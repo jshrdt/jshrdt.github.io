@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MultiBLiMP v2 - Language Overview</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+        <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+        <style>
+            :root {
+                --bg: #f5f5f4;
+                --card: #ffffff;
+                --text: #1c1917;
+                --accent: #2563eb;
+                --border: #e7e5e4;
+                --hover: #f5f5f5;
+            }
+            body {
+                margin: 0;
+                min-height: 100vh;
+                font-family: 'DM Sans', system-ui, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                padding: 2rem;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: var(--card);
+                padding: 2.5rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+                border: 1px solid var(--border);
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 2rem;
+            }
+            .title-section {
+                flex: 1;
+            }
+            h1 {
+                margin: 0 0 0.5rem 0;
+                font-size: 1.75rem;
+                font-weight: 600;
+                color: var(--text);
+            }
+            .subtitle {
+                color: #78716c;
+                font-size: 0.95rem;
+            }
+            .controls {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .back-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 0.875rem;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: white;
+                color: #57534e;
+                font-family: 'DM Sans', system-ui, sans-serif;
+                font-size: 0.875rem;
+                font-weight: 500;
+                text-decoration: none;
+                transition: border-color 0.15s, color 0.15s, background 0.15s;
+            }
+            .back-btn:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: #eff6ff;
+                text-decoration: none;
+            }
+            .back-btn svg {
+                flex-shrink: 0;
+            }
+            .controls label {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: #57534e;
+            }
+            select {
+                padding: 0.5rem 2rem 0.5rem 0.875rem;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: white;
+                color: var(--text);
+                font-family: 'DM Sans', system-ui, sans-serif;
+                font-size: 0.875rem;
+                font-weight: 500;
+                cursor: pointer;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2357534e' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 0.625rem center;
+            }
+            select:hover {
+                border-color: var(--accent);
+            }
+            select:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1.5rem;
+            }
+            thead {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--hover);
+                border-bottom: 2px solid var(--border);
+            }
+            th {
+                padding: 0.875rem 1rem;
+                text-align: left;
+                font-weight: 600;
+                font-size: 0.875rem;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
+                color: #57534e;
+                cursor: pointer;
+                user-select: none;
+                position: relative;
+                background: var(--hover);
+            }
+            th:hover {
+                background: #ececeb;
+            }
+            th.sortable::after {
+                content: '⇅';
+                position: absolute;
+                right: 0.5rem;
+                opacity: 0.3;
+                font-size: 0.75rem;
+            }
+            th.sort-asc::after {
+                content: '↑';
+                opacity: 1;
+            }
+            th.sort-desc::after {
+                content: '↓';
+                opacity: 1;
+            }
+            td {
+                padding: 0.875rem 1rem;
+                border-bottom: 1px solid var(--border);
+            }
+            tbody tr:hover {
+                background: var(--hover);
+            }
+            tbody tr:last-child td {
+                border-bottom: none;
+            }
+            td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8) {
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+            a {
+                color: var(--accent);
+                text-decoration: none;
+                font-weight: 500;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            #scatterPlot {
+                width: 100%;
+                height: 500px;
+                margin-bottom: 2rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="title-section">
+                    <h1>MultiBLiMP v2 - Language Overview</h1>
+                    <div class="subtitle">Word order prediction through decision trees</div>
+                </div>
+                <div class="controls">
+                    <a href="../" class="back-btn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Overview
+                    </a>
+                    <label for="entropyType">Entropy Type:</label>
+                    <select id="entropyType">
+                        <option value="six" selected>Six-class</option>
+                        <option value="binary">Binary (majority vs. rest)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="scatterPlot"></div>
+
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-column="0">Language</th>
+                        <th class="sortable" data-column="1">Base Entropy</th>
+                        <th class="sortable" data-column="2">Reduced Entropy</th>
+                        <th class="sortable" data-column="3">Δ Entropy</th>
+                        <th class="sortable" data-column="4">DT Acc%</th>
+                        <th class="sortable" data-column="5">N Items</th>
+                        <th class="sortable" data-column="6">N 1 swap</th>
+                        <th class="sortable" data-column="7">N 4 swap</th>
+                        <th class="sortable" data-column="8">N Pairs</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    
+            <tr>
+                <td data-sort="afrikaans"><a href="/multiblimp/spNa/Afrikaans">Afrikaans</a></td>
+                <td data-sort="0.8967">0.897</td>
+                <td data-sort="0.0591">0.059</td>
+                <td data-sort="0.8375">0.838</td>
+                <td data-sort="0.9940">99.4%</td>
+                <td data-sort="336">336</td>
+                <td data-sort="334">334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="668">668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="albanian"><a href="/multiblimp/spNa/Albanian">Albanian</a></td>
+                <td data-sort="0.7131">0.713</td>
+                <td data-sort="0.4772">0.477</td>
+                <td data-sort="0.2359">0.236</td>
+                <td data-sort="0.8182">81.8%</td>
+                <td data-sort="22">22</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient greek"><a href="/multiblimp/spNa/Ancient_Greek">Ancient Greek</a></td>
+                <td data-sort="0.1525">0.152</td>
+                <td data-sort="0.1525">0.152</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9800">98.0%</td>
+                <td data-sort="1249">1,249</td>
+                <td data-sort="1224">1,224</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2448">2,448</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient hebrew"><a href="/multiblimp/spNa/Ancient_Hebrew">Ancient Hebrew</a></td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9610">96.1%</td>
+                <td data-sort="461">461</td>
+                <td data-sort="443">443</td>
+                <td data-sort="0">0</td>
+                <td data-sort="886">886</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="armenian"><a href="/multiblimp/spNa/Armenian">Armenian</a></td>
+                <td data-sort="0.1534">0.153</td>
+                <td data-sort="0.0894">0.089</td>
+                <td data-sort="0.0640">0.064</td>
+                <td data-sort="0.9892">98.9%</td>
+                <td data-sort="924">924</td>
+                <td data-sort="904">904</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1808">1,808</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="basque"><a href="/multiblimp/spNa/Basque">Basque</a></td>
+                <td data-sort="0.9740">0.974</td>
+                <td data-sort="0.0053">0.005</td>
+                <td data-sort="0.9687">0.969</td>
+                <td data-sort="0.9991">99.9%</td>
+                <td data-sort="3503">3,503</td>
+                <td data-sort="3480">3,480</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6960">6,960</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bhojpuri"><a href="/multiblimp/spNa/Bhojpuri">Bhojpuri</a></td>
+                <td data-sort="1.3017">1.302</td>
+                <td data-sort="1.1274">1.127</td>
+                <td data-sort="0.1743">0.174</td>
+                <td data-sort="0.6047">60.5%</td>
+                <td data-sort="43">43</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="breton"><a href="/multiblimp/spNa/Breton">Breton</a></td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9932">99.3%</td>
+                <td data-sort="148">148</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bulgarian"><a href="/multiblimp/spNa/Bulgarian">Bulgarian</a></td>
+                <td data-sort="0.2666">0.267</td>
+                <td data-sort="0.2666">0.267</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9581">95.8%</td>
+                <td data-sort="836">836</td>
+                <td data-sort="801">801</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1602">1,602</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="catalan"><a href="/multiblimp/spNa/Catalan">Catalan</a></td>
+                <td data-sort="1.4316">1.432</td>
+                <td data-sort="0.1530">0.153</td>
+                <td data-sort="1.2787">1.279</td>
+                <td data-sort="0.9766">97.7%</td>
+                <td data-sort="4315">4,315</td>
+                <td data-sort="4124">4,124</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8248">8,248</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="classical armenian"><a href="/multiblimp/spNa/Classical_Armenian">Classical Armenian</a></td>
+                <td data-sort="0.6651">0.665</td>
+                <td data-sort="0.5004">0.500</td>
+                <td data-sort="0.1647">0.165</td>
+                <td data-sort="0.8326">83.3%</td>
+                <td data-sort="227">227</td>
+                <td data-sort="160">160</td>
+                <td data-sort="0">0</td>
+                <td data-sort="320">320</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="croatian"><a href="/multiblimp/spNa/Croatian">Croatian</a></td>
+                <td data-sort="0.3998">0.400</td>
+                <td data-sort="0.1182">0.118</td>
+                <td data-sort="0.2816">0.282</td>
+                <td data-sort="0.9845">98.4%</td>
+                <td data-sort="3095">3,095</td>
+                <td data-sort="3031">3,031</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6062">6,062</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="czech"><a href="/multiblimp/spNa/Czech">Czech</a></td>
+                <td data-sort="0.9508">0.951</td>
+                <td data-sort="0.0549">0.055</td>
+                <td data-sort="0.8959">0.896</td>
+                <td data-sort="0.9925">99.3%</td>
+                <td data-sort="6412">6,412</td>
+                <td data-sort="6276">6,276</td>
+                <td data-sort="0">0</td>
+                <td data-sort="12552">12,552</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="danish"><a href="/multiblimp/spNa/Danish">Danish</a></td>
+                <td data-sort="1.4764">1.476</td>
+                <td data-sort="0.4299">0.430</td>
+                <td data-sort="1.0465">1.047</td>
+                <td data-sort="0.8907">89.1%</td>
+                <td data-sort="1070">1,070</td>
+                <td data-sort="921">921</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1842">1,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="dutch"><a href="/multiblimp/spNa/Dutch">Dutch</a></td>
+                <td data-sort="0.9954">0.995</td>
+                <td data-sort="0.2344">0.234</td>
+                <td data-sort="0.7610">0.761</td>
+                <td data-sort="0.4601">46.0%</td>
+                <td data-sort="2654">2,654</td>
+                <td data-sort="2648">2,648</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5296">5,296</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="egyptian"><a href="/multiblimp/spNa/Egyptian">Egyptian</a></td>
+                <td data-sort="1.3844">1.384</td>
+                <td data-sort="0.8166">0.817</td>
+                <td data-sort="0.5678">0.568</td>
+                <td data-sort="0.8586">85.9%</td>
+                <td data-sort="99">99</td>
+                <td data-sort="56">56</td>
+                <td data-sort="0">0</td>
+                <td data-sort="112">112</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="english"><a href="/multiblimp/spNa/English">English</a></td>
+                <td data-sort="0.6117">0.612</td>
+                <td data-sort="0.1163">0.116</td>
+                <td data-sort="0.4954">0.495</td>
+                <td data-sort="0.9830">98.3%</td>
+                <td data-sort="3109">3,109</td>
+                <td data-sort="3032">3,032</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6064">6,064</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="estonian"><a href="/multiblimp/spNa/Estonian">Estonian</a></td>
+                <td data-sort="0.0521">0.052</td>
+                <td data-sort="0.0171">0.017</td>
+                <td data-sort="0.0350">0.035</td>
+                <td data-sort="0.9985">99.8%</td>
+                <td data-sort="1952">1,952</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3880">3,880</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="faroese"><a href="/multiblimp/spNa/Faroese">Faroese</a></td>
+                <td data-sort="1.2641">1.264</td>
+                <td data-sort="1.2641">1.264</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7000">70.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="finnish"><a href="/multiblimp/spNa/Finnish">Finnish</a></td>
+                <td data-sort="0.6042">0.604</td>
+                <td data-sort="0.4195">0.420</td>
+                <td data-sort="0.1846">0.185</td>
+                <td data-sort="0.8670">86.7%</td>
+                <td data-sort="2783">2,783</td>
+                <td data-sort="2405">2,405</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4810">4,810</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="french"><a href="/multiblimp/spNa/French">French</a></td>
+                <td data-sort="1.3537">1.354</td>
+                <td data-sort="0.3094">0.309</td>
+                <td data-sort="1.0443">1.044</td>
+                <td data-sort="0.9411">94.1%</td>
+                <td data-sort="3615">3,615</td>
+                <td data-sort="3380">3,380</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6760">6,760</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="galician"><a href="/multiblimp/spNa/Galician">Galician</a></td>
+                <td data-sort="1.0523">1.052</td>
+                <td data-sort="0.4460">0.446</td>
+                <td data-sort="0.6063">0.606</td>
+                <td data-sort="0.8667">86.7%</td>
+                <td data-sort="45">45</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="georgian"><a href="/multiblimp/spNa/Georgian">Georgian</a></td>
+                <td data-sort="1.0207">1.021</td>
+                <td data-sort="0.8979">0.898</td>
+                <td data-sort="0.1228">0.123</td>
+                <td data-sort="0.7524">75.2%</td>
+                <td data-sort="206">206</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="german"><a href="/multiblimp/spNa/German">German</a></td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9916">99.2%</td>
+                <td data-sort="954">954</td>
+                <td data-sort="946">946</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1892">1,892</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gheg"><a href="/multiblimp/spNa/Gheg">Gheg</a></td>
+                <td data-sort="0.6867">0.687</td>
+                <td data-sort="0.2014">0.201</td>
+                <td data-sort="0.4853">0.485</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="182">182</td>
+                <td data-sort="143">143</td>
+                <td data-sort="0">0</td>
+                <td data-sort="286">286</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gothic"><a href="/multiblimp/spNa/Gothic">Gothic</a></td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9855">98.6%</td>
+                <td data-sort="69">69</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="136">136</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="greek"><a href="/multiblimp/spNa/Greek">Greek</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hebrew"><a href="/multiblimp/spNa/Hebrew">Hebrew</a></td>
+                <td data-sort="0.7239">0.724</td>
+                <td data-sort="0.1497">0.150</td>
+                <td data-sort="0.5742">0.574</td>
+                <td data-sort="0.9789">97.9%</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="1865">1,865</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3730">3,730</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hindi"><a href="/multiblimp/spNa/Hindi">Hindi</a></td>
+                <td data-sort="0.5308">0.531</td>
+                <td data-sort="0.4254">0.425</td>
+                <td data-sort="0.1054">0.105</td>
+                <td data-sort="0.7878">78.8%</td>
+                <td data-sort="8817">8,817</td>
+                <td data-sort="8008">8,008</td>
+                <td data-sort="0">0</td>
+                <td data-sort="16016">16,016</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="icelandic"><a href="/multiblimp/spNa/Icelandic">Icelandic</a></td>
+                <td data-sort="0.7789">0.779</td>
+                <td data-sort="0.4538">0.454</td>
+                <td data-sort="0.3252">0.325</td>
+                <td data-sort="0.9019">90.2%</td>
+                <td data-sort="1040">1,040</td>
+                <td data-sort="938">938</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1876">1,876</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="italian"><a href="/multiblimp/spNa/Italian">Italian</a></td>
+                <td data-sort="1.3518">1.352</td>
+                <td data-sort="0.3074">0.307</td>
+                <td data-sort="1.0444">1.044</td>
+                <td data-sort="0.9465">94.7%</td>
+                <td data-sort="4303">4,303</td>
+                <td data-sort="4035">4,035</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8070">8,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kangri"><a href="/multiblimp/spNa/Kangri">Kangri</a></td>
+                <td data-sort="1.2396">1.240</td>
+                <td data-sort="0.6316">0.632</td>
+                <td data-sort="0.6079">0.608</td>
+                <td data-sort="0.8382">83.8%</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kazakh"><a href="/multiblimp/spNa/Kazakh">Kazakh</a></td>
+                <td data-sort="0.6360">0.636</td>
+                <td data-sort="0.5108">0.511</td>
+                <td data-sort="0.1252">0.125</td>
+                <td data-sort="0.8519">85.2%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latin"><a href="/multiblimp/spNa/Latin">Latin</a></td>
+                <td data-sort="0.2633">0.263</td>
+                <td data-sort="0.1698">0.170</td>
+                <td data-sort="0.0936">0.094</td>
+                <td data-sort="0.9677">96.8%</td>
+                <td data-sort="1116">1,116</td>
+                <td data-sort="1062">1,062</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2124">2,124</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latvian"><a href="/multiblimp/spNa/Latvian">Latvian</a></td>
+                <td data-sort="0.6784">0.678</td>
+                <td data-sort="0.1822">0.182</td>
+                <td data-sort="0.4962">0.496</td>
+                <td data-sort="0.9686">96.9%</td>
+                <td data-sort="2324">2,324</td>
+                <td data-sort="2222">2,222</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4444">4,444</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ligurian"><a href="/multiblimp/spNa/Ligurian">Ligurian</a></td>
+                <td data-sort="0.9495">0.950</td>
+                <td data-sort="0.3158">0.316</td>
+                <td data-sort="0.6337">0.634</td>
+                <td data-sort="0.9438">94.4%</td>
+                <td data-sort="89">89</td>
+                <td data-sort="70">70</td>
+                <td data-sort="0">0</td>
+                <td data-sort="140">140</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="lithuanian"><a href="/multiblimp/spNa/Lithuanian">Lithuanian</a></td>
+                <td data-sort="0.6567">0.657</td>
+                <td data-sort="0.4277">0.428</td>
+                <td data-sort="0.2290">0.229</td>
+                <td data-sort="0.9211">92.1%</td>
+                <td data-sort="279">279</td>
+                <td data-sort="250">250</td>
+                <td data-sort="0">0</td>
+                <td data-sort="500">500</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="low saxon"><a href="/multiblimp/spNa/Low_Saxon">Low Saxon</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="228">228</td>
+                <td data-sort="228">228</td>
+                <td data-sort="0">0</td>
+                <td data-sort="456">456</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="maghrebi arabic french"><a href="/multiblimp/spNa/Maghrebi_Arabic_French">Maghrebi Arabic French</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="14">14</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="marathi"><a href="/multiblimp/spNa/Marathi">Marathi</a></td>
+                <td data-sort="0.8898">0.890</td>
+                <td data-sort="0.5133">0.513</td>
+                <td data-sort="0.3765">0.377</td>
+                <td data-sort="0.8542">85.4%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="middle french"><a href="/multiblimp/spNa/Middle_French">Middle French</a></td>
+                <td data-sort="0.4068">0.407</td>
+                <td data-sort="0.1519">0.152</td>
+                <td data-sort="0.2549">0.255</td>
+                <td data-sort="0.9781">97.8%</td>
+                <td data-sort="866">866</td>
+                <td data-sort="816">816</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1632">1,632</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="naija"><a href="/multiblimp/spNa/Naija">Naija</a></td>
+                <td data-sort="0.9914">0.991</td>
+                <td data-sort="0.3358">0.336</td>
+                <td data-sort="0.6556">0.656</td>
+                <td data-sort="0.8704">87.0%</td>
+                <td data-sort="54">54</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="north sami"><a href="/multiblimp/spNa/North_Sami">North Sami</a></td>
+                <td data-sort="0.2255">0.226</td>
+                <td data-sort="0.0764">0.076</td>
+                <td data-sort="0.1491">0.149</td>
+                <td data-sort="0.9654">96.5%</td>
+                <td data-sort="260">260</td>
+                <td data-sort="240">240</td>
+                <td data-sort="0">0</td>
+                <td data-sort="480">480</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian bokmã¥l"><a href="/multiblimp/spNa/Norwegian_Bokm%C3%83%C2%A5l">Norwegian BokmÃ¥l</a></td>
+                <td data-sort="0.6320">0.632</td>
+                <td data-sort="0.0336">0.034</td>
+                <td data-sort="0.5984">0.598</td>
+                <td data-sort="0.9966">99.7%</td>
+                <td data-sort="2354">2,354</td>
+                <td data-sort="2334">2,334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4668">4,668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian nynorsk"><a href="/multiblimp/spNa/Norwegian_Nynorsk">Norwegian Nynorsk</a></td>
+                <td data-sort="0.9237">0.924</td>
+                <td data-sort="0.4153">0.415</td>
+                <td data-sort="0.5083">0.508</td>
+                <td data-sort="0.8489">84.9%</td>
+                <td data-sort="1674">1,674</td>
+                <td data-sort="1421">1,421</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2842">2,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old church slavonic"><a href="/multiblimp/spNa/Old_Church_Slavonic">Old Church Slavonic</a></td>
+                <td data-sort="0.2213">0.221</td>
+                <td data-sort="0.2213">0.221</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9683">96.8%</td>
+                <td data-sort="693">693</td>
+                <td data-sort="671">671</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1342">1,342</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old east slavic"><a href="/multiblimp/spNa/Old_East_Slavic">Old East Slavic</a></td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9480">94.8%</td>
+                <td data-sort="788">788</td>
+                <td data-sort="747">747</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1494">1,494</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old french"><a href="/multiblimp/spNa/Old_French">Old French</a></td>
+                <td data-sort="0.3319">0.332</td>
+                <td data-sort="0.0261">0.026</td>
+                <td data-sort="0.3059">0.306</td>
+                <td data-sort="0.9907">99.1%</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="2397">2,397</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4794">4,794</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old georgian"><a href="/multiblimp/spNa/Old_Georgian">Old Georgian</a></td>
+                <td data-sort="1.3952">1.395</td>
+                <td data-sort="0.3866">0.387</td>
+                <td data-sort="1.0086">1.009</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="20">20</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old occitan"><a href="/multiblimp/spNa/Old_Occitan">Old Occitan</a></td>
+                <td data-sort="0.7866">0.787</td>
+                <td data-sort="0.1898">0.190</td>
+                <td data-sort="0.5968">0.597</td>
+                <td data-sort="0.9643">96.4%</td>
+                <td data-sort="588">588</td>
+                <td data-sort="550">550</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1100">1,100</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ottoman turkish"><a href="/multiblimp/spNa/Ottoman_Turkish">Ottoman Turkish</a></td>
+                <td data-sort="1.1841">1.184</td>
+                <td data-sort="0.3115">0.311</td>
+                <td data-sort="0.8726">0.873</td>
+                <td data-sort="0.9402">94.0%</td>
+                <td data-sort="117">117</td>
+                <td data-sort="73">73</td>
+                <td data-sort="0">0</td>
+                <td data-sort="146">146</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pashto"><a href="/multiblimp/spNa/Pashto">Pashto</a></td>
+                <td data-sort="1.7288">1.729</td>
+                <td data-sort="0.8701">0.870</td>
+                <td data-sort="0.8587">0.859</td>
+                <td data-sort="0.7692">76.9%</td>
+                <td data-sort="39">39</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="persian"><a href="/multiblimp/spNa/Persian">Persian</a></td>
+                <td data-sort="0.6332">0.633</td>
+                <td data-sort="0.5851">0.585</td>
+                <td data-sort="0.0480">0.048</td>
+                <td data-sort="0.8651">86.5%</td>
+                <td data-sort="2876">2,876</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4954">4,954</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="phrygian"><a href="/multiblimp/spNa/Phrygian">Phrygian</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="9">9</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pomak"><a href="/multiblimp/spNa/Pomak">Pomak</a></td>
+                <td data-sort="0.4734">0.473</td>
+                <td data-sort="0.2978">0.298</td>
+                <td data-sort="0.1757">0.176</td>
+                <td data-sort="0.9356">93.6%</td>
+                <td data-sort="714">714</td>
+                <td data-sort="657">657</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1314">1,314</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="portuguese"><a href="/multiblimp/spNa/Portuguese">Portuguese</a></td>
+                <td data-sort="0.9005">0.900</td>
+                <td data-sort="0.1904">0.190</td>
+                <td data-sort="0.7101">0.710</td>
+                <td data-sort="0.9662">96.6%</td>
+                <td data-sort="1300">1,300</td>
+                <td data-sort="1223">1,223</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2446">2,446</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="punjabi"><a href="/multiblimp/spNa/Punjabi">Punjabi</a></td>
+                <td data-sort="1.7098">1.710</td>
+                <td data-sort="0.9968">0.997</td>
+                <td data-sort="0.7130">0.713</td>
+                <td data-sort="0.7162">71.6%</td>
+                <td data-sort="74">74</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="romanian"><a href="/multiblimp/spNa/Romanian">Romanian</a></td>
+                <td data-sort="1.4184">1.418</td>
+                <td data-sort="0.2189">0.219</td>
+                <td data-sort="1.1995">1.200</td>
+                <td data-sort="0.9619">96.2%</td>
+                <td data-sort="2599">2,599</td>
+                <td data-sort="2468">2,468</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4936">4,936</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="russian"><a href="/multiblimp/spNa/Russian">Russian</a></td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sanskrit"><a href="/multiblimp/spNa/Sanskrit">Sanskrit</a></td>
+                <td data-sort="0.0914">0.091</td>
+                <td data-sort="0.0914">0.091</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9903">99.0%</td>
+                <td data-sort="1029">1,029</td>
+                <td data-sort="1019">1,019</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2038">2,038</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="serbian"><a href="/multiblimp/spNa/Serbian">Serbian</a></td>
+                <td data-sort="0.3677">0.368</td>
+                <td data-sort="0.1471">0.147</td>
+                <td data-sort="0.2206">0.221</td>
+                <td data-sort="0.9803">98.0%</td>
+                <td data-sort="2029">2,029</td>
+                <td data-sort="1962">1,962</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3924">3,924</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sicilian"><a href="/multiblimp/spNa/Sicilian">Sicilian</a></td>
+                <td data-sort="1.0518">1.052</td>
+                <td data-sort="1.0518">1.052</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7407">74.1%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sinhala"><a href="/multiblimp/spNa/Sinhala">Sinhala</a></td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="skolt sami"><a href="/multiblimp/spNa/Skolt_Sami">Skolt Sami</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="17">17</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovak"><a href="/multiblimp/spNa/Slovak">Slovak</a></td>
+                <td data-sort="0.0871">0.087</td>
+                <td data-sort="0.0425">0.042</td>
+                <td data-sort="0.0446">0.045</td>
+                <td data-sort="0.9905">99.0%</td>
+                <td data-sort="3363">3,363</td>
+                <td data-sort="3318">3,318</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6636">6,636</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovenian"><a href="/multiblimp/spNa/Slovenian">Slovenian</a></td>
+                <td data-sort="0.2133">0.213</td>
+                <td data-sort="0.0504">0.050</td>
+                <td data-sort="0.1628">0.163</td>
+                <td data-sort="0.9889">98.9%</td>
+                <td data-sort="3885">3,885</td>
+                <td data-sort="3842">3,842</td>
+                <td data-sort="0">0</td>
+                <td data-sort="7684">7,684</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="spanish"><a href="/multiblimp/spNa/Spanish">Spanish</a></td>
+                <td data-sort="1.4273">1.427</td>
+                <td data-sort="0.2098">0.210</td>
+                <td data-sort="1.2176">1.218</td>
+                <td data-sort="0.9660">96.6%</td>
+                <td data-sort="3260">3,260</td>
+                <td data-sort="3021">3,021</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6042">6,042</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="swedish"><a href="/multiblimp/spNa/Swedish">Swedish</a></td>
+                <td data-sort="1.2790">1.279</td>
+                <td data-sort="0.9199">0.920</td>
+                <td data-sort="0.3591">0.359</td>
+                <td data-sort="0.7429">74.3%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tamil"><a href="/multiblimp/spNa/Tamil">Tamil</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="166">166</td>
+                <td data-sort="166">166</td>
+                <td data-sort="0">0</td>
+                <td data-sort="332">332</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tatar"><a href="/multiblimp/spNa/Tatar">Tatar</a></td>
+                <td data-sort="1.2617">1.262</td>
+                <td data-sort="1.0936">1.094</td>
+                <td data-sort="0.1681">0.168</td>
+                <td data-sort="0.6522">65.2%</td>
+                <td data-sort="23">23</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish"><a href="/multiblimp/spNa/Turkish">Turkish</a></td>
+                <td data-sort="0.8749">0.875</td>
+                <td data-sort="0.1970">0.197</td>
+                <td data-sort="0.6779">0.678</td>
+                <td data-sort="0.9514">95.1%</td>
+                <td data-sort="1152">1,152</td>
+                <td data-sort="1067">1,067</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2134">2,134</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish german"><a href="/multiblimp/spNa/Turkish_German">Turkish German</a></td>
+                <td data-sort="0.8817">0.882</td>
+                <td data-sort="0.2029">0.203</td>
+                <td data-sort="0.6788">0.679</td>
+                <td data-sort="0.9630">96.3%</td>
+                <td data-sort="243">243</td>
+                <td data-sort="234">234</td>
+                <td data-sort="0">0</td>
+                <td data-sort="468">468</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="upper sorbian"><a href="/multiblimp/spNa/Upper_Sorbian">Upper Sorbian</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="24">24</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="urdu"><a href="/multiblimp/spNa/Urdu">Urdu</a></td>
+                <td data-sort="0.8306">0.831</td>
+                <td data-sort="0.5504">0.550</td>
+                <td data-sort="0.2802">0.280</td>
+                <td data-sort="0.8531">85.3%</td>
+                <td data-sort="3186">3,186</td>
+                <td data-sort="2692">2,692</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5384">5,384</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uyghur"><a href="/multiblimp/spNa/Uyghur">Uyghur</a></td>
+                <td data-sort="0.9726">0.973</td>
+                <td data-sort="0.7872">0.787</td>
+                <td data-sort="0.1853">0.185</td>
+                <td data-sort="0.7143">71.4%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uzbek"><a href="/multiblimp/spNa/Uzbek">Uzbek</a></td>
+                <td data-sort="1.2625">1.263</td>
+                <td data-sort="0.9448">0.945</td>
+                <td data-sort="0.3177">0.318</td>
+                <td data-sort="0.8333">83.3%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="western armenian"><a href="/multiblimp/spNa/Western_Armenian">Western Armenian</a></td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9692">96.9%</td>
+                <td data-sort="552">552</td>
+                <td data-sort="535">535</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1070">1,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="xibe"><a href="/multiblimp/spNa/Xibe">Xibe</a></td>
+                <td data-sort="0.7788">0.779</td>
+                <td data-sort="0.1433">0.143</td>
+                <td data-sort="0.6354">0.635</td>
+                <td data-sort="0.9825">98.2%</td>
+                <td data-sort="114">114</td>
+                <td data-sort="88">88</td>
+                <td data-sort="0">0</td>
+                <td data-sort="176">176</td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <script>
+            // Store both data sets for table and plot
+            const tableData = {
+                six: `
+            <tr>
+                <td data-sort="afrikaans"><a href="/multiblimp/spNa/Afrikaans">Afrikaans</a></td>
+                <td data-sort="0.8967">0.897</td>
+                <td data-sort="0.0591">0.059</td>
+                <td data-sort="0.8375">0.838</td>
+                <td data-sort="0.9940">99.4%</td>
+                <td data-sort="336">336</td>
+                <td data-sort="334">334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="668">668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="albanian"><a href="/multiblimp/spNa/Albanian">Albanian</a></td>
+                <td data-sort="0.7131">0.713</td>
+                <td data-sort="0.4772">0.477</td>
+                <td data-sort="0.2359">0.236</td>
+                <td data-sort="0.8182">81.8%</td>
+                <td data-sort="22">22</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient greek"><a href="/multiblimp/spNa/Ancient_Greek">Ancient Greek</a></td>
+                <td data-sort="0.1525">0.152</td>
+                <td data-sort="0.1525">0.152</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9800">98.0%</td>
+                <td data-sort="1249">1,249</td>
+                <td data-sort="1224">1,224</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2448">2,448</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient hebrew"><a href="/multiblimp/spNa/Ancient_Hebrew">Ancient Hebrew</a></td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9610">96.1%</td>
+                <td data-sort="461">461</td>
+                <td data-sort="443">443</td>
+                <td data-sort="0">0</td>
+                <td data-sort="886">886</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="armenian"><a href="/multiblimp/spNa/Armenian">Armenian</a></td>
+                <td data-sort="0.1534">0.153</td>
+                <td data-sort="0.0894">0.089</td>
+                <td data-sort="0.0640">0.064</td>
+                <td data-sort="0.9892">98.9%</td>
+                <td data-sort="924">924</td>
+                <td data-sort="904">904</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1808">1,808</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="basque"><a href="/multiblimp/spNa/Basque">Basque</a></td>
+                <td data-sort="0.9740">0.974</td>
+                <td data-sort="0.0053">0.005</td>
+                <td data-sort="0.9687">0.969</td>
+                <td data-sort="0.9991">99.9%</td>
+                <td data-sort="3503">3,503</td>
+                <td data-sort="3480">3,480</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6960">6,960</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bhojpuri"><a href="/multiblimp/spNa/Bhojpuri">Bhojpuri</a></td>
+                <td data-sort="1.3017">1.302</td>
+                <td data-sort="1.1274">1.127</td>
+                <td data-sort="0.1743">0.174</td>
+                <td data-sort="0.6047">60.5%</td>
+                <td data-sort="43">43</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="breton"><a href="/multiblimp/spNa/Breton">Breton</a></td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9932">99.3%</td>
+                <td data-sort="148">148</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bulgarian"><a href="/multiblimp/spNa/Bulgarian">Bulgarian</a></td>
+                <td data-sort="0.2666">0.267</td>
+                <td data-sort="0.2666">0.267</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9581">95.8%</td>
+                <td data-sort="836">836</td>
+                <td data-sort="801">801</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1602">1,602</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="catalan"><a href="/multiblimp/spNa/Catalan">Catalan</a></td>
+                <td data-sort="1.4316">1.432</td>
+                <td data-sort="0.1530">0.153</td>
+                <td data-sort="1.2787">1.279</td>
+                <td data-sort="0.9766">97.7%</td>
+                <td data-sort="4315">4,315</td>
+                <td data-sort="4124">4,124</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8248">8,248</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="classical armenian"><a href="/multiblimp/spNa/Classical_Armenian">Classical Armenian</a></td>
+                <td data-sort="0.6651">0.665</td>
+                <td data-sort="0.5004">0.500</td>
+                <td data-sort="0.1647">0.165</td>
+                <td data-sort="0.8326">83.3%</td>
+                <td data-sort="227">227</td>
+                <td data-sort="160">160</td>
+                <td data-sort="0">0</td>
+                <td data-sort="320">320</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="croatian"><a href="/multiblimp/spNa/Croatian">Croatian</a></td>
+                <td data-sort="0.3998">0.400</td>
+                <td data-sort="0.1182">0.118</td>
+                <td data-sort="0.2816">0.282</td>
+                <td data-sort="0.9845">98.4%</td>
+                <td data-sort="3095">3,095</td>
+                <td data-sort="3031">3,031</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6062">6,062</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="czech"><a href="/multiblimp/spNa/Czech">Czech</a></td>
+                <td data-sort="0.9508">0.951</td>
+                <td data-sort="0.0549">0.055</td>
+                <td data-sort="0.8959">0.896</td>
+                <td data-sort="0.9925">99.3%</td>
+                <td data-sort="6412">6,412</td>
+                <td data-sort="6276">6,276</td>
+                <td data-sort="0">0</td>
+                <td data-sort="12552">12,552</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="danish"><a href="/multiblimp/spNa/Danish">Danish</a></td>
+                <td data-sort="1.4764">1.476</td>
+                <td data-sort="0.4299">0.430</td>
+                <td data-sort="1.0465">1.047</td>
+                <td data-sort="0.8907">89.1%</td>
+                <td data-sort="1070">1,070</td>
+                <td data-sort="921">921</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1842">1,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="dutch"><a href="/multiblimp/spNa/Dutch">Dutch</a></td>
+                <td data-sort="0.9954">0.995</td>
+                <td data-sort="0.2344">0.234</td>
+                <td data-sort="0.7610">0.761</td>
+                <td data-sort="0.4601">46.0%</td>
+                <td data-sort="2654">2,654</td>
+                <td data-sort="2648">2,648</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5296">5,296</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="egyptian"><a href="/multiblimp/spNa/Egyptian">Egyptian</a></td>
+                <td data-sort="1.3844">1.384</td>
+                <td data-sort="0.8166">0.817</td>
+                <td data-sort="0.5678">0.568</td>
+                <td data-sort="0.8586">85.9%</td>
+                <td data-sort="99">99</td>
+                <td data-sort="56">56</td>
+                <td data-sort="0">0</td>
+                <td data-sort="112">112</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="english"><a href="/multiblimp/spNa/English">English</a></td>
+                <td data-sort="0.6117">0.612</td>
+                <td data-sort="0.1163">0.116</td>
+                <td data-sort="0.4954">0.495</td>
+                <td data-sort="0.9830">98.3%</td>
+                <td data-sort="3109">3,109</td>
+                <td data-sort="3032">3,032</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6064">6,064</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="estonian"><a href="/multiblimp/spNa/Estonian">Estonian</a></td>
+                <td data-sort="0.0521">0.052</td>
+                <td data-sort="0.0171">0.017</td>
+                <td data-sort="0.0350">0.035</td>
+                <td data-sort="0.9985">99.8%</td>
+                <td data-sort="1952">1,952</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3880">3,880</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="faroese"><a href="/multiblimp/spNa/Faroese">Faroese</a></td>
+                <td data-sort="1.2641">1.264</td>
+                <td data-sort="1.2641">1.264</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7000">70.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="finnish"><a href="/multiblimp/spNa/Finnish">Finnish</a></td>
+                <td data-sort="0.6042">0.604</td>
+                <td data-sort="0.4195">0.420</td>
+                <td data-sort="0.1846">0.185</td>
+                <td data-sort="0.8670">86.7%</td>
+                <td data-sort="2783">2,783</td>
+                <td data-sort="2405">2,405</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4810">4,810</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="french"><a href="/multiblimp/spNa/French">French</a></td>
+                <td data-sort="1.3537">1.354</td>
+                <td data-sort="0.3094">0.309</td>
+                <td data-sort="1.0443">1.044</td>
+                <td data-sort="0.9411">94.1%</td>
+                <td data-sort="3615">3,615</td>
+                <td data-sort="3380">3,380</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6760">6,760</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="galician"><a href="/multiblimp/spNa/Galician">Galician</a></td>
+                <td data-sort="1.0523">1.052</td>
+                <td data-sort="0.4460">0.446</td>
+                <td data-sort="0.6063">0.606</td>
+                <td data-sort="0.8667">86.7%</td>
+                <td data-sort="45">45</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="georgian"><a href="/multiblimp/spNa/Georgian">Georgian</a></td>
+                <td data-sort="1.0207">1.021</td>
+                <td data-sort="0.8979">0.898</td>
+                <td data-sort="0.1228">0.123</td>
+                <td data-sort="0.7524">75.2%</td>
+                <td data-sort="206">206</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="german"><a href="/multiblimp/spNa/German">German</a></td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9916">99.2%</td>
+                <td data-sort="954">954</td>
+                <td data-sort="946">946</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1892">1,892</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gheg"><a href="/multiblimp/spNa/Gheg">Gheg</a></td>
+                <td data-sort="0.6867">0.687</td>
+                <td data-sort="0.2014">0.201</td>
+                <td data-sort="0.4853">0.485</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="182">182</td>
+                <td data-sort="143">143</td>
+                <td data-sort="0">0</td>
+                <td data-sort="286">286</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gothic"><a href="/multiblimp/spNa/Gothic">Gothic</a></td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9855">98.6%</td>
+                <td data-sort="69">69</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="136">136</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="greek"><a href="/multiblimp/spNa/Greek">Greek</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hebrew"><a href="/multiblimp/spNa/Hebrew">Hebrew</a></td>
+                <td data-sort="0.7239">0.724</td>
+                <td data-sort="0.1497">0.150</td>
+                <td data-sort="0.5742">0.574</td>
+                <td data-sort="0.9789">97.9%</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="1865">1,865</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3730">3,730</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hindi"><a href="/multiblimp/spNa/Hindi">Hindi</a></td>
+                <td data-sort="0.5308">0.531</td>
+                <td data-sort="0.4254">0.425</td>
+                <td data-sort="0.1054">0.105</td>
+                <td data-sort="0.7878">78.8%</td>
+                <td data-sort="8817">8,817</td>
+                <td data-sort="8008">8,008</td>
+                <td data-sort="0">0</td>
+                <td data-sort="16016">16,016</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="icelandic"><a href="/multiblimp/spNa/Icelandic">Icelandic</a></td>
+                <td data-sort="0.7789">0.779</td>
+                <td data-sort="0.4538">0.454</td>
+                <td data-sort="0.3252">0.325</td>
+                <td data-sort="0.9019">90.2%</td>
+                <td data-sort="1040">1,040</td>
+                <td data-sort="938">938</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1876">1,876</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="italian"><a href="/multiblimp/spNa/Italian">Italian</a></td>
+                <td data-sort="1.3518">1.352</td>
+                <td data-sort="0.3074">0.307</td>
+                <td data-sort="1.0444">1.044</td>
+                <td data-sort="0.9465">94.7%</td>
+                <td data-sort="4303">4,303</td>
+                <td data-sort="4035">4,035</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8070">8,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kangri"><a href="/multiblimp/spNa/Kangri">Kangri</a></td>
+                <td data-sort="1.2396">1.240</td>
+                <td data-sort="0.6316">0.632</td>
+                <td data-sort="0.6079">0.608</td>
+                <td data-sort="0.8382">83.8%</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kazakh"><a href="/multiblimp/spNa/Kazakh">Kazakh</a></td>
+                <td data-sort="0.6360">0.636</td>
+                <td data-sort="0.5108">0.511</td>
+                <td data-sort="0.1252">0.125</td>
+                <td data-sort="0.8519">85.2%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latin"><a href="/multiblimp/spNa/Latin">Latin</a></td>
+                <td data-sort="0.2633">0.263</td>
+                <td data-sort="0.1698">0.170</td>
+                <td data-sort="0.0936">0.094</td>
+                <td data-sort="0.9677">96.8%</td>
+                <td data-sort="1116">1,116</td>
+                <td data-sort="1062">1,062</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2124">2,124</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latvian"><a href="/multiblimp/spNa/Latvian">Latvian</a></td>
+                <td data-sort="0.6784">0.678</td>
+                <td data-sort="0.1822">0.182</td>
+                <td data-sort="0.4962">0.496</td>
+                <td data-sort="0.9686">96.9%</td>
+                <td data-sort="2324">2,324</td>
+                <td data-sort="2222">2,222</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4444">4,444</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ligurian"><a href="/multiblimp/spNa/Ligurian">Ligurian</a></td>
+                <td data-sort="0.9495">0.950</td>
+                <td data-sort="0.3158">0.316</td>
+                <td data-sort="0.6337">0.634</td>
+                <td data-sort="0.9438">94.4%</td>
+                <td data-sort="89">89</td>
+                <td data-sort="70">70</td>
+                <td data-sort="0">0</td>
+                <td data-sort="140">140</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="lithuanian"><a href="/multiblimp/spNa/Lithuanian">Lithuanian</a></td>
+                <td data-sort="0.6567">0.657</td>
+                <td data-sort="0.4277">0.428</td>
+                <td data-sort="0.2290">0.229</td>
+                <td data-sort="0.9211">92.1%</td>
+                <td data-sort="279">279</td>
+                <td data-sort="250">250</td>
+                <td data-sort="0">0</td>
+                <td data-sort="500">500</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="low saxon"><a href="/multiblimp/spNa/Low_Saxon">Low Saxon</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="228">228</td>
+                <td data-sort="228">228</td>
+                <td data-sort="0">0</td>
+                <td data-sort="456">456</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="maghrebi arabic french"><a href="/multiblimp/spNa/Maghrebi_Arabic_French">Maghrebi Arabic French</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="14">14</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="marathi"><a href="/multiblimp/spNa/Marathi">Marathi</a></td>
+                <td data-sort="0.8898">0.890</td>
+                <td data-sort="0.5133">0.513</td>
+                <td data-sort="0.3765">0.377</td>
+                <td data-sort="0.8542">85.4%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="middle french"><a href="/multiblimp/spNa/Middle_French">Middle French</a></td>
+                <td data-sort="0.4068">0.407</td>
+                <td data-sort="0.1519">0.152</td>
+                <td data-sort="0.2549">0.255</td>
+                <td data-sort="0.9781">97.8%</td>
+                <td data-sort="866">866</td>
+                <td data-sort="816">816</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1632">1,632</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="naija"><a href="/multiblimp/spNa/Naija">Naija</a></td>
+                <td data-sort="0.9914">0.991</td>
+                <td data-sort="0.3358">0.336</td>
+                <td data-sort="0.6556">0.656</td>
+                <td data-sort="0.8704">87.0%</td>
+                <td data-sort="54">54</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="north sami"><a href="/multiblimp/spNa/North_Sami">North Sami</a></td>
+                <td data-sort="0.2255">0.226</td>
+                <td data-sort="0.0764">0.076</td>
+                <td data-sort="0.1491">0.149</td>
+                <td data-sort="0.9654">96.5%</td>
+                <td data-sort="260">260</td>
+                <td data-sort="240">240</td>
+                <td data-sort="0">0</td>
+                <td data-sort="480">480</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian bokmã¥l"><a href="/multiblimp/spNa/Norwegian_Bokm%C3%83%C2%A5l">Norwegian BokmÃ¥l</a></td>
+                <td data-sort="0.6320">0.632</td>
+                <td data-sort="0.0336">0.034</td>
+                <td data-sort="0.5984">0.598</td>
+                <td data-sort="0.9966">99.7%</td>
+                <td data-sort="2354">2,354</td>
+                <td data-sort="2334">2,334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4668">4,668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian nynorsk"><a href="/multiblimp/spNa/Norwegian_Nynorsk">Norwegian Nynorsk</a></td>
+                <td data-sort="0.9237">0.924</td>
+                <td data-sort="0.4153">0.415</td>
+                <td data-sort="0.5083">0.508</td>
+                <td data-sort="0.8489">84.9%</td>
+                <td data-sort="1674">1,674</td>
+                <td data-sort="1421">1,421</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2842">2,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old church slavonic"><a href="/multiblimp/spNa/Old_Church_Slavonic">Old Church Slavonic</a></td>
+                <td data-sort="0.2213">0.221</td>
+                <td data-sort="0.2213">0.221</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9683">96.8%</td>
+                <td data-sort="693">693</td>
+                <td data-sort="671">671</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1342">1,342</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old east slavic"><a href="/multiblimp/spNa/Old_East_Slavic">Old East Slavic</a></td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9480">94.8%</td>
+                <td data-sort="788">788</td>
+                <td data-sort="747">747</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1494">1,494</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old french"><a href="/multiblimp/spNa/Old_French">Old French</a></td>
+                <td data-sort="0.3319">0.332</td>
+                <td data-sort="0.0261">0.026</td>
+                <td data-sort="0.3059">0.306</td>
+                <td data-sort="0.9907">99.1%</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="2397">2,397</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4794">4,794</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old georgian"><a href="/multiblimp/spNa/Old_Georgian">Old Georgian</a></td>
+                <td data-sort="1.3952">1.395</td>
+                <td data-sort="0.3866">0.387</td>
+                <td data-sort="1.0086">1.009</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="20">20</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old occitan"><a href="/multiblimp/spNa/Old_Occitan">Old Occitan</a></td>
+                <td data-sort="0.7866">0.787</td>
+                <td data-sort="0.1898">0.190</td>
+                <td data-sort="0.5968">0.597</td>
+                <td data-sort="0.9643">96.4%</td>
+                <td data-sort="588">588</td>
+                <td data-sort="550">550</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1100">1,100</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ottoman turkish"><a href="/multiblimp/spNa/Ottoman_Turkish">Ottoman Turkish</a></td>
+                <td data-sort="1.1841">1.184</td>
+                <td data-sort="0.3115">0.311</td>
+                <td data-sort="0.8726">0.873</td>
+                <td data-sort="0.9402">94.0%</td>
+                <td data-sort="117">117</td>
+                <td data-sort="73">73</td>
+                <td data-sort="0">0</td>
+                <td data-sort="146">146</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pashto"><a href="/multiblimp/spNa/Pashto">Pashto</a></td>
+                <td data-sort="1.7288">1.729</td>
+                <td data-sort="0.8701">0.870</td>
+                <td data-sort="0.8587">0.859</td>
+                <td data-sort="0.7692">76.9%</td>
+                <td data-sort="39">39</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="persian"><a href="/multiblimp/spNa/Persian">Persian</a></td>
+                <td data-sort="0.6332">0.633</td>
+                <td data-sort="0.5851">0.585</td>
+                <td data-sort="0.0480">0.048</td>
+                <td data-sort="0.8651">86.5%</td>
+                <td data-sort="2876">2,876</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4954">4,954</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="phrygian"><a href="/multiblimp/spNa/Phrygian">Phrygian</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="9">9</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pomak"><a href="/multiblimp/spNa/Pomak">Pomak</a></td>
+                <td data-sort="0.4734">0.473</td>
+                <td data-sort="0.2978">0.298</td>
+                <td data-sort="0.1757">0.176</td>
+                <td data-sort="0.9356">93.6%</td>
+                <td data-sort="714">714</td>
+                <td data-sort="657">657</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1314">1,314</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="portuguese"><a href="/multiblimp/spNa/Portuguese">Portuguese</a></td>
+                <td data-sort="0.9005">0.900</td>
+                <td data-sort="0.1904">0.190</td>
+                <td data-sort="0.7101">0.710</td>
+                <td data-sort="0.9662">96.6%</td>
+                <td data-sort="1300">1,300</td>
+                <td data-sort="1223">1,223</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2446">2,446</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="punjabi"><a href="/multiblimp/spNa/Punjabi">Punjabi</a></td>
+                <td data-sort="1.7098">1.710</td>
+                <td data-sort="0.9968">0.997</td>
+                <td data-sort="0.7130">0.713</td>
+                <td data-sort="0.7162">71.6%</td>
+                <td data-sort="74">74</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="romanian"><a href="/multiblimp/spNa/Romanian">Romanian</a></td>
+                <td data-sort="1.4184">1.418</td>
+                <td data-sort="0.2189">0.219</td>
+                <td data-sort="1.1995">1.200</td>
+                <td data-sort="0.9619">96.2%</td>
+                <td data-sort="2599">2,599</td>
+                <td data-sort="2468">2,468</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4936">4,936</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="russian"><a href="/multiblimp/spNa/Russian">Russian</a></td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sanskrit"><a href="/multiblimp/spNa/Sanskrit">Sanskrit</a></td>
+                <td data-sort="0.0914">0.091</td>
+                <td data-sort="0.0914">0.091</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9903">99.0%</td>
+                <td data-sort="1029">1,029</td>
+                <td data-sort="1019">1,019</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2038">2,038</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="serbian"><a href="/multiblimp/spNa/Serbian">Serbian</a></td>
+                <td data-sort="0.3677">0.368</td>
+                <td data-sort="0.1471">0.147</td>
+                <td data-sort="0.2206">0.221</td>
+                <td data-sort="0.9803">98.0%</td>
+                <td data-sort="2029">2,029</td>
+                <td data-sort="1962">1,962</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3924">3,924</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sicilian"><a href="/multiblimp/spNa/Sicilian">Sicilian</a></td>
+                <td data-sort="1.0518">1.052</td>
+                <td data-sort="1.0518">1.052</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7407">74.1%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sinhala"><a href="/multiblimp/spNa/Sinhala">Sinhala</a></td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="skolt sami"><a href="/multiblimp/spNa/Skolt_Sami">Skolt Sami</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="17">17</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovak"><a href="/multiblimp/spNa/Slovak">Slovak</a></td>
+                <td data-sort="0.0871">0.087</td>
+                <td data-sort="0.0425">0.042</td>
+                <td data-sort="0.0446">0.045</td>
+                <td data-sort="0.9905">99.0%</td>
+                <td data-sort="3363">3,363</td>
+                <td data-sort="3318">3,318</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6636">6,636</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovenian"><a href="/multiblimp/spNa/Slovenian">Slovenian</a></td>
+                <td data-sort="0.2133">0.213</td>
+                <td data-sort="0.0504">0.050</td>
+                <td data-sort="0.1628">0.163</td>
+                <td data-sort="0.9889">98.9%</td>
+                <td data-sort="3885">3,885</td>
+                <td data-sort="3842">3,842</td>
+                <td data-sort="0">0</td>
+                <td data-sort="7684">7,684</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="spanish"><a href="/multiblimp/spNa/Spanish">Spanish</a></td>
+                <td data-sort="1.4273">1.427</td>
+                <td data-sort="0.2098">0.210</td>
+                <td data-sort="1.2176">1.218</td>
+                <td data-sort="0.9660">96.6%</td>
+                <td data-sort="3260">3,260</td>
+                <td data-sort="3021">3,021</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6042">6,042</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="swedish"><a href="/multiblimp/spNa/Swedish">Swedish</a></td>
+                <td data-sort="1.2790">1.279</td>
+                <td data-sort="0.9199">0.920</td>
+                <td data-sort="0.3591">0.359</td>
+                <td data-sort="0.7429">74.3%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tamil"><a href="/multiblimp/spNa/Tamil">Tamil</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="166">166</td>
+                <td data-sort="166">166</td>
+                <td data-sort="0">0</td>
+                <td data-sort="332">332</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tatar"><a href="/multiblimp/spNa/Tatar">Tatar</a></td>
+                <td data-sort="1.2617">1.262</td>
+                <td data-sort="1.0936">1.094</td>
+                <td data-sort="0.1681">0.168</td>
+                <td data-sort="0.6522">65.2%</td>
+                <td data-sort="23">23</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish"><a href="/multiblimp/spNa/Turkish">Turkish</a></td>
+                <td data-sort="0.8749">0.875</td>
+                <td data-sort="0.1970">0.197</td>
+                <td data-sort="0.6779">0.678</td>
+                <td data-sort="0.9514">95.1%</td>
+                <td data-sort="1152">1,152</td>
+                <td data-sort="1067">1,067</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2134">2,134</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish german"><a href="/multiblimp/spNa/Turkish_German">Turkish German</a></td>
+                <td data-sort="0.8817">0.882</td>
+                <td data-sort="0.2029">0.203</td>
+                <td data-sort="0.6788">0.679</td>
+                <td data-sort="0.9630">96.3%</td>
+                <td data-sort="243">243</td>
+                <td data-sort="234">234</td>
+                <td data-sort="0">0</td>
+                <td data-sort="468">468</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="upper sorbian"><a href="/multiblimp/spNa/Upper_Sorbian">Upper Sorbian</a></td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="24">24</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="urdu"><a href="/multiblimp/spNa/Urdu">Urdu</a></td>
+                <td data-sort="0.8306">0.831</td>
+                <td data-sort="0.5504">0.550</td>
+                <td data-sort="0.2802">0.280</td>
+                <td data-sort="0.8531">85.3%</td>
+                <td data-sort="3186">3,186</td>
+                <td data-sort="2692">2,692</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5384">5,384</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uyghur"><a href="/multiblimp/spNa/Uyghur">Uyghur</a></td>
+                <td data-sort="0.9726">0.973</td>
+                <td data-sort="0.7872">0.787</td>
+                <td data-sort="0.1853">0.185</td>
+                <td data-sort="0.7143">71.4%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uzbek"><a href="/multiblimp/spNa/Uzbek">Uzbek</a></td>
+                <td data-sort="1.2625">1.263</td>
+                <td data-sort="0.9448">0.945</td>
+                <td data-sort="0.3177">0.318</td>
+                <td data-sort="0.8333">83.3%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="western armenian"><a href="/multiblimp/spNa/Western_Armenian">Western Armenian</a></td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9692">96.9%</td>
+                <td data-sort="552">552</td>
+                <td data-sort="535">535</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1070">1,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="xibe"><a href="/multiblimp/spNa/Xibe">Xibe</a></td>
+                <td data-sort="0.7788">0.779</td>
+                <td data-sort="0.1433">0.143</td>
+                <td data-sort="0.6354">0.635</td>
+                <td data-sort="0.9825">98.2%</td>
+                <td data-sort="114">114</td>
+                <td data-sort="88">88</td>
+                <td data-sort="0">0</td>
+                <td data-sort="176">176</td>
+            </tr>
+            `,
+                binary: `
+            <tr>
+                <td data-sort="afrikaans"><a href="/multiblimp/spNa/Afrikaans">Afrikaans</a></td>
+                <td data-sort="0.8967">0.897</td>
+                <td data-sort="0.0726">0.073</td>
+                <td data-sort="0.8241">0.824</td>
+                <td data-sort="0.9940">99.4%</td>
+                <td data-sort="336">336</td>
+                <td data-sort="334">334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="668">668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="albanian"><a href="/multiblimp/spNa/Albanian">Albanian</a></td>
+                <td data-sort="0.7131">0.713</td>
+                <td data-sort="0.6022">0.602</td>
+                <td data-sort="0.1110">0.111</td>
+                <td data-sort="0.8182">81.8%</td>
+                <td data-sort="22">22</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient greek"><a href="/multiblimp/spNa/Ancient_Greek">Ancient Greek</a></td>
+                <td data-sort="0.1437">0.144</td>
+                <td data-sort="0.1437">0.144</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9800">98.0%</td>
+                <td data-sort="1249">1,249</td>
+                <td data-sort="1224">1,224</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2448">2,448</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ancient hebrew"><a href="/multiblimp/spNa/Ancient_Hebrew">Ancient Hebrew</a></td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.2425">0.242</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9610">96.1%</td>
+                <td data-sort="461">461</td>
+                <td data-sort="443">443</td>
+                <td data-sort="0">0</td>
+                <td data-sort="886">886</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="armenian"><a href="/multiblimp/spNa/Armenian">Armenian</a></td>
+                <td data-sort="0.1534">0.153</td>
+                <td data-sort="0.0923">0.092</td>
+                <td data-sort="0.0611">0.061</td>
+                <td data-sort="0.9892">98.9%</td>
+                <td data-sort="924">924</td>
+                <td data-sort="904">904</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1808">1,808</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="basque"><a href="/multiblimp/spNa/Basque">Basque</a></td>
+                <td data-sort="0.8796">0.880</td>
+                <td data-sort="0.0099">0.010</td>
+                <td data-sort="0.8697">0.870</td>
+                <td data-sort="0.9991">99.9%</td>
+                <td data-sort="3503">3,503</td>
+                <td data-sort="3480">3,480</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6960">6,960</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bhojpuri"><a href="/multiblimp/spNa/Bhojpuri">Bhojpuri</a></td>
+                <td data-sort="0.9696">0.970</td>
+                <td data-sort="0.8682">0.868</td>
+                <td data-sort="0.1014">0.101</td>
+                <td data-sort="0.6047">60.5%</td>
+                <td data-sort="43">43</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="breton"><a href="/multiblimp/spNa/Breton">Breton</a></td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0812">0.081</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9932">99.3%</td>
+                <td data-sort="148">148</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="bulgarian"><a href="/multiblimp/spNa/Bulgarian">Bulgarian</a></td>
+                <td data-sort="0.2533">0.253</td>
+                <td data-sort="0.2533">0.253</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9581">95.8%</td>
+                <td data-sort="836">836</td>
+                <td data-sort="801">801</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1602">1,602</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="catalan"><a href="/multiblimp/spNa/Catalan">Catalan</a></td>
+                <td data-sort="0.9927">0.993</td>
+                <td data-sort="0.1364">0.136</td>
+                <td data-sort="0.8563">0.856</td>
+                <td data-sort="0.9766">97.7%</td>
+                <td data-sort="4315">4,315</td>
+                <td data-sort="4124">4,124</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8248">8,248</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="classical armenian"><a href="/multiblimp/spNa/Classical_Armenian">Classical Armenian</a></td>
+                <td data-sort="0.6651">0.665</td>
+                <td data-sort="0.5004">0.500</td>
+                <td data-sort="0.1647">0.165</td>
+                <td data-sort="0.8326">83.3%</td>
+                <td data-sort="227">227</td>
+                <td data-sort="160">160</td>
+                <td data-sort="0">0</td>
+                <td data-sort="320">320</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="croatian"><a href="/multiblimp/spNa/Croatian">Croatian</a></td>
+                <td data-sort="0.3373">0.337</td>
+                <td data-sort="0.1135">0.114</td>
+                <td data-sort="0.2238">0.224</td>
+                <td data-sort="0.9845">98.4%</td>
+                <td data-sort="3095">3,095</td>
+                <td data-sort="3031">3,031</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6062">6,062</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="czech"><a href="/multiblimp/spNa/Czech">Czech</a></td>
+                <td data-sort="0.7674">0.767</td>
+                <td data-sort="0.0574">0.057</td>
+                <td data-sort="0.7100">0.710</td>
+                <td data-sort="0.9925">99.3%</td>
+                <td data-sort="6412">6,412</td>
+                <td data-sort="6276">6,276</td>
+                <td data-sort="0">0</td>
+                <td data-sort="12552">12,552</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="danish"><a href="/multiblimp/spNa/Danish">Danish</a></td>
+                <td data-sort="0.9987">0.999</td>
+                <td data-sort="0.4121">0.412</td>
+                <td data-sort="0.5866">0.587</td>
+                <td data-sort="0.8907">89.1%</td>
+                <td data-sort="1070">1,070</td>
+                <td data-sort="921">921</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1842">1,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="dutch"><a href="/multiblimp/spNa/Dutch">Dutch</a></td>
+                <td data-sort="0.9954">0.995</td>
+                <td data-sort="0.2367">0.237</td>
+                <td data-sort="0.7587">0.759</td>
+                <td data-sort="0.4601">46.0%</td>
+                <td data-sort="2654">2,654</td>
+                <td data-sort="2648">2,648</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5296">5,296</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="egyptian"><a href="/multiblimp/spNa/Egyptian">Egyptian</a></td>
+                <td data-sort="0.9791">0.979</td>
+                <td data-sort="0.5866">0.587</td>
+                <td data-sort="0.3925">0.392</td>
+                <td data-sort="0.8586">85.9%</td>
+                <td data-sort="99">99</td>
+                <td data-sort="56">56</td>
+                <td data-sort="0">0</td>
+                <td data-sort="112">112</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="english"><a href="/multiblimp/spNa/English">English</a></td>
+                <td data-sort="0.5943">0.594</td>
+                <td data-sort="0.1096">0.110</td>
+                <td data-sort="0.4848">0.485</td>
+                <td data-sort="0.9830">98.3%</td>
+                <td data-sort="3109">3,109</td>
+                <td data-sort="3032">3,032</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6064">6,064</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="estonian"><a href="/multiblimp/spNa/Estonian">Estonian</a></td>
+                <td data-sort="0.0521">0.052</td>
+                <td data-sort="0.0171">0.017</td>
+                <td data-sort="0.0350">0.035</td>
+                <td data-sort="0.9985">99.8%</td>
+                <td data-sort="1952">1,952</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3880">3,880</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="faroese"><a href="/multiblimp/spNa/Faroese">Faroese</a></td>
+                <td data-sort="0.9024">0.902</td>
+                <td data-sort="0.9024">0.902</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7000">70.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="finnish"><a href="/multiblimp/spNa/Finnish">Finnish</a></td>
+                <td data-sort="0.5735">0.574</td>
+                <td data-sort="0.4049">0.405</td>
+                <td data-sort="0.1687">0.169</td>
+                <td data-sort="0.8670">86.7%</td>
+                <td data-sort="2783">2,783</td>
+                <td data-sort="2405">2,405</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4810">4,810</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="french"><a href="/multiblimp/spNa/French">French</a></td>
+                <td data-sort="0.9559">0.956</td>
+                <td data-sort="0.2547">0.255</td>
+                <td data-sort="0.7013">0.701</td>
+                <td data-sort="0.9411">94.1%</td>
+                <td data-sort="3615">3,615</td>
+                <td data-sort="3380">3,380</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6760">6,760</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="galician"><a href="/multiblimp/spNa/Galician">Galician</a></td>
+                <td data-sort="0.8439">0.844</td>
+                <td data-sort="0.5190">0.519</td>
+                <td data-sort="0.3249">0.325</td>
+                <td data-sort="0.8667">86.7%</td>
+                <td data-sort="45">45</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="georgian"><a href="/multiblimp/spNa/Georgian">Georgian</a></td>
+                <td data-sort="0.8317">0.832</td>
+                <td data-sort="0.7797">0.780</td>
+                <td data-sort="0.0519">0.052</td>
+                <td data-sort="0.7524">75.2%</td>
+                <td data-sort="206">206</td>
+                <td data-sort="147">147</td>
+                <td data-sort="0">0</td>
+                <td data-sort="294">294</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="german"><a href="/multiblimp/spNa/German">German</a></td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0734">0.073</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9916">99.2%</td>
+                <td data-sort="954">954</td>
+                <td data-sort="946">946</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1892">1,892</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gheg"><a href="/multiblimp/spNa/Gheg">Gheg</a></td>
+                <td data-sort="0.6867">0.687</td>
+                <td data-sort="0.2014">0.201</td>
+                <td data-sort="0.4853">0.485</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="182">182</td>
+                <td data-sort="143">143</td>
+                <td data-sort="0">0</td>
+                <td data-sort="286">286</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="gothic"><a href="/multiblimp/spNa/Gothic">Gothic</a></td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.1494">0.149</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9855">98.6%</td>
+                <td data-sort="69">69</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="136">136</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="greek"><a href="/multiblimp/spNa/Greek">Greek</a></td>
+                <td data-sort="0.1330">0.133</td>
+                <td data-sort="0.1330">0.133</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hebrew"><a href="/multiblimp/spNa/Hebrew">Hebrew</a></td>
+                <td data-sort="0.6192">0.619</td>
+                <td data-sort="0.1516">0.152</td>
+                <td data-sort="0.4676">0.468</td>
+                <td data-sort="0.9789">97.9%</td>
+                <td data-sort="1940">1,940</td>
+                <td data-sort="1865">1,865</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3730">3,730</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="hindi"><a href="/multiblimp/spNa/Hindi">Hindi</a></td>
+                <td data-sort="0.5001">0.500</td>
+                <td data-sort="0.3987">0.399</td>
+                <td data-sort="0.1014">0.101</td>
+                <td data-sort="0.7878">78.8%</td>
+                <td data-sort="8817">8,817</td>
+                <td data-sort="8008">8,008</td>
+                <td data-sort="0">0</td>
+                <td data-sort="16016">16,016</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="icelandic"><a href="/multiblimp/spNa/Icelandic">Icelandic</a></td>
+                <td data-sort="0.6083">0.608</td>
+                <td data-sort="0.4000">0.400</td>
+                <td data-sort="0.2083">0.208</td>
+                <td data-sort="0.9019">90.2%</td>
+                <td data-sort="1040">1,040</td>
+                <td data-sort="938">938</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1876">1,876</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="italian"><a href="/multiblimp/spNa/Italian">Italian</a></td>
+                <td data-sort="0.9979">0.998</td>
+                <td data-sort="0.2658">0.266</td>
+                <td data-sort="0.7322">0.732</td>
+                <td data-sort="0.9465">94.7%</td>
+                <td data-sort="4303">4,303</td>
+                <td data-sort="4035">4,035</td>
+                <td data-sort="0">0</td>
+                <td data-sort="8070">8,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kangri"><a href="/multiblimp/spNa/Kangri">Kangri</a></td>
+                <td data-sort="0.9109">0.911</td>
+                <td data-sort="0.6316">0.632</td>
+                <td data-sort="0.2793">0.279</td>
+                <td data-sort="0.8382">83.8%</td>
+                <td data-sort="68">68</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="kazakh"><a href="/multiblimp/spNa/Kazakh">Kazakh</a></td>
+                <td data-sort="0.6360">0.636</td>
+                <td data-sort="0.6096">0.610</td>
+                <td data-sort="0.0264">0.026</td>
+                <td data-sort="0.8519">85.2%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latin"><a href="/multiblimp/spNa/Latin">Latin</a></td>
+                <td data-sort="0.2249">0.225</td>
+                <td data-sort="0.1698">0.170</td>
+                <td data-sort="0.0551">0.055</td>
+                <td data-sort="0.9677">96.8%</td>
+                <td data-sort="1116">1,116</td>
+                <td data-sort="1062">1,062</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2124">2,124</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="latvian"><a href="/multiblimp/spNa/Latvian">Latvian</a></td>
+                <td data-sort="0.5752">0.575</td>
+                <td data-sort="0.1771">0.177</td>
+                <td data-sort="0.3980">0.398</td>
+                <td data-sort="0.9686">96.9%</td>
+                <td data-sort="2324">2,324</td>
+                <td data-sort="2222">2,222</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4444">4,444</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ligurian"><a href="/multiblimp/spNa/Ligurian">Ligurian</a></td>
+                <td data-sort="0.7540">0.754</td>
+                <td data-sort="0.3489">0.349</td>
+                <td data-sort="0.4051">0.405</td>
+                <td data-sort="0.9438">94.4%</td>
+                <td data-sort="89">89</td>
+                <td data-sort="70">70</td>
+                <td data-sort="0">0</td>
+                <td data-sort="140">140</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="lithuanian"><a href="/multiblimp/spNa/Lithuanian">Lithuanian</a></td>
+                <td data-sort="0.4858">0.486</td>
+                <td data-sort="0.3546">0.355</td>
+                <td data-sort="0.1311">0.131</td>
+                <td data-sort="0.9211">92.1%</td>
+                <td data-sort="279">279</td>
+                <td data-sort="250">250</td>
+                <td data-sort="0">0</td>
+                <td data-sort="500">500</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="low saxon"><a href="/multiblimp/spNa/Low_Saxon">Low Saxon</a></td>
+                <td data-sort="0.0224">0.022</td>
+                <td data-sort="0.0224">0.022</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="228">228</td>
+                <td data-sort="228">228</td>
+                <td data-sort="0">0</td>
+                <td data-sort="456">456</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="maghrebi arabic french"><a href="/multiblimp/spNa/Maghrebi_Arabic_French">Maghrebi Arabic French</a></td>
+                <td data-sort="0.2108">0.211</td>
+                <td data-sort="0.2108">0.211</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="14">14</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="marathi"><a href="/multiblimp/spNa/Marathi">Marathi</a></td>
+                <td data-sort="0.7095">0.710</td>
+                <td data-sort="0.5133">0.513</td>
+                <td data-sort="0.1962">0.196</td>
+                <td data-sort="0.8542">85.4%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="middle french"><a href="/multiblimp/spNa/Middle_French">Middle French</a></td>
+                <td data-sort="0.4068">0.407</td>
+                <td data-sort="0.1607">0.161</td>
+                <td data-sort="0.2461">0.246</td>
+                <td data-sort="0.9781">97.8%</td>
+                <td data-sort="866">866</td>
+                <td data-sort="816">816</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1632">1,632</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="naija"><a href="/multiblimp/spNa/Naija">Naija</a></td>
+                <td data-sort="0.9914">0.991</td>
+                <td data-sort="0.4520">0.452</td>
+                <td data-sort="0.5394">0.539</td>
+                <td data-sort="0.8704">87.0%</td>
+                <td data-sort="54">54</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="north sami"><a href="/multiblimp/spNa/North_Sami">North Sami</a></td>
+                <td data-sort="0.2255">0.226</td>
+                <td data-sort="0.0962">0.096</td>
+                <td data-sort="0.1293">0.129</td>
+                <td data-sort="0.9654">96.5%</td>
+                <td data-sort="260">260</td>
+                <td data-sort="240">240</td>
+                <td data-sort="0">0</td>
+                <td data-sort="480">480</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian bokmã¥l"><a href="/multiblimp/spNa/Norwegian_Bokm%C3%83%C2%A5l">Norwegian BokmÃ¥l</a></td>
+                <td data-sort="0.6320">0.632</td>
+                <td data-sort="0.0371">0.037</td>
+                <td data-sort="0.5949">0.595</td>
+                <td data-sort="0.9966">99.7%</td>
+                <td data-sort="2354">2,354</td>
+                <td data-sort="2334">2,334</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4668">4,668</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="norwegian nynorsk"><a href="/multiblimp/spNa/Norwegian_Nynorsk">Norwegian Nynorsk</a></td>
+                <td data-sort="0.9237">0.924</td>
+                <td data-sort="0.4261">0.426</td>
+                <td data-sort="0.4976">0.498</td>
+                <td data-sort="0.8489">84.9%</td>
+                <td data-sort="1674">1,674</td>
+                <td data-sort="1421">1,421</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2842">2,842</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old church slavonic"><a href="/multiblimp/spNa/Old_Church_Slavonic">Old Church Slavonic</a></td>
+                <td data-sort="0.2064">0.206</td>
+                <td data-sort="0.2064">0.206</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9683">96.8%</td>
+                <td data-sort="693">693</td>
+                <td data-sort="671">671</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1342">1,342</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old east slavic"><a href="/multiblimp/spNa/Old_East_Slavic">Old East Slavic</a></td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.2973">0.297</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9480">94.8%</td>
+                <td data-sort="788">788</td>
+                <td data-sort="747">747</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1494">1,494</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old french"><a href="/multiblimp/spNa/Old_French">Old French</a></td>
+                <td data-sort="0.3319">0.332</td>
+                <td data-sort="0.0311">0.031</td>
+                <td data-sort="0.3009">0.301</td>
+                <td data-sort="0.9907">99.1%</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="2397">2,397</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4794">4,794</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old georgian"><a href="/multiblimp/spNa/Old_Georgian">Old Georgian</a></td>
+                <td data-sort="1.0000">1.000</td>
+                <td data-sort="0.5200">0.520</td>
+                <td data-sort="0.4800">0.480</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="20">20</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="old occitan"><a href="/multiblimp/spNa/Old_Occitan">Old Occitan</a></td>
+                <td data-sort="0.6434">0.643</td>
+                <td data-sort="0.1744">0.174</td>
+                <td data-sort="0.4690">0.469</td>
+                <td data-sort="0.9643">96.4%</td>
+                <td data-sort="588">588</td>
+                <td data-sort="550">550</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1100">1,100</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="ottoman turkish"><a href="/multiblimp/spNa/Ottoman_Turkish">Ottoman Turkish</a></td>
+                <td data-sort="0.9560">0.956</td>
+                <td data-sort="0.3115">0.311</td>
+                <td data-sort="0.6445">0.644</td>
+                <td data-sort="0.9402">94.0%</td>
+                <td data-sort="117">117</td>
+                <td data-sort="73">73</td>
+                <td data-sort="0">0</td>
+                <td data-sort="146">146</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pashto"><a href="/multiblimp/spNa/Pashto">Pashto</a></td>
+                <td data-sort="0.9778">0.978</td>
+                <td data-sort="0.7695">0.770</td>
+                <td data-sort="0.2083">0.208</td>
+                <td data-sort="0.7692">76.9%</td>
+                <td data-sort="39">39</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="persian"><a href="/multiblimp/spNa/Persian">Persian</a></td>
+                <td data-sort="0.5812">0.581</td>
+                <td data-sort="0.5622">0.562</td>
+                <td data-sort="0.0191">0.019</td>
+                <td data-sort="0.8651">86.5%</td>
+                <td data-sort="2876">2,876</td>
+                <td data-sort="2477">2,477</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4954">4,954</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="phrygian"><a href="/multiblimp/spNa/Phrygian">Phrygian</a></td>
+                <td data-sort="0.2864">0.286</td>
+                <td data-sort="0.2864">0.286</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="9">9</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="pomak"><a href="/multiblimp/spNa/Pomak">Pomak</a></td>
+                <td data-sort="0.3987">0.399</td>
+                <td data-sort="0.2572">0.257</td>
+                <td data-sort="0.1415">0.142</td>
+                <td data-sort="0.9356">93.6%</td>
+                <td data-sort="714">714</td>
+                <td data-sort="657">657</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1314">1,314</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="portuguese"><a href="/multiblimp/spNa/Portuguese">Portuguese</a></td>
+                <td data-sort="0.7966">0.797</td>
+                <td data-sort="0.1933">0.193</td>
+                <td data-sort="0.6034">0.603</td>
+                <td data-sort="0.9662">96.6%</td>
+                <td data-sort="1300">1,300</td>
+                <td data-sort="1223">1,223</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2446">2,446</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="punjabi"><a href="/multiblimp/spNa/Punjabi">Punjabi</a></td>
+                <td data-sort="0.9669">0.967</td>
+                <td data-sort="0.8241">0.824</td>
+                <td data-sort="0.1428">0.143</td>
+                <td data-sort="0.7162">71.6%</td>
+                <td data-sort="74">74</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="romanian"><a href="/multiblimp/spNa/Romanian">Romanian</a></td>
+                <td data-sort="0.9876">0.988</td>
+                <td data-sort="0.2144">0.214</td>
+                <td data-sort="0.7731">0.773</td>
+                <td data-sort="0.9619">96.2%</td>
+                <td data-sort="2599">2,599</td>
+                <td data-sort="2468">2,468</td>
+                <td data-sort="0">0</td>
+                <td data-sort="4936">4,936</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="russian"><a href="/multiblimp/spNa/Russian">Russian</a></td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.5746">0.575</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9000">90.0%</td>
+                <td data-sort="10">10</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sanskrit"><a href="/multiblimp/spNa/Sanskrit">Sanskrit</a></td>
+                <td data-sort="0.0821">0.082</td>
+                <td data-sort="0.0821">0.082</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9903">99.0%</td>
+                <td data-sort="1029">1,029</td>
+                <td data-sort="1019">1,019</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2038">2,038</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="serbian"><a href="/multiblimp/spNa/Serbian">Serbian</a></td>
+                <td data-sort="0.3170">0.317</td>
+                <td data-sort="0.1337">0.134</td>
+                <td data-sort="0.1833">0.183</td>
+                <td data-sort="0.9803">98.0%</td>
+                <td data-sort="2029">2,029</td>
+                <td data-sort="1962">1,962</td>
+                <td data-sort="0">0</td>
+                <td data-sort="3924">3,924</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sicilian"><a href="/multiblimp/spNa/Sicilian">Sicilian</a></td>
+                <td data-sort="0.8384">0.838</td>
+                <td data-sort="0.8384">0.838</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.7407">74.1%</td>
+                <td data-sort="27">27</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="sinhala"><a href="/multiblimp/spNa/Sinhala">Sinhala</a></td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.3095">0.310</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9615">96.2%</td>
+                <td data-sort="26">26</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="skolt sami"><a href="/multiblimp/spNa/Skolt_Sami">Skolt Sami</a></td>
+                <td data-sort="0.1831">0.183</td>
+                <td data-sort="0.1831">0.183</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="17">17</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovak"><a href="/multiblimp/spNa/Slovak">Slovak</a></td>
+                <td data-sort="0.0785">0.079</td>
+                <td data-sort="0.0382">0.038</td>
+                <td data-sort="0.0403">0.040</td>
+                <td data-sort="0.9905">99.0%</td>
+                <td data-sort="3363">3,363</td>
+                <td data-sort="3318">3,318</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6636">6,636</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="slovenian"><a href="/multiblimp/spNa/Slovenian">Slovenian</a></td>
+                <td data-sort="0.2133">0.213</td>
+                <td data-sort="0.0504">0.050</td>
+                <td data-sort="0.1628">0.163</td>
+                <td data-sort="0.9889">98.9%</td>
+                <td data-sort="3885">3,885</td>
+                <td data-sort="3842">3,842</td>
+                <td data-sort="0">0</td>
+                <td data-sort="7684">7,684</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="spanish"><a href="/multiblimp/spNa/Spanish">Spanish</a></td>
+                <td data-sort="0.9994">0.999</td>
+                <td data-sort="0.1962">0.196</td>
+                <td data-sort="0.8032">0.803</td>
+                <td data-sort="0.9660">96.6%</td>
+                <td data-sort="3260">3,260</td>
+                <td data-sort="3021">3,021</td>
+                <td data-sort="0">0</td>
+                <td data-sort="6042">6,042</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="swedish"><a href="/multiblimp/spNa/Swedish">Swedish</a></td>
+                <td data-sort="0.8326">0.833</td>
+                <td data-sort="0.7223">0.722</td>
+                <td data-sort="0.1103">0.110</td>
+                <td data-sort="0.7429">74.3%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tamil"><a href="/multiblimp/spNa/Tamil">Tamil</a></td>
+                <td data-sort="0.0294">0.029</td>
+                <td data-sort="0.0294">0.029</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="166">166</td>
+                <td data-sort="166">166</td>
+                <td data-sort="0">0</td>
+                <td data-sort="332">332</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="tatar"><a href="/multiblimp/spNa/Tatar">Tatar</a></td>
+                <td data-sort="0.9377">0.938</td>
+                <td data-sort="0.8444">0.844</td>
+                <td data-sort="0.0934">0.093</td>
+                <td data-sort="0.6522">65.2%</td>
+                <td data-sort="23">23</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish"><a href="/multiblimp/spNa/Turkish">Turkish</a></td>
+                <td data-sort="0.7112">0.711</td>
+                <td data-sort="0.1935">0.193</td>
+                <td data-sort="0.5177">0.518</td>
+                <td data-sort="0.9514">95.1%</td>
+                <td data-sort="1152">1,152</td>
+                <td data-sort="1067">1,067</td>
+                <td data-sort="0">0</td>
+                <td data-sort="2134">2,134</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="turkish german"><a href="/multiblimp/spNa/Turkish_German">Turkish German</a></td>
+                <td data-sort="0.7512">0.751</td>
+                <td data-sort="0.2029">0.203</td>
+                <td data-sort="0.5484">0.548</td>
+                <td data-sort="0.9630">96.3%</td>
+                <td data-sort="243">243</td>
+                <td data-sort="234">234</td>
+                <td data-sort="0">0</td>
+                <td data-sort="468">468</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="upper sorbian"><a href="/multiblimp/spNa/Upper_Sorbian">Upper Sorbian</a></td>
+                <td data-sort="0.1414">0.141</td>
+                <td data-sort="0.1414">0.141</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="1.0000">100.0%</td>
+                <td data-sort="24">24</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="urdu"><a href="/multiblimp/spNa/Urdu">Urdu</a></td>
+                <td data-sort="0.6962">0.696</td>
+                <td data-sort="0.4966">0.497</td>
+                <td data-sort="0.1996">0.200</td>
+                <td data-sort="0.8531">85.3%</td>
+                <td data-sort="3186">3,186</td>
+                <td data-sort="2692">2,692</td>
+                <td data-sort="0">0</td>
+                <td data-sort="5384">5,384</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uyghur"><a href="/multiblimp/spNa/Uyghur">Uyghur</a></td>
+                <td data-sort="0.9726">0.973</td>
+                <td data-sort="0.7872">0.787</td>
+                <td data-sort="0.1853">0.185</td>
+                <td data-sort="0.7143">71.4%</td>
+                <td data-sort="35">35</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="uzbek"><a href="/multiblimp/spNa/Uzbek">Uzbek</a></td>
+                <td data-sort="0.8762">0.876</td>
+                <td data-sort="0.6331">0.633</td>
+                <td data-sort="0.2431">0.243</td>
+                <td data-sort="0.8333">83.3%</td>
+                <td data-sort="48">48</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+                <td data-sort="0">0</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="western armenian"><a href="/multiblimp/spNa/Western_Armenian">Western Armenian</a></td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.2026">0.203</td>
+                <td data-sort="0.0000">0.000</td>
+                <td data-sort="0.9692">96.9%</td>
+                <td data-sort="552">552</td>
+                <td data-sort="535">535</td>
+                <td data-sort="0">0</td>
+                <td data-sort="1070">1,070</td>
+            </tr>
+            
+            <tr>
+                <td data-sort="xibe"><a href="/multiblimp/spNa/Xibe">Xibe</a></td>
+                <td data-sort="0.7788">0.779</td>
+                <td data-sort="0.1731">0.173</td>
+                <td data-sort="0.6057">0.606</td>
+                <td data-sort="0.9825">98.2%</td>
+                <td data-sort="114">114</td>
+                <td data-sort="88">88</td>
+                <td data-sort="0">0</td>
+                <td data-sort="176">176</td>
+            </tr>
+            `
+            };
+
+            const plotData = {
+                six: [{"name": "Afrikaans", "base": 0.896670077522058, "reduced": 0.059146430695321654, "n_items": 336, "url": "/multiblimp/spNa/Afrikaans"}, {"name": "Albanian", "base": 0.7131467486384921, "reduced": 0.4772170014624825, "n_items": 22, "url": "/multiblimp/spNa/Albanian"}, {"name": "Ancient Greek", "base": 0.15247907177433623, "reduced": 0.15247907177433623, "n_items": 1249, "url": "/multiblimp/spNa/Ancient_Greek"}, {"name": "Ancient Hebrew", "base": 0.24249063711593322, "reduced": 0.24249063711593322, "n_items": 461, "url": "/multiblimp/spNa/Ancient_Hebrew"}, {"name": "Armenian", "base": 0.15341416667871968, "reduced": 0.08944413928179425, "n_items": 924, "url": "/multiblimp/spNa/Armenian"}, {"name": "Basque", "base": 0.973999107646944, "reduced": 0.005267642295190207, "n_items": 3503, "url": "/multiblimp/spNa/Basque"}, {"name": "Bhojpuri", "base": 1.3016764459861279, "reduced": 1.127387846694715, "n_items": 43, "url": "/multiblimp/spNa/Bhojpuri"}, {"name": "Breton", "base": 0.08123773168471687, "reduced": 0.08123773168471687, "n_items": 148, "url": "/multiblimp/spNa/Breton"}, {"name": "Bulgarian", "base": 0.2665563131294537, "reduced": 0.2665563131294537, "n_items": 836, "url": "/multiblimp/spNa/Bulgarian"}, {"name": "Catalan", "base": 1.4316293577858126, "reduced": 0.15295470372616998, "n_items": 4315, "url": "/multiblimp/spNa/Catalan"}, {"name": "Classical Armenian", "base": 0.6650757860764138, "reduced": 0.5004242286802066, "n_items": 227, "url": "/multiblimp/spNa/Classical_Armenian"}, {"name": "Croatian", "base": 0.39977999977774026, "reduced": 0.11818005439133349, "n_items": 3095, "url": "/multiblimp/spNa/Croatian"}, {"name": "Czech", "base": 0.9508116687144113, "reduced": 0.05491217035311448, "n_items": 6412, "url": "/multiblimp/spNa/Czech"}, {"name": "Danish", "base": 1.4764376143492972, "reduced": 0.4299089549479305, "n_items": 1070, "url": "/multiblimp/spNa/Danish"}, {"name": "Dutch", "base": 0.995395847994814, "reduced": 0.23438250056200013, "n_items": 2654, "url": "/multiblimp/spNa/Dutch"}, {"name": "Egyptian", "base": 1.3843535719701574, "reduced": 0.816558996091471, "n_items": 99, "url": "/multiblimp/spNa/Egyptian"}, {"name": "English", "base": 0.6117031264998903, "reduced": 0.11630505861323137, "n_items": 3109, "url": "/multiblimp/spNa/English"}, {"name": "Estonian", "base": 0.05209066256832528, "reduced": 0.017080900924111863, "n_items": 1952, "url": "/multiblimp/spNa/Estonian"}, {"name": "Faroese", "base": 1.2640886121123147, "reduced": 1.2640886121123147, "n_items": 10, "url": "/multiblimp/spNa/Faroese"}, {"name": "Finnish", "base": 0.6041558237112308, "reduced": 0.4195181411887522, "n_items": 2783, "url": "/multiblimp/spNa/Finnish"}, {"name": "French", "base": 1.3537468417582643, "reduced": 0.3094124093341088, "n_items": 3615, "url": "/multiblimp/spNa/French"}, {"name": "Galician", "base": 1.052317067952531, "reduced": 0.4460075407134676, "n_items": 45, "url": "/multiblimp/spNa/Galician"}, {"name": "Georgian", "base": 1.020721988567566, "reduced": 0.8979404463156104, "n_items": 206, "url": "/multiblimp/spNa/Georgian"}, {"name": "German", "base": 0.07341285000773425, "reduced": 0.07341285000773425, "n_items": 954, "url": "/multiblimp/spNa/German"}, {"name": "Gheg", "base": 0.6867258591968726, "reduced": 0.2014451197352058, "n_items": 182, "url": "/multiblimp/spNa/Gheg"}, {"name": "Gothic", "base": 0.1493881393181406, "reduced": 0.1493881393181406, "n_items": 69, "url": "/multiblimp/spNa/Gothic"}, {"name": "Greek", "base": 0.0, "reduced": 0.0, "n_items": 26, "url": "/multiblimp/spNa/Greek"}, {"name": "Hebrew", "base": 0.7239480828571806, "reduced": 0.14974321041857783, "n_items": 1940, "url": "/multiblimp/spNa/Hebrew"}, {"name": "Hindi", "base": 0.5307858935935359, "reduced": 0.4254119192814191, "n_items": 8817, "url": "/multiblimp/spNa/Hindi"}, {"name": "Icelandic", "base": 0.778943948486661, "reduced": 0.45378825259775113, "n_items": 1040, "url": "/multiblimp/spNa/Icelandic"}, {"name": "Italian", "base": 1.351758400023009, "reduced": 0.30738285847871444, "n_items": 4303, "url": "/multiblimp/spNa/Italian"}, {"name": "Kangri", "base": 1.239557225623589, "reduced": 0.6316216230168188, "n_items": 68, "url": "/multiblimp/spNa/Kangri"}, {"name": "Kazakh", "base": 0.6360156177392154, "reduced": 0.5108047450298244, "n_items": 27, "url": "/multiblimp/spNa/Kazakh"}, {"name": "Latin", "base": 0.2633366728334718, "reduced": 0.16975605933583446, "n_items": 1116, "url": "/multiblimp/spNa/Latin"}, {"name": "Latvian", "base": 0.6784401770652128, "reduced": 0.18222627949942244, "n_items": 2324, "url": "/multiblimp/spNa/Latvian"}, {"name": "Ligurian", "base": 0.9495036917686211, "reduced": 0.3157589456138277, "n_items": 89, "url": "/multiblimp/spNa/Ligurian"}, {"name": "Lithuanian", "base": 0.6567111495218811, "reduced": 0.42772137502584257, "n_items": 279, "url": "/multiblimp/spNa/Lithuanian"}, {"name": "Low Saxon", "base": 0.0, "reduced": 0.0, "n_items": 228, "url": "/multiblimp/spNa/Low_Saxon"}, {"name": "Maghrebi Arabic French", "base": 0.0, "reduced": 0.0, "n_items": 14, "url": "/multiblimp/spNa/Maghrebi_Arabic_French"}, {"name": "Marathi", "base": 0.8898447158921781, "reduced": 0.5132996832161338, "n_items": 48, "url": "/multiblimp/spNa/Marathi"}, {"name": "Middle French", "base": 0.406795386642799, "reduced": 0.15192811446027932, "n_items": 866, "url": "/multiblimp/spNa/Middle_French"}, {"name": "Naija", "base": 0.991398259406648, "reduced": 0.3358193713995247, "n_items": 54, "url": "/multiblimp/spNa/Naija"}, {"name": "North Sami", "base": 0.22552829268557745, "reduced": 0.07641901833693868, "n_items": 260, "url": "/multiblimp/spNa/North_Sami"}, {"name": "Norwegian Bokm\u00c3\u00a5l", "base": 0.6319679808899963, "reduced": 0.03360024704994206, "n_items": 2354, "url": "/multiblimp/spNa/Norwegian_Bokm%C3%83%C2%A5l"}, {"name": "Norwegian Nynorsk", "base": 0.9236715148303425, "reduced": 0.4153422622375945, "n_items": 1674, "url": "/multiblimp/spNa/Norwegian_Nynorsk"}, {"name": "Old Church Slavonic", "base": 0.22131078854913291, "reduced": 0.22131078854913291, "n_items": 693, "url": "/multiblimp/spNa/Old_Church_Slavonic"}, {"name": "Old East Slavic", "base": 0.29733315187368126, "reduced": 0.29733315187368126, "n_items": 788, "url": "/multiblimp/spNa/Old_East_Slavic"}, {"name": "Old French", "base": 0.3319459448849974, "reduced": 0.026068228044426316, "n_items": 2477, "url": "/multiblimp/spNa/Old_French"}, {"name": "Old Georgian", "base": 1.3952141813521783, "reduced": 0.3866133371438173, "n_items": 20, "url": "/multiblimp/spNa/Old_Georgian"}, {"name": "Old Occitan", "base": 0.786615340570088, "reduced": 0.18979000095036197, "n_items": 588, "url": "/multiblimp/spNa/Old_Occitan"}, {"name": "Ottoman Turkish", "base": 1.1841014148886086, "reduced": 0.3114864004143145, "n_items": 117, "url": "/multiblimp/spNa/Ottoman_Turkish"}, {"name": "Pashto", "base": 1.7288329306703458, "reduced": 0.8701031066228176, "n_items": 39, "url": "/multiblimp/spNa/Pashto"}, {"name": "Persian", "base": 0.6331519780268045, "reduced": 0.5851020435221094, "n_items": 2876, "url": "/multiblimp/spNa/Persian"}, {"name": "Phrygian", "base": 0.0, "reduced": 0.0, "n_items": 9, "url": "/multiblimp/spNa/Phrygian"}, {"name": "Pomak", "base": 0.4734330222685209, "reduced": 0.29776071031331364, "n_items": 714, "url": "/multiblimp/spNa/Pomak"}, {"name": "Portuguese", "base": 0.9004705575733699, "reduced": 0.19037296139339546, "n_items": 1300, "url": "/multiblimp/spNa/Portuguese"}, {"name": "Punjabi", "base": 1.7098336313928695, "reduced": 0.9968207360044887, "n_items": 74, "url": "/multiblimp/spNa/Punjabi"}, {"name": "Romanian", "base": 1.418408042144368, "reduced": 0.21887817020071862, "n_items": 2599, "url": "/multiblimp/spNa/Romanian"}, {"name": "Russian", "base": 0.5746356978376794, "reduced": 0.5746356978376794, "n_items": 10, "url": "/multiblimp/spNa/Russian"}, {"name": "Sanskrit", "base": 0.09136565192090026, "reduced": 0.09136565192090026, "n_items": 1029, "url": "/multiblimp/spNa/Sanskrit"}, {"name": "Serbian", "base": 0.3677095239023678, "reduced": 0.14712908356777277, "n_items": 2029, "url": "/multiblimp/spNa/Serbian"}, {"name": "Sicilian", "base": 1.0518332417552838, "reduced": 1.0518332417552838, "n_items": 27, "url": "/multiblimp/spNa/Sicilian"}, {"name": "Sinhala", "base": 0.3095434291503252, "reduced": 0.3095434291503252, "n_items": 26, "url": "/multiblimp/spNa/Sinhala"}, {"name": "Skolt Sami", "base": 0.0, "reduced": 0.0, "n_items": 17, "url": "/multiblimp/spNa/Skolt_Sami"}, {"name": "Slovak", "base": 0.08710357668344713, "reduced": 0.042457491477852966, "n_items": 3363, "url": "/multiblimp/spNa/Slovak"}, {"name": "Slovenian", "base": 0.21329517105334228, "reduced": 0.05044653565552405, "n_items": 3885, "url": "/multiblimp/spNa/Slovenian"}, {"name": "Spanish", "base": 1.4273400512888603, "reduced": 0.20976950257277518, "n_items": 3260, "url": "/multiblimp/spNa/Spanish"}, {"name": "Swedish", "base": 1.279009948794714, "reduced": 0.9199358874046291, "n_items": 35, "url": "/multiblimp/spNa/Swedish"}, {"name": "Tamil", "base": 0.0, "reduced": 0.0, "n_items": 166, "url": "/multiblimp/spNa/Tamil"}, {"name": "Tatar", "base": 1.2617416312118583, "reduced": 1.093604926482822, "n_items": 23, "url": "/multiblimp/spNa/Tatar"}, {"name": "Turkish", "base": 0.8749039541798327, "reduced": 0.19700773294168775, "n_items": 1152, "url": "/multiblimp/spNa/Turkish"}, {"name": "Turkish German", "base": 0.881722364421625, "reduced": 0.20288282642917455, "n_items": 243, "url": "/multiblimp/spNa/Turkish_German"}, {"name": "Upper Sorbian", "base": 0.0, "reduced": 0.0, "n_items": 24, "url": "/multiblimp/spNa/Upper_Sorbian"}, {"name": "Urdu", "base": 0.8306406594862024, "reduced": 0.5503973532214027, "n_items": 3186, "url": "/multiblimp/spNa/Urdu"}, {"name": "Uyghur", "base": 0.972552316568843, "reduced": 0.7872319712371498, "n_items": 35, "url": "/multiblimp/spNa/Uyghur"}, {"name": "Uzbek", "base": 1.2625239362485814, "reduced": 0.9448299701283673, "n_items": 48, "url": "/multiblimp/spNa/Uzbek"}, {"name": "Western Armenian", "base": 0.2025783405415805, "reduced": 0.2025783405415805, "n_items": 552, "url": "/multiblimp/spNa/Western_Armenian"}, {"name": "Xibe", "base": 0.7787684576550704, "reduced": 0.1433319910802575, "n_items": 114, "url": "/multiblimp/spNa/Xibe"}],
+                binary: [{"name": "Afrikaans", "base": 0.896670077522058, "reduced": 0.07261634113218698, "n_items": 336, "url": "/multiblimp/spNa/Afrikaans"}, {"name": "Albanian", "base": 0.7131467486384921, "reduced": 0.6021581478790753, "n_items": 22, "url": "/multiblimp/spNa/Albanian"}, {"name": "Ancient Greek", "base": 0.14368057600395787, "reduced": 0.14368057600395787, "n_items": 1249, "url": "/multiblimp/spNa/Ancient_Greek"}, {"name": "Ancient Hebrew", "base": 0.24249063711593322, "reduced": 0.24249063711593322, "n_items": 461, "url": "/multiblimp/spNa/Ancient_Hebrew"}, {"name": "Armenian", "base": 0.15341416667871968, "reduced": 0.09233120624935946, "n_items": 924, "url": "/multiblimp/spNa/Armenian"}, {"name": "Basque", "base": 0.8796450893530943, "reduced": 0.00991608021849515, "n_items": 3503, "url": "/multiblimp/spNa/Basque"}, {"name": "Bhojpuri", "base": 0.9696055994904407, "reduced": 0.8682359152608135, "n_items": 43, "url": "/multiblimp/spNa/Bhojpuri"}, {"name": "Breton", "base": 0.08123773168471687, "reduced": 0.08123773168471687, "n_items": 148, "url": "/multiblimp/spNa/Breton"}, {"name": "Bulgarian", "base": 0.25325008622861567, "reduced": 0.25325008622861567, "n_items": 836, "url": "/multiblimp/spNa/Bulgarian"}, {"name": "Catalan", "base": 0.9927274230495482, "reduced": 0.13641322397899006, "n_items": 4315, "url": "/multiblimp/spNa/Catalan"}, {"name": "Classical Armenian", "base": 0.6650757860764138, "reduced": 0.5004242286802066, "n_items": 227, "url": "/multiblimp/spNa/Classical_Armenian"}, {"name": "Croatian", "base": 0.3372900666170139, "reduced": 0.11353866347805051, "n_items": 3095, "url": "/multiblimp/spNa/Croatian"}, {"name": "Czech", "base": 0.7674010623366274, "reduced": 0.0574114246461502, "n_items": 6412, "url": "/multiblimp/spNa/Czech"}, {"name": "Danish", "base": 0.9986688871673934, "reduced": 0.4120719227551133, "n_items": 1070, "url": "/multiblimp/spNa/Danish"}, {"name": "Dutch", "base": 0.995395847994814, "reduced": 0.2367436400032408, "n_items": 2654, "url": "/multiblimp/spNa/Dutch"}, {"name": "Egyptian", "base": 0.9790514648094593, "reduced": 0.5865625281703737, "n_items": 99, "url": "/multiblimp/spNa/Egyptian"}, {"name": "English", "base": 0.5943381409297499, "reduced": 0.10958313069607521, "n_items": 3109, "url": "/multiblimp/spNa/English"}, {"name": "Estonian", "base": 0.05209066256832528, "reduced": 0.017080900924111863, "n_items": 1952, "url": "/multiblimp/spNa/Estonian"}, {"name": "Faroese", "base": 0.9023932827949788, "reduced": 0.9023932827949788, "n_items": 10, "url": "/multiblimp/spNa/Faroese"}, {"name": "Finnish", "base": 0.5735477164955014, "reduced": 0.40488310915294773, "n_items": 2783, "url": "/multiblimp/spNa/Finnish"}, {"name": "French", "base": 0.9559493237299719, "reduced": 0.2546779953012121, "n_items": 3615, "url": "/multiblimp/spNa/French"}, {"name": "Galician", "base": 0.8439491244805034, "reduced": 0.5190367034027951, "n_items": 45, "url": "/multiblimp/spNa/Galician"}, {"name": "Georgian", "base": 0.8316631693398787, "reduced": 0.779717997138081, "n_items": 206, "url": "/multiblimp/spNa/Georgian"}, {"name": "German", "base": 0.07341285000773425, "reduced": 0.07341285000773425, "n_items": 954, "url": "/multiblimp/spNa/German"}, {"name": "Gheg", "base": 0.6867258591968726, "reduced": 0.2014451197352058, "n_items": 182, "url": "/multiblimp/spNa/Gheg"}, {"name": "Gothic", "base": 0.1493881393181406, "reduced": 0.1493881393181406, "n_items": 69, "url": "/multiblimp/spNa/Gothic"}, {"name": "Greek", "base": 0.13303964861069895, "reduced": 0.13303964861069895, "n_items": 26, "url": "/multiblimp/spNa/Greek"}, {"name": "Hebrew", "base": 0.6192359718123431, "reduced": 0.15163640043866203, "n_items": 1940, "url": "/multiblimp/spNa/Hebrew"}, {"name": "Hindi", "base": 0.500093804732346, "reduced": 0.3986839920937203, "n_items": 8817, "url": "/multiblimp/spNa/Hindi"}, {"name": "Icelandic", "base": 0.6082755361724923, "reduced": 0.4000046349409626, "n_items": 1040, "url": "/multiblimp/spNa/Icelandic"}, {"name": "Italian", "base": 0.9979211044418534, "reduced": 0.2657547421385851, "n_items": 4303, "url": "/multiblimp/spNa/Italian"}, {"name": "Kangri", "base": 0.9108783787500366, "reduced": 0.6316216230168188, "n_items": 68, "url": "/multiblimp/spNa/Kangri"}, {"name": "Kazakh", "base": 0.6360156177392154, "reduced": 0.6096065923642785, "n_items": 27, "url": "/multiblimp/spNa/Kazakh"}, {"name": "Latin", "base": 0.2248631808657191, "reduced": 0.16975605933583446, "n_items": 1116, "url": "/multiblimp/spNa/Latin"}, {"name": "Latvian", "base": 0.5751560825905888, "reduced": 0.17711361056649463, "n_items": 2324, "url": "/multiblimp/spNa/Latvian"}, {"name": "Ligurian", "base": 0.7540340561971326, "reduced": 0.34892515015831593, "n_items": 89, "url": "/multiblimp/spNa/Ligurian"}, {"name": "Lithuanian", "base": 0.4857508681893449, "reduced": 0.3546362429498995, "n_items": 279, "url": "/multiblimp/spNa/Lithuanian"}, {"name": "Low Saxon", "base": 0.022446119403629776, "reduced": 0.022446119403629776, "n_items": 228, "url": "/multiblimp/spNa/Low_Saxon"}, {"name": "Maghrebi Arabic French", "base": 0.21084230031853213, "reduced": 0.21084230031853213, "n_items": 14, "url": "/multiblimp/spNa/Maghrebi_Arabic_French"}, {"name": "Marathi", "base": 0.7095128863456239, "reduced": 0.5132996832161338, "n_items": 48, "url": "/multiblimp/spNa/Marathi"}, {"name": "Middle French", "base": 0.406795386642799, "reduced": 0.16069188243093888, "n_items": 866, "url": "/multiblimp/spNa/Middle_French"}, {"name": "Naija", "base": 0.991398259406648, "reduced": 0.4519905867061615, "n_items": 54, "url": "/multiblimp/spNa/Naija"}, {"name": "North Sami", "base": 0.22552829268557745, "reduced": 0.09624810247888184, "n_items": 260, "url": "/multiblimp/spNa/North_Sami"}, {"name": "Norwegian Bokm\u00c3\u00a5l", "base": 0.6319679808899963, "reduced": 0.03711070862970392, "n_items": 2354, "url": "/multiblimp/spNa/Norwegian_Bokm%C3%83%C2%A5l"}, {"name": "Norwegian Nynorsk", "base": 0.9236715148303425, "reduced": 0.4260732013979063, "n_items": 1674, "url": "/multiblimp/spNa/Norwegian_Nynorsk"}, {"name": "Old Church Slavonic", "base": 0.20639017395009773, "reduced": 0.20639017395009773, "n_items": 693, "url": "/multiblimp/spNa/Old_Church_Slavonic"}, {"name": "Old East Slavic", "base": 0.29733315187368126, "reduced": 0.29733315187368126, "n_items": 788, "url": "/multiblimp/spNa/Old_East_Slavic"}, {"name": "Old French", "base": 0.3319459448849974, "reduced": 0.031064037297241866, "n_items": 2477, "url": "/multiblimp/spNa/Old_French"}, {"name": "Old Georgian", "base": 1.0, "reduced": 0.5199958310453303, "n_items": 20, "url": "/multiblimp/spNa/Old_Georgian"}, {"name": "Old Occitan", "base": 0.6434103910449582, "reduced": 0.17443803100619404, "n_items": 588, "url": "/multiblimp/spNa/Old_Occitan"}, {"name": "Ottoman Turkish", "base": 0.9559815661120321, "reduced": 0.3114864004143145, "n_items": 117, "url": "/multiblimp/spNa/Ottoman_Turkish"}, {"name": "Pashto", "base": 0.9777945702913884, "reduced": 0.7695147227787891, "n_items": 39, "url": "/multiblimp/spNa/Pashto"}, {"name": "Persian", "base": 0.5812452491133949, "reduced": 0.5621940853511521, "n_items": 2876, "url": "/multiblimp/spNa/Persian"}, {"name": "Phrygian", "base": 0.28639695711595625, "reduced": 0.28639695711595625, "n_items": 9, "url": "/multiblimp/spNa/Phrygian"}, {"name": "Pomak", "base": 0.3987201199169786, "reduced": 0.2571812807921833, "n_items": 714, "url": "/multiblimp/spNa/Pomak"}, {"name": "Portuguese", "base": 0.7966471313366509, "reduced": 0.19328129957526965, "n_items": 1300, "url": "/multiblimp/spNa/Portuguese"}, {"name": "Punjabi", "base": 0.9669170093596808, "reduced": 0.824129931953578, "n_items": 74, "url": "/multiblimp/spNa/Punjabi"}, {"name": "Romanian", "base": 0.9875560424870028, "reduced": 0.2144172229327937, "n_items": 2599, "url": "/multiblimp/spNa/Romanian"}, {"name": "Russian", "base": 0.5746356978376794, "reduced": 0.5746356978376794, "n_items": 10, "url": "/multiblimp/spNa/Russian"}, {"name": "Sanskrit", "base": 0.08207765981223403, "reduced": 0.08207765981223403, "n_items": 1029, "url": "/multiblimp/spNa/Sanskrit"}, {"name": "Serbian", "base": 0.31699247801889807, "reduced": 0.1336893604790202, "n_items": 2029, "url": "/multiblimp/spNa/Serbian"}, {"name": "Sicilian", "base": 0.8383729377099397, "reduced": 0.8383729377099397, "n_items": 27, "url": "/multiblimp/spNa/Sicilian"}, {"name": "Sinhala", "base": 0.3095434291503252, "reduced": 0.3095434291503252, "n_items": 26, "url": "/multiblimp/spNa/Sinhala"}, {"name": "Skolt Sami", "base": 0.18312206830137276, "reduced": 0.18312206830137276, "n_items": 17, "url": "/multiblimp/spNa/Skolt_Sami"}, {"name": "Slovak", "base": 0.07853810148471543, "reduced": 0.038240602453331454, "n_items": 3363, "url": "/multiblimp/spNa/Slovak"}, {"name": "Slovenian", "base": 0.21329517105334228, "reduced": 0.05044653565552405, "n_items": 3885, "url": "/multiblimp/spNa/Slovenian"}, {"name": "Spanish", "base": 0.9994257827616733, "reduced": 0.19617693848256074, "n_items": 3260, "url": "/multiblimp/spNa/Spanish"}, {"name": "Swedish", "base": 0.8325582396745668, "reduced": 0.7222951182005873, "n_items": 35, "url": "/multiblimp/spNa/Swedish"}, {"name": "Tamil", "base": 0.029413884585638123, "reduced": 0.029413884585638123, "n_items": 166, "url": "/multiblimp/spNa/Tamil"}, {"name": "Tatar", "base": 0.9377342939868041, "reduced": 0.8443531382737774, "n_items": 23, "url": "/multiblimp/spNa/Tatar"}, {"name": "Turkish", "base": 0.7112199652238225, "reduced": 0.19348599292572666, "n_items": 1152, "url": "/multiblimp/spNa/Turkish"}, {"name": "Turkish German", "base": 0.7512381526608342, "reduced": 0.20288282642917455, "n_items": 243, "url": "/multiblimp/spNa/Turkish_German"}, {"name": "Upper Sorbian", "base": 0.14144054254182067, "reduced": 0.14144054254182067, "n_items": 24, "url": "/multiblimp/spNa/Upper_Sorbian"}, {"name": "Urdu", "base": 0.696170771850954, "reduced": 0.4966170024803252, "n_items": 3186, "url": "/multiblimp/spNa/Urdu"}, {"name": "Uyghur", "base": 0.972552316568843, "reduced": 0.7872319712371498, "n_items": 35, "url": "/multiblimp/spNa/Uyghur"}, {"name": "Uzbek", "base": 0.8762441668050729, "reduced": 0.6331497369794028, "n_items": 48, "url": "/multiblimp/spNa/Uzbek"}, {"name": "Western Armenian", "base": 0.2025783405415805, "reduced": 0.2025783405415805, "n_items": 552, "url": "/multiblimp/spNa/Western_Armenian"}, {"name": "Xibe", "base": 0.7787684576550704, "reduced": 0.1731089474048513, "n_items": 114, "url": "/multiblimp/spNa/Xibe"}]
+            };
+
+            const table = document.getElementById('dataTable');
+            const tbody = document.getElementById('tableBody');
+            const headers = table.querySelectorAll('th.sortable');
+            const entropySelect = document.getElementById('entropyType');
+
+            let currentSort = { column: 0, ascending: true };
+            let currentEntropyType = 'six';
+
+            // Initialize plot
+            renderPlot(currentEntropyType);
+
+            // Sort by language (alphabetically) on load
+            sortTable(0, true, true);
+
+            // Handle entropy type change
+            entropySelect.addEventListener('change', (e) => {
+                currentEntropyType = e.target.value;
+                tbody.innerHTML = tableData[currentEntropyType];
+                renderPlot(currentEntropyType);
+                // Re-apply current sort
+                sortTable(currentSort.column, currentSort.ascending, true);
+            });
+
+            // Render scatter plot
+            function renderPlot(entropyType) {
+                const data = plotData[entropyType];
+
+                const trace = {
+                    x: data.map(d => d.base),
+                    y: data.map(d => d.reduced),
+                    mode: 'markers',
+                    type: 'scatter',
+                    text: data.map(d => d.name),
+                    customdata: data.map(d => [d.url, d.n_items]),
+                    hovertemplate: '<b>%{text}</b><br>' +
+                                'Base Entropy: %{x:.3f}<br>' +
+                                'Reduced Entropy: %{y:.3f}<br>' +
+                                'N Items: %{customdata[1]:,}<br>' +
+                                '<extra></extra>',
+                    marker: {
+                        size: data.map(d => d.n_items),
+                        sizemode: 'area',
+                        sizeref: 2 * Math.max(...data.map(d => d.n_items)) / (40 ** 2),
+                        sizemin: 4,
+                        color: '#2563eb',
+                        opacity: 0.6,
+                        line: {
+                            color: '#1e40af',
+                            width: 1
+                        }
+                    }
+                };
+
+                const layout = {
+                    title: {
+                        text: 'Base Entropy vs. Reduced Entropy',
+                        font: {
+                            family: 'DM Sans, system-ui, sans-serif',
+                            size: 16,
+                            color: '#1c1917'
+                        }
+                    },
+                    xaxis: {
+                        title: 'Base Entropy',
+                        gridcolor: '#e7e5e4',
+                        zeroline: false
+                    },
+                    yaxis: {
+                        title: 'Reduced Entropy',
+                        gridcolor: '#e7e5e4',
+                        zeroline: false
+                    },
+                    plot_bgcolor: '#ffffff',
+                    paper_bgcolor: '#ffffff',
+                    font: {
+                        family: 'DM Sans, system-ui, sans-serif',
+                        color: '#1c1917'
+                    },
+                    hovermode: 'closest',
+                    margin: { t: 50, r: 30, b: 50, l: 60 }
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                    displaylogo: false
+                };
+
+                Plotly.newPlot('scatterPlot', [trace], layout, config);
+
+                // Add click event to navigate to language page
+                document.getElementById('scatterPlot').on('plotly_click', function(data) {
+                    const url = data.points[0].customdata[0];
+                    if (url) {
+                        window.location.href = url;
+                    }
+                });
+            }
+
+            // Handle column header clicks
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = parseInt(header.dataset.column);
+                    const ascending = currentSort.column === column ? !currentSort.ascending : true;
+                    sortTable(column, ascending);
+                });
+            });
+
+            function sortTable(column, ascending, skipToggle = false) {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                rows.sort((a, b) => {
+                    const aVal = parseFloat(a.children[column].dataset.sort) || a.children[column].dataset.sort;
+                    const bVal = parseFloat(b.children[column].dataset.sort) || b.children[column].dataset.sort;
+
+                    if (typeof aVal === 'string' && typeof bVal === 'string') {
+                        return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    }
+                    return ascending ? aVal - bVal : bVal - aVal;
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+
+                if (!skipToggle) {
+                    // Update header indicators
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    headers[column].classList.add(ascending ? 'sort-asc' : 'sort-desc');
+
+                    currentSort = { column, ascending };
+                } else {
+                    headers[0].classList.add('sort-asc');
+                }
+            }
+        </script>
+    </body>
+    </html>
