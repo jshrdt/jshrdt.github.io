@@ -2,28 +2,57 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>No tree — single label</title>
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { font-family: "DM Sans", sans-serif; display: flex; justify-content: center;
-            align-items: center; height: 100vh; margin: 0; background: white; color: #1c1917; }
-    .box { text-align: center; max-width: 480px; padding: 2rem; }
-    h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
-    p  { color: #78716c; font-size: 0.95rem; }
-    .label { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.9rem;
-              background: #f5f5f4; border-radius: 999px; font-weight: 600; font-size: 1.1rem; }
-    .meta { margin-top: 1.5rem; text-align: left; font-size: 0.85rem; }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: #f5f5f4; color: #1c1917; }
+    .layout { display: flex; height: 100vh; }
+    .sidebar {
+        width: 260px; flex-shrink: 0; background: white;
+        border-right: 1px solid #e7e5e4; padding: 1.5rem; display: flex;
+        flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: #78716c; font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: #f5f5f4; border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid #e7e5e4; }
+    .meta { font-size: 0.8rem; }
     .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
                  border-bottom: 1px solid #e7e5e4; }
-    .meta-key { color: #78716c; }
+    .meta-key { color: #a8a29e; }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: #78716c; }
+    .main { flex: 1; overflow-y: auto; padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: #78716c; margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: #fafaf9; color: #78716c; font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid #e7e5e4; white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid #f0efee; vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: #eff6ff; }
+    .ex-table a { color: #2563eb; text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>No decision tree to display</h2>
-    <p>All training samples for <b>head_nsubj_Gender_agreement</b> belong to a single label —
-       no splits were needed.</p>
-    <div class="label">Yes</div>
-    <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Phrygian</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">10</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>head_nsubj_Gender_agreement</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="label">Yes</div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Phrygian</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">10</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 10)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>head_form</th><th>head_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>[ι]ος σεμουν [κνο]υ̣μανει κα[κου]ν̣ αδδακετ , [αββ]ε̣ρετορ [.....]ε̣μερη [...]υ̣ ορβουν [....] τος τυ.[.. γεγ]α̣ριτμ[ενος ειτου] .</td><td>γεγ]α̣ριτμ[ενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM845568-5" ; A [form="γεγ]α̣ριτμ[ενος"] ; B [form="τος"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος νι σεμον το [κνουμα]ν̣ε κακον αδδακετ αιν’ ατεαμα , ις τιε τι[ττετικ]μ̣ε̣ν̣ος ειτυ</td><td>τι[ττετικ]μ̣ε̣ν̣ος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>ις</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM984534-2" ; A [form="τι[ττετικ]μ̣ε̣ν̣ος"] ; B [form="ις"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος νι σεμουν κνουμανε κακουν αδακετ , ι?ος τιτετουκμενουν ειτου .</td><td>τιτετουκμενουν</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>ι?ος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM846320-2" ; A [form="τιτετουκμενουν"] ; B [form="ι?ος"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος νι σεμουν κνουμανει κακουν αββερετοι αινι ατεαμα , τος νι με σζεμελως κε τιε κε τιττετικμενος ειτου</td><td>τιττετικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM984526-1" ; A [form="τιττετικμενος"] ; B [form="τος"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος σαι κακον αδδακετ μανκαι , τ̣[ος] νι ζως κ̣ε πεις κε τιτετικμενος ειτου .</td><td>τιτετικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τ̣[ος]</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM844853-2" ; A [form="τιτετικμενος"] ; B [form="τ̣[ος]"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος νι σεμον κνουμανει κακον αδ̣δακετ [αινι]? μ̣αν̣και , τ̣ο̣ς̣ ν̣ι̣ μ̣ε̣ [δ]ε̣[ως κε ζεμελως κ]ε Τιε τιττετικμενος ειτου .</td><td>τιττετικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τ̣ο̣ς̣</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM918546-1" ; A [form="τιττετικμενος"] ; B [form="τ̣ο̣ς̣"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>[ιος] σεμον τι κνουμανι κ[ακ][ον α]βερετι ζ̣ει[ραι] παρταν , το[ς] [νι με] ζ̣ι[μελως] α τι ατιτικμενος [ειτ]ου .</td><td>ατιτικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>το[ς]</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM845394-2" ; A [form="ατιτικμενος"] ; B [form="το[ς]"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>[ιο]ς νι σεμουν κνουμανε κ̣[ακον] αββερετ ατ νου[.] μου[ρου]ν , τος νι με ζεμελος κε δεος κ̣ε τιη τιττετικμενος ε[ι]τ̣ου .</td><td>τιττετικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM984537-1" ; A [form="τιττετικμενος"] ; B [form="τος"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>[ιος σεμου]ν κνουμανι κακα [αδδακ]εν , δεος κε ζεμ[ελος κε] [---] α̣κε οι ειροι α τιε τιττ[ετικμενοι ειν]νου .</td><td>τιττ[ετικμενοι</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Plur</details></td><td>ειροι</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM931697-1" ; A [form="τιττ[ετικμενοι"] ; B [form="ειροι"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr><tr><td>ιος νι σιμουν κνουμανι κακουν αββιρετο αινι μμυρα , τος νι δ̣[ιως ζ]ιμε̣λως τι μεκα τ[ιε] τιττετικμενος ειτου .</td><td>τιττετικμενος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td>τος</td><td><details><summary>features...</summary>Gender=Masc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Phrygian-KUL@2.18&request=pattern { meta.sent_id = "TM984544-1" ; A [form="τιττετικμενος"] ; B [form="τος"]  }' target='_blank'>UD_Phrygian-KUL</a></td></tr></tbody></table>
+    </div>
   </div>
 </body>
 </html>

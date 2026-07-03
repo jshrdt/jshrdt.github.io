@@ -2,28 +2,57 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>No tree — single label</title>
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { font-family: "DM Sans", sans-serif; display: flex; justify-content: center;
-            align-items: center; height: 100vh; margin: 0; background: white; color: #1c1917; }
-    .box { text-align: center; max-width: 480px; padding: 2rem; }
-    h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
-    p  { color: #78716c; font-size: 0.95rem; }
-    .label { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.9rem;
-              background: #f5f5f4; border-radius: 999px; font-weight: 600; font-size: 1.1rem; }
-    .meta { margin-top: 1.5rem; text-align: left; font-size: 0.85rem; }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: #f5f5f4; color: #1c1917; }
+    .layout { display: flex; height: 100vh; }
+    .sidebar {
+        width: 260px; flex-shrink: 0; background: white;
+        border-right: 1px solid #e7e5e4; padding: 1.5rem; display: flex;
+        flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: #78716c; font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: #f5f5f4; border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid #e7e5e4; }
+    .meta { font-size: 0.8rem; }
     .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
                  border-bottom: 1px solid #e7e5e4; }
-    .meta-key { color: #78716c; }
+    .meta-key { color: #a8a29e; }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: #78716c; }
+    .main { flex: 1; overflow-y: auto; padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: #78716c; margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: #fafaf9; color: #78716c; font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid #e7e5e4; white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid #f0efee; vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: #eff6ff; }
+    .ex-table a { color: #2563eb; text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>No decision tree to display</h2>
-    <p>All training samples for <b>head_nsubj_Gender_agreement</b> belong to a single label —
-       no splits were needed.</p>
-    <div class="label">--</div>
-    <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Malayalam</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">4</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>head_nsubj_Gender_agreement</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="label">--</div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Malayalam</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">4</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 4)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>കലാമൂല്യമുള്ളതാക്കി മാറ്റാമായിരുന്ന ഒരു വിഷയത്തെ പക്കാ കച്ചവടച്ചരക്കാക്കി മാറ്റിയെങ്കിലും പത്മകുമാർ സംവിധാനം ചെയ്‌ത ഈ ചിത്രത്തെ മോഹൻലാൽ ഫാൻസ്‌ ഒരാഘോഷമാക്കി മാറ്റി .</td><td>പത്മകുമാർ</td><td><details><summary>features...</summary>Animacy=Anim</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL@2.18&request=pattern { meta.sent_id = "indiccorp131" ; A [form="ചെയ്‌ത"] ; B [form="പത്മകുമാർ"]  }' target='_blank'>UD_Malayalam-UFAL</a></td></tr><tr><td>നിർമാണം കഴിഞ്ഞ് 18 വർഷം കഴിഞ്ഞിട്ട് ഉം സംരക്ഷണഭിത്തി നിർമിയ്ക്കാത്തതിൽ പ്രതിഷേധം ശക്തം ആണ് .</td><td>നിർമാണം</td><td><details><summary>features...</summary>Animacy=Inan</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL@2.18&request=pattern { meta.sent_id = "indiccorp171" ; A [form="കഴിഞ്ഞിട്ട്"] ; B [form="നിർമാണം"]  }' target='_blank'>UD_Malayalam-UFAL</a></td></tr><tr><td>ധിരുബായി അമ്പാനി മരിച്ചപ്പോൾ ഉണ്ടായ കുടുംബ വഴക്കിനെ തുടർന്ന് മുകേഷ് അമ്പാനിക്ക് സഹോദരന് നൽകണ്ട വന്ന കമ്പനി ആണ് റിലയൻസ് കമ്യൂണിക്കേഷൻസ് .</td><td>സഹോദരന്</td><td><details><summary>features...</summary>Animacy=Anim</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL@2.18&request=pattern { meta.sent_id = "indiccorp92" ; A [form="വന്ന"] ; B [form="സഹോദരന്"]  }' target='_blank'>UD_Malayalam-UFAL</a></td></tr><tr><td>ബിഹാറിനു പിന്നാലെ യുപിയിൽ ഉം വിശാലസഖ്യം ; അഖിലേഷ് യാദവ് കോൺഗ്രസുമായി ചർച്ച നടത്തി</td><td>അഖിലേഷ്</td><td><details><summary>features...</summary>Animacy=Anim</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL@2.18&request=pattern { meta.sent_id = "indiccorp142" ; A [form="നടത്തി"] ; B [form="അഖിലേഷ്"]  }' target='_blank'>UD_Malayalam-UFAL</a></td></tr></tbody></table>
+    </div>
   </div>
 </body>
 </html>
