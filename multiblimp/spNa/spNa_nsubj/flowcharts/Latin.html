@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome.outcome-empty { background: var(--surface-raised); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=537</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence"><strong>qui</strong> anbas lateras est <strong>tenente</strong> in via publica, caput uno tenet in orto Serbuli, alio capu tene in orto sancti Martini, quem quondam Clarissimo ad manu sua abuit.</td><td class="sentence">&mdash;</td><td>tenente</td><td>qui</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Acc<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>PronType=Rel</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-LLCT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s2362%22%20%3B%20A%20%5Bform%3D%22tenente%22%7C%22Tenente%22%5D%20%3B%20B%20%5Bform%3D%22qui%22%7C%22Qui%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-LLCT</a></td></tr><tr><td class="sentence">et resedit <strong>qui</strong> erat <strong>mortuus</strong> et coepit loqui</td><td class="sentence">&mdash;</td><td>mortuus</td><td>qui</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>Tense=Past<br>Voice=Pass</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>PronType=Rel</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-PROIEL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2216789%22%20%3B%20A%20%5Bform%3D%22mortuus%22%7C%22Mortuus%22%5D%20%3B%20B%20%5Bform%3D%22qui%22%7C%22Qui%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-PROIEL</a></td></tr><tr><td class="sentence"><strong>qui</strong> uno caput est <strong>tenente</strong> in via publica, alio caput est tenente in terra ipsius ecclesie sancti Angeli, latus unum est tenente in terra Sicheradi clerici, filio bone memorie Suintrualdi, et alio latus est tenente in terra qui fuit quondam Auriperti.</td><td class="sentence">&mdash;</td><td>tenente</td><td>qui</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Acc<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>PronType=Rel</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-LLCT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s2465%22%20%3B%20A%20%5Bform%3D%22tenente%22%7C%22Tenente%22%5D%20%3B%20B%20%5Bform%3D%22qui%22%7C%22Qui%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-LLCT</a></td></tr><tr><td class="sentence"><strong>finis</strong> igitur eius, qui est priuatio habens rationem mali, est <strong>intentus</strong> a natura: sicut etiam forma et bonum, quae sunt generationis finis.</td><td class="sentence">&mdash;</td><td>intentus</td><td>finis</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Case=Nom<br>Gender=Masc<br>InflClass=LatX<br><strong class="swap-feat">Number=Sing</strong><br>Voice=Pass</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br>Gender=Masc<br>InflClass=IndEurI<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-ITTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s5880%22%20%3B%20A%20%5Bform%3D%22intentus%22%7C%22Intentus%22%5D%20%3B%20B%20%5Bform%3D%22finis%22%7C%22Finis%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-ITTB</a></td></tr><tr><td class="sentence">+ In Dei omnipotentis nomine regnante domno nostro Karolus divina <strong>faventem</strong> <strong>clementiam</strong> imperatore augusto, anno imperii eis quarto, idus augustas, indictione secunda.</td><td class="sentence">&mdash;</td><td>faventem</td><td>clementiam</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>Voice=Act</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Abl<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-LLCT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s445%22%20%3B%20A%20%5Bform%3D%22faventem%22%7C%22Faventem%22%5D%20%3B%20B%20%5Bform%3D%22clementiam%22%7C%22Clementiam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-LLCT</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome outcome-empty" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome outcome-empty" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=1836</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">et omnium in synagoga <strong>oculi</strong> erant <strong>intendentes</strong> in eum</td><td class="sentence">et omnium in synagoga <strong>oculi</strong> erant <strong>intendens</strong> in eum</td><td>intendentes</td><td>oculi</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-PROIEL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2216525%22%20%3B%20A%20%5Bform%3D%22intendentes%22%7C%22Intendentes%22%5D%20%3B%20B%20%5Bform%3D%22oculi%22%7C%22Oculi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-PROIEL</a></td></tr><tr><td class="sentence">In Dei omnipotentis nomine regnante domno nostro Karolus divina <strong>favente</strong> <strong>clementia</strong> inperatore augusto, anno inperii eius secundo, pridie idus iulii, indictione quinta decima.</td><td class="sentence">In Dei omnipotentis nomine regnante domno nostro Karolus divina <strong>faventibus</strong> <strong>clementia</strong> inperatore augusto, anno inperii eius secundo, pridie idus iulii, indictione quinta decima.</td><td>favente</td><td>clementia</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>Voice=Act</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Abl<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-LLCT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s179%22%20%3B%20A%20%5Bform%3D%22favente%22%7C%22Favente%22%5D%20%3B%20B%20%5Bform%3D%22clementia%22%7C%22Clementia%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-LLCT</a></td></tr><tr><td class="sentence">neque fornicemur sicut <strong>quidam</strong> ex ipsis <strong>fornicati</strong> sunt et ceciderunt una die viginti tria milia</td><td class="sentence">neque fornicemur sicut <strong>quidam</strong> ex ipsis <strong>fornicatus</strong> sunt et ceciderunt una die viginti tria milia</td><td>fornicati</td><td>quidam</td><td>PL -&gt; SG</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Perf<br>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong><br>Tense=Past<br>Voice=Pass</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-PROIEL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2228232%22%20%3B%20A%20%5Bform%3D%22fornicati%22%7C%22Fornicati%22%5D%20%3B%20B%20%5Bform%3D%22quidam%22%7C%22Quidam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-PROIEL</a></td></tr><tr><td class="sentence">+ In Dei omnipotentis nomine <strong>regnante</strong> <strong>domno</strong> nostro Vuido gratiam Dei imperator augusto, anno imperii eius tertio, pridie kalendas martias, indictione undecima.</td><td class="sentence">+ In Dei omnipotentis nomine <strong>regnantibus</strong> <strong>domno</strong> nostro Vuido gratiam Dei imperator augusto, anno imperii eius tertio, pridie kalendas martias, indictione undecima.</td><td>regnante</td><td>domno</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Abl<br>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-LLCT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s498%22%20%3B%20A%20%5Bform%3D%22regnante%22%7C%22Regnante%22%5D%20%3B%20B%20%5Bform%3D%22domno%22%7C%22Domno%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-LLCT</a></td></tr><tr><td class="sentence">plerosque <strong>Belgos</strong> esse <strong>ortos</strong> a Germanis Rhenum que antiquitus traductos propter loci fertilitatem ibi consedisse Gallos que qui ea loca incolerent expulisse solos que esse qui patrum nostrorum memoria omni Gallia vexata Teutonos Cimbros que intra suos fines ingredi prohibuerint</td><td class="sentence">plerosque <strong>Belgos</strong> esse <strong>ortum</strong> a Germanis Rhenum que antiquitus traductos propter loci fertilitatem ibi consedisse Gallos que qui ea loca incolerent expulisse solos que esse qui patrum nostrorum memoria omni Gallia vexata Teutonos Cimbros que intra suos fines ingredi prohibuerint</td><td>ortos</td><td>belgos</td><td>PL -&gt; SG</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Perf<br>Case=Acc<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong><br>Tense=Past<br>Voice=Pass</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Acc<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-PROIEL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2256939%22%20%3B%20A%20%5Bform%3D%22ortos%22%7C%22Ortos%22%5D%20%3B%20B%20%5Bform%3D%22belgos%22%7C%22Belgos%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-PROIEL</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=288</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>alternatives</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">cum autem aliquis effectus producitur ab aliqua causa superiori <strong>mediantibus</strong> propriis <strong>principiis</strong>, non est miraculum.</td><td class="sentence">cum autem aliquis effectus producitur ab aliqua causa superiori <strong>mediante</strong> propriis <strong>principiis</strong>, non est miraculum.</td><td>mediantibus</td><td>principiis</td><td>PL -&gt; SG</td><td>mediante, medianti</td><td class="feats"><details><summary>7 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Neut<br>InflClass=LatA<br><strong class="swap-feat">Number=Plur</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Abl<br>Gender=Neut<br>InflClass=IndEurO<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-ITTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s10614%22%20%3B%20A%20%5Bform%3D%22mediantibus%22%7C%22Mediantibus%22%5D%20%3B%20B%20%5Bform%3D%22principiis%22%7C%22Principiis%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-ITTB</a></td></tr><tr><td class="sentence">Si consideremus unam domum, cuius finis est domesticos ad bene vivere preparare, unum oportet esse qui regulet et regat, quem dicunt patremfamilias, vel eius locumtenentem, iuxta <strong>dicentem</strong> <strong>Phylosophum</strong>: &lt;&lt;Omnis domus regitur a senissimo&gt;&gt;; et huius, ut ait Homerus, est regulare omnes et leges imponere aliis.</td><td class="sentence">Si consideremus unam domum, cuius finis est domesticos ad bene vivere preparare, unum oportet esse qui regulet et regat, quem dicunt patremfamilias, vel eius locumtenentem, iuxta <strong>dicantes</strong> <strong>Phylosophum</strong>: &lt;&lt;Omnis domus regitur a senissimo&gt;&gt;; et huius, ut ait Homerus, est regulare omnes et leges imponere aliis.</td><td>dicentem</td><td>phylosophum</td><td>SG -&gt; PL</td><td>dicantes, dicantis, dicentis, dicentes</td><td class="feats"><details><summary>7 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Acc<br>Gender=Masc<br>InflClass=LatX<br><strong class="swap-feat">Number=Sing</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Acc<br>Gender=Masc<br>InflClass=IndEurO<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-UDante%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Mon-45%22%20%3B%20A%20%5Bform%3D%22dicentem%22%7C%22Dicentem%22%5D%20%3B%20B%20%5Bform%3D%22phylosophum%22%7C%22Phylosophum%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-UDante</a></td></tr><tr><td class="sentence">cum autem aliquis effectus producitur ab aliqua causa superiori <strong>mediantibus</strong> propriis <strong>principiis</strong>, non est miraculum.</td><td class="sentence">cum autem aliquis effectus producitur ab aliqua causa superiori <strong>medianti</strong> propriis <strong>principiis</strong>, non est miraculum.</td><td>mediantibus</td><td>principiis</td><td>PL -&gt; SG</td><td>mediante, medianti</td><td class="feats"><details><summary>7 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Neut<br>InflClass=LatA<br><strong class="swap-feat">Number=Plur</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Abl<br>Gender=Neut<br>InflClass=IndEurO<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-ITTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s10614%22%20%3B%20A%20%5Bform%3D%22mediantibus%22%7C%22Mediantibus%22%5D%20%3B%20B%20%5Bform%3D%22principiis%22%7C%22Principiis%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-ITTB</a></td></tr><tr><td class="sentence">Si consideremus unam domum, cuius finis est domesticos ad bene vivere preparare, unum oportet esse qui regulet et regat, quem dicunt patremfamilias, vel eius locumtenentem, iuxta <strong>dicentem</strong> <strong>Phylosophum</strong>: &lt;&lt;Omnis domus regitur a senissimo&gt;&gt;; et huius, ut ait Homerus, est regulare omnes et leges imponere aliis.</td><td class="sentence">Si consideremus unam domum, cuius finis est domesticos ad bene vivere preparare, unum oportet esse qui regulet et regat, quem dicunt patremfamilias, vel eius locumtenentem, iuxta <strong>dicantis</strong> <strong>Phylosophum</strong>: &lt;&lt;Omnis domus regitur a senissimo&gt;&gt;; et huius, ut ait Homerus, est regulare omnes et leges imponere aliis.</td><td>dicentem</td><td>phylosophum</td><td>SG -&gt; PL</td><td>dicantes, dicantis, dicentis, dicentes</td><td class="feats"><details><summary>7 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Imp<br>Case=Acc<br>Gender=Masc<br>InflClass=LatX<br><strong class="swap-feat">Number=Sing</strong><br>Tense=Pres<br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Acc<br>Gender=Masc<br>InflClass=IndEurO<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-UDante%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Mon-45%22%20%3B%20A%20%5Bform%3D%22dicentem%22%7C%22Dicentem%22%5D%20%3B%20B%20%5Bform%3D%22phylosophum%22%7C%22Phylosophum%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-UDante</a></td></tr><tr><td class="sentence">Ait enim Poeta noster in primo: Certe hinc Romanos olim <strong>volventibus</strong> <strong>annis</strong> hinc fore ductores, revocato a sanguine Teucri, qui mare, qui terras omni ditione tenerent.</td><td class="sentence">Ait enim Poeta noster in primo: Certe hinc Romanos olim <strong>volventi</strong> <strong>annis</strong> hinc fore ductores, revocato a sanguine Teucri, qui mare, qui terras omni ditione tenerent.</td><td>volventibus</td><td>annis</td><td>PL -&gt; SG</td><td>volventi, volvente</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Imp<br>Case=Abl<br>Gender=Masc<br>InflClass=LatX<br><strong class="swap-feat">Number=Plur</strong><br>Voice=Act</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Abl<br>Gender=Masc<br>InflClass=IndEurO<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Latin-UDante%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Mon-352%22%20%3B%20A%20%5Bform%3D%22volventibus%22%7C%22Volventibus%22%5D%20%3B%20B%20%5Bform%3D%22annis%22%7C%22Annis%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latin-UDante</a></td></tr></tbody></table></div></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

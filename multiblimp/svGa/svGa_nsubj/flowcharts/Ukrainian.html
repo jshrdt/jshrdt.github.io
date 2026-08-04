@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=1772</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">...Голубан затулив Зеленського, Дорн затулив Голубана, кулічі й паски затулили Дорна, <strong>сніг</strong> <strong>затулив</strong> кулічі й паски...</td><td class="sentence">&mdash;</td><td>затулив</td><td>сніг</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Perf<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222cqd%22%20%3B%20A%20%5Bform%3D%22%D0%B7%D0%B0%D1%82%D1%83%D0%BB%D0%B8%D0%B2%22%7C%22%D0%97%D0%B0%D1%82%D1%83%D0%BB%D0%B8%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D1%81%D0%BD%D1%96%D0%B3%22%7C%22%D0%A1%D0%BD%D1%96%D0%B3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence"><strong>Деґрадація</strong> <strong>сягнула</strong> такого рівня, що багато наших місцевих сімей влаштовувало домашні гостини першого травня і сьомого листопада.</td><td class="sentence">&mdash;</td><td>сягнула</td><td>деґрадація</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Aspect=Perf<br><strong class="swap-feat">Gender=Fem</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22117l%22%20%3B%20A%20%5Bform%3D%22%D1%81%D1%8F%D0%B3%D0%BD%D1%83%D0%BB%D0%B0%22%7C%22%D0%A1%D1%8F%D0%B3%D0%BD%D1%83%D0%BB%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B4%D0%B5%D2%91%D1%80%D0%B0%D0%B4%D0%B0%D1%86%D1%96%D1%8F%22%7C%22%D0%94%D0%B5%D2%91%D1%80%D0%B0%D0%B4%D0%B0%D1%86%D1%96%D1%8F%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence">Зупинивши свою «Ниву» в полі, <strong>Дудаєв</strong> <strong>розвернув</strong> телефон на капоті автомобіля, зловив сигнал із супутника.</td><td class="sentence">&mdash;</td><td>розвернув</td><td>Дудаєв</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Perf<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>NameType=Sur<br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2236sq%22%20%3B%20A%20%5Bform%3D%22%D1%80%D0%BE%D0%B7%D0%B2%D0%B5%D1%80%D0%BD%D1%83%D0%B2%22%7C%22%D0%A0%D0%BE%D0%B7%D0%B2%D0%B5%D1%80%D0%BD%D1%83%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D0%94%D1%83%D0%B4%D0%B0%D1%94%D0%B2%22%7C%22%D0%94%D1%83%D0%B4%D0%B0%D1%94%D0%B2%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence">Хлопчаком він добряче напрактикувався, жбурляючи камінчики в кого заманеться, аж поки кролики, вивірки і навіть пташки почали блискавично тікати йому з дороги, щойно бачили, як він нахиляється; і навіть подорослішавши, <strong>він</strong> усе ще <strong>присвячував</strong> чимало часу метанню кілець і дротиків, стрільбі по паличках, грі в кулі й кеґлі та іншим тихим метальним і влучальним іграм — він таки справді вмів робити багато чого, окрім як пускати кільцями дим, загадувати загадки та готувати їжу, але раніше мені було немає коли розповісти вам про це.</td><td class="sentence">&mdash;</td><td>присвячував</td><td>він</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Person=3<br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223adw%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D1%80%D0%B8%D1%81%D0%B2%D1%8F%D1%87%D1%83%D0%B2%D0%B0%D0%B2%22%7C%22%D0%9F%D1%80%D0%B8%D1%81%D0%B2%D1%8F%D1%87%D1%83%D0%B2%D0%B0%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D1%96%D0%BD%22%7C%22%D0%92%D1%96%D0%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence"><strong>Він</strong> <strong>обіцяв</strong>, що у мене буде багато грошей, баб і закордонних поїздок.</td><td class="sentence">&mdash;</td><td>обіцяв</td><td>він</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Person=3<br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2211cx%22%20%3B%20A%20%5Bform%3D%22%D0%BE%D0%B1%D1%96%D1%86%D1%8F%D0%B2%22%7C%22%D0%9E%D0%B1%D1%96%D1%86%D1%8F%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D1%96%D0%BD%22%7C%22%D0%92%D1%96%D0%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome outcome-empty" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome outcome-empty" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=375</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Якби хоч <strong>тато</strong> <strong>був</strong>...</td><td class="sentence">Якби хоч <strong>тато</strong> <strong>були</strong>...</td><td>був</td><td>тато</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223bmz%22%20%3B%20A%20%5Bform%3D%22%D0%B1%D1%83%D0%B2%22%7C%22%D0%91%D1%83%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D1%82%D0%B0%D1%82%D0%BE%22%7C%22%D0%A2%D0%B0%D1%82%D0%BE%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence">Оскільки жінка типу матері Ґракхів, або Жанни д&#x27;Арк робить, як казав Б. Шов — з овець мужчин, то тип Андромахи навпаки, робить з мужчин те, що <strong>робила</strong> з ними <strong>Цирцея</strong>...</td><td class="sentence">Оскільки жінка типу матері Ґракхів, або Жанни д&#x27;Арк робить, як казав Б. Шов — з овець мужчин, то тип Андромахи навпаки, робить з мужчин те, що <strong>робили</strong> з ними <strong>Цирцея</strong>...</td><td>робила</td><td>Цирцея</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Fem</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Fem</strong><br>NameType=Giv<br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222y9v%22%20%3B%20A%20%5Bform%3D%22%D1%80%D0%BE%D0%B1%D0%B8%D0%BB%D0%B0%22%7C%22%D0%A0%D0%BE%D0%B1%D0%B8%D0%BB%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%A6%D0%B8%D1%80%D1%86%D0%B5%D1%8F%22%7C%22%D0%A6%D0%B8%D1%80%D1%86%D0%B5%D1%8F%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence"><strong>Прийшов</strong> <strong>кінець</strong> і соняшному квітневому дню, і все товариство опинилося під піччю.</td><td class="sentence"><strong>прийшли</strong> <strong>кінець</strong> і соняшному квітневому дню, і все товариство опинилося під піччю.</td><td>прийшов</td><td>кінець</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Perf<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222una%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D1%80%D0%B8%D0%B9%D1%88%D0%BE%D0%B2%22%7C%22%D0%9F%D1%80%D0%B8%D0%B9%D1%88%D0%BE%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D1%96%D0%BD%D0%B5%D1%86%D1%8C%22%7C%22%D0%9A%D1%96%D0%BD%D0%B5%D1%86%D1%8C%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence">Її майже голі від сидіння груди горіли останнім огнем, який <strong>могла</strong> видушити матерня <strong>любов</strong> з виснаженого тіла.</td><td class="sentence">Її майже голі від сидіння груди горіли останнім огнем, який <strong>могли</strong> видушити матерня <strong>любов</strong> з виснаженого тіла.</td><td>могла</td><td>любов</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Fem</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-IU%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222u2e%22%20%3B%20A%20%5Bform%3D%22%D0%BC%D0%BE%D0%B3%D0%BB%D0%B0%22%7C%22%D0%9C%D0%BE%D0%B3%D0%BB%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BB%D1%8E%D0%B1%D0%BE%D0%B2%22%7C%22%D0%9B%D1%8E%D0%B1%D0%BE%D0%B2%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-IU</a></td></tr><tr><td class="sentence">І 12-те число цілком достатнє для того, щоб зробити всі ті процедури, про які <strong>говорив</strong> <strong>Володимир</strong> Михайлович.</td><td class="sentence">І 12-те число цілком достатнє для того, щоб зробити всі ті процедури, про які <strong>говорили</strong> <strong>Володимир</strong> Михайлович.</td><td>говорив</td><td>Володимир</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Mood=Ind<br>Number=Sing<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>NameType=Giv<br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Ukrainian-ParlaMint%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ParlaMint-UA_2004-11-27-m0.u150.p2.lang1.s4%22%20%3B%20A%20%5Bform%3D%22%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%B8%D0%B2%22%7C%22%D0%93%D0%BE%D0%B2%D0%BE%D1%80%D0%B8%D0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%D0%92%D0%BE%D0%BB%D0%BE%D0%B4%D0%B8%D0%BC%D0%B8%D1%80%22%7C%22%D0%92%D0%BE%D0%BB%D0%BE%D0%B4%D0%B8%D0%BC%D0%B8%D1%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ukrainian-ParlaMint</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

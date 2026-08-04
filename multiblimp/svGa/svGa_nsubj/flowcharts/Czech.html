@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=3535</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence"><strong>Dědeček</strong>, mlynář, se s babičkou <strong>nepřel</strong>, řekl si asi, že to je marné, ať se sama přesvědčí, že lípa zahyne, jinak by mu to mohla vyčítat celý zbytek života.</td><td class="sentence">&mdash;</td><td>nepřel</td><td>dědeček</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Neg</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-andelvte192-s3%22%20%3B%20A%20%5Bform%3D%22nep%C5%99el%22%7C%22Nep%C5%99el%22%5D%20%3B%20B%20%5Bform%3D%22d%C4%9Bde%C4%8Dek%22%7C%22D%C4%9Bde%C4%8Dek%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence"><strong>Hrůza</strong> mi <strong>nedovolila</strong> ani plakat.</td><td class="sentence">&mdash;</td><td>nedovolila</td><td>hrůza</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing<br>Polarity=Neg</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-andelvte208-s7%22%20%3B%20A%20%5Bform%3D%22nedovolila%22%7C%22Nedovolila%22%5D%20%3B%20B%20%5Bform%3D%22hr%C5%AFza%22%7C%22Hr%C5%AFza%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">V závěru usnesení <strong>vytyčilo</strong> plenární <strong>zasedání</strong> ÚRO dvanáct nejdůležitějších úkolů, které se stanou hlavním obsahem činnosti všech odborových orgánů a organizací.</td><td class="sentence">&mdash;</td><td>vytyčilo</td><td>zasedání</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Aspect=Perf<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n15w-s24%22%20%3B%20A%20%5Bform%3D%22vyty%C4%8Dilo%22%7C%22Vyty%C4%8Dilo%22%5D%20%3B%20B%20%5Bform%3D%22zased%C3%A1n%C3%AD%22%7C%22Zased%C3%A1n%C3%AD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr><tr><td class="sentence"><strong>Havlena</strong> si <strong>připadal</strong> z počátku jako pacient po totální amputaci nohou, který se znovu učí chodit - na protézách.</td><td class="sentence">&mdash;</td><td>připadal</td><td>Havlena</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Perf<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>NameType=Sur<br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-p_navrat115-s11%22%20%3B%20A%20%5Bform%3D%22p%C5%99ipadal%22%7C%22P%C5%99ipadal%22%5D%20%3B%20B%20%5Bform%3D%22Havlena%22%7C%22Havlena%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence"><strong>Cesta</strong> dvakrát <strong>zatáčela</strong> a jejím středem tekly proudy tající vody, sníh na okrajích sesedal.</td><td class="sentence">&mdash;</td><td>zatáčela</td><td>cesta</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Fem</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Fem</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-p_navrat138-s9%22%20%3B%20A%20%5Bform%3D%22zat%C3%A1%C4%8Dela%22%7C%22Zat%C3%A1%C4%8Dela%22%5D%20%3B%20B%20%5Bform%3D%22cesta%22%7C%22Cesta%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=156</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence"><strong>Přivítal</strong> ho mlčenlivý <strong>pohled</strong> deseti párů očí.</td><td class="sentence">&mdash;</td><td>přivítal</td><td>pohled</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-p_navrat127-s5%22%20%3B%20A%20%5Bform%3D%22p%C5%99iv%C3%ADtal%22%7C%22P%C5%99iv%C3%ADtal%22%5D%20%3B%20B%20%5Bform%3D%22pohled%22%7C%22Pohled%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Ještě než sešel po dřevěném schodišti do přízemí, naložil do kamen a uzavřel dolní dvířka, aby by <strong>oheň</strong> <strong>trávil</strong> pomalu a co nejdéle vydržel.</td><td class="sentence">&mdash;</td><td>trávil</td><td>oheň</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-p_navrat080-s3%22%20%3B%20A%20%5Bform%3D%22tr%C3%A1vil%22%7C%22Tr%C3%A1vil%22%5D%20%3B%20B%20%5Bform%3D%22ohe%C5%88%22%7C%22Ohe%C5%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Vysočany, část Holešovic, horní Žižkov jsou v této době mladými dělnickými obvody, jejichž dělnickou základnu <strong>tvořilo</strong> <strong>obyvatelstvo</strong> především prvé, případně druhé generace.</td><td class="sentence">&mdash;</td><td>tvořilo</td><td>obyvatelstvo</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s26w-s126%22%20%3B%20A%20%5Bform%3D%22tvo%C5%99ilo%22%7C%22Tvo%C5%99ilo%22%5D%20%3B%20B%20%5Bform%3D%22obyvatelstvo%22%7C%22Obyvatelstvo%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr><tr><td class="sentence">S tím <strong>souviselo</strong> <strong>postavení</strong> manganu, kterého se vyrobilo téměř # * .</td><td class="sentence">&mdash;</td><td>souviselo</td><td>postavení</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s08w-s28%22%20%3B%20A%20%5Bform%3D%22souviselo%22%7C%22Souviselo%22%5D%20%3B%20B%20%5Bform%3D%22postaven%C3%AD%22%7C%22Postaven%C3%AD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr><tr><td class="sentence">Stavba byla založena na skalnatém, předem upraveném podloží, a jak ukázal výzkum, byla svými bočními zdmi vestavěna, připlentována, do jakéhosi lůžka, jež skalnaté <strong>podloží</strong> <strong>vytvářelo</strong>.</td><td class="sentence">&mdash;</td><td>vytvářelo</td><td>podloží</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s25w-s104%22%20%3B%20A%20%5Bform%3D%22vytv%C3%A1%C5%99elo%22%7C%22Vytv%C3%A1%C5%99elo%22%5D%20%3B%20B%20%5Bform%3D%22podlo%C5%BE%C3%AD%22%7C%22Podlo%C5%BE%C3%AD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=2</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Znělo to, jako by <strong>někdo</strong> <strong>lil</strong> na podlahu vodu, a vtom ke mně zavanul zápach moče.</td><td class="sentence">Znělo to, jako by <strong>někdo</strong> <strong>lil</strong> na podlahu vodu, a vtom ke mně zavanul zápach moče.</td><td>lil</td><td>někdo</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>PronType=Ind</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-form1XXX048-s2%22%20%3B%20A%20%5Bform%3D%22lil%22%7C%22Lil%22%5D%20%3B%20B%20%5Bform%3D%22n%C4%9Bkdo%22%7C%22N%C4%9Bkdo%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Obrazně řečeno, ze všech se <strong>lil</strong> <strong>pot</strong>, protože harmonogram, časový program jednotlivých výrobních operací v tiskárně, je neúprosný.</td><td class="sentence">Obrazně řečeno, ze všech se <strong>lil</strong> <strong>pot</strong>, protože harmonogram, časový program jednotlivých výrobních operací v tiskárně, je neúprosný.</td><td>lil</td><td>pot</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Inan<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n05w-s146%22%20%3B%20A%20%5Bform%3D%22lil%22%7C%22Lil%22%5D%20%3B%20B%20%5Bform%3D%22pot%22%7C%22Pot%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr></tbody></table></div></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=2271</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence"><strong>Rozsvítilo</strong> se červené <strong>světlo</strong> kamery a já jsem položil soudruhu Homolovi první otázku - jako obvykle jsem předstíral, že mě právě v tuto chvíli napadla.</td><td class="sentence"><strong>rozsvítila</strong> se červené <strong>světlo</strong> kamery a já jsem položil soudruhu Homolovi první otázku - jako obvykle jsem předstíral, že mě právě v tuto chvíli napadla.</td><td>rozsvítilo</td><td>světlo</td><td>SG -&gt; PL</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Neut</span></summary>Case=Nom<br><strong class="swap-feat">Gender=Neut</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-form1XXX225-s3%22%20%3B%20A%20%5Bform%3D%22rozsv%C3%ADtilo%22%7C%22Rozsv%C3%ADtilo%22%5D%20%3B%20B%20%5Bform%3D%22sv%C4%9Btlo%22%7C%22Sv%C4%9Btlo%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Do té doby <strong>viděli</strong> letouny pouze <strong>bloggeři</strong>.</td><td class="sentence">Do té doby <strong>viděl</strong> letouny pouze <strong>bloggeři</strong>.</td><td>viděli</td><td>bloggeři</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01020004%22%20%3B%20A%20%5Bform%3D%22vid%C4%9Bli%22%7C%22Vid%C4%9Bli%22%5D%20%3B%20B%20%5Bform%3D%22blogge%C5%99i%22%7C%22Blogge%C5%99i%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-PUD</a></td></tr><tr><td class="sentence">I když idealismus je, jak <strong>říkal</strong> <strong>Lenin</strong>, také cestou k náboženství, nelze proto ještě náboženství a filozofický idealismus ztotožňovat.</td><td class="sentence">I když idealismus je, jak <strong>říkali</strong> <strong>Lenin</strong>, také cestou k náboženství, nelze proto ještě náboženství a filozofický idealismus ztotožňovat.</td><td>říkal</td><td>Lenin</td><td>SG -&gt; PL</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>NameType=Sur<br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s37w-s93%22%20%3B%20A%20%5Bform%3D%22%C5%99%C3%ADkal%22%7C%22%C5%98%C3%ADkal%22%5D%20%3B%20B%20%5Bform%3D%22Lenin%22%7C%22Lenin%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr><tr><td class="sentence">Tyto souvislosti jsou jasně patrny tam, kde se <strong>lingvisté</strong> <strong>angažovali</strong> v otázkách jazykově politických, v úvahách o vztazích mezi češtinou a slovenštinou.</td><td class="sentence">Tyto souvislosti jsou jasně patrny tam, kde se <strong>lingvisté</strong> <strong>angažoval</strong> v otázkách jazykově politických, v úvahách o vztazích mezi češtinou a slovenštinou.</td><td>angažovali</td><td>lingvisté</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s19w-s173%22%20%3B%20A%20%5Bform%3D%22anga%C5%BEovali%22%7C%22Anga%C5%BEovali%22%5D%20%3B%20B%20%5Bform%3D%22lingvist%C3%A9%22%7C%22Lingvist%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-CAC</a></td></tr><tr><td class="sentence">Když známý <strong>mistr</strong> meče <strong>cítil</strong>, že se blíží jeho konec, přemýšlel, kterému ze svých tří synů by měl předat svou cennou zbraň.</td><td class="sentence">Když známý <strong>mistr</strong> meče <strong>cítili</strong>, že se blíží jeho konec, přemýšlel, kterému ze svých tří synů by měl předat svou cennou zbraň.</td><td>cítil</td><td>mistr</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-vitamnlX142-s6%22%20%3B%20A%20%5Bform%3D%22c%C3%ADtil%22%7C%22C%C3%ADtil%22%5D%20%3B%20B%20%5Bform%3D%22mistr%22%7C%22Mistr%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=734</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>alternatives</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Za Černým mořem <strong>žil</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td class="sentence">Za Černým mořem <strong>žnuli</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td>žil</td><td>chalupník</td><td>SG -&gt; PL</td><td>žnuli, žili, žali</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-tri3XXXX034-s12%22%20%3B%20A%20%5Bform%3D%22%C5%BEil%22%7C%22%C5%BDil%22%5D%20%3B%20B%20%5Bform%3D%22chalupn%C3%ADk%22%7C%22Chalupn%C3%ADk%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Po svatbě <strong>žili</strong> mladí <strong>manželé</strong> šťastně a spokojeně.</td><td class="sentence">Po svatbě <strong>žil</strong> mladí <strong>manželé</strong> šťastně a spokojeně.</td><td>žili</td><td>manželé</td><td>PL -&gt; SG</td><td>žil, žnul, žal</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-tri3XXXX041-s1%22%20%3B%20A%20%5Bform%3D%22%C5%BEili%22%7C%22%C5%BDili%22%5D%20%3B%20B%20%5Bform%3D%22man%C5%BEel%C3%A9%22%7C%22Man%C5%BEel%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Za Černým mořem <strong>žil</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td class="sentence">Za Černým mořem <strong>žili</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td>žil</td><td>chalupník</td><td>SG -&gt; PL</td><td>žnuli, žili, žali</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-tri3XXXX034-s12%22%20%3B%20A%20%5Bform%3D%22%C5%BEil%22%7C%22%C5%BDil%22%5D%20%3B%20B%20%5Bform%3D%22chalupn%C3%ADk%22%7C%22Chalupn%C3%ADk%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Po svatbě <strong>žili</strong> mladí <strong>manželé</strong> šťastně a spokojeně.</td><td class="sentence">Po svatbě <strong>žnul</strong> mladí <strong>manželé</strong> šťastně a spokojeně.</td><td>žili</td><td>manželé</td><td>PL -&gt; SG</td><td>žil, žnul, žal</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Plur</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-tri3XXXX041-s1%22%20%3B%20A%20%5Bform%3D%22%C5%BEili%22%7C%22%C5%BDili%22%5D%20%3B%20B%20%5Bform%3D%22man%C5%BEel%C3%A9%22%7C%22Man%C5%BEel%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td class="sentence">Za Černým mořem <strong>žil</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td class="sentence">Za Černým mořem <strong>žali</strong> v jedné vesnici chudý <strong>chalupník</strong>.</td><td>žil</td><td>chalupník</td><td>SG -&gt; PL</td><td>žnuli, žili, žali</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Aspect=Imp<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Animacy=Anim<br>Case=Nom<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-tri3XXXX034-s12%22%20%3B%20A%20%5Bform%3D%22%C5%BEil%22%7C%22%C5%BDil%22%5D%20%3B%20B%20%5Bform%3D%22chalupn%C3%ADk%22%7C%22Chalupn%C3%ADk%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr></tbody></table></div></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

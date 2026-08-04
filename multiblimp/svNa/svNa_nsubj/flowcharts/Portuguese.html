@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=7145</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Mas postos de comando de a igreja permanecerão exclusivamente masculinos, <strong>disse</strong> o <strong>cardeal</strong> Eduardo Martinez Somalo em Roma.</td><td class="sentence">&mdash;</td><td>disse</td><td>cardeal</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF214-6%22%20%3B%20A%20%5Bform%3D%22cardeal%22%7C%22Cardeal%22%5D%20%3B%20B%20%5Bform%3D%22disse%22%7C%22Disse%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr><tr><td class="sentence">Só o procurou tempos depois, quando o secretário de Assuntos Especiais, Eliezer Baptista, resolveu preparar o macroplanejamento de o país uma idéia esplendorosa <strong>que</strong>, infelizmente, não <strong>resistiu</strong> a o impeachment de Collor e convocou Mourão para sua equipe.</td><td class="sentence">&mdash;</td><td>resistiu</td><td>que</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>PronType=Rel</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF57-1%22%20%3B%20A%20%5Bform%3D%22que%22%7C%22Que%22%5D%20%3B%20B%20%5Bform%3D%22resistiu%22%7C%22Resistiu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr><tr><td class="sentence">O <strong>neto</strong> <strong>sorriu</strong> :</td><td class="sentence">&mdash;</td><td>sorriu</td><td>neto</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222310%22%20%3B%20A%20%5Bform%3D%22neto%22%7C%22Neto%22%5D%20%3B%20B%20%5Bform%3D%22sorriu%22%7C%22Sorriu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-CINTIL</a></td></tr><tr><td class="sentence">A <strong>peoa</strong> Keyla Polizello <strong>venceu</strong> a final de a prova de os Três Tambores em Barretos (SP) em a noite de este domingo (19) e garantiu um prêmio de R $ 80 mil, além de uma vaga para uma competição internacional em Las Vegas, em os EUA.</td><td class="sentence">&mdash;</td><td>venceu</td><td>peoa</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Aspect=Perf<br>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s9496%22%20%3B%20A%20%5Bform%3D%22peoa%22%7C%22Peoa%22%5D%20%3B%20B%20%5Bform%3D%22venceu%22%7C%22Venceu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-GSD</a></td></tr><tr><td class="sentence">O diretor de crédito agrícola de o Banco de o Brasil, Said Miguel, disse ontem em a Comissão de Agricultura de a Câmara de os Deputados que os <strong>agricultores</strong> já <strong>renegociaram</strong> R$ 1,7 bilhão de as dívidas em atraso.</td><td class="sentence">&mdash;</td><td>renegociaram</td><td>agricultores</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Pqp<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF453-3%22%20%3B%20A%20%5Bform%3D%22agricultores%22%7C%22Agricultores%22%5D%20%3B%20B%20%5Bform%3D%22renegociaram%22%7C%22Renegociaram%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=18693</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Quando estes são utilizados, deve se ter controle sobre o fluxo através de o duto uma vez que a dispersão de hidratos é favorecida em maiores velocidades enquanto que <strong>vazões</strong> baixas <strong>favorecem</strong> a aglomeração de os cristais, podendo levar a o entupimento de o duto.</td><td class="sentence">Quando estes são utilizados, deve se ter controle sobre o fluxo através de o duto uma vez que a dispersão de hidratos é favorecida em maiores velocidades enquanto que <strong>vazões</strong> baixas <strong>favorece</strong> a aglomeração de os cristais, podendo levar a o entupimento de o duto.</td><td>favorecem</td><td>vazões</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22334-20150521-MONOGRAFIA_0-466%22%20%3B%20A%20%5Bform%3D%22vaz%C3%B5es%22%7C%22Vaz%C3%B5es%22%5D%20%3B%20B%20%5Bform%3D%22favorecem%22%7C%22Favorecem%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-PetroGold</a></td></tr><tr><td class="sentence">Sempre que isso aconteceu , um <strong>sorriso</strong> <strong>parecia</strong> iluminar o rosto de_ o Presidente de_ a República .</td><td class="sentence">Sempre que isso aconteceu , um <strong>sorriso</strong> <strong>pareciam</strong> iluminar o rosto de_ o Presidente de_ a República .</td><td>parecia</td><td>sorriso</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Imp<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2217901%22%20%3B%20A%20%5Bform%3D%22sorriso%22%7C%22Sorriso%22%5D%20%3B%20B%20%5Bform%3D%22parecia%22%7C%22Parecia%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-CINTIL</a></td></tr><tr><td class="sentence">Mas, em a bancada, já <strong>poucos</strong> <strong>acreditam</strong> em o título.</td><td class="sentence">Mas, em a bancada, já <strong>poucos</strong> <strong>acredita</strong> em o título.</td><td>acreditam</td><td>poucos</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong><br>PronType=Dem</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP846-6%22%20%3B%20A%20%5Bform%3D%22poucos%22%7C%22Poucos%22%5D%20%3B%20B%20%5Bform%3D%22acreditam%22%7C%22Acreditam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr><tr><td class="sentence">Nunca em_ o passado uma <strong>selecção</strong> africana <strong>chegara</strong> tão longe em_ um competição de futebol .</td><td class="sentence">Nunca em_ o passado uma <strong>selecção</strong> africana <strong>chegaram</strong> tão longe em_ um competição de futebol .</td><td>chegara</td><td>selecção</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Pqp<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%228305%22%20%3B%20A%20%5Bform%3D%22selec%C3%A7%C3%A3o%22%7C%22Selec%C3%A7%C3%A3o%22%5D%20%3B%20B%20%5Bform%3D%22chegara%22%7C%22Chegara%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-CINTIL</a></td></tr><tr><td class="sentence">Radicalizando a ideia de as vanguardas em reduzir cada linguagem artística a a sua especificidade, <strong>eles</strong> <strong>acabaram</strong> por inverter a lógica de purificação de meios de o modernismo.</td><td class="sentence">Radicalizando a ideia de as vanguardas em reduzir cada linguagem artística a a sua especificidade, <strong>eles</strong> <strong>acabara</strong> por inverter a lógica de purificação de meios de o modernismo.</td><td>acabaram</td><td>eles</td><td>PL -&gt; SG</td><td class="feats"><details><summary>7 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Aspect=Perf<br>ExtPos=AUX<br>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Case=Nom<br>Gender=Masc<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP145-2%22%20%3B%20A%20%5Bform%3D%22eles%22%7C%22Eles%22%5D%20%3B%20B%20%5Bform%3D%22acabaram%22%7C%22Acabaram%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=335</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>alternatives</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">A cada enterro de policial que <strong>eu</strong> <strong>vou</strong>, eu o odeio ainda mais.</td><td class="sentence">A cada enterro de policial que <strong>eu</strong> <strong>vamosimos</strong>, eu o odeio ainda mais.</td><td>vou</td><td>eu</td><td>SG -&gt; PL</td><td>vamosimos, vamos</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=1<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br><strong class="swap-feat">Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Porttinari%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FOLHA_DOC003100_SENT026%22%20%3B%20A%20%5Bform%3D%22eu%22%7C%22Eu%22%5D%20%3B%20B%20%5Bform%3D%22vou%22%7C%22Vou%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Porttinari</a></td></tr><tr><td class="sentence"><strong>Começaram</strong> as <strong>reuniões</strong> preparatórias para a feitura de_ os programas eleitorais .</td><td class="sentence"><strong>começou</strong> as <strong>reuniões</strong> preparatórias para a feitura de_ os programas eleitorais .</td><td>começaram</td><td>reuniões</td><td>PL -&gt; SG</td><td>começou, começara</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221600%22%20%3B%20A%20%5Bform%3D%22reuni%C3%B5es%22%7C%22Reuni%C3%B5es%22%5D%20%3B%20B%20%5Bform%3D%22come%C3%A7aram%22%7C%22Come%C3%A7aram%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-CINTIL</a></td></tr><tr><td class="sentence">A cada enterro de policial que <strong>eu</strong> <strong>vou</strong>, eu o odeio ainda mais.</td><td class="sentence">A cada enterro de policial que <strong>eu</strong> <strong>vamos</strong>, eu o odeio ainda mais.</td><td>vou</td><td>eu</td><td>SG -&gt; PL</td><td>vamosimos, vamos</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=1<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Case=Nom<br><strong class="swap-feat">Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Porttinari%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FOLHA_DOC003100_SENT026%22%20%3B%20A%20%5Bform%3D%22eu%22%7C%22Eu%22%5D%20%3B%20B%20%5Bform%3D%22vou%22%7C%22Vou%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Porttinari</a></td></tr><tr><td class="sentence"><strong>Começaram</strong> as <strong>reuniões</strong> preparatórias para a feitura de_ os programas eleitorais .</td><td class="sentence"><strong>começara</strong> as <strong>reuniões</strong> preparatórias para a feitura de_ os programas eleitorais .</td><td>começaram</td><td>reuniões</td><td>PL -&gt; SG</td><td>começou, começara</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221600%22%20%3B%20A%20%5Bform%3D%22reuni%C3%B5es%22%7C%22Reuni%C3%B5es%22%5D%20%3B%20B%20%5Bform%3D%22come%C3%A7aram%22%7C%22Come%C3%A7aram%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-CINTIL</a></td></tr><tr><td class="sentence">Em essa época, <strong>Fishel</strong> teria <strong>conhecido</strong> o ginecologista britânico Robert Winston, a quem convidou para um encontro científico promovido por Antinori.</td><td class="sentence">Em essa época, <strong>Fishel</strong> teria <strong>conheciam</strong> o ginecologista britânico Robert Winston, a quem convidou para um encontro científico promovido por Antinori.</td><td>conhecido</td><td>Fishel</td><td>SG -&gt; PL</td><td>conheciam, conheceram, conhecidos</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Mood=Ind<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF996-8%22%20%3B%20A%20%5Bform%3D%22Fishel%22%7C%22Fishel%22%5D%20%3B%20B%20%5Bform%3D%22conhecido%22%7C%22Conhecido%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Portuguese-Bosque</a></td></tr></tbody></table></div></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

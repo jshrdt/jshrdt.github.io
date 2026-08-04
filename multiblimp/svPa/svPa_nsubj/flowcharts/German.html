@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=2709</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Angesichts zunehmender Sabotagen durch Hacker und Virenprogrammierer <strong>plädierte</strong> <strong>sie</strong> für bessere Fahndungsmöglichkeiten der Polizei in dem Internet .</td><td class="sentence">&mdash;</td><td>plädierte</td><td>sie</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Fem<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s150564%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22pl%C3%A4dierte%22%7C%22Pl%C3%A4dierte%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Microsoft machte in dem Juli gegen das Urteil des Berufungsgerichts vergeblich geltend , <strong>es</strong> <strong>basiere</strong> auf mangelndem Verständnis für die Softwarearchitektur .</td><td class="sentence">&mdash;</td><td>basiere</td><td>es</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Neut<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s125834%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22basiere%22%7C%22Basiere%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Dort <strong>gebe</strong> <strong>es</strong> einen Passus , der Käufer und Verkäufer dazu verpflichtet , die gesetzlichen Bestimmungen zu beachten , so Hermann .</td><td class="sentence">&mdash;</td><td>gebe</td><td>es</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Neut<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s201871%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22gebe%22%7C%22Gebe%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Ob <strong>es</strong> letztlich <strong>ausreicht</strong> , kann ich heute nicht definitiv sagen &quot; , sagte Finanzvorstand Karl-Gerhard Eick dem ARD-Magazin Report Mainz .</td><td class="sentence">&mdash;</td><td>ausreicht</td><td>es</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Neut<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s152448%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22ausreicht%22%7C%22Ausreicht%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">``Dazu will Haider eine politische Kulturrevolution, <strong>er</strong> <strong>ist</strong> gegen die Parteien, gegen die Sozialpartner.</td><td class="sentence">&mdash;</td><td>ist</td><td>er</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Masc<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s708%22%20%3B%20A%20%5Bform%3D%22er%22%7C%22Er%22%5D%20%3B%20B%20%5Bform%3D%22ist%22%7C%22Ist%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=3</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Hallo, <strong>Sie</strong> <strong>beschreiben</strong> alle das gleiche, Zusammenführung auf Ehrenamt mit Extraabschnitten für 1+2.</td><td class="sentence">&mdash;</td><td>beschreiben</td><td>sie</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Ind<br><strong class="swap-feat">Person=2</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4345%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22beschreiben%22%7C%22Beschreiben%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence"><strong>Melden</strong> <strong>Sie</strong> die Gäste an, sonst droht eine Geldstrafe.</td><td class="sentence">&mdash;</td><td>melden</td><td>sie</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Imp<br><strong class="swap-feat">Person=2</strong><br>VerbForm=Fin</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s711%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22melden%22%7C%22Melden%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence"><strong>Schimpfen</strong> <strong>Sie</strong> mit Ihrem Wecker?</td><td class="sentence">&mdash;</td><td>schimpfen</td><td>sie</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Ind<br><strong class="swap-feat">Person=2</strong><br>Tense=Pres</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n02048002%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22schimpfen%22%7C%22Schimpfen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-PUD</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=2</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Außerdem erklärte sie, dass sie sich einfach dachte: &quot;<strong>Weißt</strong> <strong>du</strong> was?</td><td class="sentence">Außerdem erklärte sie, dass sie sich einfach dachte: &quot;<strong>weißt</strong> <strong>du</strong> was?</td><td>weißt</td><td>du</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=2</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br>Number=Sing<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s7611%22%20%3B%20A%20%5Bform%3D%22du%22%7C%22Du%22%5D%20%3B%20B%20%5Bform%3D%22wei%C3%9Ft%22%7C%22Wei%C3%9Ft%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence">Ich werde eine Karte in Deinem Namen unterschreiben , damit <strong>Du</strong> auch in Kalifornien <strong>weißt</strong> , worum es geht .</td><td class="sentence">Ich werde eine Karte in Deinem Namen unterschreiben , damit <strong>Du</strong> auch in Kalifornien <strong>weißt</strong> , worum es geht .</td><td>weißt</td><td>du</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=2</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br>Number=Sing<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s137452%22%20%3B%20A%20%5Bform%3D%22du%22%7C%22Du%22%5D%20%3B%20B%20%5Bform%3D%22wei%C3%9Ft%22%7C%22Wei%C3%9Ft%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr></tbody></table></div></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=11750</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Frühstück <strong>gibt</strong> <strong>es</strong> erst ab 8:00 Uhr.</td><td class="sentence">Frühstück <strong>geben</strong> <strong>es</strong> erst ab 8:00 Uhr.</td><td>gibt</td><td>es</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Neut<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s153%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22gibt%22%7C%22Gibt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence">Dann <strong>löschen</strong> <strong>Sie</strong> einige Dateien aus Ihrem Systemverzeichnis .</td><td class="sentence">Dann <strong>löscht</strong> <strong>Sie</strong> einige Dateien aus Ihrem Systemverzeichnis .</td><td>löschen</td><td>sie</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s191422%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22l%C3%B6schen%22%7C%22L%C3%B6schen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence"><strong>Er</strong> <strong>hat</strong> seine harten Kanten in dem Spiel, aber auch weiche Hände.</td><td class="sentence"><strong>Er</strong> <strong>haben</strong> seine harten Kanten in dem Spiel, aber auch weiche Hände.</td><td>hat</td><td>er</td><td>SG -&gt; PL</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Masc<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01074020%22%20%3B%20A%20%5Bform%3D%22er%22%7C%22Er%22%5D%20%3B%20B%20%5Bform%3D%22hat%22%7C%22Hat%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-PUD</a></td></tr><tr><td class="sentence">Als die wichtigsten Barrieren <strong>machten</strong> <strong>sie</strong> fehlende Finanz- und Personalmittel , mangelnde Unterstützung der oberen Administrationsetagen , unabgestimmte Strategien und technische Standards , aber auch zu strenge Datenschutzbestimmungen aus .</td><td class="sentence">Als die wichtigsten Barrieren <strong>machte</strong> <strong>sie</strong> fehlende Finanz- und Personalmittel , mangelnde Unterstützung der oberen Administrationsetagen , unabgestimmte Strategien und technische Standards , aber auch zu strenge Datenschutzbestimmungen aus .</td><td>machten</td><td>sie</td><td>PL -&gt; SG</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s127885%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22machten%22%7C%22Machten%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Die Preisspirale der privaten Telefonanbieter dreht sich weiter - doch <strong>es</strong> <strong>geht</strong> abwärts .</td><td class="sentence">Die Preisspirale der privaten Telefonanbieter dreht sich weiter - doch <strong>es</strong> <strong>gehen</strong> abwärts .</td><td>geht</td><td>es</td><td>SG -&gt; PL</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Neut<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s75528%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22geht%22%7C%22Geht%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=196</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>alternatives</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">&quot; <strong>Wir</strong> <strong>erinnern</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td class="sentence">&quot; <strong>Wir</strong> <strong>erinner</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td>erinnern</td><td>wir</td><td>PL -&gt; SG</td><td>erinner, erinnere, erinnre</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s127921%22%20%3B%20A%20%5Bform%3D%22wir%22%7C%22Wir%22%5D%20%3B%20B%20%5Bform%3D%22erinnern%22%7C%22Erinnern%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Erst als wir sie ansahen, <strong>fragte</strong> <strong>sie</strong> in dem barschen Ton: Bitte?</td><td class="sentence">Erst als wir sie ansahen, <strong>frugen</strong> <strong>sie</strong> in dem barschen Ton: Bitte?</td><td>fragte</td><td>sie</td><td>SG -&gt; PL</td><td>frugen, fragten</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Fem<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s1279%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22fragte%22%7C%22Fragte%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence">&quot; <strong>Wir</strong> <strong>erinnern</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td class="sentence">&quot; <strong>Wir</strong> <strong>erinnere</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td>erinnern</td><td>wir</td><td>PL -&gt; SG</td><td>erinner, erinnere, erinnre</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s127921%22%20%3B%20A%20%5Bform%3D%22wir%22%7C%22Wir%22%5D%20%3B%20B%20%5Bform%3D%22erinnern%22%7C%22Erinnern%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr><tr><td class="sentence">Erst als wir sie ansahen, <strong>fragte</strong> <strong>sie</strong> in dem barschen Ton: Bitte?</td><td class="sentence">Erst als wir sie ansahen, <strong>fragten</strong> <strong>sie</strong> in dem barschen Ton: Bitte?</td><td>fragte</td><td>sie</td><td>SG -&gt; PL</td><td>frugen, fragten</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Tense=Past<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Gender=Fem<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s1279%22%20%3B%20A%20%5Bform%3D%22sie%22%7C%22Sie%22%5D%20%3B%20B%20%5Bform%3D%22fragte%22%7C%22Fragte%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-GSD</a></td></tr><tr><td class="sentence">&quot; <strong>Wir</strong> <strong>erinnern</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td class="sentence">&quot; <strong>Wir</strong> <strong>erinnre</strong> uns noch mit Schmerzen an das vergangene Jahr .</td><td>erinnern</td><td>wir</td><td>PL -&gt; SG</td><td>erinner, erinnere, erinnre</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_German-HDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22hdt-s127921%22%20%3B%20A%20%5Bform%3D%22wir%22%7C%22Wir%22%5D%20%3B%20B%20%5Bform%3D%22erinnern%22%7C%22Erinnern%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_German-HDT</a></td></tr></tbody></table></div></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

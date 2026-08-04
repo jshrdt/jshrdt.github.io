@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=182</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Nepakibdami ant migracijos kaip „nacionalinės grėsmės “kabliuko, <strong>jie</strong> <strong>laikosi</strong> tyrinėtojų ir kartu aktyvių visuomenės narių vertos pozicijos, kad, sprendžiant „grėsmių “klausimą, „ypač didelės reikšmės įgyja tiek gilus migracijos proceso supratimas, tiek ir efektyvi viešoji politika ir kad valstybė turi gerbti gyventojų teisę pasirinkti, kurioje šalyje jiems geriausia save realizuoti “, o „išimtinai negatyvi migracijos interpretacija neatsižvelgia į besikeičiantį šiuolaikinės migracijos pobūdį, tiek ir šiuolaikinę migracijos teoriją “(p. 170).</td><td class="sentence">&mdash;</td><td>laikosi</td><td>jie</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Masc<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Ciubrinsko_rec_74s-s71%22%20%3B%20A%20%5Bform%3D%22jie%22%7C%22Jie%22%5D%20%3B%20B%20%5Bform%3D%22laikosi%22%7C%22Laikosi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence"><strong>Jis</strong> <strong>atneša</strong>, gydytojai pasirašo.</td><td class="sentence">&mdash;</td><td>atneša</td><td>jis</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Masc<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s23%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22atne%C5%A1a%22%7C%22Atne%C5%A1a%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Ką <strong>mes</strong> <strong>slepiame</strong>?</td><td class="sentence">&mdash;</td><td>slepiame</td><td>mes</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-8-s5%22%20%3B%20A%20%5Bform%3D%22mes%22%7C%22Mes%22%5D%20%3B%20B%20%5Bform%3D%22slepiame%22%7C%22Slepiame%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence"><strong>Nebegrobtų</strong> dabar <strong>jis</strong> žaidžiančios pievoje Europos, nebeplauktų per marias - nustekentas, suvargęs, dar paskęstų.</td><td class="sentence">&mdash;</td><td>nebegrobtų</td><td>jis</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Cnd<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Polarity=Neg<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Masc<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Serelyte-1-s21%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22nebegrobt%C5%B3%22%7C%22Nebegrobt%C5%B3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Jeigu dukrelė vis klausia, kaip ji atrodo (su tam tikru rūbu ar tam tikroje situacijoje), tuo akivaizdžiai rodydama susirūpinimą savo išvaizda, nebūtinai reikia tiksliai atsakyti, ką <strong>jūs</strong> <strong>galvojate</strong>.</td><td class="sentence">&mdash;</td><td>galvojate</td><td>jūs</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=2</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=2</span></summary>Case=Nom<br>Definite=Ind<br>Number=Plur<br><strong class="swap-feat">Person=2</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22myliu_savo_kuna-s48%22%20%3B%20A%20%5Bform%3D%22j%C5%ABs%22%7C%22J%C5%ABs%22%5D%20%3B%20B%20%5Bform%3D%22galvojate%22%7C%22Galvojate%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome outcome-empty" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=40</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Kaip nurodo ir pati autorė, lietuviškieji spaudos žanrai yra mažai tirti, o esamos analizės jų klasifikavimą nepagrindžia aiškiais kriterijais, paprastai remiasi preskriptyviu požiūriu, t. y. žanrų apžvalgose paprastai nurodoma, ne kokie <strong>jie</strong> <strong>yra</strong>, o kokie jie turėtų būti.</td><td class="sentence">Kaip nurodo ir pati autorė, lietuviškieji spaudos žanrai yra mažai tirti, o esamos analizės jų klasifikavimą nepagrindžia aiškiais kriterijais, paprastai remiasi preskriptyviu požiūriu, t. y. žanrų apžvalgose paprastai nurodoma, ne kokie <strong>jie</strong> <strong>yra</strong>, o kokie jie turėtų būti.</td><td>yra</td><td>jie</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Masc<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Ruzaites_rec_109s-s28%22%20%3B%20A%20%5Bform%3D%22jie%22%7C%22Jie%22%5D%20%3B%20B%20%5Bform%3D%22yra%22%7C%22Yra%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Kol <strong>jie</strong> <strong>girdės</strong> tik save, mes galime mažinti biudžetą kiekvieną mėnesį, kol jame liks nulis.</td><td class="sentence">Kol <strong>jie</strong> <strong>girdės</strong> tik save, mes galime mažinti biudžetą kiekvieną mėnesį, kol jame liks nulis.</td><td>girdės</td><td>jie</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Fut<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Masc<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22biudzetas-s46%22%20%3B%20A%20%5Bform%3D%22jie%22%7C%22Jie%22%5D%20%3B%20B%20%5Bform%3D%22gird%C4%97s%22%7C%22Gird%C4%97s%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Pirma, <strong>jos</strong> visada <strong>turi</strong> vardus, antra, jos visada ką nors veikia, veikė, su jomis kas nors yra atsitikę arba jos jau negyvos.</td><td class="sentence">Pirma, <strong>jos</strong> visada <strong>turi</strong> vardus, antra, jos visada ką nors veikia, veikė, su jomis kas nors yra atsitikę arba jos jau negyvos.</td><td>turi</td><td>jos</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Fem<br>Number=Plur<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Navakas-2-s48%22%20%3B%20A%20%5Bform%3D%22jos%22%7C%22Jos%22%5D%20%3B%20B%20%5Bform%3D%22turi%22%7C%22Turi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence"><strong>Ji</strong> <strong>eina</strong> tiesiai per širdį iki pirmo vaikiško prisiminimo.</td><td class="sentence"><strong>Ji</strong> <strong>eina</strong> tiesiai per širdį iki pirmo vaikiško prisiminimo.</td><td>eina</td><td>ji</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Fem<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s5%22%20%3B%20A%20%5Bform%3D%22ji%22%7C%22Ji%22%5D%20%3B%20B%20%5Bform%3D%22eina%22%7C%22Eina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Keista, kad <strong>ji</strong> iki šiol <strong>dirba</strong>. “</td><td class="sentence">Keista, kad <strong>ji</strong> iki šiol <strong>dirba</strong>. “</td><td>dirba</td><td>ji</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=3</span></summary>Case=Nom<br>Definite=Ind<br>Gender=Fem<br>Number=Sing<br><strong class="swap-feat">Person=3</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sventems-s158%22%20%3B%20A%20%5Bform%3D%22ji%22%7C%22Ji%22%5D%20%3B%20B%20%5Bform%3D%22dirba%22%7C%22Dirba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr></tbody></table></div></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=24</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Vyras geria alų, ėda svogūnus, česnaką, gadina orą ir sveikatą, o <strong>aš</strong> <strong>turiu</strong> tursenti jam iš paskos ir mėginti viską ištaisyti, sulopyti, už viską atgailauti, visko gėdytis.</td><td class="sentence">Vyras geria alų, ėda svogūnus, česnaką, gadina orą ir sveikatą, o <strong>aš</strong> <strong>turime</strong> tursenti jam iš paskos ir mėginti viską ištaisyti, sulopyti, už viską atgailauti, visko gėdytis.</td><td>turiu</td><td>aš</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Parulskis-7-s11%22%20%3B%20A%20%5Bform%3D%22a%C5%A1%22%7C%22A%C5%A1%22%5D%20%3B%20B%20%5Bform%3D%22turiu%22%7C%22Turiu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Natūralu, kad išlaidas reikia mažinti, tam <strong>mes</strong> <strong>pritariame</strong>, bet yra dalykų, dėl kurių turime kiek kitokią poziciją.</td><td class="sentence">Natūralu, kad išlaidas reikia mažinti, tam <strong>mes</strong> <strong>pritariu</strong>, bet yra dalykų, dėl kurių turime kiek kitokią poziciją.</td><td>pritariame</td><td>mes</td><td>PL -&gt; SG</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22biudzetas-s54%22%20%3B%20A%20%5Bform%3D%22mes%22%7C%22Mes%22%5D%20%3B%20B%20%5Bform%3D%22pritariame%22%7C%22Pritariame%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Iš visur man nereikalingų pokalbių šrapneliai, muzikos skiautės, kaimynas metalistas vėl pjauna savo gitarą, ir netgi nuo arbatos kylančius garus <strong>aš</strong>, regis, <strong>pradedu</strong> girdėti.</td><td class="sentence">Iš visur man nereikalingų pokalbių šrapneliai, muzikos skiautės, kaimynas metalistas vėl pjauna savo gitarą, ir netgi nuo arbatos kylančius garus <strong>aš</strong>, regis, <strong>pradedame</strong> girdėti.</td><td>pradedu</td><td>aš</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Navakas-1-s28%22%20%3B%20A%20%5Bform%3D%22a%C5%A1%22%7C%22A%C5%A1%22%5D%20%3B%20B%20%5Bform%3D%22pradedu%22%7C%22Pradedu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Bet ne galvos slepiasi po švelniu saulės šydu, o ištisi pasauliai, ir tik apie kai kurių egzistavimą <strong>mes</strong> <strong>turime</strong> neaiškių ir nepatikrintų žinių.</td><td class="sentence">Bet ne galvos slepiasi po švelniu saulės šydu, o ištisi pasauliai, ir tik apie kai kurių egzistavimą <strong>mes</strong> <strong>turiu</strong> neaiškių ir nepatikrintų žinių.</td><td>turime</td><td>mes</td><td>PL -&gt; SG</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Plur<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Serelyte-2-s5%22%20%3B%20A%20%5Bform%3D%22mes%22%7C%22Mes%22%5D%20%3B%20B%20%5Bform%3D%22turime%22%7C%22Turime%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr><tr><td class="sentence">Kvapai mažiausiai savarankiški, atrodo, jog savaime jie neegzistuoja, juos kuria skalbiniai, vanilė, popierius, kaip <strong>aš</strong> dabar <strong>kuriu</strong> Tave.</td><td class="sentence">Kvapai mažiausiai savarankiški, atrodo, jog savaime jie neegzistuoja, juos kuria skalbiniai, vanilė, popierius, kaip <strong>aš</strong> dabar <strong>kuriame</strong> Tave.</td><td>kuriu</td><td>aš</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Mood=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Fin</details></td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Person=1</span></summary>Case=Nom<br>Definite=Ind<br>Number=Sing<br><strong class="swap-feat">Person=1</strong><br>PronType=Prs</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Navakas-1-s48%22%20%3B%20A%20%5Bform%3D%22a%C5%A1%22%7C%22A%C5%A1%22%5D%20%3B%20B%20%5Bform%3D%22kuriu%22%7C%22Kuriu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Lithuanian-ALKSNIS</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome outcome-empty" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>

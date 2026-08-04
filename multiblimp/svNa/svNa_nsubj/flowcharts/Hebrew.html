@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create_pairs bucket flowchart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --surface-raised: #fafaf9;
+    --border: #e7e5e4;
+    --border-subtle: #f0efee;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --font-ui: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: clamp(14px, 3vw, 32px);
+  }
+
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.subtitle {
+    color: var(--text-secondary); font-size: 12.5px; margin-bottom: 20px; max-width: 720px;
+  }
+
+  .flow-wrap { overflow-x: auto; padding-bottom: 16px; width: 100%; }
+  .flow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 1400px; margin: 0 auto;
+  }
+
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 10px 16px; text-align: center;
+    max-width: min(360px, 82vw); font-size: 13px; font-family: var(--font-mono);
+  }
+  .node.decision { border-style: dashed; border-color: var(--text-tertiary); font-weight: 500; }
+  .node.start { font-weight: 600; }
+  .node-explain {
+    font-family: var(--font-ui); font-size: 10.5px; font-weight: 400; font-style: italic;
+    color: var(--text-secondary); margin-top: 7px; line-height: 1.4;
+  }
+
+  .connector {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+    text-align: center; max-width: min(280px, 82vw); gap: 4px;
+  }
+  .connector::before { content: ""; width: 1px; height: 10px; background: var(--border); }
+  .connector span {
+    display: inline-flex; align-items: center; background: var(--surface-raised);
+    border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+    font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+  }
+  .connector .explain {
+    font-family: var(--font-ui); font-size: 9.5px; font-style: italic;
+    color: var(--text-tertiary); line-height: 1.35; max-width: 230px;
+  }
+
+  .branch {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+    align-items: flex-start; border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px; width: 100%;
+  }
+  .branch-col { display: flex; flex-direction: column; align-items: center; }
+
+  .outcome {
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 10px 14px; min-width: 190px; max-width: min(760px, 94vw);
+    text-align: center; background: var(--surface); transition: box-shadow .15s;
+  }
+  .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome-title {
+    font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .outcome-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--accent)); flex-shrink: 0; }
+  .count {
+    color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 400; margin-left: 2px;
+  }
+
+  details { margin-top: 8px; text-align: left; }
+  summary {
+    cursor: pointer; color: var(--accent); font-size: 10.5px; font-weight: 500;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+  p.empty { color: var(--text-tertiary); font-size: 10.5px; margin-top: 6px; }
+
+  .examples-scroll { overflow-x: auto; max-width: 100%; }
+  table.examples { border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+  table.examples th, table.examples td {
+    border-bottom: 1px solid var(--border-subtle); padding: 5px 10px; text-align: left;
+    white-space: nowrap; font-family: var(--font-mono); vertical-align: top;
+  }
+  table.examples th {
+    color: var(--text-tertiary); font-weight: 600; font-family: var(--font-ui);
+    text-transform: uppercase; letter-spacing: .03em; font-size: 9.5px; white-space: nowrap;
+  }
+  table.examples tbody tr:hover td { background: var(--accent-light); }
+  table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+  table.examples td.sentence strong { color: var(--accent); font-weight: 700; }
+  table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-secondary); }
+  table.examples td.feats strong.swap-feat { color: var(--accent); font-weight: 700; }
+  table.examples td.feats .swap-feat-badge { color: var(--accent); font-weight: 600; }
+  table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+  table.examples td.treebank a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>create_pairs bucket flowchart</h1>
+  <p class="subtitle">Traces the branch logic in process_item() for this run. Each outcome box shows how many rows landed there and up to 5 example rows (covering distinct feature_vals categories where possible), with before/after sentences (heuristic spacing — no treebank passed in).</p>
+  <div class="flow-wrap">
+
+  <div class="flow">
+    <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
+
+    <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=726</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">מ ריאד נמסר כי 40 נשים נראו השבוע כש הן נוהגות ב הפגנתיות ב מכוניות ב רחובות ה בירה על אף ה איסור ש <strong>הטילה</strong> ה <strong>ממלכה</strong> על נהיגה_ _של_ _הן .</td><td class="sentence">&mdash;</td><td>הטילה</td><td>ממלכה</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br>HebBinyan=HIFIL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>Voice=Act</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224046%22%20%3B%20A%20%5Bform%3D%22%D7%9E%D7%9E%D7%9C%D7%9B%D7%94%22%7C%22%D7%9E%D7%9E%D7%9C%D7%9B%D7%94%22%5D%20%3B%20B%20%5Bform%3D%22%D7%94%D7%98%D7%99%D7%9C%D7%94%22%7C%22%D7%94%D7%98%D7%99%D7%9C%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">הפעם ה <strong>קהל</strong> לא <strong>חסם</strong> את ה אמבולנס .</td><td class="sentence">&mdash;</td><td>חסם</td><td>קהל</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22491%22%20%3B%20A%20%5Bform%3D%22%D7%A7%D7%94%D7%9C%22%7C%22%D7%A7%D7%94%D7%9C%22%5D%20%3B%20B%20%5Bform%3D%22%D7%97%D7%A1%D7%9D%22%7C%22%D7%97%D7%A1%D7%9D%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">ה סקאלופיני אל-לימונה, פרוסות עגל דקות ב רוטב ה מבוסס על ציר חום, יין מרסלה, לימון ו עשבי מאכל היה מאכזב משום ש ה עגל בושל יתר על ה מידה ו ה <strong>רוטב</strong> <strong>הוסמך</strong>, ללא סיבה, ב קמח .</td><td class="sentence">&mdash;</td><td>הוסמך</td><td>רוטב</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br>HebBinyan=HUFAL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>Voice=Pass</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%226104%22%20%3B%20A%20%5Bform%3D%22%D7%A8%D7%95%D7%98%D7%91%22%7C%22%D7%A8%D7%95%D7%98%D7%91%22%5D%20%3B%20B%20%5Bform%3D%22%D7%94%D7%95%D7%A1%D7%9E%D7%9A%22%7C%22%D7%94%D7%95%D7%A1%D7%9E%D7%9A%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">אם שני ה צדדים ה נוגעים ו ה צדדים ה בין -לאומיים ה אחרים לא יגיעו ל פתרון משביע רצון, <strong>יועלה</strong> ה <strong>משבר</strong> בפני פורום בין-לאומי עליון, ש תוצאות פסיקה_ _של_ _הוא ו החלטה_ _של_ _הוא יהיו תקפות ו מחייבות .</td><td class="sentence">&mdash;</td><td>יועלה</td><td>משבר</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br>HebBinyan=HUFAL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Fut<br>Voice=Pass</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224970%22%20%3B%20A%20%5Bform%3D%22%D7%9E%D7%A9%D7%91%D7%A8%22%7C%22%D7%9E%D7%A9%D7%91%D7%A8%22%5D%20%3B%20B%20%5Bform%3D%22%D7%99%D7%95%D7%A2%D7%9C%D7%94%22%7C%22%D7%99%D7%95%D7%A2%D7%9C%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">לא מי-יודע-מה ב השוואה ל ה_ ציפיות ה מתעוררות ב לב לקוח תמים ל מקרא הודעת ה בנק ! לעומת זאת, ה <strong>לקוח</strong> ה תמים <strong>יתקשה</strong> להבין מ הודעת ה בנק , ש אם יסכים לקבל את &quot;ה תנאים ה ניתנים ל חוסכים ותיקים בלבד&quot;, יפסיד ב ה_ מעבר מ תוכנית ל תוכנית .</td><td class="sentence">&mdash;</td><td>יתקשה</td><td>לקוח</td><td class="feats"><details><summary>5 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br>HebBinyan=HITPAEL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Fut</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Masc<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222977%22%20%3B%20A%20%5Bform%3D%22%D7%9C%D7%A7%D7%95%D7%97%22%7C%22%D7%9C%D7%A7%D7%95%D7%97%22%5D%20%3B%20B%20%5Bform%3D%22%D7%99%D7%AA%D7%A7%D7%A9%D7%94%22%7C%22%D7%99%D7%AA%D7%A7%D7%A9%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr></tbody></table></div></details>
+    </div>
+
+    <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
+    <div class="outcome" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+
+    <div class="connector"><span>for each swap_form in swap_forms</span><div class="explain">One or more candidate re-inflected forms came back; each one is checked in turn below.</div></div>
+    <div class="node decision">swap_form == form ?<div class="node-explain">Does the re-inflected word look exactly the same as the original, with no visible change?</div></div>
+
+    <div class="branch">
+      <div class="branch-col">
+        <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
+        <div class="outcome" style="--dot:#64748b">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+      </div>
+      <div class="branch-col">
+        <div class="connector"><span>no &rarr; get_form_features(swap_form)</span><div class="explain">The spelling changed &mdash; now check what grammatical value that new form actually carries.</div></div>
+        <div class="node decision">feature_vals &cap; swap_feature_vals = &empty;<br>and UNDEFINED not in swap_feature_vals ?<div class="node-explain">Does the new form&rsquo;s value genuinely differ from the original, and is it clearly defined (not ambiguous)?</div></div>
+
+        <div class="branch">
+          <div class="branch-col">
+            <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
+            <div class="outcome" style="--dot:#ef4444">
+      <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
+            <div class="outcome" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+          </div>
+          <div class="branch-col">
+            <div class="connector"><span>yes</span><div class="explain">The new form clearly and only carries the target value &mdash; a real change.</div></div>
+            <div class="node decision">swap_feature_vals non-empty<br>and within max_num_of_pairs quota ?<div class="node-explain">Did we get a usable value for the new form, and is there still room left in the per-feature-pair balancing quota?</div></div>
+
+            <div class="branch">
+              <div class="branch-col">
+                <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
+                <div class="outcome" style="--dot:#f59e0b">
+      <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
+                <div class="outcome" style="--dot:#a78bfa">
+      <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+              </div>
+              <div class="branch-col">
+                <div class="connector"><span>yes &rarr; check subject overlap</span><div class="explain">Looks like a valid swap &mdash; now make sure the subject itself doesn&rsquo;t already carry the new value.</div></div>
+                <div class="node decision">child_features &cap; swap_feature_vals &ne; &empty; ?<div class="node-explain">Does the subject&rsquo;s own features already match what the verb was just swapped to?</div></div>
+
+                <div class="branch">
+                  <div class="branch-col">
+                    <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
+                    <div class="outcome" style="--dot:#eab308">
+      <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                  <div class="branch-col">
+                    <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
+                    <div class="outcome" style="--dot:#22c55e">
+      <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=1284</span></div>
+      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>feature_vals</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">היא גם תמנה את ראשי ה מחלקות ב ערכאה זאת ו ב בית -ה משפט ל ערעורים (את ה נשיאים <strong>תמנה</strong> ה <strong>וועדה</strong> ל בחירת שופטים).</td><td class="sentence">היא גם תמנה את ראשי ה מחלקות ב ערכאה זאת ו ב בית -ה משפט ל ערעורים (את ה נשיאים <strong>תמנינה</strong> ה <strong>וועדה</strong> ל בחירת שופטים).</td><td>תמנה</td><td>וועדה</td><td>SG -&gt; PL</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Fut</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%226012%22%20%3B%20A%20%5Bform%3D%22%D7%95%D7%95%D7%A2%D7%93%D7%94%22%7C%22%D7%95%D7%95%D7%A2%D7%93%D7%94%22%5D%20%3B%20B%20%5Bform%3D%22%D7%AA%D7%9E%D7%A0%D7%94%22%7C%22%D7%AA%D7%9E%D7%A0%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">דינה רצבסקי, מנהלת אגף תוכניות ארציות ו מחוזיות ב משרד ה פנים , ציינה ש <strong>הוראות</strong> אלו, אשר תבואנה במקום ה הוראות ש אושרו ב-1976, <strong>תשפרנה</strong> את ה תכנון ה מוקדם של ה דרכים ו תזרזנה את הליכי ה דיון ו ה החלטה ב מוסדות ה תכנון ב כל ה נוגע ל סלילת כבישים חדשים.</td><td class="sentence">דינה רצבסקי, מנהלת אגף תוכניות ארציות ו מחוזיות ב משרד ה פנים , ציינה ש <strong>הוראות</strong> אלו, אשר תבואנה במקום ה הוראות ש אושרו ב-1976, <strong>תשפר</strong> את ה תכנון ה מוקדם של ה דרכים ו תזרזנה את הליכי ה דיון ו ה החלטה ב מוסדות ה תכנון ב כל ה נוגע ל סלילת כבישים חדשים.</td><td>תשפרנה</td><td>הוראות</td><td>PL -&gt; SG</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Fut</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221924%22%20%3B%20A%20%5Bform%3D%22%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%22%7C%22%D7%94%D7%95%D7%A8%D7%90%D7%95%D7%AA%22%5D%20%3B%20B%20%5Bform%3D%22%D7%AA%D7%A9%D7%A4%D7%A8%D7%A0%D7%94%22%7C%22%D7%AA%D7%A9%D7%A4%D7%A8%D7%A0%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">ח&quot;כ ראובן ריבלין, ש התמודד על ה תפקיד , ביקש לפחות להתמנות כ חבר ב וועדת חוץ ו ביטחון , בעקבות פינוי מקום ל ה_ סיעה ב וועדה זו בשל פרישה_ _של_ _הוא של ה ח&quot;כ לשעבר זלמן שובל, אך ה <strong>סיעה</strong> <strong>החליטה</strong> לדחות את ה החלטה ב ה_ עניין .</td><td class="sentence">ח&quot;כ ראובן ריבלין, ש התמודד על ה תפקיד , ביקש לפחות להתמנות כ חבר ב וועדת חוץ ו ביטחון , בעקבות פינוי מקום ל ה_ סיעה ב וועדה זו בשל פרישה_ _של_ _הוא של ה ח&quot;כ לשעבר זלמן שובל, אך ה <strong>סיעה</strong> <strong>החליטו</strong> לדחות את ה החלטה ב ה_ עניין .</td><td>החליטה</td><td>סיעה</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br>HebBinyan=HIFIL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>Voice=Act</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221871%22%20%3B%20A%20%5Bform%3D%22%D7%A1%D7%99%D7%A2%D7%94%22%7C%22%D7%A1%D7%99%D7%A2%D7%94%22%5D%20%3B%20B%20%5Bform%3D%22%D7%94%D7%97%D7%9C%D7%99%D7%98%D7%94%22%7C%22%D7%94%D7%97%D7%9C%D7%99%D7%98%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">אני חושש ש <strong>תהיינה</strong> <strong>החלטות</strong> שגויות ו כי יחתמו עסקות בלא קריטריונים אחידים ו שווים .</td><td class="sentence">אני חושש ש <strong>תהיה</strong> <strong>החלטות</strong> שגויות ו כי יחתמו עסקות בלא קריטריונים אחידים ו שווים .</td><td>תהיינה</td><td>החלטות</td><td>PL -&gt; SG</td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong><br>Person=3<br>Tense=Fut</details></td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Number=Plur</span></summary>Gender=Fem<br><strong class="swap-feat">Number=Plur</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221932%22%20%3B%20A%20%5Bform%3D%22%D7%94%D7%97%D7%9C%D7%98%D7%95%D7%AA%22%7C%22%D7%94%D7%97%D7%9C%D7%98%D7%95%D7%AA%22%5D%20%3B%20B%20%5Bform%3D%22%D7%AA%D7%94%D7%99%D7%99%D7%A0%D7%94%22%7C%22%D7%AA%D7%94%D7%99%D7%99%D7%A0%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr><tr><td class="sentence">ארבעה שבועות לאחר מ כן <strong>הופיעה</strong> <strong>דוד_</strong> _של_ _הן , האגר י., ב מעון ש אל_ _הוא הועברו ה ילדות , לקחת את_ _הן ל קניות .</td><td class="sentence">ארבעה שבועות לאחר מ כן <strong>הופיעו</strong> <strong>דוד_</strong> _של_ _הן , האגר י., ב מעון ש אל_ _הוא הועברו ה ילדות , לקחת את_ _הן ל קניות .</td><td>הופיעה</td><td>דוד_</td><td>SG -&gt; PL</td><td class="feats"><details><summary>6 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Gender=Fem<br>HebBinyan=HIFIL<br><strong class="swap-feat">Number=Sing</strong><br>Person=3<br>Tense=Past<br>Voice=Act</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Number=Sing</span></summary>Definite=Def<br>Gender=Fem<br><strong class="swap-feat">Number=Sing</strong></details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Hebrew-HTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223080%22%20%3B%20A%20%5Bform%3D%22%D7%93%D7%95%D7%93_%22%7C%22%D7%93%D7%95%D7%93_%22%5D%20%3B%20B%20%5Bform%3D%22%D7%94%D7%95%D7%A4%D7%99%D7%A2%D7%94%22%7C%22%D7%94%D7%95%D7%A4%D7%99%D7%A2%D7%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Hebrew-HTB</a></td></tr></tbody></table></div></details>
+    </div>
+                    <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
+                    <div class="outcome" style="--dot:#38bdf8">
+      <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
+    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</body>
+</html>
