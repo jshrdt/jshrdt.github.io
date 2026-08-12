@@ -1,59 +1,1092 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>No decision tree to display</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: "DM Sans", sans-serif; margin: 0; background: #f5f5f4; color: #1c1917; }
-    .layout { display: flex; height: 100vh; }
-    .sidebar {
-        width: 260px; flex-shrink: 0; background: white;
-        border-right: 1px solid #e7e5e4; padding: 1.5rem; display: flex;
-        flex-direction: column; gap: 1rem;
-    }
-    h2 { font-size: 1.1rem; margin: 0; }
-    p  { color: #78716c; font-size: 0.875rem; margin: 0; line-height: 1.5; }
-    .label { display: inline-block; padding: 0.3rem 0.9rem;
-              background: #f5f5f4; border-radius: 999px; font-weight: 600;
-              font-size: 1rem; border: 1px solid #e7e5e4; }
-    .meta { font-size: 0.8rem; }
-    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
-                 border-bottom: 1px solid #e7e5e4; }
-    .meta-key { color: #a8a29e; }
-    .meta-val { font-family: "JetBrains Mono", monospace; color: #78716c; }
-    .main { flex: 1; overflow-y: auto; padding: 1.5rem; }
-    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
-                letter-spacing: 0.05em; color: #78716c; margin: 0 0 0.75rem; }
-    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
-                 border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden; }
-    .ex-table th { background: #fafaf9; color: #78716c; font-size: 0.7rem; font-weight: 600;
-                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
-                    text-align: left; border-bottom: 1px solid #e7e5e4; white-space: nowrap; }
-    .ex-table td { padding: 5px 10px; border-bottom: 1px solid #f0efee; vertical-align: top;
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
-    .ex-table tbody tr:hover td { background: #eff6ff; }
-    .ex-table a { color: #2563eb; text-decoration: none; font-weight: 500; }
-    .ex-table a:hover { text-decoration: underline; }
-    .ex-table tbody tr:last-child td { border-bottom: none; }
-    .ex-table td strong { color: #2563eb; font-weight: 700; }
-  </style>
-</head>
+<head><meta charset="utf-8" /></head>
 <body>
-  <div class="layout">
-    <div class="sidebar">
-      <div>
-        <h2>Single label</h2>
-        <p>All training samples for <b>head_nsubj_Gender_agreement</b> share one agreement label — no decision tree was needed.</p>
-      </div>
-      <div class="label">unk</div>
-      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Norwegian_Nynorsk</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">1,860</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
-    </div>
-    <div class="main">
-      <h3>Example items (sample of 50)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>head_form</th><th>head_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Som mellom andre <strong>Anders</strong> Aschim har <strong>peika</strong> på , så er Maria framleis møy i Nytestamentet ( sjå Luk 1,27 ; Matt 1,23 ) .</td><td>peika</td><td><details><summary>features...</summary></details></td><td>Anders</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22002349%22%20%3B%20A%20%5Bform%3D%22peika%22%7C%22Peika%22%5D%20%3B%20B%20%5Bform%3D%22Anders%22%7C%22Anders%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>No har <strong>me</strong> <strong>forstått</strong> at dei folkevalde har viktigare saker å stella med , og me er framleis best , no på delegering :</td><td>forstått</td><td><details><summary>features...</summary></details></td><td>me</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22004551%22%20%3B%20A%20%5Bform%3D%22forst%C3%A5tt%22%7C%22Forst%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22me%22%7C%22Me%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>I femtito av dei seksti åra Seljord Elektriske har vore i drift har <strong>Tore</strong> Tufte <strong>stått</strong> til teneste for kundane .</td><td>stått</td><td><details><summary>features...</summary></details></td><td>Tore</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012275%22%20%3B%20A%20%5Bform%3D%22st%C3%A5tt%22%7C%22St%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22Tore%22%7C%22Tore%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Derfor har vi arbeidd for full barnehagedekning , og derfor har <strong>vi</strong> <strong>lyfta</strong> samferdsel som den første regjeringa som faktisk har oppfylt rammene i Nasjonal transportplan .</td><td>lyfta</td><td><details><summary>features...</summary></details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011614%22%20%3B%20A%20%5Bform%3D%22lyfta%22%7C%22Lyfta%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Det</strong> har <strong>gjort</strong> at alt som har vorte skrive om Amundsen , har vore innlegg i ein slik mytedebatt .</td><td>gjort</td><td><details><summary>features...</summary>Tense=Past</details></td><td>det</td><td><details><summary>features...</summary><strong>Gender=Neut</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22004203%22%20%3B%20A%20%5Bform%3D%22gjort%22%7C%22Gjort%22%5D%20%3B%20B%20%5Bform%3D%22det%22%7C%22Det%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Derfor har det nå <strong>kome</strong> <strong>framlegg</strong> om å utvide samarbeidet om barnevern til å gjelde alle oppgåver barneverntenesta har etter lova .</td><td>kome</td><td><details><summary>features...</summary>Tense=Past</details></td><td>framlegg</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012379%22%20%3B%20A%20%5Bform%3D%22kome%22%7C%22Kome%22%5D%20%3B%20B%20%5Bform%3D%22framlegg%22%7C%22Framlegg%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Etter dette har <strong>livet</strong> <strong>vorte</strong> litt rolegare for Blakemore .</td><td>vorte</td><td><details><summary>features...</summary>Tense=Past</details></td><td>livet</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016332%22%20%3B%20A%20%5Bform%3D%22vorte%22%7C%22Vorte%22%5D%20%3B%20B%20%5Bform%3D%22livet%22%7C%22Livet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Me</strong> har <strong>lagt</strong> fram ein maritim strategi som næringa har teke vel imot , og det vart innført ei reiarlagsskatteordning som er lik den som er i Europa , noko som næringa har etterspurt i mange år .</td><td>lagt</td><td><details><summary>features...</summary></details></td><td>me</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011543%22%20%3B%20A%20%5Bform%3D%22lagt%22%7C%22Lagt%22%5D%20%3B%20B%20%5Bform%3D%22me%22%7C%22Me%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>For det første har <strong>vi</strong> <strong>lagt</strong> stor vekt på å halde orden i økonomien .</td><td>lagt</td><td><details><summary>features...</summary></details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011298%22%20%3B%20A%20%5Bform%3D%22lagt%22%7C%22Lagt%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Vi</strong> har <strong>utvikla</strong> det norske systemet som har tre viktige ingrediensar :</td><td>utvikla</td><td><details><summary>features...</summary>Tense=Past</details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011297%22%20%3B%20A%20%5Bform%3D%22utvikla%22%7C%22Utvikla%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Dei</strong> har <strong>sett</strong> opp den vakre kyrkja og har gjort ein kjempejobb , kyter Urbø .</td><td>sett</td><td><details><summary>features...</summary></details></td><td>dei</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22015995%22%20%3B%20A%20%5Bform%3D%22sett%22%7C%22Sett%22%5D%20%3B%20B%20%5Bform%3D%22dei%22%7C%22Dei%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Børsøkonomane</strong> har alltid <strong>hatt</strong> vanskar med å tenkje seg at det kan bli knapt med råvarer , og dei har ført lite innsikt til saka .</td><td>hatt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>børsøkonomane</td><td><details><summary>features...</summary><strong>Gender=Masc</strong><br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016425%22%20%3B%20A%20%5Bform%3D%22hatt%22%7C%22Hatt%22%5D%20%3B%20B%20%5Bform%3D%22b%C3%B8rs%C3%B8konomane%22%7C%22B%C3%B8rs%C3%B8konomane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>På 21-årsdagen fredag var det klart ; <strong>ho</strong> hadde <strong>erobra</strong> andreplassen i B-klassa med 117 poeng , bare to poeng bak vinnaren .</td><td>erobra</td><td><details><summary>features...</summary>Tense=Past</details></td><td>ho</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=Fem</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012583%22%20%3B%20A%20%5Bform%3D%22erobra%22%7C%22Erobra%22%5D%20%3B%20B%20%5Bform%3D%22ho%22%7C%22Ho%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- Det er synd at VTR ikkje valte å vere med på informasjonsmøtet som <strong>kommunalministeren</strong> har <strong>hatt</strong> om kompensasjonsordninga .</td><td>hatt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>kommunalministeren</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012016%22%20%3B%20A%20%5Bform%3D%22hatt%22%7C%22Hatt%22%5D%20%3B%20B%20%5Bform%3D%22kommunalministeren%22%7C%22Kommunalministeren%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- <strong>Vi</strong> hadde <strong>håpa</strong> at det fanst eit reinfritt område , og at vi kunne gjera tiltak dersom vi møtte rein .</td><td>håpa</td><td><details><summary>features...</summary>Tense=Past</details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009601%22%20%3B%20A%20%5Bform%3D%22h%C3%A5pa%22%7C%22H%C3%A5pa%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>På dei fleste har det <strong>sete</strong> éin <strong>person</strong> .</td><td>sete</td><td><details><summary>features...</summary>Tense=Past</details></td><td>person</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22014354%22%20%3B%20A%20%5Bform%3D%22sete%22%7C%22Sete%22%5D%20%3B%20B%20%5Bform%3D%22person%22%7C%22Person%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Ifølgje han er det lettare å gje slepp på ungdomskjærleiken til partiet , « når det ikkje har <strong>vore</strong> nokon <strong>intimitet</strong> i forholdet på 35 år » .</td><td>vore</td><td><details><summary>features...</summary>Tense=Past</details></td><td>intimitet</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009967%22%20%3B%20A%20%5Bform%3D%22vore%22%7C%22Vore%22%5D%20%3B%20B%20%5Bform%3D%22intimitet%22%7C%22Intimitet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- Eg har blitt overfallen , slått og sparka så eg hamna på sjukehus , og eg har noko slikt som 20 søksmål mot meg fordi <strong>vi</strong> har <strong>skrive</strong> kritisk om styresmaktene .</td><td>skrive</td><td><details><summary>features...</summary>Tense=Past</details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003501%22%20%3B%20A%20%5Bform%3D%22skrive%22%7C%22Skrive%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Justisminister</strong> Knut Storberget har <strong>opna</strong> for dette , sjølv om han presiserer at han berre inviterer til ein debatt .</td><td>opna</td><td><details><summary>features...</summary>Tense=Past</details></td><td>justisminister</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009116%22%20%3B%20A%20%5Bform%3D%22opna%22%7C%22Opna%22%5D%20%3B%20B%20%5Bform%3D%22justisminister%22%7C%22Justisminister%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Hytteeigarane</strong> har også <strong>klaga</strong> på at det blir brent søppel og skogsavfall i steinbrotet .</td><td>klaga</td><td><details><summary>features...</summary></details></td><td>hytteeigarane</td><td><details><summary>features...</summary><strong>Gender=Masc</strong><br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012912%22%20%3B%20A%20%5Bform%3D%22klaga%22%7C%22Klaga%22%5D%20%3B%20B%20%5Bform%3D%22hytteeigarane%22%7C%22Hytteeigarane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Det burde <strong>vi</strong> få <strong>diskutert</strong> ein gong , smiler Don Mitchell .</td><td>diskutert</td><td><details><summary>features...</summary></details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008051%22%20%3B%20A%20%5Bform%3D%22diskutert%22%7C%22Diskutert%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Men <strong>påtalen</strong> har ikkje <strong>komme</strong> enno , opplyser RV-representanten .</td><td>komme</td><td><details><summary>features...</summary>Tense=Past</details></td><td>påtalen</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008075%22%20%3B%20A%20%5Bform%3D%22komme%22%7C%22Komme%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A5talen%22%7C%22P%C3%A5talen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>I staden for å vedta kor godt ein vegg skal vere isolert , kunne <strong>dei</strong> <strong>vedtatt</strong> kor mykje energi eit hus får bruke .</td><td>vedtatt</td><td><details><summary>features...</summary></details></td><td>dei</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22002000%22%20%3B%20A%20%5Bform%3D%22vedtatt%22%7C%22Vedtatt%22%5D%20%3B%20B%20%5Bform%3D%22dei%22%7C%22Dei%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Eg meiner at det nye materiale syner at langt fleire var involverte i denne samtalen enn <strong>ein</strong> tidlegare har <strong>trudd</strong> .</td><td>trudd</td><td><details><summary>features...</summary>Tense=Past</details></td><td>ein</td><td><details><summary>features...</summary><strong>Gender=nan</strong><br>PronType=Art,Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008217%22%20%3B%20A%20%5Bform%3D%22trudd%22%7C%22Trudd%22%5D%20%3B%20B%20%5Bform%3D%22ein%22%7C%22Ein%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- Det ser ut til at den øvste <strong>løeveggen</strong> har <strong>tatt</strong> unna for mesteparten , fortel Jon Herfinn Botnen .</td><td>tatt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>løeveggen</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22005795%22%20%3B%20A%20%5Bform%3D%22tatt%22%7C%22Tatt%22%5D%20%3B%20B%20%5Bform%3D%22l%C3%B8eveggen%22%7C%22L%C3%B8eveggen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Me</strong> har <strong>gleda</strong> oss med Jan Gunnar ei god stund og eg ser ikkje nokon grunn til at det skal stoppe .</td><td>gleda</td><td><details><summary>features...</summary></details></td><td>me</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012328%22%20%3B%20A%20%5Bform%3D%22gleda%22%7C%22Gleda%22%5D%20%3B%20B%20%5Bform%3D%22me%22%7C%22Me%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Eit større <strong>jordras</strong> har <strong>hamna</strong> midt i vegbana ved Instefjord i Gulen .</td><td>hamna</td><td><details><summary>features...</summary></details></td><td>jordras</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22005756%22%20%3B%20A%20%5Bform%3D%22hamna%22%7C%22Hamna%22%5D%20%3B%20B%20%5Bform%3D%22jordras%22%7C%22Jordras%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Og at islamisering av Europa skulle utgjere eit eksistensielt trugsmål for menneske i det landet som ligg lengst borte frå den muslimske verda , som ikkje er med i EU , og der Europas <strong>lagnad</strong> aldri har <strong>vekt</strong> noka større interesse anna enn for turistar og historienerdar , er rett og slett vanskeleg å fatte .</td><td>vekt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>lagnad</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003975%22%20%3B%20A%20%5Bform%3D%22vekt%22%7C%22Vekt%22%5D%20%3B%20B%20%5Bform%3D%22lagnad%22%7C%22Lagnad%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- Eg trur ikkje <strong>me</strong> har <strong>kome</strong> til midten av desse 20 åra , og eg er ikkje optimist , seier redaktøren .</td><td>kome</td><td><details><summary>features...</summary>Tense=Past</details></td><td>me</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22017215%22%20%3B%20A%20%5Bform%3D%22kome%22%7C%22Kome%22%5D%20%3B%20B%20%5Bform%3D%22me%22%7C%22Me%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Haga</strong> har rett nok <strong>uttala</strong> seg så klossete at ein undrast på om ho slår ei kvit løgn .</td><td>uttala</td><td><details><summary>features...</summary></details></td><td>Haga</td><td><details><summary>features...</summary><strong>Gender=nan</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016542%22%20%3B%20A%20%5Bform%3D%22uttala%22%7C%22Uttala%22%5D%20%3B%20B%20%5Bform%3D%22Haga%22%7C%22Haga%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Medvite å nekta for noko som <strong>ein</strong> har <strong>sagt</strong> på TV , er det ingen som gjer .</td><td>sagt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>ein</td><td><details><summary>features...</summary><strong>Gender=nan</strong><br>PronType=Art,Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016545%22%20%3B%20A%20%5Bform%3D%22sagt%22%7C%22Sagt%22%5D%20%3B%20B%20%5Bform%3D%22ein%22%7C%22Ein%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Men eit <strong>vitne</strong> fekk <strong>notert</strong> registreringsnummera på dei to bilane .</td><td>notert</td><td><details><summary>features...</summary></details></td><td>vitne</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22014921%22%20%3B%20A%20%5Bform%3D%22notert%22%7C%22Notert%22%5D%20%3B%20B%20%5Bform%3D%22vitne%22%7C%22Vitne%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Den <strong>attityden</strong> har <strong>sete</strong> for lenge og feitna i stolen , det er på høg tid han kjem seg ut på ein joggetur , seier dominikanarmunken .</td><td>sete</td><td><details><summary>features...</summary>Tense=Past</details></td><td>attityden</td><td><details><summary>features...</summary><strong>Gender=Masc</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008939%22%20%3B%20A%20%5Bform%3D%22sete%22%7C%22Sete%22%5D%20%3B%20B%20%5Bform%3D%22attityden%22%7C%22Attityden%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Difor har <strong>Kunnskapsdepartementet</strong> nyleg <strong>lagt</strong> fram ei eiga melding om dette temaet , jf. St.meld. nr. 23 ( 2007 - 2008 ) Språk bygger broer - språkstimulering og språkopplæring for barn , unge og voksne .</td><td>lagt</td><td><details><summary>features...</summary></details></td><td>Kunnskapsdepartementet</td><td><details><summary>features...</summary><strong>Gender=nan</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22010712%22%20%3B%20A%20%5Bform%3D%22lagt%22%7C%22Lagt%22%5D%20%3B%20B%20%5Bform%3D%22Kunnskapsdepartementet%22%7C%22Kunnskapsdepartementet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Det</strong> ville ha <strong>ført</strong> til 14,6 millionar kroner meir til dei same kommunane , viser utrekningar frå kommunaldepartementet , hevdar Sp sine kandidatar .</td><td>ført</td><td><details><summary>features...</summary>Tense=Past</details></td><td>det</td><td><details><summary>features...</summary><strong>Gender=Neut</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22013219%22%20%3B%20A%20%5Bform%3D%22f%C3%B8rt%22%7C%22F%C3%B8rt%22%5D%20%3B%20B%20%5Bform%3D%22det%22%7C%22Det%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Men dei planlagde helikoptermålingane i Kvalsund i Finnmark vart stansa før <strong>dei</strong> hadde <strong>starta</strong> , og kan tidlegast gjennomførast til hausten .</td><td>starta</td><td><details><summary>features...</summary></details></td><td>dei</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009597%22%20%3B%20A%20%5Bform%3D%22starta%22%7C%22Starta%22%5D%20%3B%20B%20%5Bform%3D%22dei%22%7C%22Dei%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Dei</strong> har <strong>vorte</strong> totalt dominerande i dei rike landa .</td><td>vorte</td><td><details><summary>features...</summary>Tense=Past</details></td><td>dei</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22015426%22%20%3B%20A%20%5Bform%3D%22vorte%22%7C%22Vorte%22%5D%20%3B%20B%20%5Bform%3D%22dei%22%7C%22Dei%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Han meinte eldsjelene har gjort eit strålande arbeid , og roste dei for å ha hatt tålmod til å takle alle motbakkane <strong>arbeidet</strong> har <strong>bydd</strong> på .</td><td>bydd</td><td><details><summary>features...</summary></details></td><td>arbeidet</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016002%22%20%3B%20A%20%5Bform%3D%22bydd%22%7C%22Bydd%22%5D%20%3B%20B%20%5Bform%3D%22arbeidet%22%7C%22Arbeidet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Saka var elles førebudd ved at <strong>departementet</strong> i eit høyringsdokument i januar 2004 hadde <strong>invitert</strong> ei rekkje instansar til å fremja synspunkt på aktuelle språkpolitiske utfordringar , særleg med tanke på å skaffa grunnlagsmateriale for arbeidet med å utforma eit strategidokument for den nye institusjonen .</td><td>invitert</td><td><details><summary>features...</summary>Tense=Past</details></td><td>departementet</td><td><details><summary>features...</summary><strong>Gender=Neut</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22010514%22%20%3B%20A%20%5Bform%3D%22invitert%22%7C%22Invitert%22%5D%20%3B%20B%20%5Bform%3D%22departementet%22%7C%22Departementet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Men <strong>BP</strong> har <strong>rekna</strong> ut at med ein oljepris på 30 dollar fatet kan den aserbajdsjanske staten fram til 2030 tene til saman 120 milliardar dollar - berre på dei to felta der Statoil er med på utvinninga .</td><td>rekna</td><td><details><summary>features...</summary>Tense=Past</details></td><td>BP</td><td><details><summary>features...</summary><strong>Gender=nan</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003468%22%20%3B%20A%20%5Bform%3D%22rekna%22%7C%22Rekna%22%5D%20%3B%20B%20%5Bform%3D%22BP%22%7C%22Bp%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Vi i styret må erkjenne at vi ikkje kan halde fram slik <strong>vi</strong> har <strong>gjort</strong> , sa nestleiar Jorunn Ringstad .</td><td>gjort</td><td><details><summary>features...</summary>Tense=Past</details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22005258%22%20%3B%20A%20%5Bform%3D%22gjort%22%7C%22Gjort%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>- <strong>Vi</strong> tyskarar har <strong>prioritert</strong> feil i lang tid no , seier Lisa Paus .</td><td>prioritert</td><td><details><summary>features...</summary></details></td><td>vi</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22001261%22%20%3B%20A%20%5Bform%3D%22prioritert%22%7C%22Prioritert%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Kritiske røyster har heva seg hos gamle dissidentar , men ei gruppe unge tsjekkiske <strong>produsentar</strong> har <strong>tenkt</strong> å ri nostalgibølgja som skapte den tyske filmen Goodbye Lenin , med ein annan vri .</td><td>tenkt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>produsentar</td><td><details><summary>features...</summary><strong>Gender=Masc</strong><br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003802%22%20%3B%20A%20%5Bform%3D%22tenkt%22%7C%22Tenkt%22%5D%20%3B%20B%20%5Bform%3D%22produsentar%22%7C%22Produsentar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Dei hevda <strong>dei</strong> hadde <strong>fått</strong> nok .</td><td>fått</td><td><details><summary>features...</summary>Tense=Past</details></td><td>dei</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22005011%22%20%3B%20A%20%5Bform%3D%22f%C3%A5tt%22%7C%22F%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22dei%22%7C%22Dei%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Dei seks <strong>kommunane</strong> i Vest-Telemark har i ti år <strong>hatt</strong> samarbeid om barnevern .</td><td>hatt</td><td><details><summary>features...</summary>Tense=Past</details></td><td>kommunane</td><td><details><summary>features...</summary><strong>Gender=Masc</strong><br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012373%22%20%3B%20A%20%5Bform%3D%22hatt%22%7C%22Hatt%22%5D%20%3B%20B%20%5Bform%3D%22kommunane%22%7C%22Kommunane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td><strong>Ingrid</strong> Kristine Hasund har <strong>skrive</strong> boka Fy Farao om nestenbanning og andre kraftuttrykk .</td><td>skrive</td><td><details><summary>features...</summary>Tense=Past</details></td><td>Ingrid</td><td><details><summary>features...</summary><strong>Gender=Fem</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003007%22%20%3B%20A%20%5Bform%3D%22skrive%22%7C%22Skrive%22%5D%20%3B%20B%20%5Bform%3D%22Ingrid%22%7C%22Ingrid%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>På fritida har <strong>han</strong> mellom anna <strong>gjort</strong> seg kjend som « fitnessrådgjevar » for både president Bush sr. og jr. og den udødelege muskelbunten frå lerretet sette mot i Bush-troppane i Irak både i 1991 og 2003 , dei same åra som « Terminator » nummer to og tre kom ut .</td><td>gjort</td><td><details><summary>features...</summary>Tense=Past</details></td><td>han</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=Masc</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22015546%22%20%3B%20A%20%5Bform%3D%22gjort%22%7C%22Gjort%22%5D%20%3B%20B%20%5Bform%3D%22han%22%7C%22Han%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Slik vart pressa fri , men måtte byta ut den makta <strong>ho</strong> før hadde <strong>lånt</strong> frå to andre statsmakter , med si eiga , pressespesifikke makt .</td><td>lånt</td><td><details><summary>features...</summary></details></td><td>ho</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=Fem</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22002062%22%20%3B%20A%20%5Bform%3D%22l%C3%A5nt%22%7C%22L%C3%A5nt%22%5D%20%3B%20B%20%5Bform%3D%22ho%22%7C%22Ho%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Det som har vore varsla av statsministeren , og som <strong>eg</strong> har <strong>varsla</strong> , og som Regjeringa er oppteken av , er ei vidare satsing på samferdsle i åra som kjem .</td><td>varsla</td><td><details><summary>features...</summary></details></td><td>eg</td><td><details><summary>features...</summary>Case=Nom<br><strong>Gender=nan</strong><br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011441%22%20%3B%20A%20%5Bform%3D%22varsla%22%7C%22Varsla%22%5D%20%3B%20B%20%5Bform%3D%22eg%22%7C%22Eg%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr><tr><td>Dag og Tid har spurt Statkraft , Statnett , kraftbørsen Nord Pool og Olje- og energidepartementet , men ingen av dei fører noko oversyn over vidaresalet av krafta som <strong>industribedriftene</strong> har <strong>fått</strong> til godpris frå staten .</td><td>fått</td><td><details><summary>features...</summary>Tense=Past</details></td><td>industribedriftene</td><td><details><summary>features...</summary><strong>Gender=Fem</strong><br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22004344%22%20%3B%20A%20%5Bform%3D%22f%C3%A5tt%22%7C%22F%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22industribedriftene%22%7C%22Industribedriftene%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a></td></tr></tbody></table>
-    </div>
-  </div>
+    <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="tree-figure" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("tree-figure")) {                    Plotly.newPlot(                        "tree-figure",                        [{"customdata":[{"node_id":0,"hovertext":"\u003ci style='color:#9c9490'\u003eClick to explore examples\u003c\u002fi\u003e"}],"hoverlabel":{"bgcolor":"white","bordercolor":"#e7e5e4","font":{"color":"#1c1917","family":"DM Sans, sans-serif","size":12}},"hovertemplate":"%{customdata.hovertext}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"rgba(0,0,0,0)","line":{"width":0},"size":56},"mode":"markers","showlegend":false,"x":[0],"y":[0],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"clickmode":"event","annotations":[{"align":"center","bgcolor":"#ba96df","bordercolor":"rgba(0,0,0,0.14)","borderpad":7,"borderwidth":1,"font":{"family":"JetBrains Mono, monospace","size":11},"name":"0","showarrow":false,"text":"\u003cb\u003eunk\u003c\u002fb\u003e\u003cbr\u003e\u003cspan style='color:#44403c;font-size:9px'\u003e\u003cb\u003e[0]\u003c\u002fb\u003e  n=1674  H=0.04\u003c\u002fspan\u003e","x":0,"y":0}],"xaxis":{"visible":false},"yaxis":{"visible":false},"margin":{"l":10,"r":10,"t":10,"b":10},"font":{"family":"DM Sans, sans-serif"},"autosize":true,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"responsive": true}                    )                };            </script>        </div>
 </body>
 </html>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #f5f5f4;
+        --surface: #ffffff;
+        --surface-raised: #fafaf9;
+        --border: #e7e5e4;
+        --border-subtle: #f0efee;
+        --text-primary: #1c1917;
+        --text-secondary: #78716c;
+        --text-tertiary: #a8a29e;
+        --accent: #2563eb;
+        --accent-light: #eff6ff;
+        --font-ui: 'DM Sans', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+        --radius: 10px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+      }
+
+      body {
+        font-family: var(--font-ui);
+        background: var(--bg);
+        color: var(--text-primary);
+        overflow: hidden;
+        height: 100vh;
+      }
+
+      .page {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .tree-panel {
+        flex: 0 0 auto;
+        height: 58%;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      .table-panel {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        font-family: var(--font-ui);
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .table-panel-header {
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .table-panel-header h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .table-panel-body {
+        padding: 0 20px 20px;
+        flex: 1;
+      }
+
+      .splitter {
+        height: 5px;
+        width: 100%;
+        cursor: row-resize;
+        background: var(--border);
+        transition: background 0.15s;
+        z-index: 20;
+        flex-shrink: 0;
+      }
+
+      .splitter:hover { background: #a8a29e; }
+
+      /* ── Info panel ── */
+      .info-panel {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        z-index: 100;
+        width: 240px;
+        overflow: hidden;
+        font-family: var(--font-ui);
+        transition: width 0.3s ease;
+      }
+
+      .info-panel.minimized {
+        width: auto;
+      }
+
+      .info-panel-header {
+        padding: 10px 14px;
+        background: var(--text-primary);
+        color: white;
+        position: relative;
+      }
+
+      .minimize-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        line-height: 1;
+        transition: background 0.2s;
+        padding: 0;
+      }
+
+      .minimize-button:hover {
+        background: rgba(255,255,255,0.3);
+      }
+
+      .minimize-button:active {
+        background: rgba(255,255,255,0.4);
+      }
+
+      .info-panel-header .language-name {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .info-panel-header .accuracy-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 5px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 20px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: rgba(255,255,255,0.9);
+      }
+
+      .accuracy-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+      }
+
+      .info-panel-meta {
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--border-subtle);
+        transition: opacity 0.3s ease, max-height 0.3s ease;
+        max-height: 500px;
+        overflow: hidden;
+      }
+
+      .info-panel.minimized .info-panel-meta,
+      .info-panel.minimized .info-panel-legend,
+      .info-panel.minimized .toggle-row,
+      .info-panel.minimized .branch-legend {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border: none;
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+      }
+
+      .meta-key {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+      }
+
+      .meta-val {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-weight: 500;
+      }
+
+      .info-panel-legend {
+        padding: 8px 14px 10px;
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 500px;
+        overflow: hidden;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border-subtle);
+        cursor: pointer;
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 100px;
+        overflow: hidden;
+      }
+
+      .legend-title {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-tertiary);
+        margin-bottom: 6px;
+      }
+
+      .legend-item {
+        display: grid;
+        grid-template-columns: 9px 28px 28px 1fr;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 0;
+      }
+
+      .legend-swatch {
+        width: 9px; height: 9px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .legend-label {
+        font-size: 11px;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-weight: 500;
+      }
+
+      .legend-count {
+        font-size: 10px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+        text-align: right;
+      }
+
+      .legend-bar-track {
+        height: 6px;
+        background: var(--border-subtle);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .legend-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      /* ── Branch legend ── */
+      .branch-legend {
+        display: flex;
+        gap: 10px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border-subtle);
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 100px;
+        overflow: hidden;
+      }
+
+      .branch-pill {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .branch-line {
+        width: 16px; height: 2.5px;
+        border-radius: 2px;
+      }
+
+      /* ── Per-node bar card (permanently visible, JS-positioned) ── */
+      #node-card-layer {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+      }
+
+      .node-dist-card {
+        position: absolute;
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.13);
+        border-radius: 4px;
+        padding: 4px 5px 3px;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 3px;
+        pointer-events: all;
+        transform: translateX(-50%);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: default;
+        z-index: 50;
+      }
+
+      .node-dist-card.expanded {
+        transform: translateX(-50%) scale(2);
+        transform-origin: top center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+        z-index: 200;
+      }
+
+      .node-dist-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        width: 19px;
+      }
+
+      .node-dist-bar-wrap {
+        width: 14px;
+        height: 30px;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .node-dist-bar {
+        width: 100%;
+        border-radius: 2px 2px 0 0;
+        min-height: 1px;
+      }
+
+      .node-dist-count {
+        font-size: 7px;
+        color: #44403c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      .node-dist-label {
+        font-size: 8.5px;
+        color: #78716c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      /* ── Node summary row: decision path + distribution side by side ── */
+      .node-summary-row {
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid var(--border);
+      }
+
+      #node-path-panel {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      #node-dist-panel {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      /* ── Node distribution panel in table header ── */
+      .node-dist-panel {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 16px;
+        height: 100%;
+        background: var(--surface-raised);
+      }
+
+      .node-dist-panel-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        width: 28px;
+      }
+
+      .node-dist-panel-bar-wrap {
+        width: 28px;
+        height: 60px;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .node-dist-panel-bar {
+        width: 100%;
+        border-radius: 3px 3px 0 0;
+        min-height: 2px;
+      }
+
+      .node-dist-panel-count {
+        font-size: 12px;
+        color: #44403c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      .node-dist-panel-label {
+        font-size: 9px;
+        color: #78716c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.3;
+      }
+
+      /* ── Decision path visualization ── */
+      .decision-path-panel {
+        height: 100%;
+        padding: 12px 20px;
+        border-right: 1px solid var(--border-subtle);
+        background: var(--surface);
+        overflow-y: auto;
+      }
+
+      .decision-path-title {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+      }
+
+      .decision-path {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .path-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .path-arrow {
+        color: var(--text-tertiary);
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+
+      .path-condition {
+        font-family: var(--font-mono);
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .path-branch {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-left: 6px;
+      }
+
+      .path-branch.true {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+      }
+
+      .path-branch.false {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+      }
+
+      /* ── Right panel table ── */
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 0 6px;
+      }
+
+      .group-swatch {
+        width: 10px; height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .group-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .group-count {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      .node-table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .node-table thead th {
+        background: var(--surface-raised);
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 6px 10px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .node-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: top;
+        color: var(--text-primary);
+        font-size: 13px;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+      }
+
+      .node-table td:has(details[open]) {
+        white-space: normal;
+        overflow: visible;
+        max-width: none;
+      }
+
+      .node-table td details[open] {
+        word-break: break-all;
+        white-space: normal;
+      }
+
+      .node-table th.col-sen_str, .node-table td.col-sen_str {
+        width: 45%;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .node-table th.col-other, .node-table td.col-other {
+        width: auto;
+        white-space: nowrap;
+      }
+
+      .node-table tbody tr:last-child td { border-bottom: none; }
+      .node-table tbody tr:hover td { background: var(--accent-light); }
+      .node-table td strong { color: var(--accent); font-weight: 700; }
+
+      .node-table a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .node-table a:hover { text-decoration: underline; }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        min-height: 300px;
+        color: var(--text-tertiary);
+        gap: 8px;
+      }
+
+      .empty-state-icon { font-size: 32px; opacity: 0.4; }
+      .empty-state-text { font-size: 13px; font-weight: 500; }
+      .empty-state-sub { font-size: 12px; color: var(--text-tertiary); }
+
+      /* ── Toggle ── */
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-top: 1px solid var(--border-subtle);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .toggle-row:hover { background: var(--surface-raised); }
+
+      .toggle-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .toggle-switch {
+        width: 28px;
+        height: 16px;
+        border-radius: 8px;
+        background: var(--accent);
+        position: relative;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch.off { background: var(--border); }
+
+      .toggle-switch::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        top: 2px;
+        left: 14px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      }
+
+      .toggle-switch.off::after { left: 2px; }
+    </style>
+
+    <div class="page">
+
+      <div class="info-panel" id="info-panel">
+        <div class="info-panel-header">
+          <button class="minimize-button" id="minimize-btn" onclick="toggleMinimize()" title="Minimize panel">−</button>
+          <div class="language-name">Norwegian Nynorsk</div>
+          <div class="accuracy-badge">
+            <span class="accuracy-dot"></span>
+            99.5% accuracy
+          </div>
+        </div>
+        <div class='info-panel-meta'><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Norwegian_Nynorsk</span></div><div class="meta-row"><span class="meta-key">accuracy</span><span class="meta-val">99.5%</span></div><div class="meta-row"><span class="meta-key">base entropy</span><span class="meta-val">0.046</span></div><div class="meta-row"><span class="meta-key">reduced entropy</span><span class="meta-val">0.046</span></div><div class="meta-row"><span class="meta-key">Nodes</span><span class="meta-val">1 (1 leaves)</span></div><div class="meta-row"><span class="meta-key">Depth</span><span class="meta-val">0</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">1,674</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Gender_agreement</span></div></div>
+        <div class="info-panel-legend">
+          <div class="legend-title">Classes · dataset distribution</div>
+          
+        <div class="legend-item" style="opacity:0.35;">
+          <span class="legend-swatch" style="background:#31cb9f;"></span>
+          <span class="legend-label">Yes</span>
+          <span class="legend-count">0</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:0px;background:#31cb9f;"></div>
+          </div>
+        </div>
+        <div class="legend-item" style="">
+          <span class="legend-swatch" style="background:#f16393;"></span>
+          <span class="legend-label">No</span>
+          <span class="legend-count">7</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:0px;background:#f16393;"></div>
+          </div>
+        </div>
+        <div class="legend-item" style="">
+          <span class="legend-swatch" style="background:#b893de;"></span>
+          <span class="legend-label">unk</span>
+          <span class="legend-count">1666</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:80px;background:#b893de;"></div>
+          </div>
+        </div>
+        </div>
+        <div class="toggle-row" id="dist-toggle-row" onclick="toggleDistributions()">
+          <span class="toggle-label">Show node distributions</span>
+          <span class="toggle-switch" id="dist-toggle-switch"></span>
+        </div>
+        <div class="branch-legend">
+          <div class="branch-pill">
+            <span class="branch-line" style="background:#dc2626;"></span>False
+          </div>
+          <div class="branch-pill">
+            <span class="branch-line" style="background:#16a34a;"></span>True
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-panel">
+        <div id="node-card-layer"></div>
+      </div>
+
+      <div class="splitter" id="dragbar"></div>
+
+      <div class="table-panel">
+        <div class="table-panel-header">
+          <h2 id="table-panel-title">Examples</h2>
+        </div>
+        <div class="node-summary-row">
+          <div id="node-path-panel" style="display:none;"></div>
+          <div id="node-dist-panel" style="display:none;"></div>
+        </div>
+        <div class="table-panel-body">
+          <div class="empty-state" id="node-table">
+            <div class="empty-state-icon">⬡</div>
+            <div class="empty-state-text">No node selected</div>
+            <div class="empty-state-sub">Click any node in the tree to explore examples</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const nodeSamples = {"No": {"0": {"rows": [{"sen_str": "Det er uheldig for regjeringa at <strong>KrF-leiar</strong> Knut Arild Hareide har <strong>vald</strong> usemje om eldregarantien som angrepspunkt , sj\u00f8lv om innhaldet i denne ordstriden nok g\u00e5r over hovudet p\u00e5 mange .", "head_form": "vald", "head_features": ["VerbForm=Part", "<strong>Gender=Fem,Masc</strong>"], "nsubj_form": "krf-leiar", "nsubj_features": ["Case=nan", "Definite=Ind", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008310%22%20%3B%20A%20%5Bform%3D%22vald%22%7C%22Vald%22%5D%20%3B%20B%20%5Bform%3D%22krf-leiar%22%7C%22Krf-leiar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Og hadde <strong>kommunane</strong> <strong>f\u00f8lgt</strong> rekneskapsloven kunne dei nytta private revisorar ; dei kunne shoppa meir i marknaden , s\u00e5 \u00e5 seie , meiner Thomsen .", "head_form": "f\u00f8lgt", "head_features": ["VerbForm=Part", "<strong>Gender=Neut</strong>"], "nsubj_form": "kommunane", "nsubj_features": ["Case=nan", "Definite=Def", "<strong>Gender=Masc</strong>", "Number=Plur", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009081%22%20%3B%20A%20%5Bform%3D%22f%C3%B8lgt%22%7C%22F%C3%B8lgt%22%5D%20%3B%20B%20%5Bform%3D%22kommunane%22%7C%22Kommunane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Han</strong> har difor <strong>f\u00f8lgt</strong> opp USA si handsaming av fangane p\u00e5 Guantanamo , og rekonstruert modellar av fangebura dei nyttar der .", "head_form": "f\u00f8lgt", "head_features": ["VerbForm=Part", "<strong>Gender=Neut</strong>"], "nsubj_form": "han", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=3", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009466%22%20%3B%20A%20%5Bform%3D%22f%C3%B8lgt%22%7C%22F%C3%B8lgt%22%5D%20%3B%20B%20%5Bform%3D%22han%22%7C%22Han%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Berg meiner medisinsk <strong>klinikk</strong> , som no har det overordna ansvaret for dei medisinske avdelingane b\u00e5de i F\u00f8rde , Nordfjord og L\u00e6rdal ikkje har <strong>f\u00f8lgd</strong> opp innf\u00f8ringa av dei nye retningslinjene godt nok .", "head_form": "f\u00f8lgd", "head_features": ["VerbForm=Part", "<strong>Gender=Fem,Masc</strong>"], "nsubj_form": "klinikk", "nsubj_features": ["Case=nan", "Definite=Ind", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22007616%22%20%3B%20A%20%5Bform%3D%22f%C3%B8lgd%22%7C%22F%C3%B8lgd%22%5D%20%3B%20B%20%5Bform%3D%22klinikk%22%7C%22Klinikk%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Verdsrekorden var realitet etter at <strong>han</strong> hadde <strong>k\u00f8yrd</strong> fram og tilbake mellom Dalen og Gulnes utanfor L\u00e5rdal to gonger .", "head_form": "k\u00f8yrd", "head_features": ["VerbForm=Part", "<strong>Gender=Fem,Masc</strong>"], "nsubj_form": "han", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=3", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012491%22%20%3B%20A%20%5Bform%3D%22k%C3%B8yrd%22%7C%22K%C3%B8yrd%22%5D%20%3B%20B%20%5Bform%3D%22han%22%7C%22Han%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Mats</strong> Solheim har <strong>imponert</strong> for Sogndal denne sesongen .", "head_form": "imponert", "head_features": ["VerbForm=Part", "<strong>Gender=Fem,Masc</strong>"], "nsubj_form": "Mats", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22007726%22%20%3B%20A%20%5Bform%3D%22imponert%22%7C%22Imponert%22%5D%20%3B%20B%20%5Bform%3D%22Mats%22%7C%22Mats%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Etter ei synfaring p\u00e5 Kyrkjebygdheia i sommar innr\u00f8mde Selj\u00e5s at omr\u00e5det for masseuttak er utvida langt utover grensene og at <strong>kommunen</strong> dessverre ikkje har <strong>f\u00f8lgd</strong> opp .", "head_form": "f\u00f8lgd", "head_features": ["VerbForm=Part", "<strong>Gender=Fem,Masc</strong>"], "nsubj_form": "kommunen", "nsubj_features": ["Case=nan", "Definite=Def", "<strong>Gender=Masc</strong>", "Number=Sing", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012895%22%20%3B%20A%20%5Bform%3D%22f%C3%B8lgd%22%7C%22F%C3%B8lgd%22%5D%20%3B%20B%20%5Bform%3D%22kommunen%22%7C%22Kommunen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Det kommunaldemokratiske systemet har dermed innebygd i seg ein mekanisme som i praksis gjer at nynorsk n\u00e5r opp til offisiell status som regionalt statleg bruksm\u00e5l i noko st\u00f8rre delar av landet enn det som ville vore tilfellet dersom til d\u00f8mes reine <strong>fleirtalsvurderingar</strong> blant innbyggjarane skulle ha <strong>avgjort</strong> sp\u00f8rsm\u00e5let .", "head_form": "avgjort", "head_features": ["VerbForm=Part", "<strong>Gender=Neut</strong>"], "nsubj_form": "fleirtalsvurderingar", "nsubj_features": ["Case=nan", "Definite=Ind", "<strong>Gender=Fem</strong>", "Number=Plur", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22011095%22%20%3B%20A%20%5Bform%3D%22avgjort%22%7C%22Avgjort%22%5D%20%3B%20B%20%5Bform%3D%22fleirtalsvurderingar%22%7C%22Fleirtalsvurderingar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}], "count": 8, "total_count": 7}}, "unk": {"0": {"rows": [{"sen_str": "<strong>Retten</strong> til \u00e5 yta motstand mot urettkomne herskarar har <strong>avf\u00f8dd</strong> ein rik tanketradisjon , som Gaddafis lagnad aktualiserer .", "head_form": "avf\u00f8dd", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "retten", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22000802%22%20%3B%20A%20%5Bform%3D%22avf%C3%B8dd%22%7C%22Avf%C3%B8dd%22%5D%20%3B%20B%20%5Bform%3D%22retten%22%7C%22Retten%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Deltakarane</strong> har <strong>vore</strong> gjennom tre del\u00f8vingar :", "head_form": "vore", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "deltakarane", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=Plur", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22005165%22%20%3B%20A%20%5Bform%3D%22vore%22%7C%22Vore%22%5D%20%3B%20B%20%5Bform%3D%22deltakarane%22%7C%22Deltakarane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Dette</strong> har <strong>f\u00f8rt</strong> til omgjering av mellom fem og ti prosent av sakene .", "head_form": "f\u00f8rt", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "dette", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Neut</strong>", "Number=nan", "Person=3", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008981%22%20%3B%20A%20%5Bform%3D%22f%C3%B8rt%22%7C%22F%C3%B8rt%22%5D%20%3B%20B%20%5Bform%3D%22dette%22%7C%22Dette%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Filmen</strong> har seinare <strong>g\u00e5tt</strong> inn i installasjonen \u00ab Who is afraid ? Contemporary Memory \u00bb .", "head_form": "g\u00e5tt", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "filmen", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009438%22%20%3B%20A%20%5Bform%3D%22g%C3%A5tt%22%7C%22G%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22filmen%22%7C%22Filmen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Fire veker seinare , saman med Aziz og Stein , hadde <strong>han</strong> <strong>laga</strong> ei gruppe kalla Pro-Test , og desse heldt ein massedemonstrasjon nettopp i Oxford .", "head_form": "laga", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "han", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=3", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016363%22%20%3B%20A%20%5Bform%3D%22laga%22%7C%22Laga%22%5D%20%3B%20B%20%5Bform%3D%22han%22%7C%22Han%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Torunn</strong> Hovde Kaasa har den siste m\u00e5naden <strong>vore</strong> innom kvar ein avkrok i Telemark i von om \u00e5 sikre Senterpartiet stortingsplass .", "head_form": "vore", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "Torunn", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Fem</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22012800%22%20%3B%20A%20%5Bform%3D%22vore%22%7C%22Vore%22%5D%20%3B%20B%20%5Bform%3D%22Torunn%22%7C%22Torunn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Etter at Kviteseid Asylmottak brann ned i april i 2002 har dei om lag 100 <strong>asyls\u00f8kjarane</strong> , som mottaket brukar \u00e5 ha til kvar tid , <strong>budd</strong> spreidd i 10 - 12 einebustadar i bygda .", "head_form": "budd", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "asyls\u00f8kjarane", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=Plur", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22013062%22%20%3B%20A%20%5Bform%3D%22budd%22%7C%22Budd%22%5D%20%3B%20B%20%5Bform%3D%22asyls%C3%B8kjarane%22%7C%22Asyls%C3%B8kjarane%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Og oppteljinga syner at bokkj\u00f8parane var ei mykje meir samansett og mangfaldig gruppe enn <strong>ein</strong> tidlegare har <strong>trudd</strong> .", "head_form": "trudd", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "ein", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=nan</strong>", "Number=nan", "Person=nan", "PronType=Art,Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22008175%22%20%3B%20A%20%5Bform%3D%22trudd%22%7C%22Trudd%22%5D%20%3B%20B%20%5Bform%3D%22ein%22%7C%22Ein%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Om <strong>prinsippet</strong> hadde <strong>omfatta</strong> tyskarane , ville grensene etter 1918 vore heilt annleis og til tyskarane sin fordel , s\u00e6rleg austover .", "head_form": "omfatta", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "prinsippet", "nsubj_features": ["Case=nan", "Definite=Def", "<strong>Gender=Neut</strong>", "Number=Sing", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22003212%22%20%3B%20A%20%5Bform%3D%22omfatta%22%7C%22Omfatta%22%5D%20%3B%20B%20%5Bform%3D%22prinsippet%22%7C%22Prinsippet%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Jenta</strong> skal ha <strong>treft</strong> eine hjulet , og bilen fekk seg ein bulk i samanst\u00f8yten .", "head_form": "treft", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "jenta", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Fem</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22006462%22%20%3B%20A%20%5Bform%3D%22treft%22%7C%22Treft%22%5D%20%3B%20B%20%5Bform%3D%22jenta%22%7C%22Jenta%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Bj\u00f8rnen</strong> hadde nyleg <strong>angripe</strong> sauer som beita like ved B\u00f8yabreen i Fj\u00e6rland , difor var B\u00f8yum ekstra p\u00e5 vakt .", "head_form": "angripe", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "bj\u00f8rnen", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22006637%22%20%3B%20A%20%5Bform%3D%22angripe%22%7C%22Angripe%22%5D%20%3B%20B%20%5Bform%3D%22bj%C3%B8rnen%22%7C%22Bj%C3%B8rnen%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "<strong>Han</strong> har <strong>hatt</strong> fransk i tre \u00e5r p\u00e5 skulen , s\u00e5 grunnlaget er til stades .", "head_form": "hatt", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "han", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=3", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22015882%22%20%3B%20A%20%5Bform%3D%22hatt%22%7C%22Hatt%22%5D%20%3B%20B%20%5Bform%3D%22han%22%7C%22Han%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Vi veit framleis ikkje korleis <strong>meldaren</strong> har <strong>komme</strong> over musikken v\u00e5r , seier Skram til VG Nett .", "head_form": "komme", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "meldaren", "nsubj_features": ["Case=nan", "Definite=nan", "<strong>Gender=Masc</strong>", "Number=nan", "Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22016783%22%20%3B%20A%20%5Bform%3D%22komme%22%7C%22Komme%22%5D%20%3B%20B%20%5Bform%3D%22meldaren%22%7C%22Meldaren%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "Samtidig har <strong>vi</strong> <strong>f\u00e5tt</strong> ein br\u00e5kete skoledebatt om alt fr\u00e5 meir testing , via tiltak mot fr\u00e5fall , til krav om niv\u00e5differensiering .", "head_form": "f\u00e5tt", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "vi", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=nan</strong>", "Number=Plur", "Person=1", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22009533%22%20%3B%20A%20%5Bform%3D%22f%C3%A5tt%22%7C%22F%C3%A5tt%22%5D%20%3B%20B%20%5Bform%3D%22vi%22%7C%22Vi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}, {"sen_str": "- <strong>Me</strong> har <strong>hatt</strong> litt brotskadar og i skibakken p\u00e5 Halbj\u00f8nnsekken har me hatt nokre kuttskadar etter fall p\u00e5 ski .", "head_form": "hatt", "head_features": ["VerbForm=Part", "<strong>Gender=nan</strong>"], "nsubj_form": "me", "nsubj_features": ["Case=Nom", "Definite=nan", "<strong>Gender=nan</strong>", "Number=Plur", "Person=1", "PronType=Prs"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Norwegian_Nynorsk-NDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22014173%22%20%3B%20A%20%5Bform%3D%22hatt%22%7C%22Hatt%22%5D%20%3B%20B%20%5Bform%3D%22me%22%7C%22Me%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Norwegian_Nynorsk-NDT</a>"}], "count": 15, "total_count": 1666}}};
+    const nodeData = {"0": {"x": 0.0, "y": 0.0, "color": "#ba96df", "dist": [{"cls": "Yes", "cnt": 0, "frac": 0.0, "color": "#31cb9f"}, {"cls": "No", "cnt": 7, "frac": 0.0041841004184100415, "color": "#f16393"}, {"cls": "unk", "cnt": 1666, "frac": 0.99581589958159, "color": "#b893de"}], "corr": [], "is_leaf": true, "parent": null, "rule": null}};
+    const classColors = {"Yes": "#31cb9f", "No": "#f16393", "unk": "#b893de"};
+
+    // ── Info panel minimize/expand ──
+    function toggleMinimize() {
+      const panel = document.getElementById("info-panel");
+      const btn = document.getElementById("minimize-btn");
+      const isMinimized = panel.classList.toggle("minimized");
+      btn.textContent = isMinimized ? "+" : "−";
+      btn.title = isMinimized ? "Expand panel" : "Minimize panel";
+    }
+
+    // ── Per-node distribution bar cards ──
+    const cardLayer = document.getElementById("node-card-layer");
+
+    function buildCard(nd) {
+      const dist = nd.dist;
+      const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
+      const BAR_MAX_H = 30;
+
+      const card = document.createElement("div");
+      card.className = "node-dist-card";
+
+      dist.forEach(d => {
+        const h = Math.max(1, Math.round((d.cnt / maxCnt) * BAR_MAX_H));
+        const dim = d.cnt === 0 ? "opacity:0.18;" : "";
+        const col = document.createElement("div");
+        col.className = "node-dist-col";
+        col.style.cssText = dim;
+        // No count in the compact view — only bar + label
+        col.innerHTML = `
+          <div class="node-dist-bar-wrap">
+            <div class="node-dist-bar" style="height:${h}px;background:${d.color};"></div>
+          </div>
+          <div class="node-dist-label">${d.cls}</div>`;
+        card.appendChild(col);
+      });
+
+      // Hover: expand to 2× and show counts
+      card.addEventListener("mouseenter", function() {
+        card.classList.add("expanded");
+        // Inject count elements
+        card.querySelectorAll(".node-dist-col").forEach((col, idx) => {
+          const existing = col.querySelector(".node-dist-count");
+          if (!existing) {
+            const countEl = document.createElement("div");
+            countEl.className = "node-dist-count";
+            countEl.textContent = dist[idx].cnt;
+            // Insert between bar and label
+            const label = col.querySelector(".node-dist-label");
+            col.insertBefore(countEl, label);
+          }
+        });
+      });
+
+      card.addEventListener("mouseleave", function() {
+        card.classList.remove("expanded");
+        card.querySelectorAll(".node-dist-count").forEach(el => el.remove());
+      });
+
+      return card;
+    }
+
+    function toggleDistributions() {
+      showDistributions = !showDistributions;
+      document.getElementById("dist-toggle-switch").classList.toggle("off", !showDistributions);
+      renderNodeCards();
+    }
+
+    // ── Example table ──
+    function renderNodeOverview(nodeId) {
+      const container = document.getElementById("node-table");
+      const titleEl = document.getElementById("table-panel-title");
+      const distPanel = document.getElementById("node-dist-panel");
+      const pathPanel = document.getElementById("node-path-panel");
+
+      const groups = [];
+      for (const [predictorValue, nodeMap] of Object.entries(nodeSamples)) {
+        const entry = nodeMap[nodeId];
+        if (entry && entry.count > 0) {
+          groups.push({
+            predictor: predictorValue,
+            rows: entry.rows,
+            count: entry.count,
+            total_count: entry.total_count
+          });
+        }
+      }
+
+      const totalSamples = groups.reduce((s,g) => s + g.total_count, 0);
+      titleEl.textContent = totalSamples > 0
+        ? `Node ${nodeId} · ${totalSamples} samples`
+        : `Node ${nodeId}`;
+
+      // ── Build decision path from root to this node ──
+      const path = [];
+      let currentNode = nodeId;
+      const nd = nodeData[String(nodeId)];
+
+      console.log("Building path for node:", nodeId);
+      console.log("Node data:", nd);
+
+      while (nd && nodeData[String(currentNode)]) {
+        const current = nodeData[String(currentNode)];
+        console.log("Current node:", currentNode, "Rule:", current.rule, "Parent:", current.parent);
+        if (current.rule) {
+          path.unshift({
+            rule: current.rule[0],
+            isTrueBranch: current.rule[1]
+          });
+        }
+        if (current.parent === null || current.parent === undefined) break;
+        currentNode = current.parent;
+      }
+
+      console.log("Built path:", path);
+
+      // Render decision path
+      if (path.length > 0) {
+        let pathHtml = '<div class="decision-path-panel">';
+        pathHtml += '<div class="decision-path-title">Decision Path</div>';
+        pathHtml += '<div class="decision-path">';
+
+        path.forEach((step, idx) => {
+          const branchClass = step.isTrueBranch ? 'true' : 'false';
+          const branchLabel = step.isTrueBranch ? 'TRUE' : 'FALSE';
+          const arrow = idx === 0 ? '▶' : '↳';
+
+          pathHtml += `
+            <div class="path-step">
+              <span class="path-arrow">${arrow}</span>
+              <span class="path-condition">${step.rule}</span>
+              <span class="path-branch ${branchClass}">${branchLabel}</span>
+            </div>`;
+        });
+
+        pathHtml += '</div></div>';
+        pathPanel.innerHTML = pathHtml;
+        pathPanel.style.display = "block";
+        console.log("Path panel HTML set");
+      } else {
+        pathPanel.style.display = "none";
+        console.log("No path to display");
+      }
+
+      // ── Distribution bar panel ──
+      if (nd) {
+        const dist = nd.dist;
+        const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
+        const BAR_MAX_H = 60;
+        let panelHtml = '<div class="node-dist-panel">';
+        dist.forEach(d => {
+          const h = Math.max(2, Math.round((d.cnt / maxCnt) * BAR_MAX_H));
+          const dim = d.cnt === 0 ? "opacity:0.18;" : "";
+          panelHtml += `
+            <div class="node-dist-panel-col" style="${dim}">
+              <div class="node-dist-panel-bar-wrap">
+                <div class="node-dist-panel-bar" style="height:${h}px;background:${d.color};"></div>
+              </div>
+              <div class="node-dist-panel-count">${d.cnt}</div>
+              <div class="node-dist-panel-label">${d.cls}</div>
+            </div>`;
+        });
+        panelHtml += "</div>";
+        distPanel.innerHTML = panelHtml;
+        distPanel.style.display = "block";
+      } else {
+        distPanel.style.display = "none";
+      }
+
+      if (groups.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">∅</div>
+          <div class="empty-state-text">No examples for this node</div></div>`;
+        return;
+      }
+
+      groups.sort((a, b) => b.total_count - a.total_count);
+      let html = "";
+
+      for (const group of groups) {
+        const color = classColors[group.predictor] || "#888";
+        const pct = totalSamples > 0 ? (group.total_count / totalSamples * 100).toFixed(1) : "0.0";
+        const shownLabel = group.count < group.total_count
+          ? `showing ${group.count} of ${group.total_count}`
+          : `${group.total_count}`;
+        html += `
+          <div class="group-header">
+            <span class="group-swatch" style="background:${color};"></span>
+            <span class="group-title">${group.predictor}</span>
+            <span class="group-count">${shownLabel} (${pct}%)</span>
+          </div>`;
+
+        if (!group.rows || group.rows.length === 0) {
+          html += `<p style="color:var(--text-tertiary);font-size:12px;padding:4px 0 12px;">No sample rows available.</p>`;
+          continue;
+        }
+
+        const cols = Object.keys(group.rows[0]);
+        html += "<table class='node-table'><thead><tr>";
+        cols.forEach(c => {
+          const cls = c === "sen_str" ? "col-sen_str" : "col-other";
+          html += `<th class="${cls}">${c}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        group.rows.forEach(r => {
+          html += "<tr>";
+          cols.forEach(c => {
+            const cls = c === "sen_str" ? "col-sen_str" : "col-other";
+            const raw = r[c] == null ? "" : String(r[c]);
+            let content;
+            if (c.endsWith("_features")) {
+              content = "<details><summary>features...</summary>" + raw.split(",").join("<br>") + "</details>";
+            } else {
+              content = raw;
+            }
+            html += "<td class='" + cls + "'>" + content + "</td>";
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ── Plotly setup ──
+    const plot = document.getElementById("tree-figure");
+    document.querySelector(".tree-panel").prepend(plot);
+    plot.style.width = "100%";
+    plot.style.height = "100%";
+    Plotly.Plots.resize(plot);
+
+    function scaleTreeFont() {
+      const w = window.innerWidth;
+      const newSize = w < 1400 ? 10 : w < 1920 ? 11 : 13;
+      const annotations = plot.layout.annotations;
+      for (let i = 0; i < annotations.length; i++) {
+        annotations[i].font.size = newSize;
+      }
+      Plotly.relayout(plot, { annotations });
+    }
+
+    let showDistributions = true;
+
+    function renderNodeCards() {
+      cardLayer.innerHTML = "";
+      if (!showDistributions) return;
+
+      // Plotly renders each annotation as <g class="annotation" data-index="N">
+      // We read the annotation's stored name (= sklearn node_id) via plot.layout.annotations[N].name
+      const panelRect = document.querySelector(".tree-panel").getBoundingClientRect();
+      const annotGroups = plot.querySelectorAll("g.annotation");
+
+      annotGroups.forEach((g, annotIdx) => {
+        // Get the sklearn node_id from the annotation's name field
+        const ann = plot.layout.annotations[annotIdx];
+        if (!ann) return;
+        const nodeId = ann.name;
+        if (nodeId === undefined) return;
+        const nd = nodeData[nodeId];
+        if (!nd) return;
+
+        const bgRect = g.querySelector("rect.bg");
+        if (!bgRect) return;
+
+        const bbox = bgRect.getBoundingClientRect();
+        const cx = bbox.left + bbox.width / 2 - panelRect.left;
+        const top = bbox.bottom - panelRect.top;
+
+        const card = buildCard(nd);
+        card.style.left = cx + "px";
+        card.style.top = top + "px";
+        cardLayer.appendChild(card);
+      });
+    }
+
+    scaleTreeFont();
+
+    plot.on("plotly_afterplot", renderNodeCards);
+    plot.on("plotly_relayout", renderNodeCards);
+    window.addEventListener("resize", () => {
+      Plotly.Plots.resize(plot);
+      scaleTreeFont();
+      // cards re-render via plotly_afterplot triggered by resize
+    });
+
+    plot.on("plotly_hover", function(e) {
+      const drag = plot.querySelector(".nsewdrag");
+      if (drag) drag.style.cursor = "pointer";
+    });
+
+    plot.on("plotly_unhover", function() {
+      const drag = plot.querySelector(".nsewdrag");
+      if (drag) drag.style.cursor = "default";
+    });
+
+    plot.on("plotly_click", function(e) {
+      const nodeId = e.points[0].customdata.node_id;
+      renderNodeOverview(nodeId);
+    });
+
+    // ── Draggable splitter ──
+    const dragbar = document.getElementById("dragbar");
+    const treePanel = document.querySelector(".tree-panel");
+    let isDragging = false;
+
+    dragbar.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      e.preventDefault();
+    });
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "";
+    });
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const page = document.querySelector(".page");
+      const rect = page.getBoundingClientRect();
+      const pct = ((e.clientY - rect.top) / rect.height) * 100;
+      if (pct > 20 && pct < 80) {
+        treePanel.style.height = pct + "%";
+        treePanel.style.flex = "0 0 auto";
+        Plotly.Plots.resize(plot);
+      }
+    });
+    </script>
+    

@@ -1,59 +1,1092 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>No decision tree to display</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: "DM Sans", sans-serif; margin: 0; background: #f5f5f4; color: #1c1917; }
-    .layout { display: flex; height: 100vh; }
-    .sidebar {
-        width: 260px; flex-shrink: 0; background: white;
-        border-right: 1px solid #e7e5e4; padding: 1.5rem; display: flex;
-        flex-direction: column; gap: 1rem;
-    }
-    h2 { font-size: 1.1rem; margin: 0; }
-    p  { color: #78716c; font-size: 0.875rem; margin: 0; line-height: 1.5; }
-    .label { display: inline-block; padding: 0.3rem 0.9rem;
-              background: #f5f5f4; border-radius: 999px; font-weight: 600;
-              font-size: 1rem; border: 1px solid #e7e5e4; }
-    .meta { font-size: 0.8rem; }
-    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
-                 border-bottom: 1px solid #e7e5e4; }
-    .meta-key { color: #a8a29e; }
-    .meta-val { font-family: "JetBrains Mono", monospace; color: #78716c; }
-    .main { flex: 1; overflow-y: auto; padding: 1.5rem; }
-    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
-                letter-spacing: 0.05em; color: #78716c; margin: 0 0 0.75rem; }
-    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
-                 border: 1px solid #e7e5e4; border-radius: 8px; overflow: hidden; }
-    .ex-table th { background: #fafaf9; color: #78716c; font-size: 0.7rem; font-weight: 600;
-                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
-                    text-align: left; border-bottom: 1px solid #e7e5e4; white-space: nowrap; }
-    .ex-table td { padding: 5px 10px; border-bottom: 1px solid #f0efee; vertical-align: top;
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
-    .ex-table tbody tr:hover td { background: #eff6ff; }
-    .ex-table a { color: #2563eb; text-decoration: none; font-weight: 500; }
-    .ex-table a:hover { text-decoration: underline; }
-    .ex-table tbody tr:last-child td { border-bottom: none; }
-    .ex-table td strong { color: #2563eb; font-weight: 700; }
-  </style>
-</head>
+<head><meta charset="utf-8" /></head>
 <body>
-  <div class="layout">
-    <div class="sidebar">
-      <div>
-        <h2>Single label</h2>
-        <p>All training samples for <b>head_nsubj_Number_agreement</b> share one agreement label — no decision tree was needed.</p>
-      </div>
-      <div class="label">unk</div>
-      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Korean</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">23,728</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Number_agreement</span></div></div>
-    </div>
-    <div class="main">
-      <h3>Example items (sample of 50)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>head_form</th><th>head_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>그 사람이 그 사람이다는 <strong>의식이</strong> <strong>팽배해</strong> 있는 국민들에게 김대중씨의 대안없는 바꾸기는 받아들여질 수 없었다 .</td><td>팽배해</td><td><details><summary>features...</summary></details></td><td>의식이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0169-s122%22%20%3B%20A%20%5Bform%3D%22%ED%8C%BD%EB%B0%B0%ED%95%B4%22%7C%22%ED%8C%BD%EB%B0%B0%ED%95%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%98%EC%8B%9D%EC%9D%B4%22%7C%22%EC%9D%98%EC%8B%9D%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>평점조차도 <strong>달기</strong> <strong>싫네요</strong></td><td>싫네요</td><td><details><summary>features...</summary></details></td><td>달기</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s2054%22%20%3B%20A%20%5Bform%3D%22%EC%8B%AB%EB%84%A4%EC%9A%94%22%7C%22%EC%8B%AB%EB%84%A4%EC%9A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8B%AC%EA%B8%B0%22%7C%22%EB%8B%AC%EA%B8%B0%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>따라서 <strong>우리가</strong> 함께 <strong>살아가는</strong> 사회에서는 협동이 더 큰 성과를 낸다 .</td><td>살아가는</td><td><details><summary>features...</summary></details></td><td>우리가</td><td><details><summary>features...</summary>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-JPN_01_3_06%22%20%3B%20A%20%5Bform%3D%22%EC%82%B4%EC%95%84%EA%B0%80%EB%8A%94%22%7C%22%EC%82%B4%EC%95%84%EA%B0%80%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9A%B0%EB%A6%AC%EA%B0%80%22%7C%22%EC%9A%B0%EB%A6%AC%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>또 먹다가 남아서 버리는 국물이나 농약 따위도 수질 <strong>오염을</strong> <strong>되는</strong> 원인이다 .</td><td>되는</td><td><details><summary>features...</summary></details></td><td>오염을</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-B200024-9-4243%22%20%3B%20A%20%5Bform%3D%22%EB%90%98%EB%8A%94%22%7C%22%EB%90%98%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EC%98%A4%EC%97%BC%EC%9D%84%22%7C%22%EC%98%A4%EC%97%BC%EC%9D%84%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>어떤 그림은 그런대로 괜찮지만 어떤 그림은 아주 다른 <strong>것이</strong> <strong>돼</strong> 버린다 .</td><td>돼</td><td><details><summary>features...</summary></details></td><td>것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-LittlePrince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22lpp.ko04-055%22%20%3B%20A%20%5Bform%3D%22%EB%8F%BC%22%7C%22%EB%8F%BC%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-LittlePrince</a></td></tr><tr><td><strong>1명이</strong> <strong>가진</strong> 동영상은 10분도 안 돼 1000명 , 1만 명이 공유하는 게 현실이다 .</td><td>가진</td><td><details><summary>features...</summary></details></td><td>1명이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3318%22%20%3B%20A%20%5Bform%3D%22%EA%B0%80%EC%A7%84%22%7C%22%EA%B0%80%EC%A7%84%22%5D%20%3B%20B%20%5Bform%3D%221%EB%AA%85%EC%9D%B4%22%7C%221%EB%AA%85%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>불만족의 근거로 31명이 교통 불편함을 , 12명이 직원의 불친절함을 , <strong>7명이</strong> 신간 도서가 많지 않다는 점을 <strong>제시했다</strong> .</td><td>제시했다</td><td><details><summary>features...</summary></details></td><td>7명이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C200008-5-6715%22%20%3B%20A%20%5Bform%3D%22%EC%A0%9C%EC%8B%9C%ED%96%88%EB%8B%A4%22%7C%22%EC%A0%9C%EC%8B%9C%ED%96%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%227%EB%AA%85%EC%9D%B4%22%7C%227%EB%AA%85%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>많은 형제 속에서 자라는 어린이는 <strong>그들만이</strong> <strong>지니게</strong> 되는 고민이 있다 .</td><td>지니게</td><td><details><summary>features...</summary></details></td><td>그들만이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0185-s36%22%20%3B%20A%20%5Bform%3D%22%EC%A7%80%EB%8B%88%EA%B2%8C%22%7C%22%EC%A7%80%EB%8B%88%EA%B2%8C%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B7%B8%EB%93%A4%EB%A7%8C%EC%9D%B4%22%7C%22%EA%B7%B8%EB%93%A4%EB%A7%8C%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>먹은 후에 <strong>우리</strong> 바로 시내 공원으로 <strong>갔다</strong> .</td><td>갔다</td><td><details><summary>features...</summary></details></td><td>우리</td><td><details><summary>features...</summary>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-B200018-5-3964%22%20%3B%20A%20%5Bform%3D%22%EA%B0%94%EB%8B%A4%22%7C%22%EA%B0%94%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9A%B0%EB%A6%AC%22%7C%22%EC%9A%B0%EB%A6%AC%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>모세가 성장한 후 , 어느 날 밖에 나갔다가 <strong>동족이</strong> 심히 <strong>고생하는</strong> 것을 보게 되었다 .</td><td>고생하는</td><td><details><summary>features...</summary></details></td><td>동족이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0174-s231%22%20%3B%20A%20%5Bform%3D%22%EA%B3%A0%EC%83%9D%ED%95%98%EB%8A%94%22%7C%22%EA%B3%A0%EC%83%9D%ED%95%98%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8F%99%EC%A1%B1%EC%9D%B4%22%7C%22%EB%8F%99%EC%A1%B1%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>개화파 앞에는 커다란 <strong>장애가</strong> <strong>놓여</strong> 있었지만 , 여건이 불리하기만 한 것은 아니었다 .</td><td>놓여</td><td><details><summary>features...</summary></details></td><td>장애가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22M2TA_070-s52%22%20%3B%20A%20%5Bform%3D%22%EB%86%93%EC%97%AC%22%7C%22%EB%86%93%EC%97%AC%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9E%A5%EC%95%A0%EA%B0%80%22%7C%22%EC%9E%A5%EC%95%A0%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>먼저 긍정적인 효과를 보면 , 대외적으로는 세계무역이 크게 신장하여 우리의 <strong>수출환경이</strong> 상당히 <strong>호전될</strong> 것으로 예상된다 .</td><td>호전될</td><td><details><summary>features...</summary></details></td><td>수출환경이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0190-s374%22%20%3B%20A%20%5Bform%3D%22%ED%98%B8%EC%A0%84%EB%90%A0%22%7C%22%ED%98%B8%EC%A0%84%EB%90%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%88%98%EC%B6%9C%ED%99%98%EA%B2%BD%EC%9D%B4%22%7C%22%EC%88%98%EC%B6%9C%ED%99%98%EA%B2%BD%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>그 뿐만 아니라 자기 나라와 상대방의 나라와 어떤 <strong>일이</strong> <strong>있었고</strong> 어떤 역사가 있는지 파악해야 더 좋은 관계를 만들기 위해 도움이 될 수도 있다고 생각한다 .</td><td>있었고</td><td><details><summary>features...</summary></details></td><td>일이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-JPN_17_2_09%22%20%3B%20A%20%5Bform%3D%22%EC%9E%88%EC%97%88%EA%B3%A0%22%7C%22%EC%9E%88%EC%97%88%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%BC%EC%9D%B4%22%7C%22%EC%9D%BC%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>젊은이들은 교회에 가는 것 이외에는 사회의 제반 관습을 모두 어기기 어려운 것으로 간주하여 그것을 지키는데 고통을 느끼는 <strong>것이</strong> <strong>보통이다</strong> .</td><td>보통이다</td><td><details><summary>features...</summary></details></td><td>것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0285-s1%22%20%3B%20A%20%5Bform%3D%22%EB%B3%B4%ED%86%B5%EC%9D%B4%EB%8B%A4%22%7C%22%EB%B3%B4%ED%86%B5%EC%9D%B4%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>사장처럼 보이는 <strong>아줌마가</strong> <strong>있는데</strong> 완전 불친절합니다 !</td><td>있는데</td><td><details><summary>features...</summary></details></td><td>아줌마가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s399%22%20%3B%20A%20%5Bform%3D%22%EC%9E%88%EB%8A%94%EB%8D%B0%22%7C%22%EC%9E%88%EB%8A%94%EB%8D%B0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%95%84%EC%A4%8C%EB%A7%88%EA%B0%80%22%7C%22%EC%95%84%EC%A4%8C%EB%A7%88%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td><strong>리문</strong> 씨는 대만에서 <strong>왔습니다</strong> .</td><td>왔습니다</td><td><details><summary>features...</summary></details></td><td>리문</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-A200025-31-2-9%22%20%3B%20A%20%5Bform%3D%22%EC%99%94%EC%8A%B5%EB%8B%88%EB%8B%A4%22%7C%22%EC%99%94%EC%8A%B5%EB%8B%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%A6%AC%EB%AC%B8%22%7C%22%EB%A6%AC%EB%AC%B8%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>일본에서 어느 정도 공부하고 왔는데 별로 <strong>도움이</strong> <strong>되지</strong> 않았어 .</td><td>되지</td><td><details><summary>features...</summary></details></td><td>도움이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C100002-8-5148%22%20%3B%20A%20%5Bform%3D%22%EB%90%98%EC%A7%80%22%7C%22%EB%90%98%EC%A7%80%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8F%84%EC%9B%80%EC%9D%B4%22%7C%22%EB%8F%84%EC%9B%80%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td><strong>나오코</strong> 씨는 많이 음식을 <strong>먹었습니다</strong> .</td><td>먹었습니다</td><td><details><summary>features...</summary></details></td><td>나오코</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-A200022-7-1-11%22%20%3B%20A%20%5Bform%3D%22%EB%A8%B9%EC%97%88%EC%8A%B5%EB%8B%88%EB%8B%A4%22%7C%22%EB%A8%B9%EC%97%88%EC%8A%B5%EB%8B%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%82%98%EC%98%A4%EC%BD%94%22%7C%22%EB%82%98%EC%98%A4%EC%BD%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>태국 <strong>정부도</strong> 이런 입장에 <strong>서서</strong> 그 섬의 생태 환경을 회복시키려는 노력을 하고 있음을 볼 수 있다 .</td><td>서서</td><td><details><summary>features...</summary></details></td><td>정부도</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-CHN_26_1_06%22%20%3B%20A%20%5Bform%3D%22%EC%84%9C%EC%84%9C%22%7C%22%EC%84%9C%EC%84%9C%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A0%95%EB%B6%80%EB%8F%84%22%7C%22%EC%A0%95%EB%B6%80%EB%8F%84%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>양국 간의 전쟁은 대규모 전면전이라기보다는 경제적 필요에 따라 수시로 충돌하는 <strong>경우가</strong> <strong>대부분이었다</strong> .</td><td>대부분이었다</td><td><details><summary>features...</summary></details></td><td>경우가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0145-s151%22%20%3B%20A%20%5Bform%3D%22%EB%8C%80%EB%B6%80%EB%B6%84%EC%9D%B4%EC%97%88%EB%8B%A4%22%7C%22%EB%8C%80%EB%B6%80%EB%B6%84%EC%9D%B4%EC%97%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%BD%EC%9A%B0%EA%B0%80%22%7C%22%EA%B2%BD%EC%9A%B0%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>코트라에 따르면 미야기현에 위치한 <strong>소니</strong> 자회사 공장은 쓰나미의 침수피해를 <strong>입어</strong> 1000명 이상의 종업원이 모두 대피했다 .</td><td>입어</td><td><details><summary>features...</summary></details></td><td>소니</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3242%22%20%3B%20A%20%5Bform%3D%22%EC%9E%85%EC%96%B4%22%7C%22%EC%9E%85%EC%96%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%86%8C%EB%8B%88%22%7C%22%EC%86%8C%EB%8B%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>공포의 균형하에서 마비되었던 1945년에서 1962년 사이의 끔찍한 <strong>두려움이</strong> 다시 <strong>솟아나고</strong> 있다 .</td><td>솟아나고</td><td><details><summary>features...</summary></details></td><td>두려움이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0051-s165%22%20%3B%20A%20%5Bform%3D%22%EC%86%9F%EC%95%84%EB%82%98%EA%B3%A0%22%7C%22%EC%86%9F%EC%95%84%EB%82%98%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EB%91%90%EB%A0%A4%EC%9B%80%EC%9D%B4%22%7C%22%EB%91%90%EB%A0%A4%EC%9B%80%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>"역사를 모르는 <strong>사람들이</strong> <strong>반복될</strong> 것이다" 라는 말이 유명하다 .</td><td>반복될</td><td><details><summary>features...</summary></details></td><td>사람들이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-ENG_34_2_01%22%20%3B%20A%20%5Bform%3D%22%EB%B0%98%EB%B3%B5%EB%90%A0%22%7C%22%EB%B0%98%EB%B3%B5%EB%90%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%82%AC%EB%9E%8C%EB%93%A4%EC%9D%B4%22%7C%22%EC%82%AC%EB%9E%8C%EB%93%A4%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>따라서 , 화성의 대기에 아르곤은 95 % 를 차지해버리는 이산화탄소가 빠져나가면 아르곤의 <strong>함량은</strong> 절대적으로 <strong>높아진다</strong> .</td><td>높아진다</td><td><details><summary>features...</summary></details></td><td>함량은</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s2177%22%20%3B%20A%20%5Bform%3D%22%EB%86%92%EC%95%84%EC%A7%84%EB%8B%A4%22%7C%22%EB%86%92%EC%95%84%EC%A7%84%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%ED%95%A8%EB%9F%89%EC%9D%80%22%7C%22%ED%95%A8%EB%9F%89%EC%9D%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>이렇게 일본에서는 3개의 대표적인 <strong>음식이</strong> <strong>있다</strong> .</td><td>있다</td><td><details><summary>features...</summary></details></td><td>음식이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C200007-13-6682%22%20%3B%20A%20%5Bform%3D%22%EC%9E%88%EB%8B%A4%22%7C%22%EC%9E%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%8C%EC%8B%9D%EC%9D%B4%22%7C%22%EC%9D%8C%EC%8B%9D%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>경찰청에 따르면 부산지방청에 소속된 프로파일러들은 <strong>김길태가</strong> 이번 사건의 유력한 용의자로 <strong>떠오를</strong> 때부터 그의 범죄 이력과 생활습관 , 성향 , 심리 등을 분석했다 .</td><td>떠오를</td><td><details><summary>features...</summary></details></td><td>김길태가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s16%22%20%3B%20A%20%5Bform%3D%22%EB%96%A0%EC%98%A4%EB%A5%BC%22%7C%22%EB%96%A0%EC%98%A4%EB%A5%BC%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B9%80%EA%B8%B8%ED%83%9C%EA%B0%80%22%7C%22%EA%B9%80%EA%B8%B8%ED%83%9C%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>지도상에는 남극과 북극이라는 <strong>용어가</strong> <strong>보이고</strong> 동서의 끝이라는 용어는 보이지 않고 있다 .</td><td>보이고</td><td><details><summary>features...</summary></details></td><td>용어가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3421%22%20%3B%20A%20%5Bform%3D%22%EB%B3%B4%EC%9D%B4%EA%B3%A0%22%7C%22%EB%B3%B4%EC%9D%B4%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9A%A9%EC%96%B4%EA%B0%80%22%7C%22%EC%9A%A9%EC%96%B4%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>나의 답변이 <strong>그가</strong> <strong>원하는</strong> 것에 못미칠 때 그는 물론 폭력을 행사하지는 않았지만 험악한 표정으로 짜증을 내며 두번세번 같은 질문을 반복한다 .</td><td>원하는</td><td><details><summary>features...</summary></details></td><td>그가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0091-s9%22%20%3B%20A%20%5Bform%3D%22%EC%9B%90%ED%95%98%EB%8A%94%22%7C%22%EC%9B%90%ED%95%98%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B7%B8%EA%B0%80%22%7C%22%EA%B7%B8%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>오죽했으면 같이 참석했던 <strong>야조프가</strong> 이후 ' 기자회견석상에서 나는 쿠데타가 이미 실패하고 있음을 직감했다 ' 고 <strong>털어놓았겠는가</strong> ?</td><td>털어놓았겠는가</td><td><details><summary>features...</summary></details></td><td>야조프가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0045-s123%22%20%3B%20A%20%5Bform%3D%22%ED%84%B8%EC%96%B4%EB%86%93%EC%95%98%EA%B2%A0%EB%8A%94%EA%B0%80%22%7C%22%ED%84%B8%EC%96%B4%EB%86%93%EC%95%98%EA%B2%A0%EB%8A%94%EA%B0%80%22%5D%20%3B%20B%20%5Bform%3D%22%EC%95%BC%EC%A1%B0%ED%94%84%EA%B0%80%22%7C%22%EC%95%BC%EC%A1%B0%ED%94%84%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td><strong>세계는</strong> 글로벌화하게 <strong>되고</strong> 경제성장도 지속적으로 상승하고 기업들은 공장을 많이 설립하기 때문에 이런 환경문제는 더 심하게 된다 .</td><td>되고</td><td><details><summary>features...</summary></details></td><td>세계는</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-CHN_4_1_02%22%20%3B%20A%20%5Bform%3D%22%EB%90%98%EA%B3%A0%22%7C%22%EB%90%98%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%84%B8%EA%B3%84%EB%8A%94%22%7C%22%EC%84%B8%EA%B3%84%EB%8A%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>오히려 도울 수 있는 것은 돕겠다 , <strong>이것이</strong> 나의 솔직한 <strong>심정입니다</strong> .</td><td>심정입니다</td><td><details><summary>features...</summary></details></td><td>이것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0083-s47%22%20%3B%20A%20%5Bform%3D%22%EC%8B%AC%EC%A0%95%EC%9E%85%EB%8B%88%EB%8B%A4%22%7C%22%EC%8B%AC%EC%A0%95%EC%9E%85%EB%8B%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%B4%EA%B2%83%EC%9D%B4%22%7C%22%EC%9D%B4%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>뭉턱뭉턱하게 그려 보이는 <strong>것이</strong> 동화 표현의 <strong>장점입니다</strong> .</td><td>장점입니다</td><td><details><summary>features...</summary></details></td><td>것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0037-s152%22%20%3B%20A%20%5Bform%3D%22%EC%9E%A5%EC%A0%90%EC%9E%85%EB%8B%88%EB%8B%A4%22%7C%22%EC%9E%A5%EC%A0%90%EC%9E%85%EB%8B%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td><strong>일본이</strong> 근 3백여 개의 봉건영주국으로 <strong>분화된</strong> 데 비해 , 조선은 유교국을 표방하고 서울과 수만 개의 마을의 사회구조를 형성하였다 .</td><td>분화된</td><td><details><summary>features...</summary></details></td><td>일본이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0068-s384%22%20%3B%20A%20%5Bform%3D%22%EB%B6%84%ED%99%94%EB%90%9C%22%7C%22%EB%B6%84%ED%99%94%EB%90%9C%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%BC%EB%B3%B8%EC%9D%B4%22%7C%22%EC%9D%BC%EB%B3%B8%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>올들어 부산을 찾는 <strong>중국인</strong> 쇼핑객이 크게 <strong>늘면서</strong> 부산 유통가의 외국인 주고객이 일본인에서 중국인으로 뒤바뀌고 있다 .</td><td>늘면서</td><td><details><summary>features...</summary></details></td><td>중국인</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4350%22%20%3B%20A%20%5Bform%3D%22%EB%8A%98%EB%A9%B4%EC%84%9C%22%7C%22%EB%8A%98%EB%A9%B4%EC%84%9C%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A4%91%EA%B5%AD%EC%9D%B8%22%7C%22%EC%A4%91%EA%B5%AD%EC%9D%B8%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>주일 미군의 시설이나 나하 항의 항만 시설까지 포함하면 민간의 <strong>도시</strong> 이용 면적은 훨씬 <strong>좁아진다</strong> .</td><td>좁아진다</td><td><details><summary>features...</summary></details></td><td>도시</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s581%22%20%3B%20A%20%5Bform%3D%22%EC%A2%81%EC%95%84%EC%A7%84%EB%8B%A4%22%7C%22%EC%A2%81%EC%95%84%EC%A7%84%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8F%84%EC%8B%9C%22%7C%22%EB%8F%84%EC%8B%9C%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>백성의 안타까운 요구가 무엇인지 통찰하는 <strong>직관력이</strong> <strong>필요하다</strong> .</td><td>필요하다</td><td><details><summary>features...</summary></details></td><td>직관력이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0017-s225%22%20%3B%20A%20%5Bform%3D%22%ED%95%84%EC%9A%94%ED%95%98%EB%8B%A4%22%7C%22%ED%95%84%EC%9A%94%ED%95%98%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A7%81%EA%B4%80%EB%A0%A5%EC%9D%B4%22%7C%22%EC%A7%81%EA%B4%80%EB%A0%A5%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>구제역 사태 이후 처음으로 <strong>시장이</strong> <strong>열린</strong> 탓인지 경기도와 경북 , 충북 지역 농민과 상인들까지 가세해 평소보다 많은 200여명이 찾았다 .</td><td>열린</td><td><details><summary>features...</summary></details></td><td>시장이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s23%22%20%3B%20A%20%5Bform%3D%22%EC%97%B4%EB%A6%B0%22%7C%22%EC%97%B4%EB%A6%B0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%8B%9C%EC%9E%A5%EC%9D%B4%22%7C%22%EC%8B%9C%EC%9E%A5%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>" 문학이란 게 대체 뭐요 " 라는 <strong>물음이</strong> 아직오 내 귓가에 <strong>쟁쟁하다</strong> .</td><td>쟁쟁하다</td><td><details><summary>features...</summary></details></td><td>물음이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0091-s11%22%20%3B%20A%20%5Bform%3D%22%EC%9F%81%EC%9F%81%ED%95%98%EB%8B%A4%22%7C%22%EC%9F%81%EC%9F%81%ED%95%98%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%AC%BC%EC%9D%8C%EC%9D%B4%22%7C%22%EB%AC%BC%EC%9D%8C%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>라헬의 묘로 전해져 오는 <strong>것이</strong> 현재도 <strong>남아</strong> 있으나 그것은 15 세기에 만들어진 것이다 .</td><td>남아</td><td><details><summary>features...</summary></details></td><td>것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0174-s136%22%20%3B%20A%20%5Bform%3D%22%EB%82%A8%EC%95%84%22%7C%22%EB%82%A8%EC%95%84%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>탄광에서는 전쟁 전의 10 분의 1 미만이 제철업과 제강업에서는 전쟁 전의 20 분의 1 <strong>미만이</strong> <strong>생산되었다</strong> .</td><td>생산되었다</td><td><details><summary>features...</summary></details></td><td>미만이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0149-s157%22%20%3B%20A%20%5Bform%3D%22%EC%83%9D%EC%82%B0%EB%90%98%EC%97%88%EB%8B%A4%22%7C%22%EC%83%9D%EC%82%B0%EB%90%98%EC%97%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%AF%B8%EB%A7%8C%EC%9D%B4%22%7C%22%EB%AF%B8%EB%A7%8C%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>배운다고 해도 혼자서 책상 앞에서 책을 보고 연필을 쥐고 그런 식으로 공부한 <strong>것이</strong> <strong>아니었다</strong> .</td><td>아니었다</td><td><details><summary>features...</summary></details></td><td>것이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ARG-JPN_14_2_02%22%20%3B%20A%20%5Bform%3D%22%EC%95%84%EB%8B%88%EC%97%88%EB%8B%A4%22%7C%22%EC%95%84%EB%8B%88%EC%97%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>첫번째 , <strong>제가</strong> 한국에 <strong>오기</strong> 전에 중국에서 도 한국어를 배웠어요 .</td><td>오기</td><td><details><summary>features...</summary></details></td><td>제가</td><td><details><summary>features...</summary>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C100011-5-5924%22%20%3B%20A%20%5Bform%3D%22%EC%98%A4%EA%B8%B0%22%7C%22%EC%98%A4%EA%B8%B0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A0%9C%EA%B0%80%22%7C%22%EC%A0%9C%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>그러나 이런 추리를 뒷받침해 주는 고고학적인 <strong>증거들이</strong> 하나 둘씩 우리 앞에 환하게 웃고 <strong>나타나고</strong> 있는 데는 어쩌랴 .</td><td>나타나고</td><td><details><summary>features...</summary></details></td><td>증거들이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0028-s124%22%20%3B%20A%20%5Bform%3D%22%EB%82%98%ED%83%80%EB%82%98%EA%B3%A0%22%7C%22%EB%82%98%ED%83%80%EB%82%98%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A6%9D%EA%B1%B0%EB%93%A4%EC%9D%B4%22%7C%22%EC%A6%9D%EA%B1%B0%EB%93%A4%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>서울에서 설악산까지 다섯 <strong>시간쯤</strong> <strong>걸렸습니다</strong> .</td><td>걸렸습니다</td><td><details><summary>features...</summary></details></td><td>시간쯤</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-A200040-35-2-6-0-3%22%20%3B%20A%20%5Bform%3D%22%EA%B1%B8%EB%A0%B8%EC%8A%B5%EB%8B%88%EB%8B%A4%22%7C%22%EA%B1%B8%EB%A0%B8%EC%8A%B5%EB%8B%88%EB%8B%A4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%8B%9C%EA%B0%84%EC%AF%A4%22%7C%22%EC%8B%9C%EA%B0%84%EC%AF%A4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a></td></tr><tr><td>이를테면 무슨 말을 하려는데 전혀 다른 말이 튀어 나온다든가 , 글을 쓰는 데도 마음과는 달리 엉뚱한 <strong>글이</strong> <strong>씌어지는</strong> 수가 있는 것이다 .</td><td>씌어지는</td><td><details><summary>features...</summary></details></td><td>글이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0185-s298%22%20%3B%20A%20%5Bform%3D%22%EC%94%8C%EC%96%B4%EC%A7%80%EB%8A%94%22%7C%22%EC%94%8C%EC%96%B4%EC%A7%80%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B8%80%EC%9D%B4%22%7C%22%EA%B8%80%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>수많은 <strong>일본인들이</strong> 이런 돈을 <strong>쓰고</strong> 있는 건 신문 광고나 엄청난 론 광고 인쇄물의 정도를 보면 알 수 있다 .</td><td>쓰고</td><td><details><summary>features...</summary></details></td><td>일본인들이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0072-s275%22%20%3B%20A%20%5Bform%3D%22%EC%93%B0%EA%B3%A0%22%7C%22%EC%93%B0%EA%B3%A0%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%BC%EB%B3%B8%EC%9D%B8%EB%93%A4%EC%9D%B4%22%7C%22%EC%9D%BC%EB%B3%B8%EC%9D%B8%EB%93%A4%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td><strong>우리나라</strong> <strong>최고되세요</strong> .</td><td>최고되세요</td><td><details><summary>features...</summary></details></td><td>우리나라</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3587%22%20%3B%20A%20%5Bform%3D%22%EC%B5%9C%EA%B3%A0%EB%90%98%EC%84%B8%EC%9A%94%22%7C%22%EC%B5%9C%EA%B3%A0%EB%90%98%EC%84%B8%EC%9A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC%22%7C%22%EC%9A%B0%EB%A6%AC%EB%82%98%EB%9D%BC%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a></td></tr><tr><td>즉 일본의 교과서는 일본이라는 <strong>나라가</strong> <strong>지향하는</strong> 의도와 궤를 같이 하는 보수 사학의 견해로 변질되기를 강요당해 온 것이 이제까지의 통례였다 .</td><td>지향하는</td><td><details><summary>features...</summary></details></td><td>나라가</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0195-s4%22%20%3B%20A%20%5Bform%3D%22%EC%A7%80%ED%96%A5%ED%95%98%EB%8A%94%22%7C%22%EC%A7%80%ED%96%A5%ED%95%98%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EB%82%98%EB%9D%BC%EA%B0%80%22%7C%22%EB%82%98%EB%9D%BC%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>이 코스트를 인하하기 위해 세계 규모의 자원 획득 경쟁이 벌어져 식민지 쟁탈전이 가열되었고 이에 따라 이해의 <strong>대립이</strong> <strong>심화하게</strong> 되었다 .</td><td>심화하게</td><td><details><summary>features...</summary></details></td><td>대립이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0113-s73%22%20%3B%20A%20%5Bform%3D%22%EC%8B%AC%ED%99%94%ED%95%98%EA%B2%8C%22%7C%22%EC%8B%AC%ED%99%94%ED%95%98%EA%B2%8C%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8C%80%EB%A6%BD%EC%9D%B4%22%7C%22%EB%8C%80%EB%A6%BD%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr><tr><td>한국에서는 1948 년 5 월에 <strong>전시민들이</strong> 참정권을 가지고 제헌국회 대의원들을 <strong>선출하는</strong> 첫 보통선거가 있었다 .</td><td>선출하는</td><td><details><summary>features...</summary></details></td><td>전시민들이</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0112-s200%22%20%3B%20A%20%5Bform%3D%22%EC%84%A0%EC%B6%9C%ED%95%98%EB%8A%94%22%7C%22%EC%84%A0%EC%B6%9C%ED%95%98%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A0%84%EC%8B%9C%EB%AF%BC%EB%93%A4%EC%9D%B4%22%7C%22%EC%A0%84%EC%8B%9C%EB%AF%BC%EB%93%A4%EC%9D%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a></td></tr></tbody></table>
-    </div>
-  </div>
+    <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="tree-figure" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("tree-figure")) {                    Plotly.newPlot(                        "tree-figure",                        [{"customdata":[{"node_id":0,"hovertext":"\u003ci style='color:#9c9490'\u003eClick to explore examples\u003c\u002fi\u003e"}],"hoverlabel":{"bgcolor":"white","bordercolor":"#e7e5e4","font":{"color":"#1c1917","family":"DM Sans, sans-serif","size":12}},"hovertemplate":"%{customdata.hovertext}\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"rgba(0,0,0,0)","line":{"width":0},"size":56},"mode":"markers","showlegend":false,"x":[0],"y":[0],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"clickmode":"event","annotations":[{"align":"center","bgcolor":"#b893de","bordercolor":"rgba(0,0,0,0.14)","borderpad":7,"borderwidth":1,"font":{"family":"JetBrains Mono, monospace","size":11},"name":"0","showarrow":false,"text":"\u003cb\u003eunk\u003c\u002fb\u003e\u003cbr\u003e\u003cspan style='color:#44403c;font-size:9px'\u003e\u003cb\u003e[0]\u003c\u002fb\u003e  n=21416  H=0.00\u003c\u002fspan\u003e","x":0,"y":0}],"xaxis":{"visible":false},"yaxis":{"visible":false},"margin":{"l":10,"r":10,"t":10,"b":10},"font":{"family":"DM Sans, sans-serif"},"autosize":true,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"responsive": true}                    )                };            </script>        </div>
 </body>
 </html>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #f5f5f4;
+        --surface: #ffffff;
+        --surface-raised: #fafaf9;
+        --border: #e7e5e4;
+        --border-subtle: #f0efee;
+        --text-primary: #1c1917;
+        --text-secondary: #78716c;
+        --text-tertiary: #a8a29e;
+        --accent: #2563eb;
+        --accent-light: #eff6ff;
+        --font-ui: 'DM Sans', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+        --radius: 10px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+      }
+
+      body {
+        font-family: var(--font-ui);
+        background: var(--bg);
+        color: var(--text-primary);
+        overflow: hidden;
+        height: 100vh;
+      }
+
+      .page {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .tree-panel {
+        flex: 0 0 auto;
+        height: 58%;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      .table-panel {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        font-family: var(--font-ui);
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .table-panel-header {
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .table-panel-header h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .table-panel-body {
+        padding: 0 20px 20px;
+        flex: 1;
+      }
+
+      .splitter {
+        height: 5px;
+        width: 100%;
+        cursor: row-resize;
+        background: var(--border);
+        transition: background 0.15s;
+        z-index: 20;
+        flex-shrink: 0;
+      }
+
+      .splitter:hover { background: #a8a29e; }
+
+      /* ── Info panel ── */
+      .info-panel {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        z-index: 100;
+        width: 240px;
+        overflow: hidden;
+        font-family: var(--font-ui);
+        transition: width 0.3s ease;
+      }
+
+      .info-panel.minimized {
+        width: auto;
+      }
+
+      .info-panel-header {
+        padding: 10px 14px;
+        background: var(--text-primary);
+        color: white;
+        position: relative;
+      }
+
+      .minimize-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        line-height: 1;
+        transition: background 0.2s;
+        padding: 0;
+      }
+
+      .minimize-button:hover {
+        background: rgba(255,255,255,0.3);
+      }
+
+      .minimize-button:active {
+        background: rgba(255,255,255,0.4);
+      }
+
+      .info-panel-header .language-name {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .info-panel-header .accuracy-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 5px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 20px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: rgba(255,255,255,0.9);
+      }
+
+      .accuracy-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+      }
+
+      .info-panel-meta {
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--border-subtle);
+        transition: opacity 0.3s ease, max-height 0.3s ease;
+        max-height: 500px;
+        overflow: hidden;
+      }
+
+      .info-panel.minimized .info-panel-meta,
+      .info-panel.minimized .info-panel-legend,
+      .info-panel.minimized .toggle-row,
+      .info-panel.minimized .branch-legend {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border: none;
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+      }
+
+      .meta-key {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+      }
+
+      .meta-val {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-weight: 500;
+      }
+
+      .info-panel-legend {
+        padding: 8px 14px 10px;
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 500px;
+        overflow: hidden;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border-subtle);
+        cursor: pointer;
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 100px;
+        overflow: hidden;
+      }
+
+      .legend-title {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-tertiary);
+        margin-bottom: 6px;
+      }
+
+      .legend-item {
+        display: grid;
+        grid-template-columns: 9px 28px 28px 1fr;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 0;
+      }
+
+      .legend-swatch {
+        width: 9px; height: 9px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .legend-label {
+        font-size: 11px;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-weight: 500;
+      }
+
+      .legend-count {
+        font-size: 10px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+        text-align: right;
+      }
+
+      .legend-bar-track {
+        height: 6px;
+        background: var(--border-subtle);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .legend-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      /* ── Branch legend ── */
+      .branch-legend {
+        display: flex;
+        gap: 10px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border-subtle);
+        transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
+        max-height: 100px;
+        overflow: hidden;
+      }
+
+      .branch-pill {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .branch-line {
+        width: 16px; height: 2.5px;
+        border-radius: 2px;
+      }
+
+      /* ── Per-node bar card (permanently visible, JS-positioned) ── */
+      #node-card-layer {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+      }
+
+      .node-dist-card {
+        position: absolute;
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.13);
+        border-radius: 4px;
+        padding: 4px 5px 3px;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 3px;
+        pointer-events: all;
+        transform: translateX(-50%);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: default;
+        z-index: 50;
+      }
+
+      .node-dist-card.expanded {
+        transform: translateX(-50%) scale(2);
+        transform-origin: top center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+        z-index: 200;
+      }
+
+      .node-dist-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        width: 19px;
+      }
+
+      .node-dist-bar-wrap {
+        width: 14px;
+        height: 30px;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .node-dist-bar {
+        width: 100%;
+        border-radius: 2px 2px 0 0;
+        min-height: 1px;
+      }
+
+      .node-dist-count {
+        font-size: 7px;
+        color: #44403c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      .node-dist-label {
+        font-size: 8.5px;
+        color: #78716c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      /* ── Node summary row: decision path + distribution side by side ── */
+      .node-summary-row {
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid var(--border);
+      }
+
+      #node-path-panel {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      #node-dist-panel {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      /* ── Node distribution panel in table header ── */
+      .node-dist-panel {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 16px;
+        height: 100%;
+        background: var(--surface-raised);
+      }
+
+      .node-dist-panel-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        width: 28px;
+      }
+
+      .node-dist-panel-bar-wrap {
+        width: 28px;
+        height: 60px;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .node-dist-panel-bar {
+        width: 100%;
+        border-radius: 3px 3px 0 0;
+        min-height: 2px;
+      }
+
+      .node-dist-panel-count {
+        font-size: 12px;
+        color: #44403c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      .node-dist-panel-label {
+        font-size: 9px;
+        color: #78716c;
+        font-family: var(--font-mono);
+        text-align: center;
+        line-height: 1.3;
+      }
+
+      /* ── Decision path visualization ── */
+      .decision-path-panel {
+        height: 100%;
+        padding: 12px 20px;
+        border-right: 1px solid var(--border-subtle);
+        background: var(--surface);
+        overflow-y: auto;
+      }
+
+      .decision-path-title {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+      }
+
+      .decision-path {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .path-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .path-arrow {
+        color: var(--text-tertiary);
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+
+      .path-condition {
+        font-family: var(--font-mono);
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .path-branch {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-left: 6px;
+      }
+
+      .path-branch.true {
+        background: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+      }
+
+      .path-branch.false {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+      }
+
+      /* ── Right panel table ── */
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 0 6px;
+      }
+
+      .group-swatch {
+        width: 10px; height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .group-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .group-count {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      .node-table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .node-table thead th {
+        background: var(--surface-raised);
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 6px 10px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .node-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: top;
+        color: var(--text-primary);
+        font-size: 13px;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+      }
+
+      .node-table td:has(details[open]) {
+        white-space: normal;
+        overflow: visible;
+        max-width: none;
+      }
+
+      .node-table td details[open] {
+        word-break: break-all;
+        white-space: normal;
+      }
+
+      .node-table th.col-sen_str, .node-table td.col-sen_str {
+        width: 45%;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .node-table th.col-other, .node-table td.col-other {
+        width: auto;
+        white-space: nowrap;
+      }
+
+      .node-table tbody tr:last-child td { border-bottom: none; }
+      .node-table tbody tr:hover td { background: var(--accent-light); }
+      .node-table td strong { color: var(--accent); font-weight: 700; }
+
+      .node-table a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .node-table a:hover { text-decoration: underline; }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        min-height: 300px;
+        color: var(--text-tertiary);
+        gap: 8px;
+      }
+
+      .empty-state-icon { font-size: 32px; opacity: 0.4; }
+      .empty-state-text { font-size: 13px; font-weight: 500; }
+      .empty-state-sub { font-size: 12px; color: var(--text-tertiary); }
+
+      /* ── Toggle ── */
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-top: 1px solid var(--border-subtle);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .toggle-row:hover { background: var(--surface-raised); }
+
+      .toggle-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .toggle-switch {
+        width: 28px;
+        height: 16px;
+        border-radius: 8px;
+        background: var(--accent);
+        position: relative;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch.off { background: var(--border); }
+
+      .toggle-switch::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+        top: 2px;
+        left: 14px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      }
+
+      .toggle-switch.off::after { left: 2px; }
+    </style>
+
+    <div class="page">
+
+      <div class="info-panel" id="info-panel">
+        <div class="info-panel-header">
+          <button class="minimize-button" id="minimize-btn" onclick="toggleMinimize()" title="Minimize panel">−</button>
+          <div class="language-name">Korean</div>
+          <div class="accuracy-badge">
+            <span class="accuracy-dot"></span>
+            100.0% accuracy
+          </div>
+        </div>
+        <div class='info-panel-meta'><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Korean</span></div><div class="meta-row"><span class="meta-key">accuracy</span><span class="meta-val">100.0%</span></div><div class="meta-row"><span class="meta-key">base entropy</span><span class="meta-val">0.002</span></div><div class="meta-row"><span class="meta-key">reduced entropy</span><span class="meta-val">0.002</span></div><div class="meta-row"><span class="meta-key">Nodes</span><span class="meta-val">1 (1 leaves)</span></div><div class="meta-row"><span class="meta-key">Depth</span><span class="meta-val">0</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">21,416</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Number_agreement</span></div></div>
+        <div class="info-panel-legend">
+          <div class="legend-title">Classes · dataset distribution</div>
+          
+        <div class="legend-item" style="">
+          <span class="legend-swatch" style="background:#31cb9f;"></span>
+          <span class="legend-label">Yes</span>
+          <span class="legend-count">3</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:0px;background:#31cb9f;"></div>
+          </div>
+        </div>
+        <div class="legend-item" style="opacity:0.35;">
+          <span class="legend-swatch" style="background:#f16393;"></span>
+          <span class="legend-label">No</span>
+          <span class="legend-count">0</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:0px;background:#f16393;"></div>
+          </div>
+        </div>
+        <div class="legend-item" style="">
+          <span class="legend-swatch" style="background:#b893de;"></span>
+          <span class="legend-label">unk</span>
+          <span class="legend-count">21413</span>
+          <div class="legend-bar-track">
+            <div class="legend-bar-fill" style="width:80px;background:#b893de;"></div>
+          </div>
+        </div>
+        </div>
+        <div class="toggle-row" id="dist-toggle-row" onclick="toggleDistributions()">
+          <span class="toggle-label">Show node distributions</span>
+          <span class="toggle-switch" id="dist-toggle-switch"></span>
+        </div>
+        <div class="branch-legend">
+          <div class="branch-pill">
+            <span class="branch-line" style="background:#dc2626;"></span>False
+          </div>
+          <div class="branch-pill">
+            <span class="branch-line" style="background:#16a34a;"></span>True
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-panel">
+        <div id="node-card-layer"></div>
+      </div>
+
+      <div class="splitter" id="dragbar"></div>
+
+      <div class="table-panel">
+        <div class="table-panel-header">
+          <h2 id="table-panel-title">Examples</h2>
+        </div>
+        <div class="node-summary-row">
+          <div id="node-path-panel" style="display:none;"></div>
+          <div id="node-dist-panel" style="display:none;"></div>
+        </div>
+        <div class="table-panel-body">
+          <div class="empty-state" id="node-table">
+            <div class="empty-state-icon">⬡</div>
+            <div class="empty-state-text">No node selected</div>
+            <div class="empty-state-sub">Click any node in the tree to explore examples</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const nodeSamples = {"Yes": {"0": {"rows": [{"sen_str": "\ubb38\ud559 \uc791\ud488\uc774 \uc18c\uc2e4\ub418\uace0 \ub9c8\ucf00\ub3c4\ub2c8\uc544\uc758 \ud544\uc0ac\ubcf8\uc774 \uc78a\ud600\uc84c\uc73c\ub098 <strong>\uadf8\ub9ac\uc2a4\uc778\ub4e4\uc740</strong> \ud398\ub2c8\ud0a4\uc544 \uc54c\ud30c\ubcb3\uc744 \ub3c4\uc785\ud558\uba74\uc11c \uc774\ub97c \uac1c\uc870\ud574 \uadf8\ub9ac\uc2a4 \uc54c\ud30c\ubcb3\uc744 <strong>\ub9cc\ub4e4\uc5b4</strong> \ub0c8\ub2e4 .", "head_form": "\ub9cc\ub4e4\uc5b4", "head_features": ["VerbForm=Fin", "Form=Aux", "Mood=Imp", "Polite=Infm", "Tense=nan", "Voice=nan"], "nsubj_form": "\uadf8\ub9ac\uc2a4\uc778\ub4e4\uc740", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w03005013%22%20%3B%20A%20%5Bform%3D%22%EA%B7%B8%EB%A6%AC%EC%8A%A4%EC%9D%B8%EB%93%A4%EC%9D%80%22%7C%22%EA%B7%B8%EB%A6%AC%EC%8A%A4%EC%9D%B8%EB%93%A4%EC%9D%80%22%5D%20%3B%20B%20%5Bform%3D%22%EB%A7%8C%EB%93%A4%EC%96%B4%22%7C%22%EB%A7%8C%EB%93%A4%EC%96%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-PUD</a>"}, {"sen_str": "\ub610\ud55c \ubc29\ucf55\uc5d0\uc11c \uac00\uc7a5 \ub192\uc740 \ube4c\ub529 \uc778 \ub9c8\ud558\ub098\ucee8 ( MahaNakhon ) \ucc98\ub7fc \ud604\ub300\uc801 \uc778 \uace0\uce35 <strong>\ube4c\ub529\ub4e4\uc774</strong> \ubc29\ucf55\uc5d0 \uc6b0\ub69d <strong>\uc19f\uc544</strong> \uc788\ub2e4 .", "head_form": "\uc19f\uc544", "head_features": ["VerbForm=Fin", "Form=Aux", "Mood=Imp", "Polite=Infm", "Tense=nan", "Voice=nan"], "nsubj_form": "\ube4c\ub529\ub4e4\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01148029%22%20%3B%20A%20%5Bform%3D%22%EB%B9%8C%EB%94%A9%EB%93%A4%EC%9D%B4%22%7C%22%EB%B9%8C%EB%94%A9%EB%93%A4%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%86%9F%EC%95%84%22%7C%22%EC%86%9F%EC%95%84%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-PUD</a>"}, {"sen_str": "\uc774\uacf3\uc740 \uadf8\ub4e4\uc774 \uadf8 \uc9c0\uc5ed\uc758 \ud638\uc8fc <strong>\uc6d0\uc8fc\ubbfc\ub4e4\uc774</strong> <strong>\ub0a8\uaca8</strong> \ub193\uc740 \uc791\uc740 \uce74\ub204 \ud558\ub098\ub97c \ud6d4\uce5c \uacf3 \uc774\ub2e4 .", "head_form": "\ub0a8\uaca8", "head_features": ["VerbForm=Fin", "Form=Aux", "Mood=Imp", "Polite=Infm", "Tense=nan", "Voice=Cau"], "nsubj_form": "\uc6d0\uc8fc\ubbfc\ub4e4\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01039032%22%20%3B%20A%20%5Bform%3D%22%EC%9B%90%EC%A3%BC%EB%AF%BC%EB%93%A4%EC%9D%B4%22%7C%22%EC%9B%90%EC%A3%BC%EB%AF%BC%EB%93%A4%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%82%A8%EA%B2%A8%22%7C%22%EB%82%A8%EA%B2%A8%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-PUD</a>"}], "count": 3, "total_count": 3}}, "unk": {"0": {"rows": [{"sen_str": "\uac00\uad6c\uc8fc \uc9c1\uc5c5\ubcc4 \ubd80\ucc44\ubcf4\uc720\uc561\uc744 \ubcf4\uba74 \uc790\uc720\uc5c5\uc885\uc0ac\uc790\uac00 325\ub9cc \uc6d0\uc73c\ub85c \uac00\uc7a5 \ub9ce\uace0 <strong>\ub2e4\uc74c\uc774</strong> \uc790\uc601\uc5c5\uc790 ( 283\ub9cc\uc6d0 ) , \ubd09\uae09\uc0dd\ud65c\uc790 ( 224\ub9cc\uc6d0 ) , \uc77c\uc6a9\ub178\ub3d9\uc790 ( 162\ub9cc\uc6d0 ) , \uae30\ud0c0 ( 158\ub9cc\uc6d0 ) \uc758 \uc21c\uc73c\ub85c <strong>\ub098\ud0c0\ub0ac\ub2e4</strong> .", "head_form": "\ub098\ud0c0\ub0ac\ub2e4", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ub2e4\uc74c\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0070-s32%22%20%3B%20A%20%5Bform%3D%22%EB%8B%A4%EC%9D%8C%EC%9D%B4%22%7C%22%EB%8B%A4%EC%9D%8C%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%82%98%ED%83%80%EB%82%AC%EB%8B%A4%22%7C%22%EB%82%98%ED%83%80%EB%82%AC%EB%8B%A4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "<strong>\ub3c8\uc774</strong> <strong>\uc544\uae5d\uc9c0\uac00</strong> \uc54a\uace0 \ud48d\uc871\ud569\ub2c8\ub2e4", "head_form": "\uc544\uae5d\uc9c0\uac00", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ub3c8\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3445%22%20%3B%20A%20%5Bform%3D%22%EB%8F%88%EC%9D%B4%22%7C%22%EB%8F%88%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%95%84%EA%B9%9D%EC%A7%80%EA%B0%80%22%7C%22%EC%95%84%EA%B9%9D%EC%A7%80%EA%B0%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a>"}, {"sen_str": "\uadf8\ub294 \ubaa9\uc131\uc758 \uc704\uc131\uc774 \ubaa9\uc131\uc758 \ub4a4\ub85c \ub4e4\uc5b4\uac00\ub294 \uc2dc\uac04\uc774 \uac19\uc740 \uc2dc\uac04 \uac04\uaca9\uc73c\ub85c \ub418\ud480\uc774\ub418\uc9c0 \uc54a\uc73c\uba70 , \ubaa9\uc131\uc758 <strong>\ub2ec\uc774</strong> \uc77c\uc815\ud55c \uc18d\ub3c4\ub85c <strong>\ub3c8\ub2e4\ub294</strong> \uae30\ub300\uc640 \uc5b4\uae0b\ub0a8\uc744 \uad00\uce21\ud588\ub2e4 .", "head_form": "\ub3c8\ub2e4\ub294", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ub2ec\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0204-s215%22%20%3B%20A%20%5Bform%3D%22%EB%8B%AC%EC%9D%B4%22%7C%22%EB%8B%AC%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%8F%88%EB%8B%A4%EB%8A%94%22%7C%22%EB%8F%88%EB%8B%A4%EB%8A%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "\uadf8\ub7ec\ub098 \uadfc\ub798\uc5d0 \ub4e4\uc5b4 \uc624\uba74\uc11c \ub2e4\uc591\ud55c \ubc29\ubc95\uc5d0 \uc758\ud55c <strong>\uc5f0\uad6c\uac00</strong> <strong>\uc774\ub8e8\uc5b4\uc9c0\uace0</strong> \uc788\ub2e4 .", "head_form": "\uc774\ub8e8\uc5b4\uc9c0\uace0", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc5f0\uad6c\uac00", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0094-s738%22%20%3B%20A%20%5Bform%3D%22%EC%97%B0%EA%B5%AC%EA%B0%80%22%7C%22%EC%97%B0%EA%B5%AC%EA%B0%80%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9D%B4%EB%A3%A8%EC%96%B4%EC%A7%80%EA%B3%A0%22%7C%22%EC%9D%B4%EB%A3%A8%EC%96%B4%EC%A7%80%EA%B3%A0%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "\ub610\ud55c \ud578\ub4dc\ud3f0\uc774 \uc788\uae30 \ub54c\ubb38\uc5d0 \ubd80\ubaa8\ub2d8\uc774 \uc27d\uac8c \uc5f0\ub77d\ud560 \uc218 \uc788\uae30\ub294 \ud558\uc9c0\ub9cc \uc544\ubb34\ub54c\ub098 \uc804\ud654\ub97c \ud558\uba74 \uc548\ub418\ub294 \uac83\uc774 <strong>\ubd80\ubaa8\ub2d8\ub4e4\uc774</strong> <strong>\ubaa8\ub974\ub294</strong> \uac83 \uac19\ub294\ub370 \ud56d\uc0c1 \uc218\uc5c5\uc911 \ubcc4\uc18c\ub9ac\ub97c \ub098\uc624\uace0 \uc218\uc5c5\uc5d0 \ud070 \uc601\ud5a5\uc744 \uc900\ub2e4 .", "head_form": "\ubaa8\ub974\ub294", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ubd80\ubaa8\ub2d8\ub4e4\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-B200054-32-2-10%22%20%3B%20A%20%5Bform%3D%22%EB%B6%80%EB%AA%A8%EB%8B%98%EB%93%A4%EC%9D%B4%22%7C%22%EB%B6%80%EB%AA%A8%EB%8B%98%EB%93%A4%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%AA%A8%EB%A5%B4%EB%8A%94%22%7C%22%EB%AA%A8%EB%A5%B4%EB%8A%94%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a>"}, {"sen_str": "1970 \ub144\ub300\uc5d0 \uac00\uc774\uc544 <strong>\uc774\ub860\uc774</strong> \ucc98\uc74c <strong>\uc18c\uac1c\ub418\uc5c8\uc744</strong> \ub54c \ucd5c\ucd08\uc758 \ubc18\uc751\uc740 \ubb38\uc790 \uadf8\ub300\ub85c \ucca0\uc800\ud55c \uc678\uba74\uc774\uc5c8\ub2e4 .", "head_form": "\uc18c\uac1c\ub418\uc5c8\uc744", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc774\ub860\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0285-s327%22%20%3B%20A%20%5Bform%3D%22%EC%9D%B4%EB%A1%A0%EC%9D%B4%22%7C%22%EC%9D%B4%EB%A1%A0%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%86%8C%EA%B0%9C%EB%90%98%EC%97%88%EC%9D%84%22%7C%22%EC%86%8C%EA%B0%9C%EB%90%98%EC%97%88%EC%9D%84%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "<strong>\uc774\uac8c</strong> \uafc8\uc778\uc9c0 <strong>\uc0dd\uc2e0\uc9c0</strong> \ubaa8\ub974\uaca0\uad70\uc694 .", "head_form": "\uc0dd\uc2e0\uc9c0", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc774\uac8c", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0127-s496%22%20%3B%20A%20%5Bform%3D%22%EC%9D%B4%EA%B2%8C%22%7C%22%EC%9D%B4%EA%B2%8C%22%5D%20%3B%20B%20%5Bform%3D%22%EC%83%9D%EC%8B%A0%EC%A7%80%22%7C%22%EC%83%9D%EC%8B%A0%EC%A7%80%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "\uc120\uc9c4\uad6d\uc5d0\uc11c\ub294 \uc0ac\ud68c\uc8fc\uc758\uac00 \uc131\uacf5\ud560 \uc218 \uc5c6\uace0 \ub7ec\uc2dc\uc544 , \uc911\uad6d , \ubca0\ud2b8\ub0a8 , \ucfe0\ubc14 \uac19\uc740 \ub098\ub77c\uc5d0\uc11c\ub9cc <strong>\uc0ac\ud68c\uc8fc\uc758\uac00</strong> <strong>\uc131\uacf5\ud560</strong> \uc218 \uc788\ub294 \uac8c \uc544\ub2c8\ub2e4 .", "head_form": "\uc131\uacf5\ud560", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc0ac\ud68c\uc8fc\uc758\uac00", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0169-s235%22%20%3B%20A%20%5Bform%3D%22%EC%82%AC%ED%9A%8C%EC%A3%BC%EC%9D%98%EA%B0%80%22%7C%22%EC%82%AC%ED%9A%8C%EC%A3%BC%EC%9D%98%EA%B0%80%22%5D%20%3B%20B%20%5Bform%3D%22%EC%84%B1%EA%B3%B5%ED%95%A0%22%7C%22%EC%84%B1%EA%B3%B5%ED%95%A0%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "\ud55c\uad6d\uacfc \uc77c\ubcf8 \uc74c\uc2dd\uc744 \ube44\uad50\ud558\uace0 \ub098\uba74 \uc0ac\ub78c\ub4e4\uc774 \ub2e4 \uac19\uc774 \ub098\ub4e4\uace0 \uba39\uace0 \uc2e0\ubd84\uc744 \uc313\uc744 \uc218 \uc788\ub294 <strong>\uc810\uc774</strong> <strong>\uc788\ub2e4</strong> .", "head_form": "\uc788\ub2e4", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc810\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C200009-10-6771%22%20%3B%20A%20%5Bform%3D%22%EC%A0%90%EC%9D%B4%22%7C%22%EC%A0%90%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9E%88%EB%8B%A4%22%7C%22%EC%9E%88%EB%8B%A4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a>"}, {"sen_str": "\uc55e\uc11c \ud0c8\uc138\uc758\ud639\uc774 \ubd88\uac70\uc9c0\uc790 <strong>\uac15\ud638\ub3d9\uc740</strong> 9\uc6d4 5\uc77c \uc18c\uc18d\uc0ac \uce21 \uacf5\uc2dd \ubcf4\ub3c4\uc790\ub8cc\ub97c \ud1b5\ud574 \" \uc88b\uc9c0 \uc54a\uc740 \uc77c\ub85c \ud32c \uc5ec\ub7ec\ubd84\uaed8 \uac71\uc815\uacfc \uc6b0\ub824\ub97c \ub0b3\uac8c \ub41c \uc810 \uba3c\uc800 \uc0ac\uacfc \ub4dc\ub9b0\ub2e4 \" \uace0 \ub300\uc911\uc5d0\uac8c \uc815\uc911\ud788 <strong>\uc0ac\uacfc\ud588\ub2e4</strong> .", "head_form": "\uc0ac\uacfc\ud588\ub2e4", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uac15\ud638\ub3d9\uc740", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s345%22%20%3B%20A%20%5Bform%3D%22%EA%B0%95%ED%98%B8%EB%8F%99%EC%9D%80%22%7C%22%EA%B0%95%ED%98%B8%EB%8F%99%EC%9D%80%22%5D%20%3B%20B%20%5Bform%3D%22%EC%82%AC%EA%B3%BC%ED%96%88%EB%8B%A4%22%7C%22%EC%82%AC%EA%B3%BC%ED%96%88%EB%8B%A4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a>"}, {"sen_str": "\ubd88\ub9cc\uc871\uc744 \ud558\ub294 <strong>\uc774\uc720\ub294</strong> \uc5ec\ub7ec\uac00\uc9c0 \uc758\uacac\uc744 <strong>\ub098\ub220\uc838\uc788\uc9c0\ub9cc</strong> \uace0\ud1b5\uc774 \ubd88\ud3b8\ud558\ub2e4 ( 31\uba85 ) \uc640 \uc9c1\uc6d0\uc774 \ubd88\uce5c\uc808\ud558\ub2e4 ( 12\uba85 ) , \uc2e0\uac04\ub3c4\uc11c\uac00 \ub9cc\uc9c0 \uc54a\ub2e4 ( 7\uba85 ) \ub4f1\uacfc \uac19\uc740 \uc8fc\ub85c \uc120\ud0dd\ud588\ub2e4 .", "head_form": "\ub098\ub220\uc838\uc788\uc9c0\ub9cc", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uc774\uc720\ub294", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-KSL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22KH-C200023-4-7461%22%20%3B%20A%20%5Bform%3D%22%EC%9D%B4%EC%9C%A0%EB%8A%94%22%7C%22%EC%9D%B4%EC%9C%A0%EB%8A%94%22%5D%20%3B%20B%20%5Bform%3D%22%EB%82%98%EB%88%A0%EC%A0%B8%EC%9E%88%EC%A7%80%EB%A7%8C%22%7C%22%EB%82%98%EB%88%A0%EC%A0%B8%EC%9E%88%EC%A7%80%EB%A7%8C%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-KSL</a>"}, {"sen_str": "\uc6b0\ub9ac\ub294 \uba3c\uc800 \uc784\ud654\uc758 <strong>\ub9ac\uc5bc\ub9ac\uc998\ub860\uc774</strong> \uc62c\ubc14\ub85c <strong>\uc815\ub9bd\ub418\uc5b4</strong> \uac00\ub294 \uacfc\uc815\uc744 \uc0b4\ud3b4\ubcf4\uace0 \uc774\uc5b4\uc11c \uadf8\uac83\uc774 \uc18c\uc124\ub860\uc73c\ub85c \uc804\uac1c\ub41c \ubcf8\uaca9\uc18c\uc124\ub860\uc5d0 \ub300\ud574 \uace0\ucc30\ud558\uae30\ub85c \ud55c\ub2e4 .", "head_form": "\uc815\ub9bd\ub418\uc5b4", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ub9ac\uc5bc\ub9ac\uc998\ub860\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0046-s15%22%20%3B%20A%20%5Bform%3D%22%EB%A6%AC%EC%96%BC%EB%A6%AC%EC%A6%98%EB%A1%A0%EC%9D%B4%22%7C%22%EB%A6%AC%EC%96%BC%EB%A6%AC%EC%A6%98%EB%A1%A0%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EC%A0%95%EB%A6%BD%EB%90%98%EC%96%B4%22%7C%22%EC%A0%95%EB%A6%BD%EB%90%98%EC%96%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}, {"sen_str": "\uac1d\uc2e4\uc5d0 <strong>\ucef4\ud4e8\ud130\ub3c4</strong> \ubaa8\ub450 <strong>\uc788\uace0</strong> , \uc870\uc6a9\ud574\uc11c \uc88b\ub124\uc694 .", "head_form": "\uc788\uace0", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ucef4\ud4e8\ud130\ub3c4", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3349%22%20%3B%20A%20%5Bform%3D%22%EC%BB%B4%ED%93%A8%ED%84%B0%EB%8F%84%22%7C%22%EC%BB%B4%ED%93%A8%ED%84%B0%EB%8F%84%22%5D%20%3B%20B%20%5Bform%3D%22%EC%9E%88%EA%B3%A0%22%7C%22%EC%9E%88%EA%B3%A0%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a>"}, {"sen_str": "\uac00\ub054\uc740 \uadf8 <strong>\ub54c</strong> \ub9db\uc774 \ub354 <strong>\uadf8\ub9ac\uc6b8</strong> \ub54c\ub3c4 \uc788\uc5b4\uc694 .", "head_form": "\uadf8\ub9ac\uc6b8", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\ub54c", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s181%22%20%3B%20A%20%5Bform%3D%22%EB%95%8C%22%7C%22%EB%95%8C%22%5D%20%3B%20B%20%5Bform%3D%22%EA%B7%B8%EB%A6%AC%EC%9A%B8%22%7C%22%EA%B7%B8%EB%A6%AC%EC%9A%B8%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-GSD</a>"}, {"sen_str": "\uc57c\uc678\uc5d0\uc11c\ub294 \ud558\ub8e8\uc5d0\ub3c4 \uae30\ud6c4\uac00 4\uacc4\uc808 \ubc14\ub00c\ub4ef \ub4a4\ubc14\ub00c\ub294 <strong>\uac83\uc774</strong> <strong>\ubcf4\ud1b5\uc785\ub2c8\ub2e4</strong> .", "head_form": "\ubcf4\ud1b5\uc785\ub2c8\ub2e4", "head_features": ["VerbForm=Fin", "Form=nan", "Mood=nan", "Polite=nan", "Tense=nan", "Voice=nan"], "nsubj_form": "\uac83\uc774", "nsubj_features": ["Person=nan", "PronType=nan"], "treebank_link": "<a href='https://universal.grew.fr/?corpus=UD_Korean-Kaist%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MH2_0094-s1518%22%20%3B%20A%20%5Bform%3D%22%EA%B2%83%EC%9D%B4%22%7C%22%EA%B2%83%EC%9D%B4%22%5D%20%3B%20B%20%5Bform%3D%22%EB%B3%B4%ED%86%B5%EC%9E%85%EB%8B%88%EB%8B%A4%22%7C%22%EB%B3%B4%ED%86%B5%EC%9E%85%EB%8B%88%EB%8B%A4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Korean-Kaist</a>"}], "count": 15, "total_count": 21413}}};
+    const nodeData = {"0": {"x": 0.0, "y": 0.0, "color": "#b893de", "dist": [{"cls": "Yes", "cnt": 3, "frac": 0.0001400821815465073, "color": "#31cb9f"}, {"cls": "No", "cnt": 0, "frac": 0.0, "color": "#f16393"}, {"cls": "unk", "cnt": 21413, "frac": 0.9998599178184535, "color": "#b893de"}], "corr": [], "is_leaf": true, "parent": null, "rule": null}};
+    const classColors = {"Yes": "#31cb9f", "No": "#f16393", "unk": "#b893de"};
+
+    // ── Info panel minimize/expand ──
+    function toggleMinimize() {
+      const panel = document.getElementById("info-panel");
+      const btn = document.getElementById("minimize-btn");
+      const isMinimized = panel.classList.toggle("minimized");
+      btn.textContent = isMinimized ? "+" : "−";
+      btn.title = isMinimized ? "Expand panel" : "Minimize panel";
+    }
+
+    // ── Per-node distribution bar cards ──
+    const cardLayer = document.getElementById("node-card-layer");
+
+    function buildCard(nd) {
+      const dist = nd.dist;
+      const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
+      const BAR_MAX_H = 30;
+
+      const card = document.createElement("div");
+      card.className = "node-dist-card";
+
+      dist.forEach(d => {
+        const h = Math.max(1, Math.round((d.cnt / maxCnt) * BAR_MAX_H));
+        const dim = d.cnt === 0 ? "opacity:0.18;" : "";
+        const col = document.createElement("div");
+        col.className = "node-dist-col";
+        col.style.cssText = dim;
+        // No count in the compact view — only bar + label
+        col.innerHTML = `
+          <div class="node-dist-bar-wrap">
+            <div class="node-dist-bar" style="height:${h}px;background:${d.color};"></div>
+          </div>
+          <div class="node-dist-label">${d.cls}</div>`;
+        card.appendChild(col);
+      });
+
+      // Hover: expand to 2× and show counts
+      card.addEventListener("mouseenter", function() {
+        card.classList.add("expanded");
+        // Inject count elements
+        card.querySelectorAll(".node-dist-col").forEach((col, idx) => {
+          const existing = col.querySelector(".node-dist-count");
+          if (!existing) {
+            const countEl = document.createElement("div");
+            countEl.className = "node-dist-count";
+            countEl.textContent = dist[idx].cnt;
+            // Insert between bar and label
+            const label = col.querySelector(".node-dist-label");
+            col.insertBefore(countEl, label);
+          }
+        });
+      });
+
+      card.addEventListener("mouseleave", function() {
+        card.classList.remove("expanded");
+        card.querySelectorAll(".node-dist-count").forEach(el => el.remove());
+      });
+
+      return card;
+    }
+
+    function toggleDistributions() {
+      showDistributions = !showDistributions;
+      document.getElementById("dist-toggle-switch").classList.toggle("off", !showDistributions);
+      renderNodeCards();
+    }
+
+    // ── Example table ──
+    function renderNodeOverview(nodeId) {
+      const container = document.getElementById("node-table");
+      const titleEl = document.getElementById("table-panel-title");
+      const distPanel = document.getElementById("node-dist-panel");
+      const pathPanel = document.getElementById("node-path-panel");
+
+      const groups = [];
+      for (const [predictorValue, nodeMap] of Object.entries(nodeSamples)) {
+        const entry = nodeMap[nodeId];
+        if (entry && entry.count > 0) {
+          groups.push({
+            predictor: predictorValue,
+            rows: entry.rows,
+            count: entry.count,
+            total_count: entry.total_count
+          });
+        }
+      }
+
+      const totalSamples = groups.reduce((s,g) => s + g.total_count, 0);
+      titleEl.textContent = totalSamples > 0
+        ? `Node ${nodeId} · ${totalSamples} samples`
+        : `Node ${nodeId}`;
+
+      // ── Build decision path from root to this node ──
+      const path = [];
+      let currentNode = nodeId;
+      const nd = nodeData[String(nodeId)];
+
+      console.log("Building path for node:", nodeId);
+      console.log("Node data:", nd);
+
+      while (nd && nodeData[String(currentNode)]) {
+        const current = nodeData[String(currentNode)];
+        console.log("Current node:", currentNode, "Rule:", current.rule, "Parent:", current.parent);
+        if (current.rule) {
+          path.unshift({
+            rule: current.rule[0],
+            isTrueBranch: current.rule[1]
+          });
+        }
+        if (current.parent === null || current.parent === undefined) break;
+        currentNode = current.parent;
+      }
+
+      console.log("Built path:", path);
+
+      // Render decision path
+      if (path.length > 0) {
+        let pathHtml = '<div class="decision-path-panel">';
+        pathHtml += '<div class="decision-path-title">Decision Path</div>';
+        pathHtml += '<div class="decision-path">';
+
+        path.forEach((step, idx) => {
+          const branchClass = step.isTrueBranch ? 'true' : 'false';
+          const branchLabel = step.isTrueBranch ? 'TRUE' : 'FALSE';
+          const arrow = idx === 0 ? '▶' : '↳';
+
+          pathHtml += `
+            <div class="path-step">
+              <span class="path-arrow">${arrow}</span>
+              <span class="path-condition">${step.rule}</span>
+              <span class="path-branch ${branchClass}">${branchLabel}</span>
+            </div>`;
+        });
+
+        pathHtml += '</div></div>';
+        pathPanel.innerHTML = pathHtml;
+        pathPanel.style.display = "block";
+        console.log("Path panel HTML set");
+      } else {
+        pathPanel.style.display = "none";
+        console.log("No path to display");
+      }
+
+      // ── Distribution bar panel ──
+      if (nd) {
+        const dist = nd.dist;
+        const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
+        const BAR_MAX_H = 60;
+        let panelHtml = '<div class="node-dist-panel">';
+        dist.forEach(d => {
+          const h = Math.max(2, Math.round((d.cnt / maxCnt) * BAR_MAX_H));
+          const dim = d.cnt === 0 ? "opacity:0.18;" : "";
+          panelHtml += `
+            <div class="node-dist-panel-col" style="${dim}">
+              <div class="node-dist-panel-bar-wrap">
+                <div class="node-dist-panel-bar" style="height:${h}px;background:${d.color};"></div>
+              </div>
+              <div class="node-dist-panel-count">${d.cnt}</div>
+              <div class="node-dist-panel-label">${d.cls}</div>
+            </div>`;
+        });
+        panelHtml += "</div>";
+        distPanel.innerHTML = panelHtml;
+        distPanel.style.display = "block";
+      } else {
+        distPanel.style.display = "none";
+      }
+
+      if (groups.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">∅</div>
+          <div class="empty-state-text">No examples for this node</div></div>`;
+        return;
+      }
+
+      groups.sort((a, b) => b.total_count - a.total_count);
+      let html = "";
+
+      for (const group of groups) {
+        const color = classColors[group.predictor] || "#888";
+        const pct = totalSamples > 0 ? (group.total_count / totalSamples * 100).toFixed(1) : "0.0";
+        const shownLabel = group.count < group.total_count
+          ? `showing ${group.count} of ${group.total_count}`
+          : `${group.total_count}`;
+        html += `
+          <div class="group-header">
+            <span class="group-swatch" style="background:${color};"></span>
+            <span class="group-title">${group.predictor}</span>
+            <span class="group-count">${shownLabel} (${pct}%)</span>
+          </div>`;
+
+        if (!group.rows || group.rows.length === 0) {
+          html += `<p style="color:var(--text-tertiary);font-size:12px;padding:4px 0 12px;">No sample rows available.</p>`;
+          continue;
+        }
+
+        const cols = Object.keys(group.rows[0]);
+        html += "<table class='node-table'><thead><tr>";
+        cols.forEach(c => {
+          const cls = c === "sen_str" ? "col-sen_str" : "col-other";
+          html += `<th class="${cls}">${c}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        group.rows.forEach(r => {
+          html += "<tr>";
+          cols.forEach(c => {
+            const cls = c === "sen_str" ? "col-sen_str" : "col-other";
+            const raw = r[c] == null ? "" : String(r[c]);
+            let content;
+            if (c.endsWith("_features")) {
+              content = "<details><summary>features...</summary>" + raw.split(",").join("<br>") + "</details>";
+            } else {
+              content = raw;
+            }
+            html += "<td class='" + cls + "'>" + content + "</td>";
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ── Plotly setup ──
+    const plot = document.getElementById("tree-figure");
+    document.querySelector(".tree-panel").prepend(plot);
+    plot.style.width = "100%";
+    plot.style.height = "100%";
+    Plotly.Plots.resize(plot);
+
+    function scaleTreeFont() {
+      const w = window.innerWidth;
+      const newSize = w < 1400 ? 10 : w < 1920 ? 11 : 13;
+      const annotations = plot.layout.annotations;
+      for (let i = 0; i < annotations.length; i++) {
+        annotations[i].font.size = newSize;
+      }
+      Plotly.relayout(plot, { annotations });
+    }
+
+    let showDistributions = true;
+
+    function renderNodeCards() {
+      cardLayer.innerHTML = "";
+      if (!showDistributions) return;
+
+      // Plotly renders each annotation as <g class="annotation" data-index="N">
+      // We read the annotation's stored name (= sklearn node_id) via plot.layout.annotations[N].name
+      const panelRect = document.querySelector(".tree-panel").getBoundingClientRect();
+      const annotGroups = plot.querySelectorAll("g.annotation");
+
+      annotGroups.forEach((g, annotIdx) => {
+        // Get the sklearn node_id from the annotation's name field
+        const ann = plot.layout.annotations[annotIdx];
+        if (!ann) return;
+        const nodeId = ann.name;
+        if (nodeId === undefined) return;
+        const nd = nodeData[nodeId];
+        if (!nd) return;
+
+        const bgRect = g.querySelector("rect.bg");
+        if (!bgRect) return;
+
+        const bbox = bgRect.getBoundingClientRect();
+        const cx = bbox.left + bbox.width / 2 - panelRect.left;
+        const top = bbox.bottom - panelRect.top;
+
+        const card = buildCard(nd);
+        card.style.left = cx + "px";
+        card.style.top = top + "px";
+        cardLayer.appendChild(card);
+      });
+    }
+
+    scaleTreeFont();
+
+    plot.on("plotly_afterplot", renderNodeCards);
+    plot.on("plotly_relayout", renderNodeCards);
+    window.addEventListener("resize", () => {
+      Plotly.Plots.resize(plot);
+      scaleTreeFont();
+      // cards re-render via plotly_afterplot triggered by resize
+    });
+
+    plot.on("plotly_hover", function(e) {
+      const drag = plot.querySelector(".nsewdrag");
+      if (drag) drag.style.cursor = "pointer";
+    });
+
+    plot.on("plotly_unhover", function() {
+      const drag = plot.querySelector(".nsewdrag");
+      if (drag) drag.style.cursor = "default";
+    });
+
+    plot.on("plotly_click", function(e) {
+      const nodeId = e.points[0].customdata.node_id;
+      renderNodeOverview(nodeId);
+    });
+
+    // ── Draggable splitter ──
+    const dragbar = document.getElementById("dragbar");
+    const treePanel = document.querySelector(".tree-panel");
+    let isDragging = false;
+
+    dragbar.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      e.preventDefault();
+    });
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "";
+    });
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const page = document.querySelector(".page");
+      const rect = page.getBoundingClientRect();
+      const pct = ((e.clientY - rect.top) / rect.height) * 100;
+      if (pct > 20 && pct < 80) {
+        treePanel.style.height = pct + "%";
+        treePanel.style.flex = "0 0 auto";
+        Plotly.Plots.resize(plot);
+      }
+    });
+    </script>
+    

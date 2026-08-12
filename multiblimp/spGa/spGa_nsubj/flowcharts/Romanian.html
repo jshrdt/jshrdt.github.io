@@ -86,6 +86,7 @@
     text-align: center; background: var(--surface); transition: box-shadow .15s;
   }
   .outcome:hover { box-shadow: var(--shadow-md); }
+  .outcome:not(.outcome-empty) { background: #ecfdf5; }
   .outcome-title {
     font-weight: 600; font-size: 12.5px; display: flex; align-items: center;
     justify-content: center; gap: 6px;
@@ -135,13 +136,13 @@
     <div class="node start">inflector.inflect(form, features)<div class="node-explain">Try to re-inflect the word into a different grammatical value (e.g. singular &rarr; plural).</div></div>
 
     <div class="connector"><span>swap_forms is None</span><div class="explain">No matching entry was found for this word at all &mdash; inflection wasn&rsquo;t even attempted.</div></div>
-    <div class="outcome" style="--dot:#94a3b8">
-      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=94</span></div>
-      <details><summary>examples (up to 5)</summary><div class="examples-scroll"><table class="examples"><thead><tr><th>before</th><th>after</th><th>head_form</th><th>nsubj_form</th><th>head_feats</th><th>nsubj_feats</th><th>treebank</th></tr></thead><tbody><tr><td class="sentence">Un <strong>om</strong> ca el nici doi ani n-a <strong>putut</strong> să stea în Butucani.</td><td class="sentence">&mdash;</td><td>putut</td><td>om</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Tense=Past</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Definite=Ind<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-441%22%20%3B%20A%20%5Bform%3D%22putut%22%7C%22Putut%22%5D%20%3B%20B%20%5Bform%3D%22om%22%7C%22Om%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-RRT</a></td></tr><tr><td class="sentence">Un <strong>studiu</strong> cu docetaxel marcat cu 14C s-a <strong>efectuat</strong> la trei pacienți cu cancer.</td><td class="sentence">&mdash;</td><td>efectuat</td><td>studiu</td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Definite=Ind<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4336%22%20%3B%20A%20%5Bform%3D%22efectuat%22%7C%22Efectuat%22%5D%20%3B%20B%20%5Bform%3D%22studiu%22%7C%22Studiu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-RRT</a></td></tr><tr><td class="sentence">Un <strong>grup</strong> a <strong>primit</strong> un placebo și trei mese zilnice, în timp ce al doilea grup a primit ulei polinesaturat omega-3.</td><td class="sentence">&mdash;</td><td>primit</td><td>grup</td><td class="feats"><details><summary>2 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Definite=Ind<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2592%22%20%3B%20A%20%5Bform%3D%22primit%22%7C%22Primit%22%5D%20%3B%20B%20%5Bform%3D%22grup%22%7C%22Grup%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-SiMoNERo</a></td></tr><tr><td class="sentence">Datorită faptului că <strong>studiul</strong> nostru nu a <strong>arătat</strong> prezența niciunei anomalii a funcției tiroidiene în lotul studiat de 30 de copii cu hipoacuzie neurosenzorială profundă bilaterală non-sindromică, purtători de implant cohlear, nu considerăm necesară testarea de rutină pentru funcția tiroidiană a acestor pacienți.</td><td class="sentence">&mdash;</td><td>arătat</td><td>studiul</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Tense=Past</details></td><td class="feats"><details><summary>4 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Case=Nom<br>Definite=Def<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3046%22%20%3B%20A%20%5Bform%3D%22ar%C4%83tat%22%7C%22Ar%C4%83tat%22%5D%20%3B%20B%20%5Bform%3D%22studiul%22%7C%22Studiul%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-SiMoNERo</a></td></tr><tr><td class="sentence">un vizionar al cărui <strong>destin</strong>, cu visurile și faptele sale de vitejie, a <strong>rămas</strong> pentru totdeauna în istorie, contribuind la modelarea lumii, așa cum o cunoaștem astăzi.</td><td class="sentence">&mdash;</td><td>rămas</td><td>destin</td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing<br>Tense=Past</details></td><td class="feats"><details><summary>3 feats &middot; <span class="swap-feat-badge">Gender=Masc</span></summary>Definite=Ind<br><strong class="swap-feat">Gender=Masc</strong><br>Number=Sing</details></td><td class="treebank"><a href='https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1362%22%20%3B%20A%20%5Bform%3D%22r%C4%83mas%22%7C%22R%C4%83mas%22%5D%20%3B%20B%20%5Bform%3D%22destin%22%7C%22Destin%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-RRT</a></td></tr></tbody></table></div></details>
+    <div class="outcome outcome-empty" style="--dot:#94a3b8">
+      <div class="outcome-title"><span class="outcome-dot"></span>no_candidates<span class="count">n=0</span></div>
+      <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
 
     <div class="connector"><span>swap_forms == [] (found, but no inflected candidates)</span><div class="explain">The word was found, but no valid re-inflected form could be generated for it.</div></div>
-    <div class="outcome" style="--dot:#94a3b8">
+    <div class="outcome outcome-empty" style="--dot:#94a3b8">
       <div class="outcome-title"><span class="outcome-dot"></span>no_inflections<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
@@ -152,7 +153,7 @@
     <div class="branch">
       <div class="branch-col">
         <div class="connector"><span>yes</span><div class="explain">The spelling didn&rsquo;t change at all, so there&rsquo;s no usable swap here.</div></div>
-        <div class="outcome" style="--dot:#64748b">
+        <div class="outcome outcome-empty" style="--dot:#64748b">
       <div class="outcome-title"><span class="outcome-dot"></span>same_forms<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
@@ -164,14 +165,14 @@
         <div class="branch">
           <div class="branch-col">
             <div class="connector"><span>no, overlap &gt; 0</span><div class="explain">The new form could still carry the original value too, so the swap didn&rsquo;t cleanly change anything.</div></div>
-            <div class="outcome" style="--dot:#ef4444">
+            <div class="outcome outcome-empty" style="--dot:#ef4444">
       <div class="outcome-title"><span class="outcome-dot"></span>same_features<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
           </div>
           <div class="branch-col">
             <div class="connector"><span>no, UNDEFINED present</span><div class="explain">The new form&rsquo;s grammatical value couldn&rsquo;t be confidently determined.</div></div>
-            <div class="outcome" style="--dot:#f59e0b">
+            <div class="outcome outcome-empty" style="--dot:#f59e0b">
       <div class="outcome-title"><span class="outcome-dot"></span>undefined_features<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
@@ -183,14 +184,14 @@
             <div class="branch">
               <div class="branch-col">
                 <div class="connector"><span>no (empty result)</span><div class="explain">No usable feature value came back for the new form.</div></div>
-                <div class="outcome" style="--dot:#f59e0b">
+                <div class="outcome outcome-empty" style="--dot:#f59e0b">
       <div class="outcome-title"><span class="outcome-dot"></span>undefined_features (empty)<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
               </div>
               <div class="branch-col">
                 <div class="connector"><span>no (quota exceeded)</span><div class="explain">This feature combination already has enough examples elsewhere, so it&rsquo;s skipped to keep the dataset balanced.</div></div>
-                <div class="outcome" style="--dot:#a78bfa">
+                <div class="outcome outcome-empty" style="--dot:#a78bfa">
       <div class="outcome-title"><span class="outcome-dot"></span>extra_pairs<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
@@ -202,19 +203,19 @@
                 <div class="branch">
                   <div class="branch-col">
                     <div class="connector"><span>yes</span><div class="explain">The subject could still agree with the new form by coincidence, so this isn&rsquo;t a clean disagreement case.</div></div>
-                    <div class="outcome" style="--dot:#eab308">
+                    <div class="outcome outcome-empty" style="--dot:#eab308">
       <div class="outcome-title"><span class="outcome-dot"></span>ambiguous_subjects<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
                   </div>
                   <div class="branch-col">
                     <div class="connector"><span>no</span><div class="explain">No overlap &mdash; swapping the verb creates a genuine agreement mismatch with the subject.</div></div>
-                    <div class="outcome" style="--dot:#22c55e">
+                    <div class="outcome outcome-empty" style="--dot:#22c55e">
       <div class="outcome-title"><span class="outcome-dot"></span>correct_swaps ✓<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
                     <div class="connector"><span>+ if multiple swap_forms existed</span><div class="explain">When more than one valid re-inflected spelling was found for this value, it&rsquo;s also logged here for visibility.</div></div>
-                    <div class="outcome" style="--dot:#38bdf8">
+                    <div class="outcome outcome-empty" style="--dot:#38bdf8">
       <div class="outcome-title"><span class="outcome-dot"></span>multi_now_valid<span class="count">n=0</span></div>
       <details><summary>examples (up to 5)</summary><p class="empty">no examples</p></details>
     </div>
