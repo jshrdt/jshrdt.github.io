@@ -16,7 +16,9 @@
     p  { color: #78716c; font-size: 0.875rem; margin: 0; line-height: 1.5; }
     .label { display: inline-block; padding: 0.3rem 0.9rem;
               background: #f5f5f4; border-radius: 999px; font-weight: 600;
-              font-size: 1rem; border: 1px solid #e7e5e4; }
+              font-size: 1rem; border: 1px solid #e7e5e4;
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
     .meta { font-size: 0.8rem; }
     .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
                  border-bottom: 1px solid #e7e5e4; }
@@ -41,18 +43,19 @@
   </style>
 </head>
 <body>
+  <script type="application/json" id="label-distribution">{"Yes": 3}</script>
   <div class="layout">
     <div class="sidebar">
       <div>
         <h2>Single label</h2>
         <p>All training samples for <b>head_nsubj_Number_agreement</b> share one agreement label — no decision tree was needed.</p>
       </div>
-      <div class="label">Yes</div>
+      <div class="labels"><div class="label">Yes</div></div>
       <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Nepali</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">3</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">head_nsubj_Number_agreement</span></div></div>
     </div>
     <div class="main">
       <h3>Example items (sample of 3)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>head_form</th><th>head_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>अनि सधैं त्यो गोठालो द्यूसो , अब द्यूसोभरी गाईबस्तु लिएर <strong>त्यो</strong> चराउन <strong>जाने</strong> ।</td><td>जाने</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Imp<br>Tense=Pres</details></td><td>त्यो</td><td><details><summary>features...</summary>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-3%22%20%3B%20A%20%5Bform%3D%22%E0%A4%9C%E0%A4%BE%E0%A4%A8%E0%A5%87%22%7C%22%E0%A4%9C%E0%A4%BE%E0%A4%A8%E0%A5%87%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%A4%E0%A5%8D%E0%A4%AF%E0%A5%8B%22%7C%22%E0%A4%A4%E0%A5%8D%E0%A4%AF%E0%A5%8B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr><tr><td>अनि भुत्लै भुत्ला जिउ भरी भुत्लै भुत्ला भएको <strong>मान्छे</strong> <strong>आएको</strong> छ रे ।</td><td>आएको</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Perf<br>Tense=Past</details></td><td>मान्छे</td><td><details><summary>features...</summary></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-11%22%20%3B%20A%20%5Bform%3D%22%E0%A4%86%E0%A4%8F%E0%A4%95%E0%A5%8B%22%7C%22%E0%A4%86%E0%A4%8F%E0%A4%95%E0%A5%8B%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%AE%E0%A4%BE%E0%A4%A8%E0%A5%8D%E0%A4%9B%E0%A5%87%22%7C%22%E0%A4%AE%E0%A4%BE%E0%A4%A8%E0%A5%8D%E0%A4%9B%E0%A5%87%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr><tr><td>अनि त्यो सरासर भित्र आएर त , " ए , <strong>तँ</strong> के गर्न <strong>लागेको</strong> ? " भनेर सोधेछ रे ।</td><td>लागेको</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Prog<br>Tense=Pres</details></td><td>तँ</td><td><details><summary>features...</summary>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-12%22%20%3B%20A%20%5Bform%3D%22%E0%A4%B2%E0%A4%BE%E0%A4%97%E0%A5%87%E0%A4%95%E0%A5%8B%22%7C%22%E0%A4%B2%E0%A4%BE%E0%A4%97%E0%A5%87%E0%A4%95%E0%A5%8B%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%A4%E0%A4%81%22%7C%22%E0%A4%A4%E0%A4%81%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr></tbody></table>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>head_form</th><th>head_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>अनि सधैं त्यो गोठालो द्यूसो , अब द्यूसोभरी गाईबस्तु लिएर <strong>त्यो</strong> चराउन <strong>जाने</strong> ।</td><td>जाने</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Imp<br>Tense=Pres</details></td><td>त्यो</td><td><details><summary>features...</summary>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-3%22%20%3B%20A%20%5Bform%3D%22%E0%A4%A4%E0%A5%8D%E0%A4%AF%E0%A5%8B%22%7C%22%E0%A4%A4%E0%A5%8D%E0%A4%AF%E0%A5%8B%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%9C%E0%A4%BE%E0%A4%A8%E0%A5%87%22%7C%22%E0%A4%9C%E0%A4%BE%E0%A4%A8%E0%A5%87%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr><tr><td>अनि भुत्लै भुत्ला जिउ भरी भुत्लै भुत्ला भएको <strong>मान्छे</strong> <strong>आएको</strong> छ रे ।</td><td>आएको</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Perf<br>Tense=Past</details></td><td>मान्छे</td><td><details><summary>features...</summary>Case=Nom<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-11%22%20%3B%20A%20%5Bform%3D%22%E0%A4%AE%E0%A4%BE%E0%A4%A8%E0%A5%8D%E0%A4%9B%E0%A5%87%22%7C%22%E0%A4%AE%E0%A4%BE%E0%A4%A8%E0%A5%8D%E0%A4%9B%E0%A5%87%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%86%E0%A4%8F%E0%A4%95%E0%A5%8B%22%7C%22%E0%A4%86%E0%A4%8F%E0%A4%95%E0%A5%8B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr><tr><td>अनि त्यो सरासर भित्र आएर त , " ए , <strong>तँ</strong> के गर्न <strong>लागेको</strong> ? " भनेर सोधेछ रे ।</td><td>लागेको</td><td><details><summary>features...</summary>VerbForm=Part<br>Aspect=Prog<br>Tense=Pres</details></td><td>तँ</td><td><details><summary>features...</summary>Person=2<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Nepali-BK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Bhootko_Katha-12%22%20%3B%20A%20%5Bform%3D%22%E0%A4%A4%E0%A4%81%22%7C%22%E0%A4%A4%E0%A4%81%22%5D%20%3B%20B%20%5Bform%3D%22%E0%A4%B2%E0%A4%BE%E0%A4%97%E0%A5%87%E0%A4%95%E0%A5%8B%22%7C%22%E0%A4%B2%E0%A4%BE%E0%A4%97%E0%A5%87%E0%A4%95%E0%A5%8B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Nepali-BK</a></td></tr></tbody></table>
     </div>
   </div>
 </body>
