@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 19}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_nsubj_Number</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Skolt_Sami</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">19</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_nsubj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 19)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Son jåått mieʹccest ... <strong>son</strong> lij ooumžen <strong>vuâlggjam</strong> , mâŋŋa näuʹdden suõʹppjââtt .</td><td>vuâlggjam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=vuâlggjam<br>VerbForm=Part</details></td><td>son</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-1%3A1-2%22%20%3B%20A%20%5Bform%3D%22vu%C3%A2lggjam%22%7C%22Vu%C3%A2lggjam%22%5D%20%3B%20B%20%5Bform%3D%22son%22%7C%22Son%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Leäi , leäi di âʹpet <strong>ooumaž</strong> lij tõn niõđ <strong>teâđstam</strong> di son tõn niõđ vuõddmâstõlškuõʹđi ja sitten son mâŋŋa vaaʹldi kaavân .</td><td>teâđstam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=teâđsted<br>VerbForm=Part</details></td><td>ooumaž</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ooumaž<br>Animacy=Hum<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-4%3A1%3A2%22%20%3B%20A%20%5Bform%3D%22te%C3%A2%C4%91stam%22%7C%22Te%C3%A2%C4%91stam%22%5D%20%3B%20B%20%5Bform%3D%22oouma%C5%BE%22%7C%22Oouma%C5%BE%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>– ” Leʹjjiǩ tâma vueʹđđed jeällam <strong>mon</strong> <strong>talkkâm</strong> ” .</td><td>talkkâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=talkkâd<br>VerbForm=Part</details></td><td>mon</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-5%3A8%3A7%22%20%3B%20A%20%5Bform%3D%22talkk%C3%A2m%22%7C%22Talkk%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22mon%22%7C%22Mon%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Na joo jälste , jälste âʹtte što måttmešt puõʹđi di de lij tueʹllj koǯstam kåʹddtueʹllj , <strong>päärnaž</strong> lij <strong>koǯstam</strong> kåʹddtueʹllj .</td><td>koǯstam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=koǯsted<br>VerbForm=Part</details></td><td>päärnaž</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=päärnaž<br>Animacy=Hum<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-2%3A3-1%22%20%3B%20A%20%5Bform%3D%22ko%C7%AFstam%22%7C%22Ko%C7%AFstam%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A4%C3%A4rna%C5%BE%22%7C%22P%C3%A4%C3%A4rna%C5%BE%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Son ceälkk , son ij tieʹđ , näʹde måttam liâ teâđstam teâđast että kuuskõõzz liâ tõn niõđ välddam , de mâiʹd toʹb rõssad ni <strong>måttam</strong> liâ <strong>teâđstam</strong> .</td><td>teâđstam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=teâđsted<br>VerbForm=Part</details></td><td>måttam</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Plur</strong><br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-4%3A2%3A2%22%20%3B%20A%20%5Bform%3D%22te%C3%A2%C4%91stam%22%7C%22Te%C3%A2%C4%91stam%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A5ttam%22%7C%22M%C3%A5ttam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td><strong>Tuänna</strong> leʹččid <strong>mõõnnâm</strong> Taʹrre , jõs leʹččid vuäǯǯam aaut .</td><td>mõõnnâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=mõõnnâd<br>VerbForm=Part</details></td><td>tuänna</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Dual</strong><br>Person=2<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22SK2020-97%3A7%22%20%3B%20A%20%5Bform%3D%22m%C3%B5%C3%B5nn%C3%A2m%22%7C%22M%C3%B5%C3%B5nn%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22tu%C3%A4nna%22%7C%22Tu%C3%A4nna%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Tõt puõʹđi , jueʹljes oiʹǧǧii , son ääušas roʹttji meädda , ceälkk : ” Mõʹnt jeäʹnn , mõʹnt jeäʹnn muʹst eʹčč iʹlleäk , säärn ton što mäʹhtt <strong>ton</strong> leäk muu <strong>raajjâm</strong> jeäʹnn ko eʹčč iʹlleäk ? ”</td><td>raajjâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=raajjâd<br>VerbForm=Part</details></td><td>ton</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-2%3A4-4%22%20%3B%20A%20%5Bform%3D%22raajj%C3%A2m%22%7C%22Raajj%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22ton%22%7C%22Ton%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td><strong>Mon</strong> leäm <strong>leämmaž</strong> määŋg vuâra tuõddrest .</td><td>leämmaž</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=leeʹd<br>VerbForm=Part</details></td><td>mon</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22SKKV2020%3A88%3A1%3A%22%20%3B%20A%20%5Bform%3D%22le%C3%A4mma%C5%BE%22%7C%22Le%C3%A4mma%C5%BE%22%5D%20%3B%20B%20%5Bform%3D%22mon%22%7C%22Mon%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Vuejjle , vuõjju , vuõjju di <strong>bieʹss</strong> lij <strong>vuâmmšõõttâm</strong> ... suʹst iʹlla ni vueiʹvv , iʹlla ni njuuʹnn .</td><td>vuâmmšõõttâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=vuâmmšõõttâd<br>VerbForm=Part</details></td><td>bieʹss</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=bieʹss<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-5%3A14%3A4%22%20%3B%20A%20%5Bform%3D%22vu%C3%A2mm%C5%A1%C3%B5%C3%B5tt%C3%A2m%22%7C%22Vu%C3%A2mm%C5%A1%C3%B5%C3%B5tt%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22bie%CA%B9ss%22%7C%22Bie%CA%B9ss%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Suʹst leäi õlggâm leeʹd tõn peeiʹv čååǥǥâʹttmen vuõptees , leša <strong>mii</strong> leežž <strong>šõddâm</strong> ǥu ij tâʹl ni vuäittam .</td><td>šõddâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=advcl<br>lemma=šõddâd<br>VerbForm=Part</details></td><td>mii</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>PronType=Rel</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FofonoffHilkka_brat_2018%3A17%22%20%3B%20A%20%5Bform%3D%22%C5%A1%C3%B5dd%C3%A2m%22%7C%22%C5%A0%C3%B5dd%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22mii%22%7C%22Mii%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>De ceälkk : ” Muu kâʹl jiõk teänab kuuʹǩǩ vueiʹn <strong>mon</strong> leäm <strong>vuâlggam</strong> . ”</td><td>vuâlggam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=vueʹlǧǧed<br>VerbForm=Part</details></td><td>mon</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-2%3A3-2%22%20%3B%20A%20%5Bform%3D%22vu%C3%A2lggam%22%7C%22Vu%C3%A2lggam%22%5D%20%3B%20B%20%5Bform%3D%22mon%22%7C%22Mon%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td><strong>Stäʹlmmstääll</strong> lij <strong>välddam</strong> tõn niõđ , stäʹlmmstääll niõđ lij välddam .</td><td>välddam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=väʹldded<br>VerbForm=Part</details></td><td>stäʹlmmstääll</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=stäʹlmmstääll<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-5%3A2%3A10%22%20%3B%20A%20%5Bform%3D%22v%C3%A4lddam%22%7C%22V%C3%A4lddam%22%5D%20%3B%20B%20%5Bform%3D%22st%C3%A4%CA%B9lmmst%C3%A4%C3%A4ll%22%7C%22St%C3%A4%CA%B9lmmst%C3%A4%C3%A4ll%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Tät jåhtta tuåimtum <strong>ǩeʹrjj</strong> lij Peter <strong>vuõltteem</strong> .</td><td>vuõltteem</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=vuõltteed<br>VerbForm=Part</details></td><td>ǩeʹrjj</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ǩeʹrjj<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FofonoffHilkka_brat_2018%3A19%22%20%3B%20A%20%5Bform%3D%22vu%C3%B5ltteem%22%7C%22Vu%C3%B5ltteem%22%5D%20%3B%20B%20%5Bform%3D%22%C7%A9e%CA%B9rjj%22%7C%22%C7%A8e%CA%B9rjj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>De eččad puõʹđi , eččad puõʹđi mieʹccest de ceälkk : ’ Jaa <strong>ton</strong> leäk kåʹddtueʹllj <strong>kooǯǯtam</strong> pärnna .</td><td>kooǯǯtam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=kooǯǯted<br>VerbForm=Part</details></td><td>ton</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-2%3A5-7%22%20%3B%20A%20%5Bform%3D%22koo%C7%AF%C7%AFtam%22%7C%22Koo%C7%AF%C7%AFtam%22%5D%20%3B%20B%20%5Bform%3D%22ton%22%7C%22Ton%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>De âʹpet âʹtte ... mõõn <strong>sij</strong> vâl leʹjje <strong>hoʹhssjam</strong> .</td><td>hoʹhssjam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=hoʹhssjed<br>VerbForm=Part</details></td><td>sij</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Plur</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-5%3A19%3A4%22%20%3B%20A%20%5Bform%3D%22ho%CA%B9hssjam%22%7C%22Ho%CA%B9hssjam%22%5D%20%3B%20B%20%5Bform%3D%22sij%22%7C%22Sij%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Son ceälkk , son ij tieʹđ , näʹde måttam liâ teâđstam teâđast että <strong>kuuskõõzz</strong> liâ tõn niõđ <strong>välddam</strong> , de mâiʹd toʹb rõssad ni måttam liâ teâđstam .</td><td>välddam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=väʹldded<br>VerbForm=Part</details></td><td>kuuskõõzz</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kuuskõõzz<br><strong>Number=Plur</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-4%3A2%3A2%22%20%3B%20A%20%5Bform%3D%22v%C3%A4lddam%22%7C%22V%C3%A4lddam%22%5D%20%3B%20B%20%5Bform%3D%22kuusk%C3%B5%C3%B5zz%22%7C%22Kuusk%C3%B5%C3%B5zz%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Stäʹlmmstääll lij välddam tõn niõđ , <strong>stäʹlmmstääll</strong> niõđ lij <strong>välddam</strong> .</td><td>välddam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=väʹldded<br>VerbForm=Part</details></td><td>stäʹlmmstääll</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=stäʹlmmstääll<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-5%3A2%3A10%22%20%3B%20A%20%5Bform%3D%22v%C3%A4lddam%22%7C%22V%C3%A4lddam%22%5D%20%3B%20B%20%5Bform%3D%22st%C3%A4%CA%B9lmmst%C3%A4%C3%A4ll%22%7C%22St%C3%A4%CA%B9lmmst%C3%A4%C3%A4ll%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td><strong>Son</strong> lij <strong>suukkâm</strong> jooǥǥ nuuʹbb peälla .</td><td>suukkâm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=suukkâd<br>VerbForm=Part</details></td><td>son</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22SKKV2020%3A89%3A9%3A%22%20%3B%20A%20%5Bform%3D%22suukk%C3%A2m%22%7C%22Suukk%C3%A2m%22%5D%20%3B%20B%20%5Bform%3D%22son%22%7C%22Son%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr><tr><td>Son ceälkk , son ij tieʹđ , näʹde <strong>måttam</strong> liâ <strong>teâđstam</strong> teâđast että kuuskõõzz liâ tõn niõđ välddam , de mâiʹd toʹb rõssad ni måttam liâ teâđstam .</td><td>teâđstam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=teâđsted<br>VerbForm=Part</details></td><td>måttam</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Plur</strong><br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Skolt_Sami-Giellagas%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kotus-skak2010-1-4%3A2%3A2%22%20%3B%20A%20%5Bform%3D%22te%C3%A2%C4%91stam%22%7C%22Te%C3%A2%C4%91stam%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A5ttam%22%7C%22M%C3%A5ttam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Skolt_Sami-Giellagas</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

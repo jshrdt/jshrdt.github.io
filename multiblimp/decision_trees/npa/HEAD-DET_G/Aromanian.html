@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"yes": 13, "unk": 1}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>NP head-DET_Gender</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">yes: 13</div><div class="label">unk: 1</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Aromanian</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.1</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">14</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">NP head-DET_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 14)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>NP head_form</th><th>NP head_features</th><th>DET_form</th><th>DET_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Atumţea avdi Muşata-Locului şi bagă di adară <strong>nă</strong> <strong>pită</strong> cum ştea nâsă .</td><td>pită</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=pită<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>Definite=Ind</details></td><td>nă</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-30%22%20%3B%20A%20%5Bform%3D%22pit%C4%83%22%7C%22Pit%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22n%C4%83%22%7C%22N%C4%83%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Nu tricu <strong>multu</strong> <strong>ќiro</strong> şi muľarea muri .</td><td>ќiro</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=ќiro<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Ind<br>Person=3</details></td><td>multu</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=multu<br><strong>Gender=Masc</strong><br>Number=Sing<br>Person=3<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-35%22%20%3B%20A%20%5Bform%3D%22%D1%9Ciro%22%7C%22%D0%8Ciro%22%5D%20%3B%20B%20%5Bform%3D%22multu%22%7C%22Multu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td><strong>Aestu</strong> <strong>lucru</strong> nu s- fațe putes .</td><td>lucru</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=lucru<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Def<br>Person=3</details></td><td>aestu</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=aestu<br>Case=Acc,Nom<br>Position=Prenom<br><strong>Gender=Masc</strong><br>Number=Sing<br>Person=3<br>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-3%22%20%3B%20A%20%5Bform%3D%22lucru%22%7C%22Lucru%22%5D%20%3B%20B%20%5Bform%3D%22aestu%22%7C%22Aestu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Cara tricu pri ninga casa featăľei , aestă alasă scamnlu , s- acumpără <strong>ndoauă</strong> <strong>fuse</strong> .</td><td>fuse</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=fus<br><strong>Gender=Fem</strong><br>Number=Plur<br>Definite=Ind<br>Person=3</details></td><td>ndoauă</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=ndoi<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Plur<br>Person=3<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-37%22%20%3B%20A%20%5Bform%3D%22fuse%22%7C%22Fuse%22%5D%20%3B%20B%20%5Bform%3D%22ndoau%C4%83%22%7C%22Ndoau%C4%83%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Şi feata ună câte ună ĺ- aspuse anarga ş- muşat cum yine <strong>un</strong> <strong>ĝone-</strong> aleptu .</td><td>ĝone-</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=ĝone<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Ind</details></td><td>un</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-21%22%20%3B%20A%20%5Bform%3D%22%C4%9Done-%22%7C%22%C4%9Cone-%22%5D%20%3B%20B%20%5Bform%3D%22un%22%7C%22Un%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Fudzirâ , fudzirâ , veară ќiro , căloari mari , calea câmplu uscat , arsi di seati fiĉorlu ţi- no afla <strong>nă</strong> <strong>ќicută</strong> di apă si -ş udă grumazlu .</td><td>ќicută</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=ќicută<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>Definite=Ind</details></td><td>nă</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-29%22%20%3B%20A%20%5Bform%3D%22%D1%9Cicut%C4%83%22%7C%22%D0%8Cicut%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22n%C4%83%22%7C%22N%C4%83%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Cum imna minduit , veade <strong>un</strong> <strong>auş</strong> cu barba albă .</td><td>auş</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=auş<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Ind</details></td><td>un</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-12%22%20%3B%20A%20%5Bform%3D%22au%C5%9F%22%7C%22Au%C5%9F%22%5D%20%3B%20B%20%5Bform%3D%22un%22%7C%22Un%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Nu mi bati , că ț- aduc ș- <strong>alti</strong> <strong>petali</strong> io !</td><td>petali</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=petală<br><strong>Gender=Fem</strong><br>Number=Plur<br>Definite=Ind<br>Person=3</details></td><td>alti</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=alt<br>Case=Acc,Nom<br>Position=Prenom<br><strong>Gender=Fem</strong><br>Number=Plur<br>Person=3<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-5%22%20%3B%20A%20%5Bform%3D%22petali%22%7C%22Petali%22%5D%20%3B%20B%20%5Bform%3D%22alti%22%7C%22Alti%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Ma după ţi mi taĺi , bucăţle s- le aduńi tu- <strong>un</strong> <strong>sac</strong> .</td><td>sac</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=sac<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Ind</details></td><td>un</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-50%22%20%3B%20A%20%5Bform%3D%22sac%22%7C%22Sac%22%5D%20%3B%20B%20%5Bform%3D%22un%22%7C%22Un%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td><strong>Tată</strong> <strong>-su</strong> nu sĉia ţi s- cama facă di harao .</td><td>tată</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=tată<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Ind<br>Person=3</details></td><td>-su</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=su<br><strong>Gender=Masc</strong><br>Number=Sing<br>Person=3<br>PronType=Prs<br>Poss=Yes<br>Number[psor]=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-19%22%20%3B%20A%20%5Bform%3D%22tat%C4%83%22%7C%22Tat%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22-su%22%7C%22-su%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Si mveaşte tu strańile a cafiĝilui ş- acaţă s- ńaură ca <strong>nă</strong> <strong>cătuşe</strong> pi ninga uşa iu durńa amirălu .</td><td>cătuşe</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=cătuşe<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>Definite=Ind</details></td><td>nă</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-28%22%20%3B%20A%20%5Bform%3D%22c%C4%83tu%C5%9Fe%22%7C%22C%C4%83tu%C5%9Fe%22%5D%20%3B%20B%20%5Bform%3D%22n%C4%83%22%7C%22N%C4%83%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>S- alinarâ apoaea , adunarâ <strong>câte</strong> <strong>meari</strong> vrurâ şi fuga .</td><td>meari</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=mer<br><strong>Gender=Fem</strong><br>Number=Plur<br>Definite=Ind<br>Person=3</details></td><td>câte</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=cât<br>Case=Acc,Nom<br><strong>Gender=Fem</strong><br>Number=Plur<br>Person=3<br>PronType=Int,Rel</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-31%22%20%3B%20A%20%5Bform%3D%22meari%22%7C%22Meari%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%A2te%22%7C%22C%C3%A2te%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>N- casă n- avea niţi <strong>un</strong> <strong>lemnu</strong> ti vătămare şoariţĺi .</td><td>lemnu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=lemnu<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Def</details></td><td>un</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=un<br>Case=Acc,Nom<br><strong>Gender=Masc</strong><br>Number=Sing<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-16%22%20%3B%20A%20%5Bform%3D%22lemnu%22%7C%22Lemnu%22%5D%20%3B%20B%20%5Bform%3D%22un%22%7C%22Un%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr><tr><td>Si mveaşte tu strańile <strong>a</strong> <strong>cafiĝilui</strong> ş- acaţă s- ńaură ca nă cătuşe pi ninga uşa iu durńa amirălu .</td><td>cafiĝilui</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nmod<br>lemma=cafiĝi<br>Case=Dat,Gen<br><strong>Gender=Masc</strong><br>Number=Sing<br>Definite=Def</details></td><td>a</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=a<br>PronType=Prs<br>Poss=Yes</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Romanian-ArT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-28%22%20%3B%20A%20%5Bform%3D%22cafi%C4%9Dilui%22%7C%22Cafi%C4%9Dilui%22%5D%20%3B%20B%20%5Bform%3D%22a%22%7C%22A%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Romanian-ArT</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

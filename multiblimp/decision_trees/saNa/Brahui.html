@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"Yes": 7, "unk": 1}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>Aux_nsubj_Number</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">Yes: 7</div><div class="label">unk: 1</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Brahui</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">8</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_nsubj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 8)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>O elo cunānā <strong>dū</strong> muṭ <strong>assaka</strong> .</td><td>assaka</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>dū</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=dū<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_7%22%20%3B%20A%20%5Bform%3D%22d%C5%AB%22%7C%22D%C5%AB%22%5D%20%3B%20B%20%5Bform%3D%22assaka%22%7C%22Assaka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>Duppān zarās cist , pinnoko dīvālasenā sexāṭī <strong>paxīras</strong> damkaššingkin leṭok <strong>assaka</strong> .</td><td>assaka</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>paxīras</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=paxīr<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_38%22%20%3B%20A%20%5Bform%3D%22pax%C4%ABras%22%7C%22Pax%C4%ABras%22%5D%20%3B%20B%20%5Bform%3D%22assaka%22%7C%22Assaka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>O xīsun , pīhun , sabbarā vilāyattīā kukuṛātā ṭolīṭī , otā ustpasandā moningā <strong>bāngo</strong> sīnae patan karesa don bāng tiningaṭī <strong>as</strong> , dunki ɣaebī o dušmane daṛakko tiningaṭī mare .</td><td>as</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=as<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>bāngo</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=bāngo<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_2%22%20%3B%20A%20%5Bform%3D%22b%C4%81ngo%22%7C%22B%C4%81ngo%22%5D%20%3B%20B%20%5Bform%3D%22as%22%7C%22As%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>Cunātā bā xaṭ mas , ki otā musi iraɣā sāmbokā <strong>kucak</strong> , asi iraɣnā musiṭṭamīko bašxā am liṭikke suriffingaṭī <strong>as</strong> .</td><td>as</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>kucak</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kucak<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_49%22%20%3B%20A%20%5Bform%3D%22kucak%22%7C%22Kucak%22%5D%20%3B%20B%20%5Bform%3D%22as%22%7C%22As%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>Maga jang jang padā xaeranā vasāhitān bār , <strong>bāngok</strong> madān madān xer kanningaṭī <strong>assur</strong> .</td><td>assur</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=as<br>SubjAuxCount=1</details></td><td>bāngok</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=bāngo<br><strong>Number=Plur</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_14%22%20%3B%20A%20%5Bform%3D%22b%C4%81ngok%22%7C%22B%C4%81ngok%22%5D%20%3B%20B%20%5Bform%3D%22assur%22%7C%22Assur%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>Onā dildast xed ān xīt assaka , o xolumnā musi <strong>kaṛo</strong> dildastāte liccok <strong>assur</strong> .</td><td>assur</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Plur</strong><br>Person=3</details></td><td>kaṛo</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kaṛo<br><strong>Number=Plur</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_18%22%20%3B%20A%20%5Bform%3D%22ka%E1%B9%9Bo%22%7C%22Ka%E1%B9%9Bo%22%5D%20%3B%20B%20%5Bform%3D%22assur%22%7C%22Assur%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td>Onā <strong>dildast</strong> xed ān xīt <strong>assaka</strong> , o xolumnā musi kaṛo dildastāte liccok assur .</td><td>assaka</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>dildast</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=dildast<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_18%22%20%3B%20A%20%5Bform%3D%22dildast%22%7C%22Dildast%22%5D%20%3B%20B%20%5Bform%3D%22assaka%22%7C%22Assaka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr><tr><td><strong>Tā̃zī</strong> paxīrnā raaṭī tūlok <strong>as</strong> .</td><td>as</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br><strong>Number=Sing</strong><br>Person=3</details></td><td>tā̃zī</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=Tā̃zī<br><strong>Number=Sing</strong><br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Brahui-Kholum%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kholum_41%22%20%3B%20A%20%5Bform%3D%22t%C4%81%CC%83z%C4%AB%22%7C%22T%C4%81%CC%83z%C4%AB%22%5D%20%3B%20B%20%5Bform%3D%22as%22%7C%22As%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Brahui-Kholum</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

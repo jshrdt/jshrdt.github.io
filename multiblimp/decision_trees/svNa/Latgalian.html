@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 11, "Yes": 5}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>Verb_nsubj_Number</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">unk: 11</div><div class="label">Yes: 5</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Latgalian</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">16</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_nsubj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 16)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>nsubj_form</th><th>nsubj_features</th><th>Verb_form</th><th>Verb_features</th><th>treebank_link</th></tr></thead><tbody><tr><td><strong>Meitine</strong> <strong>pīraksteja</strong> viestuli sovai draudzinei .</td><td>meitine</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=meitine<br>Case=Nom<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3</details></td><td>pīraksteja</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=raksteit<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p1s1%22%20%3B%20A%20%5Bform%3D%22meitine%22%7C%22Meitine%22%5D%20%3B%20B%20%5Bform%3D%22p%C4%ABraksteja%22%7C%22P%C4%ABraksteja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Maņ ruodīs , ka <strong>leist</strong> <strong>leits</strong> .</td><td>leits</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=leits<br>Case=Nom<br>Gender=Masc<br><strong>Number=Sing</strong><br>Person=3</details></td><td>leist</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=csubj<br>lemma=leit<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Pres</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p2s1%22%20%3B%20A%20%5Bform%3D%22leits%22%7C%22Leits%22%5D%20%3B%20B%20%5Bform%3D%22leist%22%7C%22Leist%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Pītera <strong>sābri</strong> <strong>nūkruosuoja</strong> statini sorkonā kruosā .</td><td>sābri</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=sābris<br>Case=Nom<br>Gender=Masc<br><strong>Number=Plur</strong><br>Person=3</details></td><td>nūkruosuoja</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=nūkruosuot<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p7s1%22%20%3B%20A%20%5Bform%3D%22s%C4%81bri%22%7C%22S%C4%81bri%22%5D%20%3B%20B%20%5Bform%3D%22n%C5%ABkruosuoja%22%7C%22N%C5%ABkruosuoja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Es navarieju tikt jam leidza , partū ka <strong>jis</strong> <strong>skrēja</strong> puoruok mudri .</td><td>jis</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Masc<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>skrēja</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=advcl<br>lemma=skrīt<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p18s1%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22skr%C4%93ja%22%7C%22Skr%C4%93ja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Es</strong> <strong>navarieju</strong> tikt jam leidza , partū ka jis skrēja puoruok mudri .</td><td>es</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br><strong>Number=Sing</strong><br>Person=1<br>PronType=Prs</details></td><td>navarieju</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=navarēt<br>VerbForm=Fin<br><strong>Number=Sing</strong><br>Person=1<br>Polarity=Neg<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p18s1%22%20%3B%20A%20%5Bform%3D%22es%22%7C%22Es%22%5D%20%3B%20B%20%5Bform%3D%22navarieju%22%7C%22Navarieju%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Jis</strong> <strong>nūpierka</strong> mašynu , bet juo bruoļs tik ritini .</td><td>jis</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Masc<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>nūpierka</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=nūpierkt<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p15s1%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22n%C5%ABpierka%22%7C%22N%C5%ABpierka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Iz kuo <strong>tu</strong> <strong>verīs</strong> ?</td><td>tu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td>verīs</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=vērtīs<br>VerbForm=Fin<br><strong>Number=Sing</strong><br>Person=2<br>Polarity=Pos<br>Reflex=Yes<br>Tense=Pres</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p13s1%22%20%3B%20A%20%5Bform%3D%22tu%22%7C%22Tu%22%5D%20%3B%20B%20%5Bform%3D%22ver%C4%ABs%22%7C%22Ver%C4%ABs%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Kai <strong>tu</strong> <strong>dūmoj</strong> , kod tu variesi atīt ?</td><td>tu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td>dūmoj</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=dūmuot<br>VerbForm=Fin<br><strong>Number=Sing</strong><br>Person=2<br>Polarity=Pos<br>Tense=Pres</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p14s1%22%20%3B%20A%20%5Bform%3D%22tu%22%7C%22Tu%22%5D%20%3B%20B%20%5Bform%3D%22d%C5%ABmoj%22%7C%22D%C5%ABmoj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Jis</strong> <strong>ceņtēs</strong> atmest peipiešonu i dzeršonu .</td><td>jis</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Masc<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>ceņtēs</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=ceņstīs<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Reflex=Yes<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p3s1%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22ce%C5%86t%C4%93s%22%7C%22Ce%C5%86t%C4%93s%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Jis</strong> <strong>izauga</strong> Parizē , Fraņcejis golvyspiļsātā .</td><td>jis</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>izauga</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=izaugt<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p20s1%22%20%3B%20A%20%5Bform%3D%22jis%22%7C%22Jis%22%5D%20%3B%20B%20%5Bform%3D%22izauga%22%7C%22Izauga%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Jei</strong> <strong>lyka</strong> sovam veiram nūmozguot mašynu .</td><td>jei</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>lyka</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=likt<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p6s1%22%20%3B%20A%20%5Bform%3D%22jei%22%7C%22Jei%22%5D%20%3B%20B%20%5Bform%3D%22lyka%22%7C%22Lyka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Jim <strong>nav</strong> ni <strong>jausmys</strong> , kurs tū pīraksteja .</td><td>jausmys</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=jausma<br>Case=Gen<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3</details></td><td>nav</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=nabyut<br>VerbForm=Fin<br>Person=3<br>Polarity=Neg<br>Tense=Pres</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p12s1%22%20%3B%20A%20%5Bform%3D%22jausmys%22%7C%22Jausmys%22%5D%20%3B%20B%20%5Bform%3D%22nav%22%7C%22Nav%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Kai tu dūmoj , kod <strong>tu</strong> <strong>variesi</strong> atīt ?</td><td>tu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td>variesi</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=varēt<br>VerbForm=Fin<br><strong>Number=Sing</strong><br>Person=2<br>Polarity=Pos<br>Tense=Fut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p14s1%22%20%3B%20A%20%5Bform%3D%22tu%22%7C%22Tu%22%5D%20%3B%20B%20%5Bform%3D%22variesi%22%7C%22Variesi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Jai vajadzēja apgrīzt motus , bet koč kaida īmesļa deļ <strong>jei</strong> tamā dīnā tuo <strong>naizdareja</strong> .</td><td>jei</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3<br>PronType=Prs</details></td><td>naizdareja</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=naizdareit<br>VerbForm=Fin<br>Person=3<br>Polarity=Neg<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p17s1%22%20%3B%20A%20%5Bform%3D%22jei%22%7C%22Jei%22%5D%20%3B%20B%20%5Bform%3D%22naizdareja%22%7C%22Naizdareja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td>Voi <strong>tu</strong> <strong>gribi</strong> īt ?</td><td>tu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Case=Nom<br><strong>Number=Sing</strong><br>Person=2<br>PronType=Prs</details></td><td>gribi</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=gribēt<br>VerbForm=Fin<br><strong>Number=Sing</strong><br>Person=2<br>Polarity=Pos<br>Tense=Pres</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p4s1%22%20%3B%20A%20%5Bform%3D%22tu%22%7C%22Tu%22%5D%20%3B%20B%20%5Bform%3D%22gribi%22%7C%22Gribi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr><tr><td><strong>Mareja</strong> <strong>dabuoja</strong> bronzu , Pīters – sudobru , i Džeina – zaltu .</td><td>Mareja</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>Case=Nom<br>Gender=Fem<br><strong>Number=Sing</strong><br>Person=3</details></td><td>dabuoja</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=dabuot<br>VerbForm=Fin<br>Person=3<br>Polarity=Pos<br>Tense=Past</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Latgalian-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a-ltg-Cairo-p9s1%22%20%3B%20A%20%5Bform%3D%22Mareja%22%7C%22Mareja%22%5D%20%3B%20B%20%5Bform%3D%22dabuoja%22%7C%22Dabuoja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Latgalian-Cairo</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 16, "Yes": 2}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>Aux_nsubj_Person</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">unk: 16</div><div class="label">Yes: 2</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Chintang</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">18</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_nsubj_Person</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 18)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Athom tɨŋkatɨŋ <strong>ulusaŋsace</strong> <strong>Ramenɨŋ</strong> monɨŋ .</td><td>ulusaŋsace</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=lus<br>SubjAuxCount=1<br>Aspect=Perf<br>Mood=Ind<br>Number=Dual<br><strong>Person=3</strong><br>Tense=Past<br>Voice=Act</details></td><td>Ramenɨŋ</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Ram<br>Case=Com<br>Number=Sing<br><strong>Person=3</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Morphology_84%22%20%3B%20A%20%5Bform%3D%22ulusa%C5%8Bsace%22%7C%22Ulusa%C5%8Bsace%22%5D%20%3B%20B%20%5Bform%3D%22Ramen%C9%A8%C5%8B%22%7C%22Ramen%C9%A8%C5%8B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td><strong>Kalpana</strong> alu <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>Kalpana</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Kalpana<br>Case=Abs<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_56%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22Kalpana%22%7C%22Kalpana%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>To pheri , to pheri <strong>anneŋa</strong> them-them napino <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>anneŋa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=anne<br>Case=Erg<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_180b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22anne%C5%8Ba%22%7C%22Anne%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Taŋkerabe maʔmiko <strong>unɨŋ</strong> yuake <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>unɨŋ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=nɨŋ<br>Case=Abs<br>Number=Sing<br>Number[psor]=Sing<br><strong>Person=3</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_70%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22un%C9%A8%C5%8B%22%7C%22Un%C9%A8%C5%8B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Iskulbeʔ yaŋ utti <strong>bidharthice</strong> ulinɨknɨŋ <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>bidharthice</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=bidhyarthi<br>Case=Abs<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_255a%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22bidharthice%22%7C%22Bidharthice%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Dosiko phak pho <strong>thippaŋa</strong> ta sedoko <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>thippaŋa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=thippa<br>Case=Erg<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Information_5b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22thippa%C5%8Ba%22%7C%22Thippa%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td><strong>Basaŋa</strong> apthero ta khaŋsi kade <strong>pho</strong> , Mainamaŋ .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>basaŋa</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ba<br>Case=Erg<br>Deixis=Prox<br>Number=Sing<br>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Complex_97b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22basa%C5%8Ba%22%7C%22Basa%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td><strong>Baceŋa</strong> asessi utiaŋse mo <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>baceŋa</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ba<br>Case=Erg<br>Deixis=Prox<br>Number=Plur<br>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Complex_47b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22bace%C5%8Ba%22%7C%22Bace%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Attu lo <strong>cha</strong> na yuakte <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>cha</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cha<br>Case=Abs<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_318a%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22cha%22%7C%22Cha%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Aya , <strong>bace</strong> na khalli tɨŋkatɨŋ ta <strong>uluceke</strong> hou !</td><td>uluceke</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=lus<br>SubjAuxCount=1<br>Aspect=Imp<br>Mood=Ind<br>Number=Dual<br><strong>Person=3</strong><br>Tense=Pres<br>Voice=Act</details></td><td>bace</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ba<br>Case=Abs<br>Deixis=Prox<br>Number=Plur<br>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_186b%22%20%3B%20A%20%5Bform%3D%22uluceke%22%7C%22Uluceke%22%5D%20%3B%20B%20%5Bform%3D%22bace%22%7C%22Bace%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Lapmeʔnacce <strong>pho</strong> huŋ go <strong>pheŋniba</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>pheŋniba</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=pheŋniba<br>Case=Abs<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_287%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22phe%C5%8Bniba%22%7C%22Phe%C5%8Bniba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Ba dhola rɨma <strong>calan</strong> yuake <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>calan</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=calan<br>Case=Abs<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Complex_268g%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22calan%22%7C%22Calan%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>The kha <strong>luŋta</strong> yuake <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>luŋta</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=luŋtak<br>Case=Abs<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_40b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22lu%C5%8Bta%22%7C%22Lu%C5%8Bta%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Abo <strong>menuwaŋa</strong> pho uhoŋbe hattuyuŋsoŋse <strong>pho</strong> .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>menuwaŋa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=menuwa<br>Case=Erg<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_340a%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22menuwa%C5%8Ba%22%7C%22Menuwa%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Agga , dui bhai <strong>anatice</strong> uliseʔ mo <strong>pho</strong> !</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>anatice</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=nati<br>Case=Abs<br>Number=Plur<br>Number[psor]=Sing<br><strong>Person=1</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_136b%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22anatice%22%7C%22Anatice%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td><strong>Anitaŋa</strong> Lokendranɨŋ Lakhmannɨŋ mɨkseĩkhaŋmeiʔkameiʔ <strong>lumettuce</strong> .</td><td>lumettuce</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=lus<br>SubjAuxCount=1<br>Aspect=Perfv<br>Mood=Ind<br>Number=Sing<br>Number[p]=Plur<br><strong>Person=3</strong><br>Person[p]=3<br>Tense=Past<br>Voice=Cau</details></td><td>Anitaŋa</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Anita<br>Case=Erg<br>Number=Sing<br><strong>Person=3</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_291%22%20%3B%20A%20%5Bform%3D%22lumettuce%22%7C%22Lumettuce%22%5D%20%3B%20B%20%5Bform%3D%22Anita%C5%8Ba%22%7C%22Anita%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td><strong>Basaŋa</strong> apthero ta khaŋsi kade <strong>pho</strong> Mainamaŋ .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>basaŋa</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ba<br>Case=Erg<br>Deixis=Prox<br>Number=Sing<br>PronType=Dem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Complex_27%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22basa%C5%8Ba%22%7C%22Basa%C5%8Ba%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td>Sontosi <strong>uchau</strong> siade <strong>pho</strong> naŋ .</td><td>pho</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=pho<br>SubjAuxCount=1<br>Evident=Nfh</details></td><td>uchau</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cha<br>Case=Abs<br>Number=Sing<br>Number[psor]=Sing<br><strong>Person=3</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_95a%22%20%3B%20A%20%5Bform%3D%22pho%22%7C%22Pho%22%5D%20%3B%20B%20%5Bform%3D%22uchau%22%7C%22Uchau%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
