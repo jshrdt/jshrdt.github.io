@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 4}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_iobj_Number</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Esperanto</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">4</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_iobj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 4)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>iobj_form</th><th>iobj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Mi konscias , ke ĉiu lando apartenas ne al tiu aŭ alia gento , sed plene egalrajte al ĉiuj siaj loĝantoj , kian ajn supozatan devenon , lingvon , religion aŭ socian rolon ili havas ; la identigadon de la interesoj de lando kun la interesoj de tiu aŭ alia gento aŭ religio kaj la pretekstadon de iaj historiaj rajtoj , kiuj permesas al unu gento en la lando regi super la aliaj gentoj kaj <strong>forrifuzi</strong> al <strong>ili</strong> la plej elementan kaj naturan rajton je la patrujo , mi rigardas kiel restaĵon el la tempoj barbaraj , kiam ekzistis nur rajto de pugno kaj glavo .</td><td>forrifuzi</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=forrifuzi<br>VerbForm=Inf</details></td><td>ili</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ili<br>Case=Nom<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-013-002%22%20%3B%20A%20%5Bform%3D%22forrifuzi%22%7C%22Forrifuzi%22%5D%20%3B%20B%20%5Bform%3D%22ili%22%7C%22Ili%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td>b ) Mi konscias , ke la esenco de la veraj religiaj ordonoj kuŝas en la koro de ĉiu homo sub la formo de konscienco kaj ke la ĉefa , por ĉiuj homoj deviga principo de tiuj ordonoj estas : agu kun aliuloj tiel , kiel vi dezirus , ke aliuloj agu kun vi ; ĉion alian en la religio mi rigardas kiel aldonojn , <strong>kiujn</strong> ĉiu homo , konforme al sia kredo , <strong>havas</strong> la rajton rigardi aŭ kiel devigajn por li dirojn de Dio , aŭ kiel komentariojn , kiujn miksite kun legendoj donis al ni diversgentaj grandaj instruintoj de la homaro , kaj kiel morojn , kiuj estas starigitaj de homoj kaj kies plenumado aŭ neplenumado dependas de nia volo .</td><td>havas</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=acl:relcl<br>lemma=havi<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres</details></td><td>kiujn</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=kiu<br>Case=Acc<br>PronType=Rel</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-020-006%22%20%3B%20A%20%5Bform%3D%22havas%22%7C%22Havas%22%5D%20%3B%20B%20%5Bform%3D%22kiujn%22%7C%22Kiujn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td>Dum la esenco de Esperanto estas plena neŭtraleco kaj la esperantisma ideo prezentas nur nedifinitan fratecan senton kaj esperon , kiujn nature naskas la renkontiĝado sur neŭtrala lingva fundamento kaj <strong>kiujn</strong> ĉiu esperantisto <strong>havas</strong> plenan rajton ne sole komentarii al si tiel , kiel li volas , sed eĉ ĝenerale akcepti aŭ ne akcepti ilin — la Homaranismo estas speciala kaj tute difinita politika-religia programo , kiu prezentas mian kredon pure privatan kaj la aliajn esperantistojn tute ne koncernas .</td><td>havas</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=havi<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres</details></td><td>kiujn</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=kiu<br>Case=Acc<br>PronType=Rel</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-006-002%22%20%3B%20A%20%5Bform%3D%22havas%22%7C%22Havas%22%5D%20%3B%20B%20%5Bform%3D%22kiujn%22%7C%22Kiujn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td>Mi konscias , ke por samregnanoj kaj samurbanoj la rolon de lingvo neŭtrala povas ludi la lingvo regna aŭ tiu kultura lingvo , kiun parolas la plimulto de la lokaj loĝantoj , sed ke tio devas esti rigardata nur kiel prooportuneca cedo de la malplimulto al la plimulto , sed ne kiel ia humiliga tributo , kiu <strong>ŝuldas</strong> <strong>gentoj</strong> mastrataj al gentoj mastrantaj .</td><td>ŝuldas</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=acl:relcl<br>lemma=ŝuldi<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres</details></td><td>gentoj</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=gento<br>Case=Nom</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-015-003%22%20%3B%20A%20%5Bform%3D%22%C5%9Duldas%22%7C%22%C5%9Culdas%22%5D%20%3B%20B%20%5Bform%3D%22gentoj%22%7C%22Gentoj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

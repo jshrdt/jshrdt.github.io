@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP v2 - NP HEAD–DET (Number) Agreement Overview</title>
+    <title>MultiBLiMP 2.0 - NP HEAD–DET (Number) Agreement Overview</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -415,7 +415,7 @@
     <div class="container">
         <div class="header">
             <div class="title-section">
-                <h1>MultiBLiMP v2 - NP HEAD–DET (Number) Agreement Overview</h1>
+                <h1>MultiBLiMP 2.0 - NP HEAD–DET (Number) Agreement Overview</h1>
                 <div class="subtitle">
                     NP HEAD–DET (Number) agreement prediction through decision trees. Click a language row
                     (or the <strong>Results</strong> button) to open its create_pairs results below.
@@ -425,7 +425,13 @@
                 </div>
             </div>
             <div class="top-controls">
-                <a href="../" class="back-btn">
+                <a href="../../../index.html" class="back-btn" title="Back to the sva-dt dataset stats overview">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Stats Overview
+                </a>
+                <a href="../../" class="back-btn">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -898,7 +904,16 @@
       // actually left over -- so at a glance you can see which languages
       // landed on a meaningfully low entropy in absolute terms, not just
       // which ones improved a lot relatively.
-      const maxBaseEntropy = Math.max(1, ...list.map(l => l.base));
+      //
+      // .filter(Number.isFinite): a trivial-included row (no fitted tree --
+      // see the include_trivial_labels/include_trivial_min_count handling
+      // below) has base = NaN by design (there's no real entropy to report
+      // for it). Math.max with even one NaN argument returns NaN, no matter
+      // how many real numbers are also present -- left unfiltered, a single
+      // such row poisoned this table-wide ceiling and broke Base/Reduced
+      // Entropy's colour for every OTHER language's row too, not just the
+      // trivial one's own (already-handled-separately) blank cell.
+      const maxBaseEntropy = Math.max(1, ...list.map(l => l.base).filter(Number.isFinite));
       const acc = SORT_ACCESSORS[currentSort.column];
       const sorted = [...list].sort((a, b) => {
         const av = acc(a), bv = acc(b);

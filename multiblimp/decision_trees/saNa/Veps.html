@@ -44,6 +44,15 @@
     --keep-light: #f1eafe;
     --role-a: #d97706;
     --role-b: #4f46e5;
+    /* Dedicated to "bonus" feature entries (see buildFeatTable's own
+       .bonus-feat) only -- every other color already means something else
+       on this page (trace-a..e rotate through PALETTE for up to 5 clicked
+       samples, trace-c/danger mark the actual violation, keep/trace-a is
+       plain decisive-bold, role-a is already a close amber). A genuine
+       gold, not borrowed from any of those, so a bonus entry reads as its
+       own distinct thing rather than borrowing another element's meaning. */
+    --bonus: #ca8a04;
+    --bonus-light: #fef3c7;
     --font-ui: 'DM Sans', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --radius: 10px;
@@ -75,6 +84,7 @@
       --ok: #4ade80; --danger: #f0605a;
       --keep: #b18cf5; --keep-light: #2a2140;
       --role-a: #f0a743; --role-b: #8b93f8;
+      --bonus: #fbbf24; --bonus-light: #3a2e0a;
       --scroll-shadow: rgba(0, 0, 0, 0.25);
     }
   }
@@ -95,6 +105,7 @@
     --ok: #4ade80; --danger: #f0605a;
     --keep: #b18cf5; --keep-light: #2a2140;
     --role-a: #f0a743; --role-b: #8b93f8;
+    --bonus: #fbbf24; --bonus-light: #3a2e0a;
     --scroll-shadow: rgba(0, 0, 0, 0.25);
   }
 
@@ -850,13 +861,41 @@
   .feat-mini-table .role-form.role-a { color: var(--role-a); }
   .feat-mini-table .role-form.role-b { color: var(--role-b); }
   .feat-mini-table td b { color: var(--sample-color, var(--keep)); font-weight: 700; }
+  /* Its own dedicated color (--bonus, defined in :root alongside the rest
+     of the palette) -- not the plain bold color above, not the decisive
+     "changed" red below: a bonus entry (see applyAfterFeat) is real new
+     information with no original value to compare against, genuinely
+     distinct from both of those, so it gets a hue nothing else on this
+     page already means. General rule here covers a bonus entry that lands
+     in a non-decisive column; the decisive.swapped-scoped one further down
+     covers the (more common) case where it shares a cell with the actual
+     decisive value. */
+  .feat-mini-table td b.bonus-feat { color: var(--bonus); }
   .feat-mini-table td .na { color: var(--text-tertiary); opacity: 0.5; }
+  /* Marks a value read from a bracketed source column (e.g. "Number[abs]"
+     shown under the plain "NUMBER" table column) as distinct from a
+     genuinely plain feature reading -- never render the two the same way,
+     down to this smallest visual unit. */
+  .feat-mini-table td .feat-bracket { color: var(--text-secondary); font-size: 0.75em; font-weight: 500; margin-left: 2px; }
+  /* One line per bracket variant of a dimension (Number[abs]/Number[erg]/...),
+     stacked instead of joined inline with a separator -- keeps every table
+     the same width regardless of how many brackets a given row carries,
+     rather than forcing horizontal scrolling on the ones that carry more. */
+  .feat-mini-table td .feat-entry-line { line-height: 1.5; }
+  .feat-mini-table td .feat-entry-line + .feat-entry-line { margin-top: 1px; }
   .feat-mini-table th.decisive, .feat-mini-table td.decisive { background: var(--sample-color-light, var(--accent-light)); }
   /* "linked" rows: a role and its reinflected swapped_ counterpart, tied
      together with a matching colored rail down the row-label cell. */
   .feat-mini-table tr.linked-row th { box-shadow: inset 3px 0 0 var(--keep); }
   .feat-mini-table td.decisive.swapped { background: var(--trace-c-light); }
   .feat-mini-table td.decisive.swapped b { color: var(--trace-c); }
+  /* Overrides the rule above for a bonus entry (see the general
+     b.bonus-feat rule near the top of this block for the full rationale)
+     sharing the decisive column's cell: real new information, not the
+     violation itself, so it must not read as "this also changed for the
+     worse" just by sitting in the same <td>. Extra class beats the plain
+     "b" selector on specificity regardless of declaration order. */
+  .feat-mini-table td.decisive.swapped b.bonus-feat { color: var(--bonus); }
 
 
   /* ── Node samples (native <details>, open by default -- unlike pairs
@@ -1075,7 +1114,7 @@
   // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Veps \u00b7 Aux_nsubj_Number", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Veps", "accuracy": "92.9%", "baseEntropy": "0.469", "reducedEntropy": "0.469", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "14", "predictor": "Aux_nsubj_Number", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 13, "color": "var(--yes)"}, {"cls": "No", "cnt": 1, "color": "var(--no)"}, {"cls": "unk", "cnt": 2, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 14, "H": 0.469, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 13, "color": "var(--yes)"}, {"cls": "No", "cnt": 1, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": false, "kept": 0, "correctSwaps": 0}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Ristitud , <strong>ked</strong> <strong>ei</strong> tekoi i\u010deze jurid , ei voigoi el\u00e4da h\u00fcvin necil mal , ei voigoi l\u00f6uta i\u010dtaze neci\u0161 mirus , ei voigoi kazvatada lapsid i\u010deze rahvahan veroid m\u00f6to .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Plur</b>", "Person=3", "Polarity=Neg"], "nsubj": "ked", "nsubjFeats": ["upos=PRON", "lemma=ken", "Case=Par", "<b>Number=Sing</b>", "PronType=Int"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_32%22%20%3B%20A%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%3B%20B%20%5Bform%3D%22ked%22%7C%22Ked%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "<strong>Min\u00e4</strong> <strong>en</strong> navedind el\u00e4da internatas , en voind el\u00e4da edahan kanzasp\u00e4i .", "verb": "en", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=1", "Polarity=Neg"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_22%22%20%3B%20A%20%5Bform%3D%22en%22%7C%22En%22%5D%20%3B%20B%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "No kaikse <strong>elo</strong> t\u00e4g\u00e4 <strong>ei</strong> azotade .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "elo", "nsubjFeats": ["upos=NOUN", "lemma=elo", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_97%22%20%3B%20A%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%3B%20B%20%5Bform%3D%22elo%22%7C%22Elo%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "T\u00e4g\u00e4 ei ole sotovijad sidod , t\u00e4nna <strong>ei</strong> ajelkoi\u0161 <strong>avtobusad</strong> .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Plur</b>", "Person=3", "Polarity=Neg"], "nsubj": "avtobusad", "nsubjFeats": ["upos=NOUN", "lemma=avtobus", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_90%22%20%3B%20A%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%3B%20B%20%5Bform%3D%22avtobusad%22%7C%22Avtobusad%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Vali\u010dusiden edel min\u00e4 tahtoin el\u02bcgeta , <strong>voin-ik</strong> <strong>min\u00e4</strong> tehta mid\u00e4-se ut da h\u00fcv\u00e4d k\u00fcl\u00e4n el\u00e4jiden t\u00e4ht .", "verb": "voin-ik", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Clitic=Ik", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_70%22%20%3B%20A%20%5Bform%3D%22voin-ik%22%7C%22Voin-ik%22%5D%20%3B%20B%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "M\u00f6 opendam veps\u00e4n kel\u02bct \u0161kolas , tegem melentartui\u017eid projektoid , tegem \u010domid koncertoid da praznikad , kus <strong>ristitud</strong> <strong>voiba</strong> johtutada i\u010deze jurid , panda p\u00e4le vepsl\u00e4i\u017eid s\u00e4doid da pagi\u0161ta kodikelel .", "verb": "voiba", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "Voice=Act"], "nsubj": "ristitud", "nsubjFeats": ["upos=NOUN", "lemma=ristit", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_36%22%20%3B%20A%20%5Bform%3D%22voiba%22%7C%22Voiba%22%5D%20%3B%20B%20%5Bform%3D%22ristitud%22%7C%22Ristitud%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Ezm\u00e4i minun <strong>rad</strong> <strong>ei</strong> koskend vepsl\u00e4i\u017eid .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "rad", "nsubjFeats": ["upos=NOUN", "lemma=rad", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_47%22%20%3B%20A%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%3B%20B%20%5Bform%3D%22rad%22%7C%22Rad%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "I\u0161ttes \u010domal \u00c4ni\u017ej\u00e4rven randal h\u00e4n starinoi\u010di : \u2013 <strong>Min\u00e4</strong> <strong>olen</strong> s\u00fcndnu Piterin agjaha , Himjogi - k\u00fcl\u00e4h\u00e4 .", "verb": "olen", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_8%22%20%3B%20A%20%5Bform%3D%22olen%22%7C%22Olen%22%5D%20%3B%20B%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Oli\u017ei h\u00fcv\u00e4 , mi\u0161e <strong>elo</strong> der\u02bconas <strong>ei</strong> k\u00fcl\u02bcm\u00e4i\u017ei , a veps\u00e4n kel\u02bc el\u00e4i\u017ei t\u00e4g\u00e4 ig\u00e4n .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "elo", "nsubjFeats": ["upos=NOUN", "lemma=elo", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_103%22%20%3B%20A%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%3B%20B%20%5Bform%3D%22elo%22%7C%22Elo%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Vai\u0161e lebup\u00e4ivile <strong>lapsed</strong> <strong>voiba</strong> ajada kodihe , vastatas vanhembidenke .", "verb": "voiba", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "Voice=Act"], "nsubj": "lapsed", "nsubjFeats": ["upos=NOUN", "lemma=laps\u02bc", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_21%22%20%3B%20A%20%5Bform%3D%22voiba%22%7C%22Voiba%22%5D%20%3B%20B%20%5Bform%3D%22lapsed%22%7C%22Lapsed%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "H\u00fcv\u00e4 , mi\u0161e minun elos <strong>oliba</strong> <strong>ristitud</strong> , kudambad abutiba minei da kaiken tugeziba .", "verb": "oliba", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "Voice=Act"], "nsubj": "ristitud", "nsubjFeats": ["upos=NOUN", "lemma=ristit", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_60%22%20%3B%20A%20%5Bform%3D%22oliba%22%7C%22Oliba%22%5D%20%3B%20B%20%5Bform%3D%22ristitud%22%7C%22Ristitud%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Nece rad om t\u00e4rged , ved\u02bc <strong>m\u00f6</strong> <strong>voim</strong> kirjutada projektoid da tehta \u00e4jan vepsl\u00e4i\u017eiden t\u00e4ht .", "verb": "voim", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "m\u00f6", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Plur</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_75%22%20%3B%20A%20%5Bform%3D%22voim%22%7C%22Voim%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%B6%22%7C%22M%C3%B6%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Konz <strong>min\u00e4</strong> <strong>olen</strong> s\u00fcndnu , vanhembad da m\u00f6 vellenke ajoim el\u00e4maha Kaskez - posadaha .", "verb": "olen", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_10%22%20%3B%20A%20%5Bform%3D%22olen%22%7C%22Olen%22%5D%20%3B%20B%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Paksus h\u00f6 tuleskeleba radmaha kivikarjeroihe vai kuna-se v\u00f6l , i nece om h\u00fcv\u00e4 , mi\u0161e <strong>m\u00f6</strong> <strong>voim</strong> el\u00e4da h\u00fcv\u00e4s ko\u017emuses .", "verb": "voim", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "m\u00f6", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Plur</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_30%22%20%3B%20A%20%5Bform%3D%22voim%22%7C%22Voim%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%B6%22%7C%22M%C3%B6%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Veps \u00b7 Aux_nsubj_Number", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Veps", "accuracy": "92.9%", "baseEntropy": "0.469", "reducedEntropy": "0.469", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "14", "predictor": "Aux_nsubj_Number", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 13, "color": "var(--yes)"}, {"cls": "No", "cnt": 1, "color": "var(--no)"}, {"cls": "unk", "cnt": 2, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 14, "H": 0.469, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 13, "color": "var(--yes)"}, {"cls": "No", "cnt": 1, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": false, "kept": 0, "correctSwaps": 0}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Ristitud , <strong>ked</strong> <strong>ei</strong> tekoi i\u010deze jurid , ei voigoi el\u00e4da h\u00fcvin necil mal , ei voigoi l\u00f6uta i\u010dtaze neci\u0161 mirus , ei voigoi kazvatada lapsid i\u010deze rahvahan veroid m\u00f6to .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Plur</b>", "Person=3", "Polarity=Neg"], "nsubj": "ked", "nsubjFeats": ["upos=PRON", "lemma=ken", "Case=Par", "<b>Number=Sing</b>", "PronType=Int"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_32%22%20%3B%20A%20%5Bform%3D%22ked%22%7C%22Ked%22%5D%20%3B%20B%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "<strong>Min\u00e4</strong> <strong>en</strong> navedind el\u00e4da internatas , en voind el\u00e4da edahan kanzasp\u00e4i .", "verb": "en", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=1", "Polarity=Neg"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_22%22%20%3B%20A%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%3B%20B%20%5Bform%3D%22en%22%7C%22En%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "No kaikse <strong>elo</strong> t\u00e4g\u00e4 <strong>ei</strong> azotade .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "elo", "nsubjFeats": ["upos=NOUN", "lemma=elo", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_97%22%20%3B%20A%20%5Bform%3D%22elo%22%7C%22Elo%22%5D%20%3B%20B%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "T\u00e4g\u00e4 ei ole sotovijad sidod , t\u00e4nna <strong>ei</strong> ajelkoi\u0161 <strong>avtobusad</strong> .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Plur</b>", "Person=3", "Polarity=Neg"], "nsubj": "avtobusad", "nsubjFeats": ["upos=NOUN", "lemma=avtobus", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_90%22%20%3B%20A%20%5Bform%3D%22avtobusad%22%7C%22Avtobusad%22%5D%20%3B%20B%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Vali\u010dusiden edel min\u00e4 tahtoin el\u02bcgeta , <strong>voin-ik</strong> <strong>min\u00e4</strong> tehta mid\u00e4-se ut da h\u00fcv\u00e4d k\u00fcl\u00e4n el\u00e4jiden t\u00e4ht .", "verb": "voin-ik", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Clitic=Ik", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_70%22%20%3B%20A%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%3B%20B%20%5Bform%3D%22voin-ik%22%7C%22Voin-ik%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "M\u00f6 opendam veps\u00e4n kel\u02bct \u0161kolas , tegem melentartui\u017eid projektoid , tegem \u010domid koncertoid da praznikad , kus <strong>ristitud</strong> <strong>voiba</strong> johtutada i\u010deze jurid , panda p\u00e4le vepsl\u00e4i\u017eid s\u00e4doid da pagi\u0161ta kodikelel .", "verb": "voiba", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "Voice=Act"], "nsubj": "ristitud", "nsubjFeats": ["upos=NOUN", "lemma=ristit", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_36%22%20%3B%20A%20%5Bform%3D%22ristitud%22%7C%22Ristitud%22%5D%20%3B%20B%20%5Bform%3D%22voiba%22%7C%22Voiba%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Ezm\u00e4i minun <strong>rad</strong> <strong>ei</strong> koskend vepsl\u00e4i\u017eid .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "rad", "nsubjFeats": ["upos=NOUN", "lemma=rad", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_47%22%20%3B%20A%20%5Bform%3D%22rad%22%7C%22Rad%22%5D%20%3B%20B%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "I\u0161ttes \u010domal \u00c4ni\u017ej\u00e4rven randal h\u00e4n starinoi\u010di : \u2013 <strong>Min\u00e4</strong> <strong>olen</strong> s\u00fcndnu Piterin agjaha , Himjogi - k\u00fcl\u00e4h\u00e4 .", "verb": "olen", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_8%22%20%3B%20A%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%3B%20B%20%5Bform%3D%22olen%22%7C%22Olen%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Oli\u017ei h\u00fcv\u00e4 , mi\u0161e <strong>elo</strong> der\u02bconas <strong>ei</strong> k\u00fcl\u02bcm\u00e4i\u017ei , a veps\u00e4n kel\u02bc el\u00e4i\u017ei t\u00e4g\u00e4 ig\u00e4n .", "verb": "ei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=ei", "SubjAuxCount=1", "<b>Number=Sing</b>", "Person=3", "Polarity=Neg"], "nsubj": "elo", "nsubjFeats": ["upos=NOUN", "lemma=elo", "Case=Nom", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_103%22%20%3B%20A%20%5Bform%3D%22elo%22%7C%22Elo%22%5D%20%3B%20B%20%5Bform%3D%22ei%22%7C%22Ei%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Vai\u0161e lebup\u00e4ivile <strong>lapsed</strong> <strong>voiba</strong> ajada kodihe , vastatas vanhembidenke .", "verb": "voiba", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "Voice=Act"], "nsubj": "lapsed", "nsubjFeats": ["upos=NOUN", "lemma=laps\u02bc", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_21%22%20%3B%20A%20%5Bform%3D%22lapsed%22%7C%22Lapsed%22%5D%20%3B%20B%20%5Bform%3D%22voiba%22%7C%22Voiba%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "H\u00fcv\u00e4 , mi\u0161e minun elos <strong>oliba</strong> <strong>ristitud</strong> , kudambad abutiba minei da kaiken tugeziba .", "verb": "oliba", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "Voice=Act"], "nsubj": "ristitud", "nsubjFeats": ["upos=NOUN", "lemma=ristit", "Case=Nom", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_60%22%20%3B%20A%20%5Bform%3D%22ristitud%22%7C%22Ristitud%22%5D%20%3B%20B%20%5Bform%3D%22oliba%22%7C%22Oliba%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Nece rad om t\u00e4rged , ved\u02bc <strong>m\u00f6</strong> <strong>voim</strong> kirjutada projektoid da tehta \u00e4jan vepsl\u00e4i\u017eiden t\u00e4ht .", "verb": "voim", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "m\u00f6", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Plur</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_75%22%20%3B%20A%20%5Bform%3D%22m%C3%B6%22%7C%22M%C3%B6%22%5D%20%3B%20B%20%5Bform%3D%22voim%22%7C%22Voim%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Konz <strong>min\u00e4</strong> <strong>olen</strong> s\u00fcndnu , vanhembad da m\u00f6 vellenke ajoim el\u00e4maha Kaskez - posadaha .", "verb": "olen", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=olda", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "min\u00e4", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Sing</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_10%22%20%3B%20A%20%5Bform%3D%22min%C3%A4%22%7C%22Min%C3%A4%22%5D%20%3B%20B%20%5Bform%3D%22olen%22%7C%22Olen%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}, {"sentence": "Paksus h\u00f6 tuleskeleba radmaha kivikarjeroihe vai kuna-se v\u00f6l , i nece om h\u00fcv\u00e4 , mi\u0161e <strong>m\u00f6</strong> <strong>voim</strong> el\u00e4da h\u00fcv\u00e4s ko\u017emuses .", "verb": "voim", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=voida", "SubjAuxCount=1", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "Voice=Act"], "nsubj": "m\u00f6", "nsubjFeats": ["upos=PRON", "lemma=min\u00e4", "Case=Nom", "<b>Number=Plur</b>", "Person=1", "PronType=Prs"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Veps-VWT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vepkar_30%22%20%3B%20A%20%5Bform%3D%22m%C3%B6%22%7C%22M%C3%B6%22%5D%20%3B%20B%20%5Bform%3D%22voim%22%7C%22Voim%22%5D%20%20%7D", "treebankName": "UD_Veps-VWT"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1362,35 +1401,99 @@ const TREE_DATA = {"title": "Veps \u00b7 Aux_nsubj_Number", "roleA": "nsubj", "r
 
   // Shared, comparable features first (this is exactly what agreement is
   // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks.
-  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos'];
+  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
+  // identifying context like deprel/upos, not agreement-relevant morphology,
+  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
+  // emits a "lemma=..." entry for every row -- it just never had a matching
+  // ORDERED_FEATS column to render into.
+  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos', 'lemma'];
 
+  function featEntries(feats, key) {
+    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
+    // live under the same "NUMBER" table column (one dimension, several
+    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
+    // for why obj/iobj/ergative-marked-subj agreement only ever has the
+    // bracketed form), but they are never the same reading: a bracket
+    // means this value came from a specific argument slot, not the token's
+    // unqualified feature. And a single token can carry *more than one*
+    // bracket of the same dimension at once (a transitive Basque verb's
+    // Number[abs] -- the object's number -- and Number[erg] -- the
+    // subject's -- both at once) -- every one of them is returned here
+    // (not just the first) so the caller can show all of them, each with
+    // its own bracket marker, rather than one arbitrarily winning the
+    // shared column.
+    const hits = feats.filter(f => {
+      const clean = f.replace(/<\/?[bi]>/g, '');
+      return clean.startsWith(key + '=') || clean.startsWith(key + '[');
+    });
+    return hits.map(hit => {
+      const clean = hit.replace(/<\/?[bi]>/g, '');
+      const eqIdx = clean.indexOf('=');
+      const fullKey = clean.slice(0, eqIdx);
+      const value = clean.slice(eqIdx + 1);
+      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
+      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
+      // doesn't apply to this token at all, rather than leaking the raw
+      // Python string into the table.
+      if (value === 'nan') return null;
+      const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
+      // bold: the decisive swap value (real violation, gets the red
+      // decisive.swapped styling below). bonus: a dimension with no
+      // original value at all, only a real one on the reinflected
+      // candidate (see applyAfterFeat's own docstring) -- genuinely new
+      // information, not a violation, so it must NOT inherit that same red
+      // "this changed for the worse" color just for sharing the cell with
+      // the entry that did.
+      return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
+    }).filter(e => e !== null);
+  }
+
+  // Single-entry convenience for callers that only need "is this column
+  // populated at all" (column-set computation) -- picks the first match,
+  // same as the old featEntry did before it could return several.
   function featEntry(feats, key) {
-    const hit = feats.find(f => f.replace(/<\/?b>/g, '').startsWith(key + '='));
-    if (!hit) return null;
-    const value = hit.replace(/<\/?b>/g, '').split('=')[1];
-    // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-    // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-    // doesn't apply to this token at all (null -> the "–" placeholder below),
-    // rather than leaking the raw Python string into the table.
-    if (value === 'nan') return null;
-    return { value, bold: hit.startsWith('<b>') };
+    return featEntries(feats, key)[0] || null;
   }
 
   // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat} column, emitted per pair as
-  // p.afterValue -- so the "swapped" row's other features are identical to
-  // the original by construction (the same feature list, only this one
-  // entry replaced), and the decisive value itself is real data, not a
-  // guessed opposite.
-  function applyAfterFeat(feats, decisiveFeat, afterValue) {
-    if (afterValue == null) return feats;
-    return feats.map(f => {
+  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
+  // p.afterValue with the exact key it was found under (plain or
+  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
+  // are identical to the original by construction (the same feature list,
+  // only this one entry replaced), the decisive value itself is real data,
+  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
+  // renders as one -- never silently relabeled as the plain "Number" the
+  // original row's own entry might (or might not) also carry.
+  //
+  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
+  // prefix: a token can carry more than one bracket of the same base
+  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
+  // only the one actually reinflected should change -- a prefix match
+  // would also overwrite the untouched sibling (e.g. relabeling the
+  // subject's unchanged Number[erg] with the object's new value).
+  //
+  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
+  // _v2_pair_from_row) are APPENDED rather than patched into an existing
+  // entry: a dimension like Basque's indirect-object Number/Person slot can
+  // be entirely absent from the original word (a plain transitive form like
+  // "zuen" never marks one at all) while genuinely present on the
+  // reinflected candidate (a ditransitive form like "zioten" does) -- real
+  // data with no original entry to replace, so it has to be added as a new
+  // column instead of overwriting one.
+  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats) {
+    const targetKey = afterFeatKey || decisiveFeat;
+    const patched = afterValue == null ? feats : feats.map(f => {
       const clean = f.replace(/<\/?b>/g, '');
       const [key] = clean.split('=');
-      if (key !== decisiveFeat) return f;
-      return `<b>${key}=${afterValue}</b>`;
+      if (key !== targetKey) return f;
+      return `<b>${targetKey}=${afterValue}</b>`;
     });
+    if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
+    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
+    // value actually changed" (bold, gets the red decisive.swapped color)
+    // apart from "a dimension with no original value, genuinely new here"
+    // (bonus) -- see its own comment for why conflating the two was wrong.
+    return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
   // One row per {label, form, feats} entry x one column per feature, columns
@@ -1409,11 +1512,38 @@ const TREE_DATA = {"title": "Veps \u00b7 Aux_nsubj_Number", "roleA": "nsubj", "r
     const headHtml = cols.map(k => `<th${k === decisiveFeat ? ' class="decisive"' : ''}>${k}</th>`).join('');
     const rowHtml = (r) => {
       const cells = cols.map(k => {
-        const e = featEntry(r.feats, k);
+        // Every entry for this column, not just one -- a token can carry
+        // more than one bracket of the same dimension at once (see
+        // featEntries), and all of them are shown, separated, so e.g. a
+        // verb's object-agreement AND subject-agreement Number are both
+        // visible and each stays comparable to the swapped role's own
+        // entry for that exact bracket.
+        const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cls = isDecisive ? ` class="decisive${r.variant === 'swapped' ? ' swapped' : ''}"` : '';
-        if (!e) return `<td${cls}><span class="na">–</span></td>`;
-        return `<td${cls}>${e.bold ? `<b>${e.value}</b>` : e.value}</td>`;
+        if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
+        // One line per entry, stacked vertically (feat-entry-line is
+        // block-level), not joined inline with a "/" separator -- 2-3
+        // bracket variants of the same dimension (e.g. a transitive verb's
+        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
+        // used to force the whole table wide enough to need horizontal
+        // scrolling just to read one cell; stacking keeps every table the
+        // same width regardless of how many brackets a given row happens
+        // to carry.
+        const parts = entries.map(e => {
+          // bonus first: a bonus entry is never also .bold (applyAfterFeat
+          // wraps each entry with exactly one of <i>/<b>), but checking it
+          // first keeps that explicit rather than relying on the ordering
+          // not mattering. class="bonus-feat" is what lets the CSS below
+          // override the red decisive.swapped color for just this entry,
+          // without touching the real decisive value sharing its cell.
+          const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
+            : e.bold ? `<b>${e.value}</b>`
+            : e.value;
+          const bracketHtml = e.bracket ? `<span class="feat-bracket">${e.bracket}</span>` : '';
+          return `<div class="feat-entry-line">${valueHtml}${bracketHtml}</div>`;
+        });
+        return `<td${cls}>${parts.join('')}</td>`;
       }).join('');
       const rowCls = r.linked ? ' class="linked-row"' : '';
       const roleCls = r.role ? ` role-${r.role}` : '';
@@ -2160,7 +2290,7 @@ const TREE_DATA = {"title": "Veps \u00b7 Aux_nsubj_Number", "roleA": "nsubj", "r
         const swappedRow = {
           label: `swapped_${origRole.label}`,
           form: p.ungrammatical,
-          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue),
+          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats),
           variant: 'swapped',
           linked: true,
           role: origRole.role,

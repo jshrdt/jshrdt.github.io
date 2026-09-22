@@ -44,6 +44,15 @@
     --keep-light: #f1eafe;
     --role-a: #d97706;
     --role-b: #4f46e5;
+    /* Dedicated to "bonus" feature entries (see buildFeatTable's own
+       .bonus-feat) only -- every other color already means something else
+       on this page (trace-a..e rotate through PALETTE for up to 5 clicked
+       samples, trace-c/danger mark the actual violation, keep/trace-a is
+       plain decisive-bold, role-a is already a close amber). A genuine
+       gold, not borrowed from any of those, so a bonus entry reads as its
+       own distinct thing rather than borrowing another element's meaning. */
+    --bonus: #ca8a04;
+    --bonus-light: #fef3c7;
     --font-ui: 'DM Sans', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --radius: 10px;
@@ -75,6 +84,7 @@
       --ok: #4ade80; --danger: #f0605a;
       --keep: #b18cf5; --keep-light: #2a2140;
       --role-a: #f0a743; --role-b: #8b93f8;
+      --bonus: #fbbf24; --bonus-light: #3a2e0a;
       --scroll-shadow: rgba(0, 0, 0, 0.25);
     }
   }
@@ -95,6 +105,7 @@
     --ok: #4ade80; --danger: #f0605a;
     --keep: #b18cf5; --keep-light: #2a2140;
     --role-a: #f0a743; --role-b: #8b93f8;
+    --bonus: #fbbf24; --bonus-light: #3a2e0a;
     --scroll-shadow: rgba(0, 0, 0, 0.25);
   }
 
@@ -850,13 +861,41 @@
   .feat-mini-table .role-form.role-a { color: var(--role-a); }
   .feat-mini-table .role-form.role-b { color: var(--role-b); }
   .feat-mini-table td b { color: var(--sample-color, var(--keep)); font-weight: 700; }
+  /* Its own dedicated color (--bonus, defined in :root alongside the rest
+     of the palette) -- not the plain bold color above, not the decisive
+     "changed" red below: a bonus entry (see applyAfterFeat) is real new
+     information with no original value to compare against, genuinely
+     distinct from both of those, so it gets a hue nothing else on this
+     page already means. General rule here covers a bonus entry that lands
+     in a non-decisive column; the decisive.swapped-scoped one further down
+     covers the (more common) case where it shares a cell with the actual
+     decisive value. */
+  .feat-mini-table td b.bonus-feat { color: var(--bonus); }
   .feat-mini-table td .na { color: var(--text-tertiary); opacity: 0.5; }
+  /* Marks a value read from a bracketed source column (e.g. "Number[abs]"
+     shown under the plain "NUMBER" table column) as distinct from a
+     genuinely plain feature reading -- never render the two the same way,
+     down to this smallest visual unit. */
+  .feat-mini-table td .feat-bracket { color: var(--text-secondary); font-size: 0.75em; font-weight: 500; margin-left: 2px; }
+  /* One line per bracket variant of a dimension (Number[abs]/Number[erg]/...),
+     stacked instead of joined inline with a separator -- keeps every table
+     the same width regardless of how many brackets a given row carries,
+     rather than forcing horizontal scrolling on the ones that carry more. */
+  .feat-mini-table td .feat-entry-line { line-height: 1.5; }
+  .feat-mini-table td .feat-entry-line + .feat-entry-line { margin-top: 1px; }
   .feat-mini-table th.decisive, .feat-mini-table td.decisive { background: var(--sample-color-light, var(--accent-light)); }
   /* "linked" rows: a role and its reinflected swapped_ counterpart, tied
      together with a matching colored rail down the row-label cell. */
   .feat-mini-table tr.linked-row th { box-shadow: inset 3px 0 0 var(--keep); }
   .feat-mini-table td.decisive.swapped { background: var(--trace-c-light); }
   .feat-mini-table td.decisive.swapped b { color: var(--trace-c); }
+  /* Overrides the rule above for a bonus entry (see the general
+     b.bonus-feat rule near the top of this block for the full rationale)
+     sharing the decisive column's cell: real new information, not the
+     violation itself, so it must not read as "this also changed for the
+     worse" just by sitting in the same <td>. Extra class beats the plain
+     "b" selector on specificity regardless of declaration order. */
+  .feat-mini-table td.decisive.swapped b.bonus-feat { color: var(--bonus); }
 
 
   /* ── Node samples (native <details>, open by default -- unlike pairs
@@ -1075,7 +1114,7 @@
   // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Upper_Sorbian \u00b7 Verb_nsubj_Gender", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Upper_Sorbian", "accuracy": "90.9%", "baseEntropy": "0.496", "reducedEntropy": "0.496", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "22", "predictor": "Verb_nsubj_Gender", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 20, "color": "var(--yes)"}, {"cls": "No", "cnt": 2, "color": "var(--no)"}, {"cls": "unk", "cnt": 2, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 22, "H": 0.496, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 20, "color": "var(--yes)"}, {"cls": "No", "cnt": 2, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": false, "kept": 0, "correctSwaps": 0}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "<strong>Zm\u011bna</strong> wurjekowanja p\u0159ed wokalomaj \" e \" a \" i \" je so pozd\u017ai\u0161o <strong>sta\u0142o</strong> .", "verb": "sta\u0142o", "verbFeats": ["upos=VERB", "deprel=root", "lemma=sta\u0107", "VerbForm=Part", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "zm\u011bna", "nsubjFeats": ["upos=NOUN", "lemma=zm\u011bna", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p251s2%22%20%3B%20A%20%5Bform%3D%22zm%C4%9Bna%22%7C%22Zm%C4%9Bna%22%5D%20%3B%20B%20%5Bform%3D%22sta%C5%82o%22%7C%22Sta%C5%82o%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Tajke <strong>wa\u0161nje</strong> doda\u0107 wobrazy by <strong>ma\u0142</strong> w cy\u0142ku so wu\u017eiwa\u0107 w nastawkach .", "verb": "ma\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u011b\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "wa\u0161nje", "nsubjFeats": ["upos=NOUN", "lemma=wa\u0161nje", "Case=Nom", "<b>Gender=Neut</b>", "Number=Sing"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p224s1%22%20%3B%20A%20%5Bform%3D%22wa%C5%A1nje%22%7C%22Wa%C5%A1nje%22%5D%20%3B%20B%20%5Bform%3D%22ma%C5%82%22%7C%22Ma%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Serbski <strong>institut</strong> ze syd\u0142om w Budy\u0161inje a wotno\u017eku w Cho\u0107ebuzu je so k 1 . januarej 1992 wot Swobodneho stata Sakska zhromadnje z krajom Braniborska <strong>wutwori\u0142</strong> .", "verb": "wutwori\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=wutwori\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "institut", "nsubjFeats": ["upos=NOUN", "lemma=institut", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p6s5%22%20%3B%20A%20%5Bform%3D%22institut%22%7C%22Institut%22%5D%20%3B%20B%20%5Bform%3D%22wutwori%C5%82%22%7C%22Wutwori%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Zo by so GNU - <strong>licenca</strong> <strong>dod\u017aer\u017ea\u0142a</strong> , dyrbi so p\u0159i tym 3 - 5 tamni\u0161ich t . mj . h\u0142ownych awtorow mjenowa\u0107 .", "verb": "dod\u017aer\u017ea\u0142a", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=dod\u017aer\u017ee\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "licenca", "nsubjFeats": ["upos=NOUN", "lemma=licenca", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p80s4%22%20%3B%20A%20%5Bform%3D%22licenca%22%7C%22Licenca%22%5D%20%3B%20B%20%5Bform%3D%22dod%C5%BAer%C5%BEa%C5%82a%22%7C%22Dod%C5%BAer%C5%BEa%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "<strong>Projekt</strong> je <strong>nasta\u0142</strong> w kooperaciji z R\u011b\u010dnym centrumom WITAJ .", "verb": "nasta\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=nasta\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "projekt", "nsubjFeats": ["upos=NOUN", "lemma=projekt", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p54s3%22%20%3B%20A%20%5Bform%3D%22projekt%22%7C%22Projekt%22%5D%20%3B%20B%20%5Bform%3D%22nasta%C5%82%22%7C%22Nasta%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Klemenowe <strong>basnje</strong> su so p\u0159ed kr\u00f3tkim do japan\u0161\u0107iny , chin\u0161\u0107iny , franco\u0161\u0107iny , jend\u017ael\u0161\u0107iny , hindi\u0161\u0107iny , \u0161wed\u0161\u0107iny , ital\u0161\u0107iny a \u0161pan\u0161\u0107iny <strong>p\u0159e\u0142o\u017eili</strong> .", "verb": "p\u0159e\u0142o\u017eili", "verbFeats": ["upos=VERB", "deprel=root", "lemma=p\u0159e\u0142o\u017eili\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "basnje", "nsubjFeats": ["upos=NOUN", "lemma=base\u0144", "Case=Acc", "<b>Gender=Fem</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p229s1%22%20%3B%20A%20%5Bform%3D%22basnje%22%7C%22Basnje%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99e%C5%82o%C5%BEili%22%7C%22P%C5%99e%C5%82o%C5%BEili%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Dnja 16 . oktobra 2009 bud\u017ae 100 l\u011bt , zo je <strong>zemr\u011b\u0142</strong> <strong>klasikar</strong> serbskeje literatury , Jakub Bart - \u0106i\u0161inski .", "verb": "zemr\u011b\u0142", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=zemr\u011b\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "klasikar", "nsubjFeats": ["upos=NOUN", "lemma=klasikar", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p128s2%22%20%3B%20A%20%5Bform%3D%22klasikar%22%7C%22Klasikar%22%5D%20%3B%20B%20%5Bform%3D%22zemr%C4%9B%C5%82%22%7C%22Zemr%C4%9B%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "W \u010dasu jich systematiska pozicija znut\u0159ka symje\u0144cow a jich pochad p\u0159eco hi\u0161\u0107e p\u0159edmjet w\u011bdomostnych debatow , je so jich znut\u0159kowna <strong>systematika</strong> nic naposledku p\u0159ez d\u017a\u011b\u0142o Angiosperm Phylogeny Group ( APG ) z 1990 . l\u011bt <strong>stabilizowa\u0142a</strong> .", "verb": "stabilizowa\u0142a", "verbFeats": ["upos=VERB", "deprel=root", "lemma=stabilizowa\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "systematika", "nsubjFeats": ["upos=NOUN", "lemma=systematika", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p222s2%22%20%3B%20A%20%5Bform%3D%22systematika%22%7C%22Systematika%22%5D%20%3B%20B%20%5Bform%3D%22stabilizowa%C5%82a%22%7C%22Stabilizowa%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "B\u011b <strong>\u010das</strong> bipolarneho sw\u011btoweho porjada a horceje w\u00f3jny <strong>zapo\u010da\u0142</strong> .", "verb": "zapo\u010da\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=zapo\u010de\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u010das", "nsubjFeats": ["upos=NOUN", "lemma=\u010das", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p190s6%22%20%3B%20A%20%5Bform%3D%22%C4%8Das%22%7C%22%C4%8Cas%22%5D%20%3B%20B%20%5Bform%3D%22zapo%C4%8Da%C5%82%22%7C%22Zapo%C4%8Da%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "W n\u011bm\u010dinje su do d\u017aensni\u0161eho w\u0161\u011b sydom ablawtowych grupow wobchowane , p\u0159i \u010dim\u017e n\u011bkotre <strong>werby</strong> su te\u017e swoju ablawtowu grupu w b\u011bhu r\u011b\u010dnych stawiznow <strong>zm\u011bnili</strong> , abo po\u010dachu s\u0142abe by\u0107 , na p\u0159 . so werb backen w sewjernej n\u011bm\u010dinje h\u0142ownje s\u0142abje sk\u0142onjuje ( backen - backte - gebackt ) , mjeztym zo so w hornjej n\u011bm\u010dinje hi\u0161\u0107e husto sylny preteritum a particip II ( backen - buk - gebacken ) jewjetej .", "verb": "zm\u011bnili", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=zm\u011bni\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "werby", "nsubjFeats": ["upos=NOUN", "lemma=werb", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p326s2%22%20%3B%20A%20%5Bform%3D%22werby%22%7C%22Werby%22%5D%20%3B%20B%20%5Bform%3D%22zm%C4%9Bnili%22%7C%22Zm%C4%9Bnili%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "N\u011bkot\u0159i r\u011b\u010despytnicy m\u011bnja , zo sumeriska <strong>r\u011b\u010d</strong> <strong>m\u00f3h\u0142a</strong> z mongol\u0161\u0107inu , fin\u0161\u0107inu , mad\u017aar\u0161\u0107inu abo z turkow\u0161\u0107inu p\u0159iwuzna by\u0107 a wotwod\u017aeja z toho p\u0159ipu\u0107owanje Sumeri\u010danow do Mezopotamiskeje z wuchoda , m\u011bnjo , zo tam su korjenja tutych r\u011b\u010dow .", "verb": "m\u00f3h\u0142a", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=m\u00f3c", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "r\u011b\u010d", "nsubjFeats": ["upos=NOUN", "lemma=r\u011b\u010d", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p384s2%22%20%3B%20A%20%5Bform%3D%22r%C4%9B%C4%8D%22%7C%22R%C4%9B%C4%8D%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%B3h%C5%82a%22%7C%22M%C3%B3h%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "p\u0159ez to <strong>m\u011b\u0142</strong> dal\u0161i nomadny <strong>lud</strong> swoju \u0161ansu k postupej d\u00f3sta\u0107 ( hlej te\u017e : Lis\u0107ina kralow z Ura ) .", "verb": "m\u011b\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u011b\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "lud", "nsubjFeats": ["upos=NOUN", "lemma=lud", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p30s4%22%20%3B%20A%20%5Bform%3D%22lud%22%7C%22Lud%22%5D%20%3B%20B%20%5Bform%3D%22m%C4%9B%C5%82%22%7C%22M%C4%9B%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Hod\u017ai so jenakorazny , zwjet\u0161a nic dok\u0142adnje jenaki system ablawtowych rjadow wobked\u017abowa\u0107 , dokel\u017e su so w\u0161elake zwukowe <strong>p\u0159esunjenja</strong> <strong>stali</strong> .", "verb": "stali", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=sta\u0107", "VerbForm=Part", "<b>Gender=Neut</b>", "Number=Plur"], "nsubj": "p\u0159esunjenja", "nsubjFeats": ["upos=NOUN", "lemma=p\u0159esunjenje", "Case=Nom", "<b>Gender=Neut</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p45s1%22%20%3B%20A%20%5Bform%3D%22p%C5%99esunjenja%22%7C%22P%C5%99esunjenja%22%5D%20%3B%20B%20%5Bform%3D%22stali%22%7C%22Stali%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "<strong>Raimundas</strong> Eimontas je te\u017e <strong>p\u0159ino\u0161owa\u0142</strong> pozadkowu hud\u017abu .", "verb": "p\u0159ino\u0161owa\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=p\u0159ino\u0161owa\u0107", "VerbForm=Part", "Animacy=Anim", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "Raimundas", "nsubjFeats": ["upos=PROPN", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p258s1%22%20%3B%20A%20%5Bform%3D%22Raimundas%22%7C%22Raimundas%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99ino%C5%A1owa%C5%82%22%7C%22P%C5%99ino%C5%A1owa%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Druhdy zastupowany nahlad , bychu wjacore pochadowe <strong>linije</strong> rostlinow z algow <strong>eksistowali</strong> , bu hi\u017eo p\u0159ez morfologiske studije jako njeprawd\u017aepodobny sp\u00f3znaty [ 4 ] , a so d\u017aensa l\u011bdma wjace zastupuje a so te\u017e p\u0159ez molekularnobiologiske studije njepodepr\u011bje . [ 6 ]", "verb": "eksistowali", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=eksistowa\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "linije", "nsubjFeats": ["upos=NOUN", "lemma=linija", "Case=Nom", "<b>Gender=Fem</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p100s1%22%20%3B%20A%20%5Bform%3D%22linije%22%7C%22Linije%22%5D%20%3B%20B%20%5Bform%3D%22eksistowali%22%7C%22Eksistowali%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Pomhaj nam , zo by na\u0161a <strong>encyklopedija</strong> dale <strong>rost\u0142a</strong> !", "verb": "rost\u0142a", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=ros\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "encyklopedija", "nsubjFeats": ["upos=NOUN", "lemma=encyklopedija", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p91s5%22%20%3B%20A%20%5Bform%3D%22encyklopedija%22%7C%22Encyklopedija%22%5D%20%3B%20B%20%5Bform%3D%22rost%C5%82a%22%7C%22Rost%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Francoz <strong>Lavoisier</strong> je wono oxygen <strong>mjenowa\u0142</strong> ( grjeksce oxys : kisilina ; a grjeksce gignomai : \u010dinju )", "verb": "mjenowa\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=mjenowa\u0107", "VerbForm=Part", "Animacy=Anim", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "Lavoisier", "nsubjFeats": ["upos=PROPN", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p274s2%22%20%3B%20A%20%5Bform%3D%22Lavoisier%22%7C%22Lavoisier%22%5D%20%3B%20B%20%5Bform%3D%22mjenowa%C5%82%22%7C%22Mjenowa%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Upper_Sorbian \u00b7 Verb_nsubj_Gender", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Upper_Sorbian", "accuracy": "90.9%", "baseEntropy": "0.496", "reducedEntropy": "0.496", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "22", "predictor": "Verb_nsubj_Gender", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 20, "color": "var(--yes)"}, {"cls": "No", "cnt": 2, "color": "var(--no)"}, {"cls": "unk", "cnt": 2, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 22, "H": 0.496, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 20, "color": "var(--yes)"}, {"cls": "No", "cnt": 2, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": false, "kept": 0, "correctSwaps": 0}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "<strong>Zm\u011bna</strong> wurjekowanja p\u0159ed wokalomaj \" e \" a \" i \" je so pozd\u017ai\u0161o <strong>sta\u0142o</strong> .", "verb": "sta\u0142o", "verbFeats": ["upos=VERB", "deprel=root", "lemma=sta\u0107", "VerbForm=Part", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "zm\u011bna", "nsubjFeats": ["upos=NOUN", "lemma=zm\u011bna", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p251s2%22%20%3B%20A%20%5Bform%3D%22zm%C4%9Bna%22%7C%22Zm%C4%9Bna%22%5D%20%3B%20B%20%5Bform%3D%22sta%C5%82o%22%7C%22Sta%C5%82o%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Tajke <strong>wa\u0161nje</strong> doda\u0107 wobrazy by <strong>ma\u0142</strong> w cy\u0142ku so wu\u017eiwa\u0107 w nastawkach .", "verb": "ma\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u011b\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "wa\u0161nje", "nsubjFeats": ["upos=NOUN", "lemma=wa\u0161nje", "Case=Nom", "<b>Gender=Neut</b>", "Number=Sing"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p224s1%22%20%3B%20A%20%5Bform%3D%22wa%C5%A1nje%22%7C%22Wa%C5%A1nje%22%5D%20%3B%20B%20%5Bform%3D%22ma%C5%82%22%7C%22Ma%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Serbski <strong>institut</strong> ze syd\u0142om w Budy\u0161inje a wotno\u017eku w Cho\u0107ebuzu je so k 1 . januarej 1992 wot Swobodneho stata Sakska zhromadnje z krajom Braniborska <strong>wutwori\u0142</strong> .", "verb": "wutwori\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=wutwori\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "institut", "nsubjFeats": ["upos=NOUN", "lemma=institut", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p6s5%22%20%3B%20A%20%5Bform%3D%22institut%22%7C%22Institut%22%5D%20%3B%20B%20%5Bform%3D%22wutwori%C5%82%22%7C%22Wutwori%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Zo by so GNU - <strong>licenca</strong> <strong>dod\u017aer\u017ea\u0142a</strong> , dyrbi so p\u0159i tym 3 - 5 tamni\u0161ich t . mj . h\u0142ownych awtorow mjenowa\u0107 .", "verb": "dod\u017aer\u017ea\u0142a", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=dod\u017aer\u017ee\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "licenca", "nsubjFeats": ["upos=NOUN", "lemma=licenca", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p80s4%22%20%3B%20A%20%5Bform%3D%22licenca%22%7C%22Licenca%22%5D%20%3B%20B%20%5Bform%3D%22dod%C5%BAer%C5%BEa%C5%82a%22%7C%22Dod%C5%BAer%C5%BEa%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "<strong>Projekt</strong> je <strong>nasta\u0142</strong> w kooperaciji z R\u011b\u010dnym centrumom WITAJ .", "verb": "nasta\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=nasta\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "projekt", "nsubjFeats": ["upos=NOUN", "lemma=projekt", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p54s3%22%20%3B%20A%20%5Bform%3D%22projekt%22%7C%22Projekt%22%5D%20%3B%20B%20%5Bform%3D%22nasta%C5%82%22%7C%22Nasta%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Klemenowe <strong>basnje</strong> su so p\u0159ed kr\u00f3tkim do japan\u0161\u0107iny , chin\u0161\u0107iny , franco\u0161\u0107iny , jend\u017ael\u0161\u0107iny , hindi\u0161\u0107iny , \u0161wed\u0161\u0107iny , ital\u0161\u0107iny a \u0161pan\u0161\u0107iny <strong>p\u0159e\u0142o\u017eili</strong> .", "verb": "p\u0159e\u0142o\u017eili", "verbFeats": ["upos=VERB", "deprel=root", "lemma=p\u0159e\u0142o\u017eili\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "basnje", "nsubjFeats": ["upos=NOUN", "lemma=base\u0144", "Case=Acc", "<b>Gender=Fem</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p229s1%22%20%3B%20A%20%5Bform%3D%22basnje%22%7C%22Basnje%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99e%C5%82o%C5%BEili%22%7C%22P%C5%99e%C5%82o%C5%BEili%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Dnja 16 . oktobra 2009 bud\u017ae 100 l\u011bt , zo je <strong>zemr\u011b\u0142</strong> <strong>klasikar</strong> serbskeje literatury , Jakub Bart - \u0106i\u0161inski .", "verb": "zemr\u011b\u0142", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=zemr\u011b\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "klasikar", "nsubjFeats": ["upos=NOUN", "lemma=klasikar", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p128s2%22%20%3B%20A%20%5Bform%3D%22klasikar%22%7C%22Klasikar%22%5D%20%3B%20B%20%5Bform%3D%22zemr%C4%9B%C5%82%22%7C%22Zemr%C4%9B%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "W \u010dasu jich systematiska pozicija znut\u0159ka symje\u0144cow a jich pochad p\u0159eco hi\u0161\u0107e p\u0159edmjet w\u011bdomostnych debatow , je so jich znut\u0159kowna <strong>systematika</strong> nic naposledku p\u0159ez d\u017a\u011b\u0142o Angiosperm Phylogeny Group ( APG ) z 1990 . l\u011bt <strong>stabilizowa\u0142a</strong> .", "verb": "stabilizowa\u0142a", "verbFeats": ["upos=VERB", "deprel=root", "lemma=stabilizowa\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "systematika", "nsubjFeats": ["upos=NOUN", "lemma=systematika", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p222s2%22%20%3B%20A%20%5Bform%3D%22systematika%22%7C%22Systematika%22%5D%20%3B%20B%20%5Bform%3D%22stabilizowa%C5%82a%22%7C%22Stabilizowa%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "B\u011b <strong>\u010das</strong> bipolarneho sw\u011btoweho porjada a horceje w\u00f3jny <strong>zapo\u010da\u0142</strong> .", "verb": "zapo\u010da\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=zapo\u010de\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u010das", "nsubjFeats": ["upos=NOUN", "lemma=\u010das", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p190s6%22%20%3B%20A%20%5Bform%3D%22%C4%8Das%22%7C%22%C4%8Cas%22%5D%20%3B%20B%20%5Bform%3D%22zapo%C4%8Da%C5%82%22%7C%22Zapo%C4%8Da%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "W n\u011bm\u010dinje su do d\u017aensni\u0161eho w\u0161\u011b sydom ablawtowych grupow wobchowane , p\u0159i \u010dim\u017e n\u011bkotre <strong>werby</strong> su te\u017e swoju ablawtowu grupu w b\u011bhu r\u011b\u010dnych stawiznow <strong>zm\u011bnili</strong> , abo po\u010dachu s\u0142abe by\u0107 , na p\u0159 . so werb backen w sewjernej n\u011bm\u010dinje h\u0142ownje s\u0142abje sk\u0142onjuje ( backen - backte - gebackt ) , mjeztym zo so w hornjej n\u011bm\u010dinje hi\u0161\u0107e husto sylny preteritum a particip II ( backen - buk - gebacken ) jewjetej .", "verb": "zm\u011bnili", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=zm\u011bni\u0107", "VerbForm=Part", "Animacy=Inan", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "werby", "nsubjFeats": ["upos=NOUN", "lemma=werb", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p326s2%22%20%3B%20A%20%5Bform%3D%22werby%22%7C%22Werby%22%5D%20%3B%20B%20%5Bform%3D%22zm%C4%9Bnili%22%7C%22Zm%C4%9Bnili%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "N\u011bkot\u0159i r\u011b\u010despytnicy m\u011bnja , zo sumeriska <strong>r\u011b\u010d</strong> <strong>m\u00f3h\u0142a</strong> z mongol\u0161\u0107inu , fin\u0161\u0107inu , mad\u017aar\u0161\u0107inu abo z turkow\u0161\u0107inu p\u0159iwuzna by\u0107 a wotwod\u017aeja z toho p\u0159ipu\u0107owanje Sumeri\u010danow do Mezopotamiskeje z wuchoda , m\u011bnjo , zo tam su korjenja tutych r\u011b\u010dow .", "verb": "m\u00f3h\u0142a", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=m\u00f3c", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "r\u011b\u010d", "nsubjFeats": ["upos=NOUN", "lemma=r\u011b\u010d", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p384s2%22%20%3B%20A%20%5Bform%3D%22r%C4%9B%C4%8D%22%7C%22R%C4%9B%C4%8D%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%B3h%C5%82a%22%7C%22M%C3%B3h%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "p\u0159ez to <strong>m\u011b\u0142</strong> dal\u0161i nomadny <strong>lud</strong> swoju \u0161ansu k postupej d\u00f3sta\u0107 ( hlej te\u017e : Lis\u0107ina kralow z Ura ) .", "verb": "m\u011b\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u011b\u0107", "VerbForm=Part", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "lud", "nsubjFeats": ["upos=NOUN", "lemma=lud", "Animacy=Inan", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p30s4%22%20%3B%20A%20%5Bform%3D%22lud%22%7C%22Lud%22%5D%20%3B%20B%20%5Bform%3D%22m%C4%9B%C5%82%22%7C%22M%C4%9B%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Hod\u017ai so jenakorazny , zwjet\u0161a nic dok\u0142adnje jenaki system ablawtowych rjadow wobked\u017abowa\u0107 , dokel\u017e su so w\u0161elake zwukowe <strong>p\u0159esunjenja</strong> <strong>stali</strong> .", "verb": "stali", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=sta\u0107", "VerbForm=Part", "<b>Gender=Neut</b>", "Number=Plur"], "nsubj": "p\u0159esunjenja", "nsubjFeats": ["upos=NOUN", "lemma=p\u0159esunjenje", "Case=Nom", "<b>Gender=Neut</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p45s1%22%20%3B%20A%20%5Bform%3D%22p%C5%99esunjenja%22%7C%22P%C5%99esunjenja%22%5D%20%3B%20B%20%5Bform%3D%22stali%22%7C%22Stali%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "<strong>Raimundas</strong> Eimontas je te\u017e <strong>p\u0159ino\u0161owa\u0142</strong> pozadkowu hud\u017abu .", "verb": "p\u0159ino\u0161owa\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=p\u0159ino\u0161owa\u0107", "VerbForm=Part", "Animacy=Anim", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "Raimundas", "nsubjFeats": ["upos=PROPN", "lemma=Raimundas", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p258s1%22%20%3B%20A%20%5Bform%3D%22Raimundas%22%7C%22Raimundas%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99ino%C5%A1owa%C5%82%22%7C%22P%C5%99ino%C5%A1owa%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Druhdy zastupowany nahlad , bychu wjacore pochadowe <strong>linije</strong> rostlinow z algow <strong>eksistowali</strong> , bu hi\u017eo p\u0159ez morfologiske studije jako njeprawd\u017aepodobny sp\u00f3znaty [ 4 ] , a so d\u017aensa l\u011bdma wjace zastupuje a so te\u017e p\u0159ez molekularnobiologiske studije njepodepr\u011bje . [ 6 ]", "verb": "eksistowali", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=eksistowa\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "linije", "nsubjFeats": ["upos=NOUN", "lemma=linija", "Case=Nom", "<b>Gender=Fem</b>", "Number=Plur"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p100s1%22%20%3B%20A%20%5Bform%3D%22linije%22%7C%22Linije%22%5D%20%3B%20B%20%5Bform%3D%22eksistowali%22%7C%22Eksistowali%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Pomhaj nam , zo by na\u0161a <strong>encyklopedija</strong> dale <strong>rost\u0142a</strong> !", "verb": "rost\u0142a", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=ros\u0107", "VerbForm=Part", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "encyklopedija", "nsubjFeats": ["upos=NOUN", "lemma=encyklopedija", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p91s5%22%20%3B%20A%20%5Bform%3D%22encyklopedija%22%7C%22Encyklopedija%22%5D%20%3B%20B%20%5Bform%3D%22rost%C5%82a%22%7C%22Rost%C5%82a%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}, {"sentence": "Francoz <strong>Lavoisier</strong> je wono oxygen <strong>mjenowa\u0142</strong> ( grjeksce oxys : kisilina ; a grjeksce gignomai : \u010dinju )", "verb": "mjenowa\u0142", "verbFeats": ["upos=VERB", "deprel=root", "lemma=mjenowa\u0107", "VerbForm=Part", "Animacy=Anim", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "Lavoisier", "nsubjFeats": ["upos=PROPN", "lemma=Lavoisier", "Animacy=Anim", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Upper_Sorbian-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22p274s2%22%20%3B%20A%20%5Bform%3D%22Lavoisier%22%7C%22Lavoisier%22%5D%20%3B%20B%20%5Bform%3D%22mjenowa%C5%82%22%7C%22Mjenowa%C5%82%22%5D%20%20%7D", "treebankName": "UD_Upper_Sorbian-UFAL"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1362,35 +1401,119 @@ const TREE_DATA = {"title": "Upper_Sorbian \u00b7 Verb_nsubj_Gender", "roleA": "
 
   // Shared, comparable features first (this is exactly what agreement is
   // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks.
-  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos'];
+  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
+  // identifying context like deprel/upos, not agreement-relevant morphology,
+  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
+  // emits a "lemma=..." entry for every row -- it just never had a matching
+  // ORDERED_FEATS column to render into.
+  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos', 'lemma'];
 
+  function featEntries(feats, key) {
+    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
+    // live under the same "NUMBER" table column (one dimension, several
+    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
+    // for why obj/iobj/ergative-marked-subj agreement only ever has the
+    // bracketed form), but they are never the same reading: a bracket
+    // means this value came from a specific argument slot, not the token's
+    // unqualified feature. And a single token can carry *more than one*
+    // bracket of the same dimension at once (a transitive Basque verb's
+    // Number[abs] -- the object's number -- and Number[erg] -- the
+    // subject's -- both at once) -- every one of them is returned here
+    // (not just the first) so the caller can show all of them, each with
+    // its own bracket marker, rather than one arbitrarily winning the
+    // shared column.
+    const hits = feats.filter(f => {
+      const clean = f.replace(/<\/?[bi]>/g, '');
+      return clean.startsWith(key + '=') || clean.startsWith(key + '[');
+    });
+    return hits.map(hit => {
+      const clean = hit.replace(/<\/?[bi]>/g, '');
+      const eqIdx = clean.indexOf('=');
+      const fullKey = clean.slice(0, eqIdx);
+      const value = clean.slice(eqIdx + 1);
+      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
+      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
+      // doesn't apply to this token at all, rather than leaking the raw
+      // Python string into the table.
+      if (value === 'nan') return null;
+      const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
+      // bold: the decisive swap value (real violation, gets the red
+      // decisive.swapped styling below). bonus: a dimension with no
+      // original value at all, only a real one on the reinflected
+      // candidate (see applyAfterFeat's own docstring) -- genuinely new
+      // information, not a violation, so it must NOT inherit that same red
+      // "this changed for the worse" color just for sharing the cell with
+      // the entry that did.
+      return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
+    }).filter(e => e !== null);
+  }
+
+  // Single-entry convenience for callers that only need "is this column
+  // populated at all" (column-set computation) -- picks the first match,
+  // same as the old featEntry did before it could return several.
   function featEntry(feats, key) {
-    const hit = feats.find(f => f.replace(/<\/?b>/g, '').startsWith(key + '='));
-    if (!hit) return null;
-    const value = hit.replace(/<\/?b>/g, '').split('=')[1];
-    // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-    // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-    // doesn't apply to this token at all (null -> the "–" placeholder below),
-    // rather than leaking the raw Python string into the table.
-    if (value === 'nan') return null;
-    return { value, bold: hit.startsWith('<b>') };
+    return featEntries(feats, key)[0] || null;
   }
 
   // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat} column, emitted per pair as
-  // p.afterValue -- so the "swapped" row's other features are identical to
-  // the original by construction (the same feature list, only this one
-  // entry replaced), and the decisive value itself is real data, not a
-  // guessed opposite.
-  function applyAfterFeat(feats, decisiveFeat, afterValue) {
-    if (afterValue == null) return feats;
-    return feats.map(f => {
-      const clean = f.replace(/<\/?b>/g, '');
+  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
+  // p.afterValue with the exact key it was found under (plain or
+  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
+  // are identical to the original by construction (the same feature list,
+  // only this one entry replaced), the decisive value itself is real data,
+  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
+  // renders as one -- never silently relabeled as the plain "Number" the
+  // original row's own entry might (or might not) also carry.
+  //
+  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
+  // prefix: a token can carry more than one bracket of the same base
+  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
+  // only the one actually reinflected -- plus any TRUE alias of that same
+  // argument slot -- should change. A blanket prefix match would also drop
+  // genuinely different, untouched arguments that just happen to share the
+  // base feature name (e.g. relabeling-away the subject's unrelated
+  // Number[erg] when only the indirect object's Number[io] was swapped).
+  //
+  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
+  // is the precise list of alias brackets create_pairs' own
+  // resolve_layered_head_key would have tried for the SAME slot as
+  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
+  // child's own Case, e.g. "[dat]") -- both naming conventions for one
+  // reading, not two (Basque iobj: [io] and [dat] both key off the same
+  // indirect object). The original role's value for a sibling was real
+  // (both conventions' sources happened to agree pre-swap), but the
+  // swap_bundle that produced afterValue only ever reports the ONE key it
+  // was actually generated under -- html_tree.py's own after_feat_key
+  // resolution stops at the first populated candidate, so a sibling with no
+  // after_ value has no verified post-swap reading at all. Carrying its
+  // pre-swap value over here would silently claim it was checked and found
+  // unchanged, when it simply was never checked -- so drop only those true
+  // aliases, not every bracket of the base feature.
+  //
+  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
+  // _v2_pair_from_row) are APPENDED rather than patched into an existing
+  // entry: a dimension like Basque's indirect-object Number/Person slot can
+  // be entirely absent from the original word (a plain transitive form like
+  // "zuen" never marks one at all) while genuinely present on the
+  // reinflected candidate (a ditransitive form like "zioten" does) -- real
+  // data with no original entry to replace, so it has to be added as a new
+  // column instead of overwriting one.
+  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
+    const targetKey = afterFeatKey || decisiveFeat;
+    const dropKeys = new Set(siblingKeys || []);
+    const patched = afterValue == null ? feats : feats.map(f => {
+      const clean = f.replace(/<\/?[bi]>/g, '');
       const [key] = clean.split('=');
-      if (key !== decisiveFeat) return f;
-      return `<b>${key}=${afterValue}</b>`;
-    });
+      if (key === targetKey) return `<b>${targetKey}=${afterValue}</b>`;
+      if (key === decisiveFeat || dropKeys.has(key)) return null;
+      return f;
+    }).filter(f => f !== null);
+    if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
+    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
+    // value actually changed" (bold, gets the red decisive.swapped color)
+    // apart from "a dimension with no original value, genuinely new here"
+    // (bonus) -- see its own comment for why conflating the two was wrong.
+    return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
   // One row per {label, form, feats} entry x one column per feature, columns
@@ -1409,11 +1532,38 @@ const TREE_DATA = {"title": "Upper_Sorbian \u00b7 Verb_nsubj_Gender", "roleA": "
     const headHtml = cols.map(k => `<th${k === decisiveFeat ? ' class="decisive"' : ''}>${k}</th>`).join('');
     const rowHtml = (r) => {
       const cells = cols.map(k => {
-        const e = featEntry(r.feats, k);
+        // Every entry for this column, not just one -- a token can carry
+        // more than one bracket of the same dimension at once (see
+        // featEntries), and all of them are shown, separated, so e.g. a
+        // verb's object-agreement AND subject-agreement Number are both
+        // visible and each stays comparable to the swapped role's own
+        // entry for that exact bracket.
+        const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cls = isDecisive ? ` class="decisive${r.variant === 'swapped' ? ' swapped' : ''}"` : '';
-        if (!e) return `<td${cls}><span class="na">–</span></td>`;
-        return `<td${cls}>${e.bold ? `<b>${e.value}</b>` : e.value}</td>`;
+        if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
+        // One line per entry, stacked vertically (feat-entry-line is
+        // block-level), not joined inline with a "/" separator -- 2-3
+        // bracket variants of the same dimension (e.g. a transitive verb's
+        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
+        // used to force the whole table wide enough to need horizontal
+        // scrolling just to read one cell; stacking keeps every table the
+        // same width regardless of how many brackets a given row happens
+        // to carry.
+        const parts = entries.map(e => {
+          // bonus first: a bonus entry is never also .bold (applyAfterFeat
+          // wraps each entry with exactly one of <i>/<b>), but checking it
+          // first keeps that explicit rather than relying on the ordering
+          // not mattering. class="bonus-feat" is what lets the CSS below
+          // override the red decisive.swapped color for just this entry,
+          // without touching the real decisive value sharing its cell.
+          const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
+            : e.bold ? `<b>${e.value}</b>`
+            : e.value;
+          const bracketHtml = e.bracket ? `<span class="feat-bracket">${e.bracket}</span>` : '';
+          return `<div class="feat-entry-line">${valueHtml}${bracketHtml}</div>`;
+        });
+        return `<td${cls}>${parts.join('')}</td>`;
       }).join('');
       const rowCls = r.linked ? ' class="linked-row"' : '';
       const roleCls = r.role ? ` role-${r.role}` : '';
@@ -2160,7 +2310,7 @@ const TREE_DATA = {"title": "Upper_Sorbian \u00b7 Verb_nsubj_Gender", "roleA": "
         const swappedRow = {
           label: `swapped_${origRole.label}`,
           form: p.ungrammatical,
-          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue),
+          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats, p.siblingKeys),
           variant: 'swapped',
           linked: true,
           role: origRole.role,

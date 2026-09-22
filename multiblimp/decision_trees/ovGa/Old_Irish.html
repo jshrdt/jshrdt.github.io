@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 16}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_obj_Gender</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Old_Irish</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">16</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_obj_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 16)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>.i. at tá di ṡeirc la laitnori inna grec co <strong>seichetar</strong> ci d a <strong>comroicniu</strong></td><td>seichetar</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=sechithir<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres<br>Voice=Act</details></td><td>comroicniu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=comrorcun<br>Case=Acc<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222%22%20%3B%20A%20%5Bform%3D%22comroicniu%22%7C%22Comroicniu%22%5D%20%3B%20B%20%5Bform%3D%22seichetar%22%7C%22Seichetar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td>IS acher in gáith i nnocht fu <strong>fuasna</strong> fairggae find <strong>ḟolt</strong> ni ágor réimm mora minn do nd láechraid lainn óa lothlind</td><td>fuasna</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=parataxis<br>lemma=fofúasna<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres<br>Voice=Act</details></td><td>ḟolt</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=folt<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222178%22%20%3B%20A%20%5Bform%3D%22%E1%B8%9Folt%22%7C%22%E1%B8%9Eolt%22%5D%20%3B%20B%20%5Bform%3D%22fuasna%22%7C%22Fuasna%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td><strong>Gaib</strong> do <strong>chuil</strong> i sin charcair ni róis chluim na colcaid · truag in sin a mail bachal ro t giuil ind ṡrathar dodcaid</td><td>gaib</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=gaibid<br>VerbForm=Fin<br>Mood=Imp<br>Tense=Pres<br>Voice=Act</details></td><td>chuil</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cúil<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223462%22%20%3B%20A%20%5Bform%3D%22chuil%22%7C%22Chuil%22%5D%20%3B%20B%20%5Bform%3D%22gaib%22%7C%22Gaib%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td>.i. ni <strong>gessam</strong> ni <strong>níi</strong> bes chotarsne di ar nícc</td><td>gessam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=guidid<br>VerbForm=Fin<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>níi</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ní<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2235%22%20%3B%20A%20%5Bform%3D%22n%C3%ADi%22%7C%22N%C3%ADi%22%5D%20%3B%20B%20%5Bform%3D%22gessam%22%7C%22Gessam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. a nno <strong>ngeiss</strong> <strong>cách</strong> imm a chomalnad</td><td>ngeiss</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=guidid<br>VerbForm=Fin<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>cách</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=cách<br>PronType=Ind</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2234%22%20%3B%20A%20%5Bform%3D%22c%C3%A1ch%22%7C%22C%C3%A1ch%22%5D%20%3B%20B%20%5Bform%3D%22ngeiss%22%7C%22Ngeiss%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. <strong>gigeste</strong> si <strong>dia</strong> linn ara fulsam ar fochidi</td><td>gigeste</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=guidid<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Fut<br>Voice=Act</details></td><td>dia</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=día<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2233%22%20%3B%20A%20%5Bform%3D%22dia%22%7C%22Dia%22%5D%20%3B%20B%20%5Bform%3D%22gigeste%22%7C%22Gigeste%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. co ní arim se peccad lib si uili ɫ ara <strong>tart</strong> sa <strong>fortacht</strong> dúib si ar na p trom fuirib for nóinur</td><td>tart</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=dobeir<br>VerbForm=Fin<br>Aspect=Perf<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>fortacht</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=fortacht<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2211%22%20%3B%20A%20%5Bform%3D%22fortacht%22%7C%22Fortacht%22%5D%20%3B%20B%20%5Bform%3D%22tart%22%7C%22Tart%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. as <strong>ririu</strong> sa mo <strong>chumang</strong> dar far cenn</td><td>ririu</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=asren<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Fut<br>Voice=Act</details></td><td>chumang</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cumang<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2231%22%20%3B%20A%20%5Bform%3D%22chumang%22%7C%22Chumang%22%5D%20%3B%20B%20%5Bform%3D%22ririu%22%7C%22Ririu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>IS acher in gáith i nnocht fu fuasna fairggae find ḟolt ni <strong>ágor</strong> <strong>réimm</strong> mora minn do nd láechraid lainn óa lothlind</td><td>ágor</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=parataxis<br>lemma=adágathar<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres<br>Voice=Act</details></td><td>réimm</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=réim<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222178%22%20%3B%20A%20%5Bform%3D%22r%C3%A9imm%22%7C%22R%C3%A9imm%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A1gor%22%7C%22%C3%81gor%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td>.i. cain <strong>ronóibad</strong> <strong>abracham</strong> tri hiris in tree ǽm didiu fa nacc</td><td>ronóibad</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=noíbaid<br>VerbForm=Fin<br>Aspect=Perf<br>Mood=Ind<br>Tense=Past<br>Voice=Pass</details></td><td>abracham</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=abracham<br>Case=Nom<br>NounType=Prop<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2239%22%20%3B%20A%20%5Bform%3D%22abracham%22%7C%22Abracham%22%5D%20%3B%20B%20%5Bform%3D%22ron%C3%B3ibad%22%7C%22Ron%C3%B3ibad%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>Do m farcai fidbaidae fál fo m <strong>chain</strong> lóid luin <strong>lúad</strong> nad cél · huas mo lebrán ind línech fo m chain trírech inna ṅén ··, Fo mm chain cói menn medair mass hi ṁbrot glass de dindgnaib doss · debrath no m choimmdiu cóima cáin scríbaimm fo róida ross</td><td>chain</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=focain<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres<br>Voice=Act</details></td><td>lúad</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=lúad<br>Case=Nom<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223103%22%20%3B%20A%20%5Bform%3D%22l%C3%BAad%22%7C%22L%C3%BAad%22%5D%20%3B%20B%20%5Bform%3D%22chain%22%7C%22Chain%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td>.i. co ní <strong>arim</strong> se <strong>peccad</strong> lib si uili ɫ ara tart sa fortacht dúib si ar na p trom fuirib for nóinur</td><td>arim</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=adrími<br>VerbForm=Fin<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>peccad</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=peccad<br>Case=Acc<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2211%22%20%3B%20A%20%5Bform%3D%22peccad%22%7C%22Peccad%22%5D%20%3B%20B%20%5Bform%3D%22arim%22%7C%22Arim%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. ni <strong>riat</strong> na <strong>dánu</strong> diadi ar a nindeb domunde</td><td>riat</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=renaid<br>VerbForm=Fin<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>dánu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=dán<br>Case=Acc<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2232%22%20%3B%20A%20%5Bform%3D%22d%C3%A1nu%22%7C%22D%C3%A1nu%22%5D%20%3B%20B%20%5Bform%3D%22riat%22%7C%22Riat%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>.i. gigeste si dia linn ara <strong>fulsam</strong> ar <strong>fochidi</strong></td><td>fulsam</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=advcl<br>lemma=foloing<br>VerbForm=Fin<br>Mood=Sub<br>Tense=Pres<br>Voice=Act</details></td><td>fochidi</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=fochith<br>Case=Acc<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipWBG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2233%22%20%3B%20A%20%5Bform%3D%22fochidi%22%7C%22Fochidi%22%5D%20%3B%20B%20%5Bform%3D%22fulsam%22%7C%22Fulsam%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipWBG</a></td></tr><tr><td>ní ǽr mall <strong>roscríbad</strong> in <strong>letráim</strong> so</td><td>roscríbad</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=acl:relcl<br>lemma=scríbaid<br>VerbForm=Fin<br>Mood=Ind<br>PartType=Aug<br>Tense=Past<br>Voice=Pass</details></td><td>letráim</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=letraim<br>Case=Nom<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222862%22%20%3B%20A%20%5Bform%3D%22letr%C3%A1im%22%7C%22Letr%C3%A1im%22%5D%20%3B%20B%20%5Bform%3D%22roscr%C3%ADbad%22%7C%22Roscr%C3%ADbad%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr><tr><td>Gaib do chuil i sin charcair ni róis chluim na colcaid · truag in sin a mail bachal ro t <strong>giuil</strong> ind <strong>ṡrathar</strong> dodcaid</td><td>giuil</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=parataxis<br>lemma=glenaid<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past<br>Voice=Act</details></td><td>ṡrathar</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=srathar<br>Case=Nom<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Irish-DipSGG%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223462%22%20%3B%20A%20%5Bform%3D%22%E1%B9%A1rathar%22%7C%22%E1%B9%A0rathar%22%5D%20%3B%20B%20%5Bform%3D%22giuil%22%7C%22Giuil%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Irish-DipSGG</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

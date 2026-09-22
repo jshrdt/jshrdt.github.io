@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 14}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_iobj_Number</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Akkadian</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">14</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_iobj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 14)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>iobj_form</th><th>iobj_features</th><th>Verb_form</th><th>Verb_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>[xx <strong>GIŠ-IG-MEŠ</strong> GIŠ-EREN MAḪ]-MEŠ ta-aḫ-lu-up-tim ZABAR as-ku-up-pu ù nu-ku-⸢še⸣-[e pi-ti-iq e-ri-i e-ma KÁ-MEŠ] -⸢ši⸣-na <strong>[ú-ra-at-ti]</strong></td><td>giš-ig-meš</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=daltu</details></td><td>[ú-ra-at-ti]</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=retû<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_14%22%20%3B%20A%20%5Bform%3D%22%5B%C3%BA-ra-at-ti%5D%22%7C%22%5B%C3%BA-ra-at-ti%5D%22%5D%20%3B%20B%20%5Bform%3D%22gi%C5%A1-ig-me%C5%A1%22%7C%22Gi%C5%A1-ig-me%C5%A1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>ummānāti ammar ultu pān kakkī ya ipparšidūni šēpī ya iṣbutū ālāni šunu <strong>ušaṣbis</strong> <strong>sunu</strong></td><td>sunu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Gender=Masc<br><strong>Number=Plur</strong><br>Person=3</details></td><td>ušaṣbis</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=ṣabātu<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past<br>VerbStem=S</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-RIAO%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Q004473-22%22%20%3B%20A%20%5Bform%3D%22u%C5%A1a%E1%B9%A3bis%22%7C%22U%C5%A1a%E1%B9%A3bis%22%5D%20%3B%20B%20%5Bform%3D%22sunu%22%7C%22Sunu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-RIAO</a></td></tr><tr><td><strong>im-gur-d-EN-LÍL</strong> BÀD ra-bí-a-am ša KÁ-DINGIR-RA-KI ša ul-la-nu-ú-a i-ni-šu i-qú-pu in ki-gal-lim re-eš-ti-im <strong>ú-ki-in</strong> uš-ši -šu</td><td>im-gur-d-EN-LÍL</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Imgur-Enlil</details></td><td>ú-ki-in</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=kânu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon7_nabopolassar_01_02%22%20%3B%20A%20%5Bform%3D%22%C3%BA-ki-in%22%7C%22%C3%9A-ki-in%22%5D%20%3B%20B%20%5Bform%3D%22im-gur-d-EN-L%C3%8DL%22%7C%22Im-gur-d-en-l%C3%ADl%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>šubtu nēhtu <strong>ušēšib</strong> <strong>šunu</strong></td><td>šunu</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>Gender=Masc<br><strong>Number=Plur</strong><br>Person=3</details></td><td>ušēšib</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=wašābu<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past<br>VerbStem=S</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-RIAO%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Q004473-98%22%20%3B%20A%20%5Bform%3D%22u%C5%A1%C4%93%C5%A1ib%22%7C%22U%C5%A1%C4%93%C5%A1ib%22%5D%20%3B%20B%20%5Bform%3D%22%C5%A1unu%22%7C%22%C5%A0unu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-RIAO</a></td></tr><tr><td><strong>DUMU-MEŠ</strong> TIN-TIR-[KI xx] ⸢ša⸣ ki-ma la lìb-[bi] ⸢DINGIR⸣ -ma ab-šá-a-ni la si-ma-ti -šú-nu šu-ziz-⸢zu⸣ an-ḫu-ut -su-un <strong>ú-pa-áš-ši-ḫa</strong> ú-ša-ap-ṭi-ir sa-ar-ma -šu-nu</td><td>dumu-meš</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=māru</details></td><td>ú-pa-áš-ši-ḫa</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=pašāhu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_8e%22%20%3B%20A%20%5Bform%3D%22%C3%BA-pa-%C3%A1%C5%A1-%C5%A1i-%E1%B8%ABa%22%7C%22%C3%9A-pa-%C3%A1%C5%A1-%C5%A1i-%E1%B8%ABa%22%5D%20%3B%20B%20%5Bform%3D%22dumu-me%C5%A1%22%7C%22Dumu-me%C5%A1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>BÀD im-gur-d-EN-LÍL BÀD GAL-a ša TIN-TIR-⸢KI⸣ <strong>[ma-aṣ]-⸢ṣar-ta⸣</strong> -šú du-un-nu-nù <strong>áš-te-eʾ-e</strong> -ma [xx] ka-a-ri a-gur-ru šá GÚ ḫa-ri-ṣi ša LUGAL maḫ-ri i-⸢pu⸣-[šu -ma la ú]-⸢šak-li-lu⸣ ši-pi-ir -šu</td><td>[ma-aṣ]-⸢ṣar-ta⸣</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=maṣṣartu</details></td><td>áš-te-eʾ-e</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=šeʾû<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_13a%22%20%3B%20A%20%5Bform%3D%22%C3%A1%C5%A1-te-e%CA%BE-e%22%7C%22%C3%81%C5%A1-te-e%CA%BE-e%22%5D%20%3B%20B%20%5Bform%3D%22%5Bma-a%E1%B9%A3%5D-%E2%B8%A2%E1%B9%A3ar-ta%E2%B8%A3%22%7C%22%5Bma-a%E1%B9%A3%5D-%E2%B8%A2%E1%B9%A3ar-ta%E2%B8%A3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>d-šà-zu EN mu-du-ú ŠÀ DINGIR-ME ša AN-e ù KI-tim ša ta-ka-la-at ni-ši-im i-bar-ru-ú ka-a-a-ni <strong>ia-a-ši-im</strong> ṣa-aḫ-ra-am ša i-na ni-ši la ut-tu-ú šá ŠÀ -ía <strong>ib-re-e</strong> -ma i-na KUR ab-ba-nu-ú iš-ku-na-an-ni a-na re-še-e-ti</td><td>ia-a-ši-im</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=yâši</details></td><td>ib-re-e</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=parataxis<br>lemma=barû<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon7_nabopolassar_03_03%22%20%3B%20A%20%5Bform%3D%22ib-re-e%22%7C%22Ib-re-e%22%5D%20%3B%20B%20%5Bform%3D%22ia-a-%C5%A1i-im%22%7C%22Ia-a-%C5%A1i-im%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td><strong>im-gur-d-EN-LÍL</strong> BÀD ra-ba-a ša ba-bi-lim-KI ul-tu GÚ ÍD-a-ra-aḫ-tim UŠ AN-TA šá KÁ-GAL-d-INANNA a-di UŠ KI-TA ša KÁ-GAL-duraš te-me-en -šu la-bi-ri <strong>ú-ṣab-bi</strong> -ma mi-it-ḫa-ri-iš a-na d-AMAR-UTU EN -ia lu-ú e-pu-uš</td><td>im-gur-d-EN-LÍL</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Imgur-Enlil</details></td><td>ú-ṣab-bi</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=ṣubbû<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon7_nabopolassar_02_02%22%20%3B%20A%20%5Bform%3D%22%C3%BA-%E1%B9%A3ab-bi%22%7C%22%C3%9A-%E1%B9%A3ab-bi%22%5D%20%3B%20B%20%5Bform%3D%22im-gur-d-EN-L%C3%8DL%22%7C%22Im-gur-d-en-l%C3%ADl%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>Ea šar apsî <strong>išīm</strong> <strong>anni</strong></td><td>anni</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br><strong>Number=Sing</strong><br>Person=1</details></td><td>išīm</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past<br>VerbStem=G</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-RIAO%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Q004456-12%22%20%3B%20A%20%5Bform%3D%22i%C5%A1%C4%ABm%22%7C%22I%C5%A1%C4%ABm%22%5D%20%3B%20B%20%5Bform%3D%22anni%22%7C%22Anni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-RIAO</a></td></tr><tr><td>le-mu-ut-ti <strong>URU</strong> -šu <strong>[i]-⸢te⸣-né-ep-pu-⸢uš⸣</strong> u₄-mi-ša-am -⸢ma⸣ xx [xx]</td><td>uru</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ālu</details></td><td>[i]-⸢te⸣-né-ep-pu-⸢uš⸣</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=epēšu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_2c%22%20%3B%20A%20%5Bform%3D%22%5Bi%5D-%E2%B8%A2te%E2%B8%A3-n%C3%A9-ep-pu-%E2%B8%A2u%C5%A1%E2%B8%A3%22%7C%22%5Bi%5D-%E2%B8%A2te%E2%B8%A3-n%C3%A9-ep-pu-%E2%B8%A2u%C5%A1%E2%B8%A3%22%5D%20%3B%20B%20%5Bform%3D%22uru%22%7C%22Uru%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>ù <strong>DINGIR-MEŠ</strong> KUR-šu-me-ri ù URI-KI ša m-d-AG-NÍ-TUKU a-na ug-ga-tim EN DINGIR-MEŠ ú-še-ri-bi a-na qé-reb šu-an-na-KI i-na qí-bi-ti d-AMAR-UTU EN GAL i-na ša-li-im-tim i-na maš-ta-ki -šu-nu <strong>ú-še-ši-ib</strong> šu-ba-at ṭu-ub lìb-bi</td><td>dingir-meš</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ilu</details></td><td>ú-še-ši-ib</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=wašābu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_11a%22%20%3B%20A%20%5Bform%3D%22%C3%BA-%C5%A1e-%C5%A1i-ib%22%7C%22%C3%9A-%C5%A1e-%C5%A1i-ib%22%5D%20%3B%20B%20%5Bform%3D%22dingir-me%C5%A1%22%7C%22Dingir-me%C5%A1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>d-AG IBILA ṣi-i-ri IGI-GÁL-LA DINGIR-MEŠ muš-tar-ḫu ša a-na ta-na-da-a-ti šit-ku-nu IBILA reš-tu-ú ša d-AMAR-UTU i-lit-ti d-e₄-ru₆-ú-a šar-rat pa-ti-qát nab-ni-ti ḫa-diš <strong>nap-li-is</strong> <strong>-ma</strong></td><td>-ma</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=-ma</details></td><td>nap-li-is</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=palāsu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon10_4%22%20%3B%20A%20%5Bform%3D%22nap-li-is%22%7C%22Nap-li-is%22%5D%20%3B%20B%20%5Bform%3D%22-ma%22%7C%22-ma%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td><strong>d-NÈ-ERI₁₁-GAL</strong> dan-dan-ni DINGIR-MEŠ <strong>ú-ša-li-ik</strong> i-da -a-a i-na-ar a-a-bi -ia ú-ša-am-qì-it ga-ri -ia</td><td>d-NÈ-ERI₁₁-GAL</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Nergal</details></td><td>ú-ša-li-ik</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=alāku<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon7_nabopolassar_03_05%22%20%3B%20A%20%5Bform%3D%22%C3%BA-%C5%A1a-li-ik%22%7C%22%C3%9A-%C5%A1a-li-ik%22%5D%20%3B%20B%20%5Bform%3D%22d-N%C3%88-ERI%E2%82%81%E2%82%81-GAL%22%7C%22D-n%C3%A8-eri%E2%82%81%E2%82%81-gal%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr><tr><td>ṣir-ti nap-ḫar LUGAL a-ši-ib BÁRA-MEŠ ša ka-li-iš kib-ra-a-ta iš-tu tam-tim e-li-tim a-di tam-tim šap-li-tim a-ši-ib ⸢na⸣-[gi-i né-su-tim] LUGAL-MEŠ KUR a-mur-ri-i a-ši-ib kuš-ta-ri ka-li -šú-un bi-lat -su-nu ka-bi-it-tim <strong>ú-bi-lu</strong> <strong>-nim</strong> -ma qé-er-ba šu-an-na-KI ú-na-áš-ši-qu še-pu -ú-a</td><td>-nim</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=-nim</details></td><td>ú-bi-lu</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=wabālu<br>VerbForm=Fin</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Akkadian-PISANDUB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22babylon8_Cyrus_II_01_9b%22%20%3B%20A%20%5Bform%3D%22%C3%BA-bi-lu%22%7C%22%C3%9A-bi-lu%22%5D%20%3B%20B%20%5Bform%3D%22-nim%22%7C%22-nim%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Akkadian-PISANDUB</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

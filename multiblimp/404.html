@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Page not found - MultiBLiMP 2.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f5f4;
+            --card: #ffffff;
+            --text: #1c1917;
+            --text-muted: #78716c;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --border: #e7e5e4;
+            --border-hover: #c7c4c0;
+            --hover: #f5f5f5;
+        }
+        /* Same palette as every other page in the site (render_html.py,
+           html_overview.py, html_deprel.py), for a consistent look. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #16140f; --card: #221f19;
+                --text: #f0ede6; --text-muted: #a39a8a;
+                --accent: #6ea8ff; --accent-soft: #1e2b40;
+                --border: #38332a; --border-hover: #4d4636;
+                --hover: #2a261e;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 3rem 2.5rem;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+        .code {
+            font-size: 3.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.5rem;
+        }
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin: 0 0 0.5rem;
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0 0 2rem;
+        }
+        code {
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-size: 0.85em;
+            word-break: break-all;
+        }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font: inherit;
+            font-size: 0.88rem;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            cursor: pointer;
+        }
+        .btn:hover { border-color: var(--border-hover); background: var(--hover); }
+        .btn-primary {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .btn-primary:hover { background: var(--accent-soft); filter: brightness(1.08); }
+        .btn svg { flex-shrink: 0; }
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="code">404</div>
+        <h1>This page doesn't exist</h1>
+        <p>Whatever brought you here — a stale link, a typo, a page that moved — <code id="attempted-path"></code>
+            isn't a page on this site.</p>
+        <div class="actions">
+            <button type="button" class="btn btn-primary" id="back-btn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Go back
+            </button>
+        </div>
+        <hr class="divider">
+        <div class="actions">
+            <a class="btn" href="/multiblimp/">sva-dt Dataset Overview</a>
+            <a class="btn" href="/multiblimp/decision_trees/">Agreement Overview (decision trees)</a>
+        </div>
+    </div>
+    <script>
+        // Always shown, always wired to history.back() -- a real 404 hit is
+        // reached by following some link or navigation from an actual
+        // previous page, so there's virtually always somewhere to return
+        // to; on the rare landing-with-no-history case (a bookmark, a raw
+        // URL typed in), history.back() is simply a no-op, which is a fine
+        // fallback that doesn't need special-casing.
+        document.getElementById('back-btn').addEventListener('click', () => history.back());
+        // location.pathname is always a short URL path on a real deployed
+        // hit -- never page content -- but this is capped anyway as a
+        // defensive measure against any pathological environment (e.g. a
+        // local preview sandbox that wraps the file as a data: URL, whose
+        // "pathname" is the entire raw source) rendering an unbounded wall
+        // of text here instead of a short "page not found" line.
+        (function () {
+            const el = document.getElementById('attempted-path');
+            let path = location.pathname;
+            try {
+                path = decodeURIComponent(path);
+            } catch (e) { /* malformed percent-encoding -- keep as-is */ }
+            el.textContent = path.length > 80 ? path.slice(0, 80) + '…' : path;
+        })();
+    </script>
+</body>
+</html>

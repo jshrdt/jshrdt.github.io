@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 10}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_obj_Gender</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Old_English</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">10</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_obj_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 10)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Petrus and Maria beclypton heom be-tƿeonen and þa <strong>forletone</strong> þa <strong>heoþe</strong> .</td><td>forletone</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=conj<br>lemma=forlætan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>heoþe</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=heóþu<br>Case=Dat<br><strong>Gender=Fem</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2216%22%20%3B%20A%20%5Bform%3D%22forletone%22%7C%22Forletone%22%5D%20%3B%20B%20%5Bform%3D%22heo%C3%BEe%22%7C%22Heo%C3%BEe%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Sam , <strong>ontyne</strong> þæt <strong>eagþyrel</strong> !</td><td>ontyne</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=ontynan<br>VerbForm=Fin<br>Mood=Imp</details></td><td>eagþyrel</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=eagþyrel<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%225%22%20%3B%20A%20%5Bform%3D%22ontyne%22%7C%22Ontyne%22%5D%20%3B%20B%20%5Bform%3D%22eag%C3%BEyrel%22%7C%22Eag%C3%BEyrel%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Hie nabbaþ nanne ȝeþoht hƿa <strong>hit</strong> <strong>ƿrat</strong> .</td><td>ƿrat</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=acl<br>lemma=ƿritan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>hit</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=hit<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2212%22%20%3B%20A%20%5Bform%3D%22%C6%BFrat%22%7C%22%C7%B7rat%22%5D%20%3B%20B%20%5Bform%3D%22hit%22%7C%22Hit%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Þæt mæden <strong>ƿrat</strong> hyre freonde <strong>ærend-ƿrit</strong> .</td><td>ƿrat</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=ƿritan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>ærend-ƿrit</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ærend-ƿrit<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221%22%20%3B%20A%20%5Bform%3D%22%C6%BFrat%22%7C%22%C7%B7rat%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A6rend-%C6%BFrit%22%7C%22%C3%86rend-%C6%BFrit%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Petrus and Maria <strong>beclypton</strong> <strong>heom</strong> be-tƿeonen and þa forletone þa heoþe .</td><td>beclypton</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=beclyppan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>heom</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=he<br>Case=Dat<br>ExtPos=PRON<br>Number=Plur<br>Person=3<br>PronType=Prs</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2216%22%20%3B%20A%20%5Bform%3D%22beclypton%22%7C%22Beclypton%22%5D%20%3B%20B%20%5Bform%3D%22heom%22%7C%22Heom%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Heo dyde þæt hyre efen-ȝemacca þæt <strong>cræt</strong> <strong>ȝeƿeasce</strong> .</td><td>ȝeƿeasce</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=ccomp<br>lemma=gewascan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>cræt</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cræt<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%226%22%20%3B%20A%20%5Bform%3D%22%C8%9De%C6%BFeasce%22%7C%22%C8%9Ce%C6%BFeasce%22%5D%20%3B%20B%20%5Bform%3D%22cr%C3%A6t%22%7C%22Cr%C3%A6t%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Hit ȝebyrede þt heo <strong>dyde</strong> hire <strong>her</strong> , ac for sume ƿisan nolde seo don sƿa .</td><td>dyde</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=csubj<br>lemma=dōn<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>her</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=her<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2217%22%20%3B%20A%20%5Bform%3D%22dyde%22%7C%22Dyde%22%5D%20%3B%20B%20%5Bform%3D%22her%22%7C%22Her%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Hie <strong>nabbaþ</strong> nanne <strong>ȝeþoht</strong> hƿa hit ƿrat .</td><td>nabbaþ</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=nabban<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Pres</details></td><td>ȝeþoht</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ȝeþoht<br>Case=Acc<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2212%22%20%3B%20A%20%5Bform%3D%22nabba%C3%BE%22%7C%22Nabba%C3%BE%22%5D%20%3B%20B%20%5Bform%3D%22%C8%9De%C3%BEoht%22%7C%22%C8%9Ce%C3%BEoht%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>Maria <strong>ȝeƿann</strong> <strong>ær</strong> , Petrus seolfor and Iohanna gold .</td><td>ȝeƿann</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=ȝeƿinnan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>ær</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ær<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%229%22%20%3B%20A%20%5Bform%3D%22%C8%9De%C6%BFann%22%7C%22%C8%9Ce%C6%BFann%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A6r%22%7C%22%C3%86r%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr><tr><td>He <strong>bohte</strong> <strong>cræt</strong> ac his broþor hƿeol-bearƿe .</td><td>bohte</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=bycgan<br>VerbForm=Fin<br>Mood=Ind<br>Tense=Past</details></td><td>cræt</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=cræt<br>Case=Acc<br><strong>Gender=Neut</strong><br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_English-Cairo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2215%22%20%3B%20A%20%5Bform%3D%22bohte%22%7C%22Bohte%22%5D%20%3B%20B%20%5Bform%3D%22cr%C3%A6t%22%7C%22Cr%C3%A6t%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_English-Cairo</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

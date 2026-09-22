@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 3}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Verb_iobj_Number</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unk</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">isiXhosa</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">3</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_iobj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 3)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>iobj_form</th><th>iobj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td><strong>Siyalibulela</strong> igalelo <strong>lakhe</strong> kwaye uyakuhlala ehleli kwiintliziyo zethu .</td><td>siyalibulela</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=bulela</details></td><td>lakhe</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=lakhe</details></td><td><a href='https://universal.grew.fr/?corpus=UD_isiXhosa-AfriSUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Masakhane-Xhosa_train_21%22%20%3B%20A%20%5Bform%3D%22siyalibulela%22%7C%22Siyalibulela%22%5D%20%3B%20B%20%5Bform%3D%22lakhe%22%7C%22Lakhe%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_isiXhosa-AfriSUD</a></td></tr><tr><td>Kanti khange <strong>kuphelele</strong> <strong>apho</strong> ngoba uDe Villiers wenze umsebenzi oncomekayo kwiqela lesizwe loMzantsi Afrika - iProteas .</td><td>kuphelele</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=phelela</details></td><td>apho</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=apho</details></td><td><a href='https://universal.grew.fr/?corpus=UD_isiXhosa-AfriSUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Masakhane-Xhosa_train_111%22%20%3B%20A%20%5Bform%3D%22kuphelele%22%7C%22Kuphelele%22%5D%20%3B%20B%20%5Bform%3D%22apho%22%7C%22Apho%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_isiXhosa-AfriSUD</a></td></tr><tr><td>USomdaka warhuqa ixhoba elirhuqela kwihlathi elikufutshane apho <strong>walidlwengulela</strong> <strong>khona</strong> eliphindaphinda de wonela .</td><td>walidlwengulela</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=advcl:cleft<br>lemma=dlwengula</details></td><td>khona</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=khona</details></td><td><a href='https://universal.grew.fr/?corpus=UD_isiXhosa-AfriSUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Masakhane-Xhosa_train_33%22%20%3B%20A%20%5Bform%3D%22walidlwengulela%22%7C%22Walidlwengulela%22%5D%20%3B%20B%20%5Bform%3D%22khona%22%7C%22Khona%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_isiXhosa-AfriSUD</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
