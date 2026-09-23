@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"no": 15}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>DET-PRON_PronType</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">no</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Swedish</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.1</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">15</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">DET-PRON_PronType</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 15)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>PRON_form</th><th>PRON_features</th><th>DET_form</th><th>DET_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>De hade dem inte på min tid , och personer utan barn uttrycker genom sitt missnöje <strong>allt</strong> <strong>sitt</strong> hat för modern uppfostran .</td><td>sitt</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=sig<br>Gender=Neut<br>Number=Sing<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>allt</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Sing<br><strong>PronType=Tot</strong><br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01095004%22%20%3B%20A%20%5Bform%3D%22allt%22%7C%22Allt%22%5D%20%3B%20B%20%5Bform%3D%22sitt%22%7C%22Sitt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-PUD</a></td></tr><tr><td>För barnen är det en mycket stor fördel om de får kontakt med <strong>bägge</strong> <strong>sina</strong> föräldrar .</td><td>sina</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=sig<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>bägge</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=bägge<br>Number=Plur<br>Definite=Def<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4256%22%20%3B%20A%20%5Bform%3D%22b%C3%A4gge%22%7C%22B%C3%A4gge%22%5D%20%3B%20B%20%5Bform%3D%22sina%22%7C%22Sina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-Talbanken</a></td></tr><tr><td>Var kommer <strong>all</strong> <strong>hennes</strong> energi ifrån ? Eller den där rösten , som kan stöta ut med en kraft som framkallar chockvågor ?</td><td>hennes</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=hon<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>all</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Sing<br><strong>PronType=Tot</strong><br>Gender=Com</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01116018%22%20%3B%20A%20%5Bform%3D%22all%22%7C%22All%22%5D%20%3B%20B%20%5Bform%3D%22hennes%22%7C%22Hennes%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-PUD</a></td></tr><tr><td>Trots <strong>alla</strong> <strong>sina</strong> grodor och felsägningar har han en förmåga att ringa in varenda en av de andra personerna i boken .</td><td>sina</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=sin<br>Case=Gen<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-test-doc2-4476%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22sina%22%7C%22Sina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>Och det är detta Amerika står inför med <strong>alla</strong> <strong>sina</strong> bubblande politiska illusioner .</td><td>sina</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=sin<br>Case=Gen<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-test-doc3-4555%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22sina%22%7C%22Sina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>Eftersom solstrålningen är en följd av kärnreaktioner , blir slutsatsen att <strong>alla</strong> <strong>våra</strong> energikällor ytterst utgår från kärnenergin .</td><td>våra</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=vi<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3107%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%A5ra%22%7C%22V%C3%A5ra%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-Talbanken</a></td></tr><tr><td>Tanken var att hålla upp en skrattspegel framför Don Quijote , att skildra <strong>alla</strong> <strong>hans</strong> absurda , orimliga självbedrägerier så att han , när han själv läste boken , skulle inse vilka villovägar han slagit in på .</td><td>hans</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=han<br>Case=Gen<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-train-doc2-674%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22hans%22%7C%22Hans%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>I äldre litteratur möter man ofta ett påstående , att <strong>alla</strong> <strong>våra</strong> energikällor på ett eller annat sätt härrör från solenergin .</td><td>våra</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=vi<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3104%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%A5ra%22%7C%22V%C3%A5ra%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-Talbanken</a></td></tr><tr><td>" Avslöja aldrig <strong>all</strong> <strong>din</strong> kärlek . "</td><td>din</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=du<br>Case=Gen<br>Gender=Com<br>Number=Sing<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>all</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Sing<br><strong>PronType=Tot</strong><br>Gender=Com</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-train-doc8-2980%22%20%3B%20A%20%5Bform%3D%22all%22%7C%22All%22%5D%20%3B%20B%20%5Bform%3D%22din%22%7C%22Din%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>Fästad vid pennan satt en liten vit pappersflagga på <strong>vars</strong> <strong>ena</strong> sida det stod : Denna utmärkta vara får Du av en DÖVSTUM .</td><td>vars</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=vars<br>Case=Gen<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Rel</strong></details></td><td>ena</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=ena<br>Number=Sing<br>Definite=Def<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-dev-doc2-3307%22%20%3B%20A%20%5Bform%3D%22ena%22%7C%22Ena%22%5D%20%3B%20B%20%5Bform%3D%22vars%22%7C%22Vars%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>Quinn fick ett intryck av att Stillmans kropp inte hade använts på länge och att <strong>alla</strong> <strong>dess</strong> funktioner fått läras in på nytt så att rörelsen hade blivit till en medveten process där varje enskild gest och förflyttning hade brutits ner i sina minsta beståndsdelar , vilket gjorde att spontaniteten och flytet i rörelserna helt gått förlorade .</td><td>dess</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=den<br>Case=Gen<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-train-doc2-466%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22dess%22%7C%22Dess%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>För alla som vill se huvudstaden i <strong>all</strong> <strong>dess</strong> prakt är november ett utmärkt tillfälle att åka .</td><td>dess</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=den<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>all</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Sing<br><strong>PronType=Tot</strong><br>Gender=Com</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01147087%22%20%3B%20A%20%5Bform%3D%22all%22%7C%22All%22%5D%20%3B%20B%20%5Bform%3D%22dess%22%7C%22Dess%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-PUD</a></td></tr><tr><td>Lagen beskriver ett antal villkor vars uppfyllelse kan få överenskommelsen att gälla igen : USA skulle behöva dra tillbaka <strong>alla</strong> <strong>sina</strong> trupper från länder som gått med i NATO efter 2000 , upphäva alla sanktioner mot Ryssland samt ersätta de kostnader som har uppkommit som en följd av sanktionerna .</td><td>sina</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=sig<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n02027021%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22sina%22%7C%22Sina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-PUD</a></td></tr><tr><td>Detta att förflytta sig från ett ställe till ett annat såg ut att kräva <strong>all</strong> <strong>hans</strong> uppmärksamhet , som om han skulle drabbas av orörlighet om han inte helhjärtat gick in för det han gjorde .</td><td>hans</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=han<br>Case=Gen<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>all</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Sing<br><strong>PronType=Tot</strong><br>Gender=Com</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-train-doc2-463%22%20%3B%20A%20%5Bform%3D%22all%22%7C%22All%22%5D%20%3B%20B%20%5Bform%3D%22hans%22%7C%22Hans%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr><tr><td>En ren formalitet , försäkrade sekreteraren , med en uppsyn som om han tog den livligaste del i <strong>alla</strong> <strong>mina</strong> vedermödor .</td><td>mina</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=jag<br>Case=Gen<br>Number=Plur<br>Definite=Def<br>Poss=Yes<br><strong>PronType=Prs</strong></details></td><td>alla</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=all<br>Number=Plur<br><strong>PronType=Tot</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Swedish-LinES%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv_lines-ud-dev-doc4-3588%22%20%3B%20A%20%5Bform%3D%22alla%22%7C%22Alla%22%5D%20%3B%20B%20%5Bform%3D%22mina%22%7C%22Mina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Swedish-LinES</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

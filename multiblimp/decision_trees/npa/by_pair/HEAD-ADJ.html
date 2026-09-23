@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        try {
+            var t = localStorage.getItem('sva-dt-theme');
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
+    <title>MultiBLiMP 2.0 - Agreement Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f5f4;
+            --card: #ffffff;
+            --panel-bg: #fafaf9;
+            --text: #1c1917;
+            --text-muted: #78716c;
+            --text-subtle: #57534e;
+            --accent: #2563eb;
+            --border: #e7e5e4;
+            --border-hover: #c7c4c0;
+            --grid-line: #e7e5e4;
+            --diagonal-line: #d4d0cb;
+            --hover: #f5f5f5;
+        }
+        /* Same palette as viz_deprel.py's html_deprel.py and viz_tree.py's
+           html_tree.py, for a consistent look across every page in the site. */
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #16140f; --card: #221f19; --panel-bg: #1c1a15;
+            --text: #f0ede6; --text-muted: #a39a8a; --text-subtle: #a39a8a;
+            --accent: #6ea8ff; --border: #38332a; --border-hover: #4d4636;
+            --grid-line: #38332a; --diagonal-line: #4d4636; --hover: #2a261e;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                color-scheme: dark;
+                --bg: #16140f; --card: #221f19; --panel-bg: #1c1a15;
+                --text: #f0ede6; --text-muted: #a39a8a; --text-subtle: #a39a8a;
+                --accent: #6ea8ff; --border: #38332a; --border-hover: #4d4636;
+                --grid-line: #38332a; --diagonal-line: #4d4636; --hover: #2a261e;
+            }
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            gap: 2rem;
+        }
+        .title-section {
+            flex: 1;
+        }
+        h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0.5rem 0 0;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+            padding-top: 0.25rem;
+        }
+        .theme-toggle {
+            width: 2.1rem; height: 2.1rem;
+            border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text-muted);
+            font-size: 0.9rem; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0; transition: border-color .15s, color .15s, background .15s;
+        }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+        .controls label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-subtle);
+        }
+        select {
+            padding: 0.5rem 2rem 0.5rem 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2357534e' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.625rem center;
+        }
+        /* the dropdown arrow is a static data-URI SVG (can't use a CSS var
+           for its fill), so give dark mode its own lighter-arrow version */
+        :root[data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a39a8a' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) select {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a39a8a' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+            }
+        }
+        select:hover { border-color: var(--accent); }
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .group-section { margin-top: 2rem; }
+        .group-section:first-of-type { margin-top: 0; }
+        .group-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 0 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        /* One per subgroup within a group that has them (currently just
+           "Noun Phrase", subdivided by role pair -- e.g. "Head–
+           Determiner") -- a group without subgroups renders its .grid
+           directly under .group-title instead, no .subgroup-section
+           wrapper at all. */
+        .subgroup-section { margin-top: 1.5rem; }
+        .subgroup-section:first-of-type { margin-top: 0; }
+        .subgroup-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0 0 0.85rem;
+            color: var(--text-subtle);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-bg);
+            overflow: hidden;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            cursor: pointer;
+        }
+        .panel:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+            border-color: var(--border-hover);
+        }
+        .mini-plot {
+            width: 100%;
+            height: 260px;
+        }
+        .panel-label {
+            padding: 0.6rem 1rem 0.75rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--card);
+        }
+        .panel-label a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.01em;
+        }
+        .panel-label a:hover { text-decoration: underline; }
+        /* NPA's own group section: a role-pair/feature card grid with a
+           toggle switching which axis is the top-level grouping, instead
+           of the flat per-panel grid other groups use -- see
+           word_order.viz_overview._npa_toggle_group_html. */
+        .npa-view-toggle {
+            display: inline-flex;
+            border: 1px solid var(--border-hover);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .npa-view-toggle button {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.4rem 0.9rem;
+            cursor: pointer;
+        }
+        .npa-view-toggle button.active {
+            background: var(--hover);
+            color: var(--text);
+        }
+        .npa-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0.85rem;
+        }
+        .npa-card {
+            display: block;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-bg);
+            padding: 0.85rem 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .npa-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+            border-color: var(--border-hover);
+        }
+        .npa-card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        .npa-card-stat {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-section">
+                <h1>MultiBLiMP 2.0 &mdash; Agreement Overview</h1>
+                <p class="description">
+                    This page gives an overview of agreement predictability across dependency relations and languages,
+                    grouped by what the subject agrees with (verb, participle, auxiliary, ...). Each panel shows the
+                    base entropy vs. reduced entropy (after fitting a decision tree) for a specific agreement feature
+                    across all available languages. Click a panel to explore it in detail, or click a point to go
+                    directly to a specific language.
+                </p>
+            </div>
+            <div class="controls">
+                <label for="entropyType">Entropy type:</label>
+                <select id="entropyType">
+                    <option value="six" selected>Six-class</option>
+                    <option value="binary">Binary (majority vs. rest)</option>
+                </select>
+                <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
+            </div>
+        </div>
+
+        <div class="group-section">
+            <h2 class="group-title">Head–Adjective</h2>
+            <div class="grid">
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_N" class="mini-plot" data-url="../../npa/HEAD-ADJ_N/index.html" data-deprel="npa/HEAD-ADJ_N"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_N/index.html">Number</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_G" class="mini-plot" data-url="../../npa/HEAD-ADJ_G/index.html" data-deprel="npa/HEAD-ADJ_G"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_G/index.html">Gender</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_P" class="mini-plot" data-url="../../npa/HEAD-ADJ_P/index.html" data-deprel="npa/HEAD-ADJ_P"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_P/index.html">Person</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_C" class="mini-plot" data-url="../../npa/HEAD-ADJ_C/index.html" data-deprel="npa/HEAD-ADJ_C"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_C/index.html">Case</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Animacy" class="mini-plot" data-url="../../npa/HEAD-ADJ_Animacy/index.html" data-deprel="npa/HEAD-ADJ_Animacy"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Animacy/index.html">Animacy</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Compound" class="mini-plot" data-url="../../npa/HEAD-ADJ_Compound/index.html" data-deprel="npa/HEAD-ADJ_Compound"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Compound/index.html">Compound</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Def" class="mini-plot" data-url="../../npa/HEAD-ADJ_Def/index.html" data-deprel="npa/HEAD-ADJ_Def"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Def/index.html">Definite</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Derivation" class="mini-plot" data-url="../../npa/HEAD-ADJ_Derivation/index.html" data-deprel="npa/HEAD-ADJ_Derivation"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Derivation/index.html">Derivation</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Form" class="mini-plot" data-url="../../npa/HEAD-ADJ_Form/index.html" data-deprel="npa/HEAD-ADJ_Form"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Form/index.html">Form</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_InflClass" class="mini-plot" data-url="../../npa/HEAD-ADJ_InflClass/index.html" data-deprel="npa/HEAD-ADJ_InflClass"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_InflClass/index.html">InflClass</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Mutation" class="mini-plot" data-url="../../npa/HEAD-ADJ_Mutation/index.html" data-deprel="npa/HEAD-ADJ_Mutation"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Mutation/index.html">Mutation</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_NounClass" class="mini-plot" data-url="../../npa/HEAD-ADJ_NounClass/index.html" data-deprel="npa/HEAD-ADJ_NounClass"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_NounClass/index.html">NounClass</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_NounType" class="mini-plot" data-url="../../npa/HEAD-ADJ_NounType/index.html" data-deprel="npa/HEAD-ADJ_NounType"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_NounType/index.html">NounType</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Polite" class="mini-plot" data-url="../../npa/HEAD-ADJ_Polite/index.html" data-deprel="npa/HEAD-ADJ_Polite"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Polite/index.html">Polite</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_SubGender" class="mini-plot" data-url="../../npa/HEAD-ADJ_SubGender/index.html" data-deprel="npa/HEAD-ADJ_SubGender"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_SubGender/index.html">SubGender</a></div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+          const btn = document.getElementById('themeToggleBtn');
+          function currentTheme() {
+            const attr = document.documentElement.getAttribute('data-theme');
+            if (attr === 'light' || attr === 'dark') return attr;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          btn.textContent = currentTheme() === 'dark' ? '☀' : '☾';
+          btn.addEventListener('click', () => {
+            const next = currentTheme() === 'dark' ? 'light' : 'dark';
+            try { localStorage.setItem('sva-dt-theme', next); } catch (e) {}
+            // Reload, not a live attribute flip -- the charts below bake
+            // resolved colors into Plotly traces at render time
+            // (getComputedStyle), not live var() references.
+            location.reload();
+          });
+        })();
+
+        const allData = {"npa/HEAD-ADJ_Animacy": {"six": [{"name": "Belarusian", "base": 0.02817992076451731, "reduced": 0.02817992076451731, "n_items": 875, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.06794892160296818, "reduced": 0.06794892160296818, "n_items": 795, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.03426826282851646, "reduced": 0.03426826282851646, "n_items": 5979, "url": "Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.019787527962240092, "reduced": 0.019787527962240092, "n_items": 2381, "url": "Polish.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.016878870712819453, "reduced": 0.016878870712819453, "n_items": 954, "url": "Russian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.03950117460432034, "reduced": 0.03950117460432034, "n_items": 352, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.01176183678835651, "reduced": 0.01176183678835651, "n_items": 2411, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.02217994142446874, "reduced": 0.02217994142446874, "n_items": 1158, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.11420425383509086, "reduced": 0.11420425383509086, "n_items": 96, "url": "Upper_Sorbian.html", "color": "#2563eb"}], "binary": [{"name": "Belarusian", "base": 0.02817992076451731, "reduced": 0.02817992076451731, "n_items": 875, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.06794892160296818, "reduced": 0.06794892160296818, "n_items": 795, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.03426826282851646, "reduced": 0.03426826282851646, "n_items": 5979, "url": "Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.019787527962240092, "reduced": 0.019787527962240092, "n_items": 2381, "url": "Polish.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.016878870712819453, "reduced": 0.016878870712819453, "n_items": 954, "url": "Russian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.03950117460432034, "reduced": 0.03950117460432034, "n_items": 352, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.01176183678835651, "reduced": 0.01176183678835651, "n_items": 2411, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.02217994142446874, "reduced": 0.02217994142446874, "n_items": 1158, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.11420425383509086, "reduced": 0.11420425383509086, "n_items": 96, "url": "Upper_Sorbian.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_C": {"six": [{"name": "Akkadian", "base": 0.2509001982935959, "reduced": 0.2509001982935959, "n_items": 354, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.17134991233324487, "reduced": 0.17134991233324487, "n_items": 95, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.3487752874839173, "reduced": 0.3487752874839173, "n_items": 1220, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.09030078506768216, "reduced": 0.09030078506768216, "n_items": 13072, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Basque", "base": 0.6950611446349045, "reduced": 0.1312079472229295, "n_items": 21, "url": "Basque.html", "color": "#2563eb"}, {"name": "Belarusian", "base": 0.021002299699099947, "reduced": 0.021002299699099947, "n_items": 6172, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.8462071998957049, "reduced": 0.7456159867509038, "n_items": 54, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.19143325481419343, "reduced": 0.19143325481419343, "n_items": 49, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Classical Armenian", "base": 0.7658364123405031, "reduced": 0.7658364123405031, "n_items": 715, "url": "Classical_Armenian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.03927233160321701, "reduced": 0.03927233160321701, "n_items": 13369, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.035960321670484977, "reduced": 0.035960321670484977, "n_items": 14842, "url": "Czech.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9988322245693406, "reduced": 0.349730785309487, "n_items": 90, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Esperanto", "base": 0.12976285905304205, "reduced": 0.12976285905304205, "n_items": 191, "url": "Esperanto.html", "color": "#2563eb"}, {"name": "Estonian", "base": 0.4735215747688351, "reduced": 0.39735175784086996, "n_items": 4389, "url": "Estonian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.112179915128749, "reduced": 0.112179915128749, "n_items": 493, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Finnish", "base": 0.1542466351233171, "reduced": 0.140982027171428, "n_items": 3877, "url": "Finnish.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.16074791284159018, "reduced": 0.16074791284159018, "n_items": 6166, "url": "Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.02422698852852692, "reduced": 0.02422698852852692, "n_items": 6479, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.13571637906526565, "reduced": 0.13571637906526565, "n_items": 77, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.26382581652074377, "reduced": 0.26382581652074377, "n_items": 650, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.10842697447169802, "reduced": 0.10842697447169802, "n_items": 3193, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.21664351963911502, "reduced": 0.17301506148663223, "n_items": 6164, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.2480935627517142, "reduced": 0.2480935627517142, "n_items": 5261, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.07663748742581514, "reduced": 0.07663748742581514, "n_items": 2482, "url": "Irish.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.36384699817692945, "reduced": 0.23203238650222732, "n_items": 33, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Karelian", "base": 0.40707680632541937, "reduced": 0.40707680632541937, "n_items": 118, "url": "Karelian.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.9990797181805819, "reduced": 0.892976396977196, "n_items": 14, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.9761883927976468, "reduced": 0.6710224422367631, "n_items": 169, "url": "Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.8715561463084058, "reduced": 0.7917735642083275, "n_items": 22, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.054076035009720615, "reduced": 0.054076035009720615, "n_items": 4922, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.1612836922728728, "reduced": 0.1612836922728728, "n_items": 5023, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.05934861309460774, "reduced": 0.05934861309460774, "n_items": 3245, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Livvi", "base": 0.6210993704855443, "reduced": 0.6210993704855443, "n_items": 46, "url": "Livvi.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.24209409948276694, "reduced": 0.24209409948276694, "n_items": 444, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.9921043909579681, "reduced": 0.6589879204206844, "n_items": 512, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.990599158998091, "reduced": 0.25977663360580805, "n_items": 63, "url": "Moksha.html", "color": "#2563eb"}, {"name": "North Sami", "base": 0.783776947484701, "reduced": 0.649533034268791, "n_items": 34, "url": "North_Sami.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.27594254014693137, "reduced": 0.27594254014693137, "n_items": 2713, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.1563349788363002, "reduced": 0.14313720622652343, "n_items": 6178, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.5344035864077966, "reduced": 0.5344035864077966, "n_items": 169, "url": "Old_Georgian.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": 0.8005396924516177, "reduced": 0.642058835334073, "n_items": 36, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": NaN, "reduced": NaN, "n_items": 233, "url": "Pashto.html", "color": "#31cb9f"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 14, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.06356308262431998, "reduced": 0.04673224497491846, "n_items": 6968, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.24130530537010003, "reduced": 0.24130530537010003, "n_items": 446, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.5435644431995964, "reduced": 0.5435644431995964, "n_items": 24, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.04469811736042779, "reduced": 0.04469811736042779, "n_items": 5577, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.01477124869993542, "reduced": 0.01477124869993542, "n_items": 8536, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.0538442357683324, "reduced": 0.0538442357683324, "n_items": 1054, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.08492514144347266, "reduced": 0.08492514144347266, "n_items": 977, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.07194914886857137, "reduced": 0.07194914886857137, "n_items": 6562, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.9366597632492168, "reduced": 0.4545068310198997, "n_items": 2184, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.02186610093205933, "reduced": 0.02186610093205933, "n_items": 5889, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.08627725203563891, "reduced": 0.06676924586825916, "n_items": 12644, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.15559664014173807, "reduced": 0.03291817415505539, "n_items": 7689, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.04618517438603095, "reduced": 0.04618517438603095, "n_items": 10629, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": 0.1170969162196241, "reduced": 0.1170969162196241, "n_items": 93, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.04641360238357502, "reduced": 0.04641360238357502, "n_items": 872, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.4843352515589454, "reduced": 0.46573868361935367, "n_items": 4074, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Uyghur", "base": 0.9967295890208365, "reduced": 0.7259219507224468, "n_items": 166, "url": "Uyghur.html", "color": "#2563eb"}, {"name": "Veps", "base": 0.921467668999097, "reduced": 0.5094848686164215, "n_items": 34, "url": "Veps.html", "color": "#2563eb"}], "binary": [{"name": "Akkadian", "base": 0.2509001982935959, "reduced": 0.2509001982935959, "n_items": 354, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.17134991233324487, "reduced": 0.17134991233324487, "n_items": 95, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.3487752874839173, "reduced": 0.3487752874839173, "n_items": 1220, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.09030078506768216, "reduced": 0.09030078506768216, "n_items": 13072, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Basque", "base": 0.6950611446349045, "reduced": 0.19506235275389383, "n_items": 21, "url": "Basque.html", "color": "#2563eb"}, {"name": "Belarusian", "base": 0.021002299699099947, "reduced": 0.021002299699099947, "n_items": 6172, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.8462071998957049, "reduced": 0.7456159867509038, "n_items": 54, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.19143325481419343, "reduced": 0.19143325481419343, "n_items": 49, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Classical Armenian", "base": 0.7658364123405031, "reduced": 0.7658364123405031, "n_items": 715, "url": "Classical_Armenian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.03927233160321701, "reduced": 0.03927233160321701, "n_items": 13369, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.035960321670484977, "reduced": 0.035960321670484977, "n_items": 14842, "url": "Czech.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9988322245693406, "reduced": 0.36712578452735245, "n_items": 90, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Esperanto", "base": 0.12976285905304205, "reduced": 0.12976285905304205, "n_items": 191, "url": "Esperanto.html", "color": "#2563eb"}, {"name": "Estonian", "base": 0.4735215747688351, "reduced": 0.3983244283871511, "n_items": 4389, "url": "Estonian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.112179915128749, "reduced": 0.112179915128749, "n_items": 493, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Finnish", "base": 0.1542466351233171, "reduced": 0.140982027171428, "n_items": 3877, "url": "Finnish.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.16074791284159018, "reduced": 0.16074791284159018, "n_items": 6166, "url": "Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.02422698852852692, "reduced": 0.02422698852852692, "n_items": 6479, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.13571637906526565, "reduced": 0.13571637906526565, "n_items": 77, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.26382581652074377, "reduced": 0.26382581652074377, "n_items": 650, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.10842697447169802, "reduced": 0.10842697447169802, "n_items": 3193, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.21664351963911502, "reduced": 0.17301506148663223, "n_items": 6164, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.2480935627517142, "reduced": 0.2480935627517142, "n_items": 5261, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.07663748742581514, "reduced": 0.07663748742581514, "n_items": 2482, "url": "Irish.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.36384699817692945, "reduced": 0.32902018710233294, "n_items": 33, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Karelian", "base": 0.40707680632541937, "reduced": 0.40707680632541937, "n_items": 118, "url": "Karelian.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.9990797181805819, "reduced": 0.892976396977196, "n_items": 14, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.9761883927976468, "reduced": 0.6710224422367631, "n_items": 169, "url": "Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.8715561463084058, "reduced": 0.7917735642083275, "n_items": 22, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.054076035009720615, "reduced": 0.054076035009720615, "n_items": 4922, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.1612836922728728, "reduced": 0.1612836922728728, "n_items": 5023, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.05934861309460774, "reduced": 0.05934861309460774, "n_items": 3245, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Livvi", "base": 0.6210993704855443, "reduced": 0.6210993704855443, "n_items": 46, "url": "Livvi.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.24209409948276694, "reduced": 0.24209409948276694, "n_items": 444, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.9921043909579681, "reduced": 0.6589879204206844, "n_items": 512, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.990599158998091, "reduced": 0.32121211923978765, "n_items": 63, "url": "Moksha.html", "color": "#2563eb"}, {"name": "North Sami", "base": 0.783776947484701, "reduced": 0.649533034268791, "n_items": 34, "url": "North_Sami.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.27594254014693137, "reduced": 0.27594254014693137, "n_items": 2713, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.1563349788363002, "reduced": 0.14313720622652343, "n_items": 6178, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.5344035864077966, "reduced": 0.5344035864077966, "n_items": 169, "url": "Old_Georgian.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": 0.8005396924516177, "reduced": 0.6684112900359868, "n_items": 36, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": NaN, "reduced": NaN, "n_items": 233, "url": "Pashto.html", "color": "#31cb9f"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 14, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.06356308262431998, "reduced": 0.04673224497491846, "n_items": 6968, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.24130530537010003, "reduced": 0.24130530537010003, "n_items": 446, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.5435644431995964, "reduced": 0.5435644431995964, "n_items": 24, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.04469811736042779, "reduced": 0.04469811736042779, "n_items": 5577, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.01477124869993542, "reduced": 0.01477124869993542, "n_items": 8536, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.0538442357683324, "reduced": 0.0538442357683324, "n_items": 1054, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.08492514144347266, "reduced": 0.08492514144347266, "n_items": 977, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.07194914886857137, "reduced": 0.07194914886857137, "n_items": 6562, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.9366597632492168, "reduced": 0.4545068310198997, "n_items": 2184, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.02186610093205933, "reduced": 0.02186610093205933, "n_items": 5889, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.08627725203563891, "reduced": 0.06676924586825916, "n_items": 12644, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.15559664014173807, "reduced": 0.03291817415505539, "n_items": 7689, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.04618517438603095, "reduced": 0.04618517438603095, "n_items": 10629, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": 0.1170969162196241, "reduced": 0.1170969162196241, "n_items": 93, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.04641360238357502, "reduced": 0.04641360238357502, "n_items": 872, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.4843352515589454, "reduced": 0.46573868361935367, "n_items": 4074, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Uyghur", "base": 0.9967295890208365, "reduced": 0.735598268615343, "n_items": 166, "url": "Uyghur.html", "color": "#2563eb"}, {"name": "Veps", "base": 0.921467668999097, "reduced": 0.5094848686164215, "n_items": 34, "url": "Veps.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Compound": {"six": [{"name": "Sanskrit", "base": NaN, "reduced": NaN, "n_items": 28, "url": "Sanskrit.html", "color": "#2563eb"}], "binary": [{"name": "Sanskrit", "base": NaN, "reduced": NaN, "n_items": 28, "url": "Sanskrit.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Def": {"six": [{"name": "Arabic", "base": 0.5466937084914243, "reduced": 0.49523919045935316, "n_items": 11533, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Basque", "base": 0.7131467486384921, "reduced": 0.16865703913505903, "n_items": 22, "url": "Basque.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.9984959485425422, "reduced": 0.9208265785019474, "n_items": 4397, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.9839519978926317, "reduced": 0.19593248777373887, "n_items": 1049, "url": "Danish.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9666186325481028, "reduced": 0.5075876275028844, "n_items": 93, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.6805325893006591, "reduced": 0.5239740040204781, "n_items": 393, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.8890349038123858, "reduced": 0.6113100161099385, "n_items": 21, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.8901483217119066, "reduced": 0.42375506238874877, "n_items": 1544, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Macedonian", "base": 0.9402859586706311, "reduced": 0.7753281730371472, "n_items": 7, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.8968179017912724, "reduced": 0.3835142947721695, "n_items": 62, "url": "Moksha.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.6529248033520794, "reduced": 0.28435220539955036, "n_items": 2876, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": NaN, "reduced": NaN, "n_items": 3009, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.9934969552396127, "reduced": 0.07043222970900039, "n_items": 288, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.9908126997764212, "reduced": 0.2615237707377392, "n_items": 6646, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.5062101380038891, "reduced": 0.24728773032438342, "n_items": 5651, "url": "Swedish.html", "color": "#2563eb"}], "binary": [{"name": "Arabic", "base": 0.5466937084914243, "reduced": 0.49523919045935316, "n_items": 11533, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Basque", "base": 0.7131467486384921, "reduced": 0.23018256086031824, "n_items": 22, "url": "Basque.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.9984959485425422, "reduced": 0.9208265785019474, "n_items": 4397, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.9839519978926317, "reduced": 0.19593248777373887, "n_items": 1049, "url": "Danish.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9666186325481028, "reduced": 0.5314383979434483, "n_items": 93, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.6805325893006591, "reduced": 0.5239740040204781, "n_items": 393, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.8890349038123858, "reduced": 0.6113100161099385, "n_items": 21, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.8901483217119066, "reduced": 0.42575459547197975, "n_items": 1544, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Macedonian", "base": 0.9402859586706311, "reduced": 0.7753281730371472, "n_items": 7, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.8968179017912724, "reduced": 0.4550271738157896, "n_items": 62, "url": "Moksha.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.6529248033520794, "reduced": 0.28614869812756905, "n_items": 2876, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": NaN, "reduced": NaN, "n_items": 3009, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.9934969552396127, "reduced": 0.08671217573683754, "n_items": 288, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.9908126997764212, "reduced": 0.2622922972840108, "n_items": 6646, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.5062101380038891, "reduced": 0.2488027040585142, "n_items": 5651, "url": "Swedish.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Derivation": {"six": [{"name": "Finnish", "base": 0.07433344019915994, "reduced": 0.07433344019915994, "n_items": 1, "url": "Finnish.html", "color": "#2563eb"}], "binary": [{"name": "Finnish", "base": 0.07433344019915994, "reduced": 0.07433344019915994, "n_items": 1, "url": "Finnish.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Form": {"six": [{"name": "Irish", "base": 0.7894529806324388, "reduced": 0.5551498924176638, "n_items": 114, "url": "Irish.html", "color": "#2563eb"}, {"name": "Manx", "base": 0.4305518670104394, "reduced": 0.4305518670104394, "n_items": 15, "url": "Manx.html", "color": "#2563eb"}], "binary": [{"name": "Irish", "base": 0.7894529806324388, "reduced": 0.5551498924176638, "n_items": 114, "url": "Irish.html", "color": "#2563eb"}, {"name": "Manx", "base": 0.4305518670104394, "reduced": 0.4305518670104394, "n_items": 15, "url": "Manx.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_G": {"six": [{"name": "Akkadian", "base": 0.06477285974602602, "reduced": 0.06477285974602602, "n_items": 713, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.222284830685688, "reduced": 0.222284830685688, "n_items": 148, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.617964061326553, "reduced": 0.617964061326553, "n_items": 1074, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Ancient Hebrew", "base": 0.09166911517647305, "reduced": 0.09166911517647305, "n_items": 550, "url": "Ancient_Hebrew.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.6268776483091779, "reduced": 0.35564719201779565, "n_items": 1109, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Belarusian", "base": NaN, "reduced": NaN, "n_items": 4473, "url": "Belarusian.html", "color": "#31cb9f"}, {"name": "Bhojpuri", "base": 0.7817281222714539, "reduced": 0.6605060363782482, "n_items": 21, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.06611261751532288, "reduced": 0.046841678875159484, "n_items": 6010, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.487021283159773, "reduced": 0.40616500622921886, "n_items": 46, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Catalan", "base": 0.06943784746907618, "reduced": 0.06943784746907618, "n_items": 7449, "url": "Catalan.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.04278769378555621, "reduced": 0.04278769378555621, "n_items": 13354, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.05974498471706314, "reduced": 0.05974498471706314, "n_items": 14809, "url": "Czech.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.22959864101442917, "reduced": 0.21811048205775427, "n_items": 710, "url": "Danish.html", "color": "#2563eb"}, {"name": "Egyptian", "base": 0.05538166844174206, "reduced": 0.05538166844174206, "n_items": 862, "url": "Egyptian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.15772017787452114, "reduced": 0.15772017787452114, "n_items": 489, "url": "Faroese.html", "color": "#2563eb"}, {"name": "French", "base": 0.02499546417267575, "reduced": 0.02499546417267575, "n_items": 9068, "url": "French.html", "color": "#2563eb"}, {"name": "Galician", "base": 0.1415404367619043, "reduced": 0.1415404367619043, "n_items": 1101, "url": "Galician.html", "color": "#2563eb"}, {"name": "German", "base": 0.03682908080707312, "reduced": 0.03682908080707312, "n_items": 7533, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.14295535512672705, "reduced": 0.14295535512672705, "n_items": 72, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.582220715043013, "reduced": 0.513125183285606, "n_items": 559, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.10273251676673806, "reduced": 0.10273251676673806, "n_items": 3196, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.1968323072726611, "reduced": 0.1968323072726611, "n_items": 79, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Hebrew", "base": 0.07812245815720409, "reduced": 0.06751386383340488, "n_items": 5210, "url": "Hebrew.html", "color": "#2563eb"}, {"name": "Highland Puebla Nahuatl", "base": 0.934068055375491, "reduced": 0.934068055375491, "n_items": 3, "url": "Highland_Puebla_Nahuatl.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.12057978037931072, "reduced": 0.12057978037931072, "n_items": 1411, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.22322953513964316, "reduced": 0.22322953513964316, "n_items": 5194, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.018882700360444572, "reduced": 0.018882700360444572, "n_items": 2514, "url": "Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.13825152873258334, "reduced": 0.13825152873258334, "n_items": 7139, "url": "Italian.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.5197027865043055, "reduced": 0.36367640061961126, "n_items": 26, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.42368057157091055, "reduced": 0.42368057157091055, "n_items": 26, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.24140486452680307, "reduced": 0.15492969097754836, "n_items": 4667, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.21068506065158782, "reduced": 0.21068506065158782, "n_items": 4978, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Ligurian", "base": 0.10638840546946682, "reduced": 0.10638840546946682, "n_items": 105, "url": "Ligurian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.07217092257762649, "reduced": 0.07217092257762649, "n_items": 3240, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.1339711061250611, "reduced": 0.1339711061250611, "n_items": 446, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Macedonian", "base": NaN, "reduced": NaN, "n_items": 18, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.7252199937160282, "reduced": 0.6976017693887376, "n_items": 821, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.8237786910954858, "reduced": 0.4262197018526284, "n_items": 577, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": 0.8758848257227503, "reduced": 0.44289665788627075, "n_items": 798, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Odia", "base": 0.7062740891876007, "reduced": 0.7062740891876007, "n_items": 10, "url": "Odia.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.39413099037086047, "reduced": 0.3037000606668841, "n_items": 2592, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.12067334571892994, "reduced": 0.12067334571892994, "n_items": 6210, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": NaN, "reduced": NaN, "n_items": 34, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": NaN, "reduced": NaN, "n_items": 208, "url": "Pashto.html", "color": "#31cb9f"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 12, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.031214028601386678, "reduced": 0.031214028601386678, "n_items": 6986, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.39214216316028605, "reduced": 0.39214216316028605, "n_items": 424, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.03902719492392428, "reduced": 0.03902719492392428, "n_items": 5125, "url": "Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.19745300438456018, "reduced": 0.19745300438456018, "n_items": 47, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.07428892241072241, "reduced": 0.07428892241072241, "n_items": 14541, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.007097877253630385, "reduced": 0.007097877253630385, "n_items": 6006, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.08029144365111479, "reduced": 0.08029144365111479, "n_items": 1047, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.09147704445400189, "reduced": 0.09147704445400189, "n_items": 976, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.07195811736753881, "reduced": 0.07195811736753881, "n_items": 6561, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sicilian", "base": 0.24988229283318544, "reduced": 0.24988229283318544, "n_items": 149, "url": "Sicilian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.6415235967256478, "reduced": 0.566047257976905, "n_items": 1229, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.020360362265859407, "reduced": 0.020360362265859407, "n_items": 5887, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.06685321591045684, "reduced": 0.06685321591045684, "n_items": 12670, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Spanish", "base": 0.05448247162276114, "reduced": 0.05448247162276114, "n_items": 7117, "url": "Spanish.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.09936617268105649, "reduced": 0.07921107337764771, "n_items": 2336, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.029309473337113468, "reduced": 0.029309473337113468, "n_items": 7189, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": NaN, "reduced": NaN, "n_items": 61, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.15506804223161794, "reduced": 0.15506804223161794, "n_items": 848, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8603550504053289, "reduced": 0.6574766456009542, "n_items": 516, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Welsh", "base": 0.6962122601251458, "reduced": 0.6658919165394371, "n_items": 188, "url": "Welsh.html", "color": "#2563eb"}], "binary": [{"name": "Akkadian", "base": 0.06477285974602602, "reduced": 0.06477285974602602, "n_items": 713, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.222284830685688, "reduced": 0.222284830685688, "n_items": 148, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.617964061326553, "reduced": 0.617964061326553, "n_items": 1074, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Ancient Hebrew", "base": 0.09166911517647305, "reduced": 0.09166911517647305, "n_items": 550, "url": "Ancient_Hebrew.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.6268776483091779, "reduced": 0.35564719201779565, "n_items": 1109, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Belarusian", "base": NaN, "reduced": NaN, "n_items": 4473, "url": "Belarusian.html", "color": "#31cb9f"}, {"name": "Bhojpuri", "base": 0.7817281222714539, "reduced": 0.6605060363782482, "n_items": 21, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.06611261751532288, "reduced": 0.046841678875159484, "n_items": 6010, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.487021283159773, "reduced": 0.40616500622921886, "n_items": 46, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Catalan", "base": 0.06943784746907618, "reduced": 0.06943784746907618, "n_items": 7449, "url": "Catalan.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.04278769378555621, "reduced": 0.04278769378555621, "n_items": 13354, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.05974498471706314, "reduced": 0.05974498471706314, "n_items": 14809, "url": "Czech.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.22959864101442917, "reduced": 0.21811048205775427, "n_items": 710, "url": "Danish.html", "color": "#2563eb"}, {"name": "Egyptian", "base": 0.05538166844174206, "reduced": 0.05538166844174206, "n_items": 862, "url": "Egyptian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.15772017787452114, "reduced": 0.15772017787452114, "n_items": 489, "url": "Faroese.html", "color": "#2563eb"}, {"name": "French", "base": 0.02499546417267575, "reduced": 0.02499546417267575, "n_items": 9068, "url": "French.html", "color": "#2563eb"}, {"name": "Galician", "base": 0.1415404367619043, "reduced": 0.1415404367619043, "n_items": 1101, "url": "Galician.html", "color": "#2563eb"}, {"name": "German", "base": 0.03682908080707312, "reduced": 0.03682908080707312, "n_items": 7533, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.14295535512672705, "reduced": 0.14295535512672705, "n_items": 72, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.582220715043013, "reduced": 0.513125183285606, "n_items": 559, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.10273251676673806, "reduced": 0.10273251676673806, "n_items": 3196, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.1968323072726611, "reduced": 0.1968323072726611, "n_items": 79, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Hebrew", "base": 0.07812245815720409, "reduced": 0.06751386383340488, "n_items": 5210, "url": "Hebrew.html", "color": "#2563eb"}, {"name": "Highland Puebla Nahuatl", "base": 0.934068055375491, "reduced": 0.934068055375491, "n_items": 3, "url": "Highland_Puebla_Nahuatl.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.12057978037931072, "reduced": 0.12057978037931072, "n_items": 1411, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.22322953513964316, "reduced": 0.22322953513964316, "n_items": 5194, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.018882700360444572, "reduced": 0.018882700360444572, "n_items": 2514, "url": "Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.13825152873258334, "reduced": 0.13825152873258334, "n_items": 7139, "url": "Italian.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.5197027865043055, "reduced": 0.4692947481033042, "n_items": 26, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.42368057157091055, "reduced": 0.42368057157091055, "n_items": 26, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.24140486452680307, "reduced": 0.15492969097754836, "n_items": 4667, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.21068506065158782, "reduced": 0.21068506065158782, "n_items": 4978, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Ligurian", "base": 0.10638840546946682, "reduced": 0.10638840546946682, "n_items": 105, "url": "Ligurian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.07217092257762649, "reduced": 0.07217092257762649, "n_items": 3240, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.1339711061250611, "reduced": 0.1339711061250611, "n_items": 446, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Macedonian", "base": NaN, "reduced": NaN, "n_items": 18, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.7252199937160282, "reduced": 0.6976017693887376, "n_items": 821, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.8237786910954858, "reduced": 0.4262197018526284, "n_items": 577, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": 0.8758848257227503, "reduced": 0.4478208445379299, "n_items": 798, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Odia", "base": 0.7062740891876007, "reduced": 0.7062740891876007, "n_items": 10, "url": "Odia.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.39413099037086047, "reduced": 0.3037000606668841, "n_items": 2592, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.12067334571892994, "reduced": 0.12067334571892994, "n_items": 6210, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": NaN, "reduced": NaN, "n_items": 34, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": NaN, "reduced": NaN, "n_items": 208, "url": "Pashto.html", "color": "#31cb9f"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 12, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.031214028601386678, "reduced": 0.031214028601386678, "n_items": 6986, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.39214216316028605, "reduced": 0.39214216316028605, "n_items": 424, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.03902719492392428, "reduced": 0.03902719492392428, "n_items": 5125, "url": "Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.19745300438456018, "reduced": 0.19745300438456018, "n_items": 47, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.07428892241072241, "reduced": 0.07428892241072241, "n_items": 14541, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.007097877253630385, "reduced": 0.007097877253630385, "n_items": 6006, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.08029144365111479, "reduced": 0.08029144365111479, "n_items": 1047, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.09147704445400189, "reduced": 0.09147704445400189, "n_items": 976, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.07195811736753881, "reduced": 0.07195811736753881, "n_items": 6561, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sicilian", "base": 0.24988229283318544, "reduced": 0.24988229283318544, "n_items": 149, "url": "Sicilian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.6415235967256478, "reduced": 0.566047257976905, "n_items": 1229, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.020360362265859407, "reduced": 0.020360362265859407, "n_items": 5887, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.06685321591045684, "reduced": 0.06685321591045684, "n_items": 12670, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Spanish", "base": 0.05448247162276114, "reduced": 0.05448247162276114, "n_items": 7117, "url": "Spanish.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.09936617268105649, "reduced": 0.07921107337764771, "n_items": 2336, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.029309473337113468, "reduced": 0.029309473337113468, "n_items": 7189, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": NaN, "reduced": NaN, "n_items": 61, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.15506804223161794, "reduced": 0.15506804223161794, "n_items": 848, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8603550504053289, "reduced": 0.6673550845809301, "n_items": 516, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Welsh", "base": 0.6962122601251458, "reduced": 0.6802821042077337, "n_items": 188, "url": "Welsh.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_InflClass": {"six": [{"name": "Latin", "base": 0.8618154372788189, "reduced": 0.8221777911181924, "n_items": 805, "url": "Latin.html", "color": "#2563eb"}], "binary": [{"name": "Latin", "base": 0.8618154372788189, "reduced": 0.8221777911181924, "n_items": 805, "url": "Latin.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Mutation": {"six": [{"name": "Welsh", "base": 0.5130666885003238, "reduced": 0.5130666885003238, "n_items": 104, "url": "Welsh.html", "color": "#2563eb"}], "binary": [{"name": "Welsh", "base": 0.5130666885003238, "reduced": 0.5130666885003238, "n_items": 104, "url": "Welsh.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_N": {"six": [{"name": "Abkhaz", "base": 0.6683415745740828, "reduced": 0.6683415745740828, "n_items": 68, "url": "Abkhaz.html", "color": "#2563eb"}, {"name": "Akkadian", "base": 0.1912206532897286, "reduced": 0.1912206532897286, "n_items": 677, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.3066062548001266, "reduced": 0.3066062548001266, "n_items": 146, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.28688427760931934, "reduced": 0.28688427760931934, "n_items": 1241, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Ancient Hebrew", "base": 0.10049535860184453, "reduced": 0.10049535860184453, "n_items": 566, "url": "Ancient_Hebrew.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.9061833438854343, "reduced": 0.6255279377127417, "n_items": 9001, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Belarusian", "base": 0.041139649450924645, "reduced": 0.041139649450924645, "n_items": 6157, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.29367630985136955, "reduced": 0.29367630985136955, "n_items": 27, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.11744430049069761, "reduced": 0.03770929470529187, "n_items": 8352, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.2742506410502928, "reduced": 0.2742506410502928, "n_items": 50, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Catalan", "base": 0.06934966009438082, "reduced": 0.06934966009438082, "n_items": 11400, "url": "Catalan.html", "color": "#2563eb"}, {"name": "Classical Armenian", "base": 0.6025927542432998, "reduced": 0.6025927542432998, "n_items": 785, "url": "Classical_Armenian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.0399316485310983, "reduced": 0.0399316485310983, "n_items": 13339, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.0310386816412514, "reduced": 0.0310386816412514, "n_items": 14847, "url": "Czech.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.17061814889807217, "reduced": 0.15402773818282917, "n_items": 2823, "url": "Danish.html", "color": "#2563eb"}, {"name": "Egyptian", "base": 0.1796963714600729, "reduced": 0.1796963714600729, "n_items": 771, "url": "Egyptian.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9672421512064857, "reduced": 0.7054773258344904, "n_items": 108, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Esperanto", "base": 0.15838440747285049, "reduced": 0.15838440747285049, "n_items": 190, "url": "Esperanto.html", "color": "#2563eb"}, {"name": "Estonian", "base": 0.06781877951001916, "reduced": 0.06781877951001916, "n_items": 4845, "url": "Estonian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.24911869409692255, "reduced": 0.24911869409692255, "n_items": 473, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Finnish", "base": 0.07387923561611806, "reduced": 0.07387923561611806, "n_items": 3922, "url": "Finnish.html", "color": "#2563eb"}, {"name": "French", "base": 0.040227597090122275, "reduced": 0.040227597090122275, "n_items": 9313, "url": "French.html", "color": "#2563eb"}, {"name": "Galician", "base": 0.05127077957769584, "reduced": 0.05127077957769584, "n_items": 1118, "url": "Galician.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.9014374810138821, "reduced": 0.8895938102984224, "n_items": 3686, "url": "Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.032806711675208655, "reduced": 0.032806711675208655, "n_items": 7759, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.26676498780302604, "reduced": 0.26676498780302604, "n_items": 73, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.20221125481458394, "reduced": 0.20221125481458394, "n_items": 659, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.07894597351176434, "reduced": 0.07894597351176434, "n_items": 3208, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.23987382528036544, "reduced": 0.23987382528036544, "n_items": 36, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Hebrew", "base": 0.07427136549841146, "reduced": 0.07427136549841146, "n_items": 5214, "url": "Hebrew.html", "color": "#2563eb"}, {"name": "Highland Puebla Nahuatl", "base": NaN, "reduced": NaN, "n_items": 12, "url": "Highland_Puebla_Nahuatl.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.12405738505600719, "reduced": 0.1109006202497361, "n_items": 1361, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.17520888011461358, "reduced": 0.17520888011461358, "n_items": 5249, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.10430176356937719, "reduced": 0.07435092041288016, "n_items": 2487, "url": "Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.062239258398804294, "reduced": 0.062239258398804294, "n_items": 10144, "url": "Italian.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.5975977764379983, "reduced": 0.5975977764379983, "n_items": 26, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Karelian", "base": 0.40707680632541937, "reduced": 0.40707680632541937, "n_items": 118, "url": "Karelian.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.41381685030363374, "reduced": 0.41381685030363374, "n_items": 27, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.7532848601413269, "reduced": 0.7532848601413269, "n_items": 226, "url": "Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.7601675029619657, "reduced": 0.6431041697088838, "n_items": 58, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.05404869401322335, "reduced": 0.05404869401322335, "n_items": 4925, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.17769197243978496, "reduced": 0.17769197243978496, "n_items": 5007, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Ligurian", "base": 0.248150454970113, "reduced": 0.248150454970113, "n_items": 104, "url": "Ligurian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.08046819128100458, "reduced": 0.08046819128100458, "n_items": 3233, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Livvi", "base": 0.17800689613931447, "reduced": 0.17800689613931447, "n_items": 54, "url": "Livvi.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.14144054254182067, "reduced": 0.14144054254182067, "n_items": 465, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Macedonian", "base": 0.3591016256485496, "reduced": 0.3591016256485496, "n_items": 20, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.6337088279115751, "reduced": 0.5918220603460418, "n_items": 870, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.9724824232118978, "reduced": 0.8026287814297541, "n_items": 45, "url": "Moksha.html", "color": "#2563eb"}, {"name": "North Sami", "base": 0.32001486274754654, "reduced": 0.32001486274754654, "n_items": 40, "url": "North_Sami.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.162070322817354, "reduced": 0.162070322817354, "n_items": 4868, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": NaN, "reduced": NaN, "n_items": 2038, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Odia", "base": 0.4488644887230294, "reduced": 0.4488644887230294, "n_items": 14, "url": "Odia.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.15791728626233822, "reduced": 0.1380398097270099, "n_items": 2783, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.12799039430992867, "reduced": 0.12799039430992867, "n_items": 6208, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.1898608035902013, "reduced": 0.1898608035902013, "n_items": 183, "url": "Old_Georgian.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": 0.778694294888974, "reduced": 0.778694294888974, "n_items": 78, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": 0.24535507153141195, "reduced": 0.24535507153141195, "n_items": 200, "url": "Pashto.html", "color": "#2563eb"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 14, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.1311139906038591, "reduced": 0.10228540618494018, "n_items": 6884, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.28775982421298896, "reduced": 0.28775982421298896, "n_items": 443, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.06669103011114062, "reduced": 0.06669103011114062, "n_items": 5571, "url": "Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.29071586546741496, "reduced": 0.29071586546741496, "n_items": 46, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.08496755501603777, "reduced": 0.08496755501603777, "n_items": 14746, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.06484591797724139, "reduced": 0.06484591797724139, "n_items": 8485, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.08630414060772269, "reduced": 0.08630414060772269, "n_items": 1049, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.05163064126726423, "reduced": 0.05163064126726423, "n_items": 938, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.0549302589792622, "reduced": 0.0549302589792622, "n_items": 6572, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sicilian", "base": 0.15109697051711368, "reduced": 0.15109697051711368, "n_items": 157, "url": "Sicilian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.48507154927691704, "reduced": 0.4609847973744929, "n_items": 2055, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.00340169537413814, "reduced": 0.00340169537413814, "n_items": 5900, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.04156374263831275, "reduced": 0.04156374263831275, "n_items": 12718, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Spanish", "base": 0.07952489623135127, "reduced": 0.07952489623135127, "n_items": 11255, "url": "Spanish.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.09957570708722993, "reduced": 0.09957570708722993, "n_items": 4240, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Turkish", "base": 0.8293289299279161, "reduced": 0.6582199711469803, "n_items": 94, "url": "Turkish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.13556458179825623, "reduced": 0.05693436278447758, "n_items": 10477, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": NaN, "reduced": NaN, "n_items": 104, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.02817992076451731, "reduced": 0.02817992076451731, "n_items": 875, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.6323266203140518, "reduced": 0.5799225526582643, "n_items": 467, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Veps", "base": 0.28221763445592507, "reduced": 0.28221763445592507, "n_items": 48, "url": "Veps.html", "color": "#2563eb"}, {"name": "Welsh", "base": 0.7242209975634333, "reduced": 0.7242209975634333, "n_items": 208, "url": "Welsh.html", "color": "#2563eb"}, {"name": "Western Sierra Puebla Nahuatl", "base": 0.6098403047164004, "reduced": 0.6098403047164004, "n_items": 8, "url": "Western_Sierra_Puebla_Nahuatl.html", "color": "#2563eb"}], "binary": [{"name": "Abkhaz", "base": 0.6683415745740828, "reduced": 0.6683415745740828, "n_items": 68, "url": "Abkhaz.html", "color": "#2563eb"}, {"name": "Akkadian", "base": 0.1912206532897286, "reduced": 0.1912206532897286, "n_items": 677, "url": "Akkadian.html", "color": "#2563eb"}, {"name": "Albanian", "base": 0.3066062548001266, "reduced": 0.3066062548001266, "n_items": 146, "url": "Albanian.html", "color": "#2563eb"}, {"name": "Ancient Greek", "base": 0.28688427760931934, "reduced": 0.28688427760931934, "n_items": 1241, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Ancient Hebrew", "base": 0.10049535860184453, "reduced": 0.10049535860184453, "n_items": 566, "url": "Ancient_Hebrew.html", "color": "#2563eb"}, {"name": "Arabic", "base": 0.9061833438854343, "reduced": 0.6255279377127417, "n_items": 9001, "url": "Arabic.html", "color": "#2563eb"}, {"name": "Belarusian", "base": 0.041139649450924645, "reduced": 0.041139649450924645, "n_items": 6157, "url": "Belarusian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.29367630985136955, "reduced": 0.29367630985136955, "n_items": 27, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Bulgarian", "base": 0.11744430049069761, "reduced": 0.03770929470529187, "n_items": 8352, "url": "Bulgarian.html", "color": "#2563eb"}, {"name": "Cappadocian", "base": 0.2742506410502928, "reduced": 0.2742506410502928, "n_items": 50, "url": "Cappadocian.html", "color": "#2563eb"}, {"name": "Catalan", "base": 0.06934966009438082, "reduced": 0.06934966009438082, "n_items": 11400, "url": "Catalan.html", "color": "#2563eb"}, {"name": "Classical Armenian", "base": 0.6025927542432998, "reduced": 0.6025927542432998, "n_items": 785, "url": "Classical_Armenian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.0399316485310983, "reduced": 0.0399316485310983, "n_items": 13339, "url": "Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.0310386816412514, "reduced": 0.0310386816412514, "n_items": 14847, "url": "Czech.html", "color": "#2563eb"}, {"name": "Danish", "base": 0.17061814889807217, "reduced": 0.15402773818282917, "n_items": 2823, "url": "Danish.html", "color": "#2563eb"}, {"name": "Egyptian", "base": 0.1796963714600729, "reduced": 0.1796963714600729, "n_items": 771, "url": "Egyptian.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.9672421512064857, "reduced": 0.7054773258344904, "n_items": 108, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Esperanto", "base": 0.15838440747285049, "reduced": 0.15838440747285049, "n_items": 190, "url": "Esperanto.html", "color": "#2563eb"}, {"name": "Estonian", "base": 0.06781877951001916, "reduced": 0.06781877951001916, "n_items": 4845, "url": "Estonian.html", "color": "#2563eb"}, {"name": "Faroese", "base": 0.24911869409692255, "reduced": 0.24911869409692255, "n_items": 473, "url": "Faroese.html", "color": "#2563eb"}, {"name": "Finnish", "base": 0.07387923561611806, "reduced": 0.07387923561611806, "n_items": 3922, "url": "Finnish.html", "color": "#2563eb"}, {"name": "French", "base": 0.040227597090122275, "reduced": 0.040227597090122275, "n_items": 9313, "url": "French.html", "color": "#2563eb"}, {"name": "Galician", "base": 0.05127077957769584, "reduced": 0.05127077957769584, "n_items": 1118, "url": "Galician.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.9014374810138821, "reduced": 0.8895938102984224, "n_items": 3686, "url": "Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.032806711675208655, "reduced": 0.032806711675208655, "n_items": 7759, "url": "German.html", "color": "#2563eb"}, {"name": "Gheg", "base": 0.26676498780302604, "reduced": 0.26676498780302604, "n_items": 73, "url": "Gheg.html", "color": "#2563eb"}, {"name": "Gothic", "base": 0.20221125481458394, "reduced": 0.20221125481458394, "n_items": 659, "url": "Gothic.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.07894597351176434, "reduced": 0.07894597351176434, "n_items": 3208, "url": "Greek.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.23987382528036544, "reduced": 0.23987382528036544, "n_items": 36, "url": "Hausa.html", "color": "#2563eb"}, {"name": "Hebrew", "base": 0.07427136549841146, "reduced": 0.07427136549841146, "n_items": 5214, "url": "Hebrew.html", "color": "#2563eb"}, {"name": "Highland Puebla Nahuatl", "base": NaN, "reduced": NaN, "n_items": 12, "url": "Highland_Puebla_Nahuatl.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.12405738505600719, "reduced": 0.1109006202497361, "n_items": 1361, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.17520888011461358, "reduced": 0.17520888011461358, "n_items": 5249, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.10430176356937719, "reduced": 0.07435092041288016, "n_items": 2487, "url": "Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.062239258398804294, "reduced": 0.062239258398804294, "n_items": 10144, "url": "Italian.html", "color": "#2563eb"}, {"name": "Kangri", "base": 0.5975977764379983, "reduced": 0.5975977764379983, "n_items": 26, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Karelian", "base": 0.40707680632541937, "reduced": 0.40707680632541937, "n_items": 118, "url": "Karelian.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.41381685030363374, "reduced": 0.41381685030363374, "n_items": 27, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.7532848601413269, "reduced": 0.7532848601413269, "n_items": 226, "url": "Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.7601675029619657, "reduced": 0.6869761102968279, "n_items": 58, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Latin", "base": 0.05404869401322335, "reduced": 0.05404869401322335, "n_items": 4925, "url": "Latin.html", "color": "#2563eb"}, {"name": "Latvian", "base": 0.17769197243978496, "reduced": 0.17769197243978496, "n_items": 5007, "url": "Latvian.html", "color": "#2563eb"}, {"name": "Ligurian", "base": 0.248150454970113, "reduced": 0.248150454970113, "n_items": 104, "url": "Ligurian.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.08046819128100458, "reduced": 0.08046819128100458, "n_items": 3233, "url": "Lithuanian.html", "color": "#2563eb"}, {"name": "Livvi", "base": 0.17800689613931447, "reduced": 0.17800689613931447, "n_items": 54, "url": "Livvi.html", "color": "#2563eb"}, {"name": "Low Saxon", "base": 0.14144054254182067, "reduced": 0.14144054254182067, "n_items": 465, "url": "Low_Saxon.html", "color": "#2563eb"}, {"name": "Macedonian", "base": 0.3591016256485496, "reduced": 0.3591016256485496, "n_items": 20, "url": "Macedonian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.6337088279115751, "reduced": 0.5918220603460418, "n_items": 870, "url": "Marathi.html", "color": "#2563eb"}, {"name": "Moksha", "base": 0.9724824232118978, "reduced": 0.8026287814297541, "n_items": 45, "url": "Moksha.html", "color": "#2563eb"}, {"name": "North Sami", "base": 0.32001486274754654, "reduced": 0.32001486274754654, "n_items": 40, "url": "North_Sami.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.162070322817354, "reduced": 0.162070322817354, "n_items": 4868, "url": "Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": NaN, "reduced": NaN, "n_items": 2038, "url": "Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Odia", "base": 0.4488644887230294, "reduced": 0.4488644887230294, "n_items": 14, "url": "Odia.html", "color": "#2563eb"}, {"name": "Old Church Slavonic", "base": 0.15791728626233822, "reduced": 0.1380398097270099, "n_items": 2783, "url": "Old_Church_Slavonic.html", "color": "#2563eb"}, {"name": "Old East Slavic", "base": 0.12799039430992867, "reduced": 0.12799039430992867, "n_items": 6208, "url": "Old_East_Slavic.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.1898608035902013, "reduced": 0.1898608035902013, "n_items": 183, "url": "Old_Georgian.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": 0.778694294888974, "reduced": 0.778694294888974, "n_items": 78, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Pashto", "base": 0.24535507153141195, "reduced": 0.24535507153141195, "n_items": 200, "url": "Pashto.html", "color": "#2563eb"}, {"name": "Phrygian", "base": NaN, "reduced": NaN, "n_items": 14, "url": "Phrygian.html", "color": "#31cb9f"}, {"name": "Polish", "base": 0.1311139906038591, "reduced": 0.10228540618494018, "n_items": 6884, "url": "Polish.html", "color": "#2563eb"}, {"name": "Pomak", "base": 0.28775982421298896, "reduced": 0.28775982421298896, "n_items": 443, "url": "Pomak.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.06669103011114062, "reduced": 0.06669103011114062, "n_items": 5571, "url": "Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.29071586546741496, "reduced": 0.29071586546741496, "n_items": 46, "url": "Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.08496755501603777, "reduced": 0.08496755501603777, "n_items": 14746, "url": "Romanian.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.06484591797724139, "reduced": 0.06484591797724139, "n_items": 8485, "url": "Russian.html", "color": "#2563eb"}, {"name": "Sanskrit", "base": 0.08630414060772269, "reduced": 0.08630414060772269, "n_items": 1049, "url": "Sanskrit.html", "color": "#2563eb"}, {"name": "Scottish Gaelic", "base": 0.05163064126726423, "reduced": 0.05163064126726423, "n_items": 938, "url": "Scottish_Gaelic.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.0549302589792622, "reduced": 0.0549302589792622, "n_items": 6572, "url": "Serbian.html", "color": "#2563eb"}, {"name": "Sicilian", "base": 0.15109697051711368, "reduced": 0.15109697051711368, "n_items": 157, "url": "Sicilian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.48507154927691704, "reduced": 0.4609847973744929, "n_items": 2055, "url": "Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.00340169537413814, "reduced": 0.00340169537413814, "n_items": 5900, "url": "Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.04156374263831275, "reduced": 0.04156374263831275, "n_items": 12718, "url": "Slovenian.html", "color": "#2563eb"}, {"name": "Spanish", "base": 0.07952489623135127, "reduced": 0.07952489623135127, "n_items": 11255, "url": "Spanish.html", "color": "#2563eb"}, {"name": "Swedish", "base": 0.09957570708722993, "reduced": 0.09957570708722993, "n_items": 4240, "url": "Swedish.html", "color": "#2563eb"}, {"name": "Turkish", "base": 0.8293289299279161, "reduced": 0.683783149127357, "n_items": 94, "url": "Turkish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.13556458179825623, "reduced": 0.05693436278447758, "n_items": 10477, "url": "Ukrainian.html", "color": "#2563eb"}, {"name": "Umbrian", "base": NaN, "reduced": NaN, "n_items": 104, "url": "Umbrian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.02817992076451731, "reduced": 0.02817992076451731, "n_items": 875, "url": "Upper_Sorbian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.6323266203140518, "reduced": 0.5850078149678696, "n_items": 467, "url": "Urdu.html", "color": "#2563eb"}, {"name": "Veps", "base": 0.28221763445592507, "reduced": 0.28221763445592507, "n_items": 48, "url": "Veps.html", "color": "#2563eb"}, {"name": "Welsh", "base": 0.7242209975634333, "reduced": 0.7242209975634333, "n_items": 208, "url": "Welsh.html", "color": "#2563eb"}, {"name": "Western Sierra Puebla Nahuatl", "base": 0.6098403047164004, "reduced": 0.6098403047164004, "n_items": 8, "url": "Western_Sierra_Puebla_Nahuatl.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_NounClass": {"six": [{"name": "Ruuli", "base": NaN, "reduced": NaN, "n_items": 32, "url": "Ruuli.html", "color": "#31cb9f"}], "binary": [{"name": "Ruuli", "base": NaN, "reduced": NaN, "n_items": 32, "url": "Ruuli.html", "color": "#31cb9f"}]}, "npa/HEAD-ADJ_NounType": {"six": [{"name": "Irish", "base": 0.09317131799548933, "reduced": 0.09317131799548933, "n_items": 124, "url": "Irish.html", "color": "#2563eb"}], "binary": [{"name": "Irish", "base": 0.09317131799548933, "reduced": 0.09317131799548933, "n_items": 124, "url": "Irish.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_P": {"six": [{"name": "Bhojpuri", "base": NaN, "reduced": NaN, "n_items": 25, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Kangri", "base": NaN, "reduced": NaN, "n_items": 21, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.27950554563667995, "reduced": 0.27950554563667995, "n_items": 29, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.23519338181924143, "reduced": 0.12081666785744291, "n_items": 62, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": NaN, "reduced": NaN, "n_items": 111, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Urdu", "base": NaN, "reduced": NaN, "n_items": 209, "url": "Urdu.html", "color": "#2563eb"}], "binary": [{"name": "Bhojpuri", "base": NaN, "reduced": NaN, "n_items": 25, "url": "Bhojpuri.html", "color": "#2563eb"}, {"name": "Kangri", "base": NaN, "reduced": NaN, "n_items": 21, "url": "Kangri.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.27950554563667995, "reduced": 0.27950554563667995, "n_items": 29, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Kyrgyz", "base": 0.23519338181924143, "reduced": 0.18384845233180214, "n_items": 62, "url": "Kyrgyz.html", "color": "#2563eb"}, {"name": "Ottoman Turkish", "base": NaN, "reduced": NaN, "n_items": 111, "url": "Ottoman_Turkish.html", "color": "#2563eb"}, {"name": "Urdu", "base": NaN, "reduced": NaN, "n_items": 209, "url": "Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Polite": {"six": [{"name": "Javanese", "base": 0.6500224216483541, "reduced": 0.6500224216483541, "n_items": 17, "url": "Javanese.html", "color": "#2563eb"}], "binary": [{"name": "Javanese", "base": 0.6500224216483541, "reduced": 0.6500224216483541, "n_items": 17, "url": "Javanese.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_SubGender": {"six": [{"name": "Polish", "base": NaN, "reduced": NaN, "n_items": 570, "url": "Polish.html", "color": "#2563eb"}], "binary": [{"name": "Polish", "base": NaN, "reduced": NaN, "n_items": 570, "url": "Polish.html", "color": "#2563eb"}]}};
+
+        let currentType = 'six';
+
+        // Read once at load, after the theme CSS (light or dark) has applied --
+        // Plotly's own layout config takes plain color strings, not CSS vars, so
+        // this is the only way its mini-charts can follow the page's theme.
+        const THEME = (() => {
+            const root = getComputedStyle(document.documentElement);
+            const v = (name) => root.getPropertyValue(name).trim();
+            return {
+                text: v('--text'),
+                grid: v('--grid-line'),
+                diagonal: v('--diagonal-line'),
+                accent: v('--accent'),
+            };
+        })();
+
+        function renderMiniPlot(el, points) {
+            const url = el.dataset.url;
+
+            const baseLine = (() => {
+                const vals = points.map(d => d.base);
+                const mn = Math.min(...vals), mx = Math.max(...vals);
+                return { x: [mn, mx], y: [mn, mx] };
+            })();
+
+            const traceLine = {
+                x: baseLine.x,
+                y: baseLine.y,
+                mode: 'lines',
+                type: 'scatter',
+                line: { color: THEME.diagonal, width: 1, dash: 'dash' },
+                hoverinfo: 'skip',
+                showlegend: false,
+            };
+
+            const tracePoints = {
+                x: points.map(d => d.base),
+                y: points.map(d => d.reduced),
+                mode: 'markers',
+                type: 'scatter',
+                text: points.map(d => d.name),
+                customdata: points.map(d => [d.url, d.n_items]),
+                hovertemplate: '<b>%{text}</b><br>Base: %{x:.3f}<br>Reduced: %{y:.3f}<br>N: %{customdata[1]:,}<extra></extra>',
+                marker: {
+                    size: points.map(d => d.n_items),
+                    sizemode: 'area',
+                    sizeref: 2 * Math.max(...points.map(d => d.n_items)) / (20 ** 2),
+                    sizemin: 3,
+                    color: points.map(d => d.color ?? THEME.accent),
+                    opacity: 0.75,
+                    line: {
+                        color: points.map(d => d.color ?? THEME.accent),
+                        width: 0.5
+                        }
+                     },
+                showlegend: false,
+            };
+
+            const layout = {
+                margin: { t: 12, r: 12, b: 40, l: 44 },
+                xaxis: {
+                    title: { text: 'Base entropy', font: { size: 10 } },
+                    gridcolor: THEME.grid,
+                    zeroline: false,
+                    tickfont: { size: 9 },
+                },
+                yaxis: {
+                    title: { text: 'Reduced entropy', font: { size: 10 } },
+                    gridcolor: THEME.grid,
+                    zeroline: false,
+                    tickfont: { size: 9 },
+                },
+                // Transparent, not a fixed white/panel color: .panel paints its
+                // own var(--panel-bg) behind the chart, light or dark.
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { family: 'DM Sans, system-ui, sans-serif', color: THEME.text },
+                hovermode: 'closest',
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: false,
+            };
+
+            Plotly.newPlot(el, [traceLine, tracePoints], layout, config);
+
+            // Plotly fires its event synchronously before the DOM click bubbles to
+            // the panel, so setting this flag here prevents the panel handler below
+            // from also navigating when the user clicked a specific data point.
+            el.on('plotly_click', function(evt) {
+                const pt = evt.points[0];
+                if (pt && pt.customdata && pt.customdata[0]) {
+                    el.parentElement._pointClicked = true;
+                    window.location.href = pt.customdata[0];
+                }
+            });
+        }
+
+        function renderAll(type) {
+            document.querySelectorAll('.mini-plot').forEach(el => {
+                const deprel = el.dataset.deprel;
+                const data = allData[deprel];
+                if (data && data[type]) {
+                    renderMiniPlot(el, data[type]);
+                }
+            });
+        }
+
+        // Set up panel-level navigation once — clicking the panel background
+        // navigates to the deprel index, unless a scatter point was clicked.
+        document.querySelectorAll('.panel').forEach(panel => {
+            panel.addEventListener('click', function() {
+                if (panel._pointClicked) {
+                    panel._pointClicked = false;
+                    return;
+                }
+                const url = panel.querySelector('.mini-plot').dataset.url;
+                if (url) window.location.href = url;
+            });
+        });
+
+        renderAll('six');
+
+        document.getElementById('entropyType').addEventListener('change', (e) => {
+            currentType = e.target.value;
+            renderAll(currentType);
+        });
+
+        // NPA's role-pair/feature toggle -- a no-op wherever this markup
+        // doesn't exist (every page except the main overview's own "Noun
+        // Phrase" section), so this can live in the one shared script block.
+        (function() {
+            const gridPair = document.getElementById('npaGridPair');
+            const gridFeat = document.getElementById('npaGridFeat');
+            const btnPair = document.getElementById('npaBtnPair');
+            const btnFeat = document.getElementById('npaBtnFeat');
+            if (!gridPair || !gridFeat || !btnPair || !btnFeat) return;
+
+            function apply(view) {
+                gridPair.style.display = view === 'feature' ? 'none' : 'grid';
+                gridFeat.style.display = view === 'feature' ? 'grid' : 'none';
+                btnPair.classList.toggle('active', view !== 'feature');
+                btnFeat.classList.toggle('active', view === 'feature');
+            }
+
+            let saved = null;
+            try { saved = localStorage.getItem('sva-dt-npa-view'); } catch (e) {}
+            apply(saved === 'feature' ? 'feature' : 'pair');
+
+            btnPair.addEventListener('click', () => {
+                apply('pair');
+                try { localStorage.setItem('sva-dt-npa-view', 'pair'); } catch (e) {}
+            });
+            btnFeat.addEventListener('click', () => {
+                apply('feature');
+                try { localStorage.setItem('sva-dt-npa-view', 'feature'); } catch (e) {}
+            });
+        })();
+    </script>
+</body>
+</html>

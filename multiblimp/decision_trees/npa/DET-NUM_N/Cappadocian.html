@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"yes": 13, "unk": 1}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>DET-NUM_Number</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">yes: 13</div><div class="label">unk: 1</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Cappadocian</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.1</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">14</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">DET-NUM_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 14)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>NUM_form</th><th>NUM_features</th><th>DET_form</th><th>DET_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Ερ συ να ΄υρέφ να ζήσεις πρέφτει σε ν’ τα δόσ’ με τη μία σ α <strong>δύο</strong> του <strong>τα</strong> τζουφάλε ν’ τα κρεμήσ’ ‘ς σ ο ποτάμι , τζαι να γαλιτζέψεις τ΄ άβγο του !</td><td>δύο</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=δύο<br><strong>Number=Plur</strong><br>Case=Acc<br>Gender=Neut</details></td><td>τα</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Plur</strong><br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.76%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%B1%22%7C%22%CE%A4%CE%B1%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B4%CF%8D%CE%BF%22%7C%22%CE%94%CF%8D%CE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Τσούριξεν τα τσάρε του πήρην σ το <strong>πρωτινό</strong> <strong>τ’</strong> άβγο τζαι σ το δεύτερο άβγο τζαι σ το τρίτο άβγο .</td><td>πρωτινό</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=πρωτινό<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Neut</details></td><td>τ’</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.105%22%20%3B%20A%20%5Bform%3D%22%CF%84%E2%80%99%22%7C%22%CE%A4%E2%80%99%22%5D%20%3B%20B%20%5Bform%3D%22%CF%80%CF%81%CF%89%CF%84%CE%B9%CE%BD%CF%8C%22%7C%22%CE%A0%CF%81%CF%89%CF%84%CE%B9%CE%BD%CF%8C%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Tučá op ro <strong>tes</strong> <strong>triz</strong> líres χem qazánǰisi ombrín du , χem qazánǰisi polá pará , χem perín du ren skótisi .</td><td>triz</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=triz<br><strong>Number=Plur</strong><br>Case=Acc<br>NumType=Card<br>Gender=Fem</details></td><td>tes</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=(o)<br><strong>Number=Plur</strong><br>Definite=Def<br>Case=Acc<br>PronType=Art<br>Gender=Fem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-AMGiC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2229%22%20%3B%20A%20%5Bform%3D%22tes%22%7C%22Tes%22%5D%20%3B%20B%20%5Bform%3D%22triz%22%7C%22Triz%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-AMGiC</a></td></tr><tr><td>Τσούριξεν τα τσάρε του πήρην σ το πρωτινό τ’ άβγο τζαι σ το δεύτερο άβγο τζαι σ <strong>το</strong> <strong>τρίτο</strong> άβγο .</td><td>τρίτο</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=τρίτο<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Neut</details></td><td>το</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.105%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%BF%22%7C%22%CE%A4%CE%BF%22%5D%20%3B%20B%20%5Bform%3D%22%CF%84%CF%81%CE%AF%CF%84%CE%BF%22%7C%22%CE%A4%CF%81%CE%AF%CF%84%CE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Το μέγο τουν αδεφός έμπη σ <strong>ο</strong> <strong>πρώτον</strong> τη στράτα , ‘σ μέσης τουν έμπην σ ο δεύτερο τη στράτα τζαι το μιτσίκκο αδεφός έμπην σ ο τρίτον τη στράτα .</td><td>πρώτον</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=πρώτος<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Neut</details></td><td>ο</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Definite=Def<br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.12%22%20%3B%20A%20%5Bform%3D%22%CE%BF%22%7C%22%CE%9F%22%5D%20%3B%20B%20%5Bform%3D%22%CF%80%CF%81%CF%8E%CF%84%CE%BF%CE%BD%22%7C%22%CE%A0%CF%81%CF%8E%CF%84%CE%BF%CE%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Σ α <strong>δώδεκα</strong> <strong>το</strong> σαχάτι , κατακρώτσεν ο ουρανός τζαι σείστην ο κόσμος !</td><td>δώδεκα</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=δώδεκα<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Fem</details></td><td>το</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.51%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%BF%22%7C%22%CE%A4%CE%BF%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B4%CF%8E%CE%B4%CE%B5%CE%BA%CE%B1%22%7C%22%CE%94%CF%8E%CE%B4%CE%B5%CE%BA%CE%B1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Τόινα <strong>τη</strong> <strong>μία</strong> έμπ’ αν αωπός σο ο κουμάσι να φα τα 'ρνίθε .</td><td>μία</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=μία<br><strong>Number=Sing</strong><br>Case=Nom<br>Gender=Fem</details></td><td>τη</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=ή<br><strong>Number=Sing</strong><br>Definite=Def<br>Case=Nom<br>PronType=Art<br>Gender=Fem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale3.2%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%B7%22%7C%22%CE%A4%CE%B7%22%5D%20%3B%20B%20%5Bform%3D%22%CE%BC%CE%AF%CE%B1%22%7C%22%CE%9C%CE%AF%CE%B1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td><strong>Ta</strong> <strong>tría</strong> güzelmá púθe nde ?</td><td>tría</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=trís<br>NumType=Card</details></td><td>ta</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=o<br><strong>Number=Plur</strong><br>Definite=Def<br>Case=Nom<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-AMGiC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2249%22%20%3B%20A%20%5Bform%3D%22ta%22%7C%22Ta%22%5D%20%3B%20B%20%5Bform%3D%22tr%C3%ADa%22%7C%22Tr%C3%ADa%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-AMGiC</a></td></tr><tr><td>Ήρταν τα <strong>τρία</strong> <strong>τ΄</strong> άβγα , γαλίτσεψαν τα κορτζόκα , πήρεν τα τζαι πηάγαν ατζεί σ ο πεγάιδι .</td><td>τρία</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=τρία<br><strong>Number=Plur</strong><br>Case=Acc<br>Gender=Neut</details></td><td>τ΄</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Plur</strong><br>Case=Nom<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.106%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%84%22%7C%22%CE%A4%CE%84%22%5D%20%3B%20B%20%5Bform%3D%22%CF%84%CF%81%CE%AF%CE%B1%22%7C%22%CE%A4%CF%81%CE%AF%CE%B1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Το <strong>δεύτερο</strong> <strong>η</strong> στράτα πάλι είπεν dα αβούτσι .</td><td>δεύτερο</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=δεύτερος<br><strong>Number=Sing</strong><br>Case=Nom<br>Gender=Neut</details></td><td>η</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=η<br><strong>Number=Sing</strong><br>Definite=Def<br>Case=Nom<br>PronType=Art<br>Gender=Fem</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.9%22%20%3B%20A%20%5Bform%3D%22%CE%B7%22%7C%22%CE%97%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B4%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%22%7C%22%CE%94%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Το μέγο τουν αδεφός έμπη σ ο πρώτον τη στράτα , ‘σ μέσης τουν έμπην σ ο δεύτερο τη στράτα τζαι το μιτσίκκο αδεφός έμπην σ <strong>ο</strong> <strong>τρίτον</strong> τη στράτα .</td><td>τρίτον</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=τρίτος<br><strong>Number=Sing</strong><br>Case=Nom<br>Gender=Neut</details></td><td>ο</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Definite=Def<br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.12%22%20%3B%20A%20%5Bform%3D%22%CE%BF%22%7C%22%CE%9F%22%5D%20%3B%20B%20%5Bform%3D%22%CF%84%CF%81%CE%AF%CF%84%CE%BF%CE%BD%22%7C%22%CE%A4%CF%81%CE%AF%CF%84%CE%BF%CE%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Σ ου να γρεπ' πάγασεν τζαι τούτινα σ ο <strong>πρωτινό</strong> <strong>το</strong> κορίτζι κοντά τζαι ΄υρίστη πίσω σ ο γαλά .</td><td>πρωτινό</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=πρωτινό<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Neut</details></td><td>το</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.87%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%BF%22%7C%22%CE%A4%CE%BF%22%5D%20%3B%20B%20%5Bform%3D%22%CF%80%CF%81%CF%89%CF%84%CE%B9%CE%BD%CF%8C%22%7C%22%CE%A0%CF%81%CF%89%CF%84%CE%B9%CE%BD%CF%8C%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Πα ποίκω γω δεχούς άντρα μο <strong>τα</strong> <strong>εννέ</strong> μαχσούλε μου , τα ’ρφανά ; »</td><td>εννέ</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=εννέα<br><strong>Number=Plur</strong><br>Case=Acc<br>NumType=Card<br>Gender=Neut</details></td><td>τα</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Plur</strong><br>Definite=Def<br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale2.26%22%20%3B%20A%20%5Bform%3D%22%CF%84%CE%B1%22%7C%22%CE%A4%CE%B1%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B5%CE%BD%CE%BD%CE%AD%22%7C%22%CE%95%CE%BD%CE%BD%CE%AD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr><tr><td>Το μέγο τουν αδεφός έμπη σ ο πρώτον τη στράτα , ‘σ μέσης τουν έμπην σ <strong>ο</strong> <strong>δεύτερο</strong> τη στράτα τζαι το μιτσίκκο αδεφός έμπην σ ο τρίτον τη στράτα .</td><td>δεύτερο</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br><strong>Number=Sing</strong><br>Case=Acc<br>Gender=Neut</details></td><td>ο</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=το<br><strong>Number=Sing</strong><br>Definite=Def<br>Case=Acc<br>PronType=Art<br>Gender=Neut</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Cappadocian-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Fairytale5.12%22%20%3B%20A%20%5Bform%3D%22%CE%BF%22%7C%22%CE%9F%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B4%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%22%7C%22%CE%94%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Cappadocian-TueCL</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

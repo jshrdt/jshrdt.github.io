@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"no": 14}</script>
+  <div class="layout">
+    <div class="sidebar">
+      <div>
+        <h2>Single label</h2>
+        <p>All training samples for <b>NP head-PRON_Case</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">no</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Malayalam</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.1</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">14</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">NP head-PRON_Case</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 14)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>PRON_form</th><th>PRON_features</th><th>NP head_form</th><th>NP head_features</th><th>treebank_link</th></tr></thead><tbody><tr><td><strong>എന്റെ</strong> അദ്ധ്വാനത്തിന്റെ ഫലമായി ലഭിച്ച <strong>പണം</strong> അല്ലേ ഞാൻ ബാങ്കിലിട്ടിരിക്കുന്നത് ?</td><td>എന്റെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഞാൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>പണം</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=പണം<br><strong>Case=Acc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp115%22%20%3B%20A%20%5Bform%3D%22%E0%B4%AA%E0%B4%A3%E0%B4%82%22%7C%22%E0%B4%AA%E0%B4%A3%E0%B4%82%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>ഭർത്താവിന്റെ അച്ഛൻ , അമ്മ , സഹോദരൻ , സഹോദരഭാര്യ എന്നിവര് ആണ് <strong>എന്റെ</strong> ഇപ്പോഴത്തെ <strong>കുടുംബം</strong> .</td><td>എന്റെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഞാൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>കുടുംബം</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=root<br>lemma=കുടുംബം<br><strong>Case=Nom</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp126%22%20%3B%20A%20%5Bform%3D%22%E0%B4%95%E0%B5%81%E0%B4%9F%E0%B5%81%E0%B4%82%E0%B4%AC%E0%B4%82%22%7C%22%E0%B4%95%E0%B5%81%E0%B4%9F%E0%B5%81%E0%B4%82%E0%B4%AC%E0%B4%82%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>പെൺകുട്ടി <strong>തന്റെ</strong> <strong>സുഹൃത്തിന്</strong> കത്ത് എഴുതി .</td><td>തന്റെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=താൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=3<br>PronType=Prs</details></td><td>സുഹൃത്തിന്</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=സുഹൃത്ത്<br><strong>Case=Dat</strong><br>Animacy=Anim<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cairo01%22%20%3B%20A%20%5Bform%3D%22%E0%B4%B8%E0%B5%81%E0%B4%B9%E0%B5%83%E0%B4%A4%E0%B5%8D%E0%B4%A4%E0%B4%BF%E0%B4%A8%E0%B5%8D%22%7C%22%E0%B4%B8%E0%B5%81%E0%B4%B9%E0%B5%83%E0%B4%A4%E0%B5%8D%E0%B4%A4%E0%B4%BF%E0%B4%A8%E0%B5%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A4%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%A4%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>നമ്മുടെ</strong> ഒക്കെ പുണ്യമായ <strong>പരമേശ്വർജിക്ക്</strong> അരവിന്ദകീർത്തി പുരസ്‌കാരം സമർപ്പിച്ച വേളയിൽ അതിന് സാക്ഷ്യം വഹിക്കാൻ പള്ളിക്കത്തോട് അരവന്ദവിദ്യാമന്ദിരത്തിലെ സപ്താഹമണ്ഡപത്തിൽ എത്താൻ കഴിഞ്ഞത് അനുഗ്രഹീത വേള ആയി .</td><td>നമ്മുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=നാം<br><strong>Case=Gen</strong><br>Number=Plur<br>Person=1<br>PronType=Prs<br>Clusivity=In</details></td><td>പരമേശ്വർജിക്ക്</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>deprel=nmod<br>lemma=പരമേശ്വർജി<br><strong>Case=Dat</strong><br>Animacy=Anim<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp159%22%20%3B%20A%20%5Bform%3D%22%E0%B4%AA%E0%B4%B0%E0%B4%AE%E0%B5%87%E0%B4%B6%E0%B5%8D%E0%B4%B5%E0%B5%BC%E0%B4%9C%E0%B4%BF%E0%B4%95%E0%B5%8D%E0%B4%95%E0%B5%8D%22%7C%22%E0%B4%AA%E0%B4%B0%E0%B4%AE%E0%B5%87%E0%B4%B6%E0%B5%8D%E0%B4%B5%E0%B5%BC%E0%B4%9C%E0%B4%BF%E0%B4%95%E0%B5%8D%E0%B4%95%E0%B5%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A8%E0%B4%AE%E0%B5%8D%E0%B4%AE%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%A8%E0%B4%AE%E0%B5%8D%E0%B4%AE%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>പാകിസ്ഥാൻ നിയമപ്രകാരം കാനഡയിലുള്ള <strong>തൻറെ</strong> <strong>ട്വിറ്റര്</strong> സെൻസർ ചെയ്തതിൽ പ്രകോപിതനായ എസ്രാ കടുത്ത ഭാഷയിൽ ആണ് മന്ത്രിയെ വിമർശിച്ചത് .</td><td>തൻറെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=താൻ<br><strong>Case=Gen</strong><br>PronType=Prs<br>Reflex=Yes</details></td><td>ട്വിറ്റര്</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>deprel=obj<br>lemma=ട്വിറ്റര്<br><strong>Case=Nom</strong><br>Animacy=Inan<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp36%22%20%3B%20A%20%5Bform%3D%22%E0%B4%9F%E0%B5%8D%E0%B4%B5%E0%B4%BF%E0%B4%B1%E0%B5%8D%E0%B4%B1%E0%B4%B0%E0%B5%8D%22%7C%22%E0%B4%9F%E0%B5%8D%E0%B4%B5%E0%B4%BF%E0%B4%B1%E0%B5%8D%E0%B4%B1%E0%B4%B0%E0%B5%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A4%E0%B5%BB%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%A4%E0%B5%BB%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>നിങ്ങളുടെ വാസസ്ഥലത്ത് ആയിരിക്കുമ്പോൾ , <strong>നിങ്ങളുടെ</strong> <strong>വീട്ടിലെ</strong> പോളിസിയുടെ ബിസിനസ്സ് ഉപകരണങ്ങളെ മാത്രമേ ഇത് ബാധിക്കുകയുള്ളൂ .</td><td>നിങ്ങളുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=നിങ്ങൾ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>വീട്ടിലെ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=വീട്<br><strong>Case=Loc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp85%22%20%3B%20A%20%5Bform%3D%22%E0%B4%B5%E0%B5%80%E0%B4%9F%E0%B5%8D%E0%B4%9F%E0%B4%BF%E0%B4%B2%E0%B5%86%22%7C%22%E0%B4%B5%E0%B5%80%E0%B4%9F%E0%B5%8D%E0%B4%9F%E0%B4%BF%E0%B4%B2%E0%B5%86%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A8%E0%B4%BF%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%A8%E0%B4%BF%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>നിന്റെ അച്ഛനേക്കാൾ <strong>എന്റെ</strong> <strong>അച്ഛൻ</strong> വളരെ ശാന്തൻ ആണ് .</td><td>എന്റെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഞാൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>അച്ഛൻ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=അച്ഛൻ<br><strong>Case=Nom</strong><br>Animacy=Anim<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cairo08%22%20%3B%20A%20%5Bform%3D%22%E0%B4%85%E0%B4%9A%E0%B5%8D%E0%B4%9B%E0%B5%BB%22%7C%22%E0%B4%85%E0%B4%9A%E0%B5%8D%E0%B4%9B%E0%B5%BB%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%8E%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>നിന്റെ</strong> <strong>അച്ഛനേക്കാൾ</strong> എന്റെ അച്ഛൻ വളരെ ശാന്തൻ ആണ് .</td><td>നിന്റെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=നീ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>അച്ഛനേക്കാൾ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=അച്ഛൻ<br><strong>Case=Cmp</strong><br>Animacy=Anim<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cairo08%22%20%3B%20A%20%5Bform%3D%22%E0%B4%85%E0%B4%9A%E0%B5%8D%E0%B4%9B%E0%B4%A8%E0%B5%87%E0%B4%95%E0%B5%8D%E0%B4%95%E0%B4%BE%E0%B5%BE%22%7C%22%E0%B4%85%E0%B4%9A%E0%B5%8D%E0%B4%9B%E0%B4%A8%E0%B5%87%E0%B4%95%E0%B5%8D%E0%B4%95%E0%B4%BE%E0%B5%BE%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A8%E0%B4%BF%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%A8%E0%B4%BF%E0%B4%A8%E0%B5%8D%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>അവളുടെ</strong> <strong>പേജിലെ</strong> " രഹസ്യ " ഫോട്ടോമേറ്റിൽ നിന്ന് ഏതാനും ഫോട്ടോകൾ അവൾ പകർത്തി .</td><td>അവളുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=അവൾ<br><strong>Case=Gen</strong><br>Gender=Fem<br>Number=Sing<br>Person=3<br>Deixis=Remt<br>PronType=Prs</details></td><td>പേജിലെ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=പേജ്<br><strong>Case=Loc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp189%22%20%3B%20A%20%5Bform%3D%22%E0%B4%AA%E0%B5%87%E0%B4%9C%E0%B4%BF%E0%B4%B2%E0%B5%86%22%7C%22%E0%B4%AA%E0%B5%87%E0%B4%9C%E0%B4%BF%E0%B4%B2%E0%B5%86%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%85%E0%B4%B5%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%85%E0%B4%B5%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>അത് ആണ് <strong>എൻറെ</strong> <strong>വീട്</strong> .</td><td>എൻറെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഞാൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>വീട്</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=root<br>lemma=വീട്<br><strong>Case=Acc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22gex09%22%20%3B%20A%20%5Bform%3D%22%E0%B4%B5%E0%B5%80%E0%B4%9F%E0%B5%8D%22%7C%22%E0%B4%B5%E0%B5%80%E0%B4%9F%E0%B5%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%8E%E0%B5%BB%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%8E%E0%B5%BB%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>നിങ്ങളുടെ</strong> <strong>വാസസ്ഥലത്ത്</strong> ആയിരിക്കുമ്പോൾ , നിങ്ങളുടെ വീട്ടിലെ പോളിസിയുടെ ബിസിനസ്സ് ഉപകരണങ്ങളെ മാത്രമേ ഇത് ബാധിക്കുകയുള്ളൂ .</td><td>നിങ്ങളുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=നിങ്ങൾ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>വാസസ്ഥലത്ത്</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=വാസസ്ഥലം<br><strong>Case=Loc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp85%22%20%3B%20A%20%5Bform%3D%22%E0%B4%B5%E0%B4%BE%E0%B4%B8%E0%B4%B8%E0%B5%8D%E0%B4%A5%E0%B4%B2%E0%B4%A4%E0%B5%8D%E0%B4%A4%E0%B5%8D%22%7C%22%E0%B4%B5%E0%B4%BE%E0%B4%B8%E0%B4%B8%E0%B5%8D%E0%B4%A5%E0%B4%B2%E0%B4%A4%E0%B5%8D%E0%B4%A4%E0%B5%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A8%E0%B4%BF%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%A8%E0%B4%BF%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>തങ്ങളുടെ</strong> <strong>പ്ലാറ്റ്‌ഫോമിൽ</strong> നിന്ന് വ്യാജവാർത്തകളെ പരമാവധി ഒഴിവാക്കി നിർത്തും എന്ന് ഉം കമ്പനി പറഞ്ഞു .</td><td>തങ്ങളുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=തങ്ങൾ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>പ്ലാറ്റ്‌ഫോമിൽ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=പ്ലാറ്റ്‌ഫോമ്<br><strong>Case=Loc</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp123%22%20%3B%20A%20%5Bform%3D%22%E0%B4%AA%E0%B5%8D%E0%B4%B2%E0%B4%BE%E0%B4%B1%E0%B5%8D%E0%B4%B1%E0%B5%8D%E2%80%8C%E0%B4%AB%E0%B5%8B%E0%B4%AE%E0%B4%BF%E0%B5%BD%22%7C%22%E0%B4%AA%E0%B5%8D%E0%B4%B2%E0%B4%BE%E0%B4%B1%E0%B5%8D%E0%B4%B1%E0%B5%8D%E2%80%8C%E0%B4%AB%E0%B5%8B%E0%B4%AE%E0%B4%BF%E0%B5%BD%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%A4%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%A4%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B4%B3%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td>അവ <strong>എൻറെ</strong> <strong>പുസ്തകങ്ങൾ</strong> ആണ് .</td><td>എൻറെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഞാൻ<br><strong>Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>പുസ്തകങ്ങൾ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=root<br>lemma=പുസ്തകങ്ങൾ<br><strong>Case=Acc</strong><br>Animacy=Anim<br>Number=Plur<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22gex07%22%20%3B%20A%20%5Bform%3D%22%E0%B4%AA%E0%B5%81%E0%B4%B8%E0%B5%8D%E0%B4%A4%E0%B4%95%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B5%BE%22%7C%22%E0%B4%AA%E0%B5%81%E0%B4%B8%E0%B5%8D%E0%B4%A4%E0%B4%95%E0%B4%99%E0%B5%8D%E0%B4%99%E0%B5%BE%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%8E%E0%B5%BB%E0%B4%B1%E0%B5%86%22%7C%22%E0%B4%8E%E0%B5%BB%E0%B4%B1%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr><tr><td><strong>ഇവരുടെ</strong> <strong>ജാമ്യാപേക്ഷ</strong> ഇന്ന് പരിഗണിക്കഉം .</td><td>ഇവരുടെ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nmod:poss<br>lemma=ഇവൻ<br><strong>Case=Gen</strong><br>Animacy=Anim<br>Number=Plur<br>Person=3<br>Deixis=Prox<br>PronType=Prs</details></td><td>ജാമ്യാപേക്ഷ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=ജാമ്യാപേക്ഷ<br><strong>Case=Nom</strong><br>Animacy=Inan<br>Number=Sing<br>Person=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Malayalam-UFAL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22indiccorp65%22%20%3B%20A%20%5Bform%3D%22%E0%B4%9C%E0%B4%BE%E0%B4%AE%E0%B5%8D%E0%B4%AF%E0%B4%BE%E0%B4%AA%E0%B5%87%E0%B4%95%E0%B5%8D%E0%B4%B7%22%7C%22%E0%B4%9C%E0%B4%BE%E0%B4%AE%E0%B5%8D%E0%B4%AF%E0%B4%BE%E0%B4%AA%E0%B5%87%E0%B4%95%E0%B5%8D%E0%B4%B7%22%5D%20%3B%20B%20%5Bform%3D%22%E0%B4%87%E0%B4%B5%E0%B4%B0%E0%B5%81%E0%B4%9F%E0%B5%86%22%7C%22%E0%B4%87%E0%B4%B5%E0%B4%B0%E0%B5%81%E0%B4%9F%E0%B5%86%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Malayalam-UFAL</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
