@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 23}</script>
+  <div class="layout">
+    
+    <div class="sidebar">
+      <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Aux_obj_Gender</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Uzbek</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">23</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_obj_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 23)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>men <strong>she'r</strong> oʻrganadigan <strong>boʻldim</strong> !</td><td>boʻldim</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=boʻl<br>xpos=V<br>Mood=Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>she'r</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=she'r<br>xpos=N<br>Case=Nom<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s610%22%20%3B%20A%20%5Bform%3D%22bo%CA%BBldim%22%5D%20%3B%20B%20%5Bform%3D%22she%27r%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>Hazrati <strong>Xizrni</strong> qay tarz topish <strong>mumkinligiga</strong> oʻzimning aqlim yetmadi .</td><td>mumkinligiga</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=mumkin<br>Case=Dat<br>SubjAuxCount=1</details></td><td>Xizrni</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=Xizr<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22498%22%20%3B%20A%20%5Bform%3D%22mumkinligiga%22%5D%20%3B%20B%20%5Bform%3D%22Xizrni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>Togʻli Qorabogʻdagi urushda ular hal qiluvchi rol oʻynadi , chunki Ozarboyjon havoda <strong>ustunlikka</strong> ega <strong>edi</strong> .</td><td>edi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=edi<br>Mood=Ind,Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>ustunlikka</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ustunlik<br>Case=Dat<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22121%22%20%3B%20A%20%5Bform%3D%22edi%22%5D%20%3B%20B%20%5Bform%3D%22ustunlikka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>Bu bepoyon choʻllar oʻz bagʻrida yana qancha <strong>sirlarni</strong> yashirgan <strong>ekan</strong> ?</td><td>ekan</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ekan<br>Mood=Ind,Ind<br>SubjAuxCount=1</details></td><td>sirlarni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=sir<br>Case=Acc<br>Number=Plur<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22495%22%20%3B%20A%20%5Bform%3D%22ekan%22%5D%20%3B%20B%20%5Bform%3D%22sirlarni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td><strong>qashqarni</strong> elimizning « gʻarbiy darvozasi » deyishgan <strong>edi</strong> .</td><td>edi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=edi<br>xpos=V<br>Mood=Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>qashqarni</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=qashqar<br>xpos=N<br>Case=Acc<br>NounType=Prop<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s62%22%20%3B%20A%20%5Bform%3D%22edi%22%5D%20%3B%20B%20%5Bform%3D%22qashqarni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>qaysi oila uy qurmoqchi , qaysi oila <strong>supa</strong> yasamoqchi <strong>boʻlsa</strong> , shu oilalar bolta koʻtarib tog'ga chiqib daraxtlarni kesar ekan .</td><td>boʻlsa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=boʻl<br>xpos=V<br>Mood=Cnd<br>SubjAuxCount=1</details></td><td>supa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=supa<br>xpos=N<br>Case=Nom<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s509%22%20%3B%20A%20%5Bform%3D%22bo%CA%BBlsa%22%5D%20%3B%20B%20%5Bform%3D%22supa%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>Postga bildirilgan izohlarda ham turli <strong>fikrlarni</strong> oʻqish <strong>mumkin</strong> .</td><td>mumkin</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=mumkin<br>SubjAuxCount=1</details></td><td>fikrlarni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=fikr<br>Case=Acc<br>Number=Plur<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22126%22%20%3B%20A%20%5Bform%3D%22mumkin%22%5D%20%3B%20B%20%5Bform%3D%22fikrlarni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>u ish qilganda <strong>aqlini</strong> ishlatmas <strong>ekan</strong> ,</td><td>ekan</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=ekan<br>xpos=AUX<br>Mood=Ind<br>SubjAuxCount=1<br>VerbForm=Fin</details></td><td>aqlini</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=aql<br>xpos=N<br>Case=Acc<br>Number[psor]=Sing<br>Person[psor]=3<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s557%22%20%3B%20A%20%5Bform%3D%22ekan%22%5D%20%3B%20B%20%5Bform%3D%22aqlini%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>Turobjon ikki kosa ichdi , xotini esa hanuz bir <strong>kosani</strong> yarimlatolmas <strong>edi</strong> .</td><td>edi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=edi<br>Mood=Ind,Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>kosani</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kosa<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22285%22%20%3B%20A%20%5Bform%3D%22edi%22%5D%20%3B%20B%20%5Bform%3D%22kosani%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>Agentlikdan aytishlaricha , Abe asosiy vazirlarni saqlab qoladi va radikal <strong>oʻzgarishlardan</strong> voz kechishi <strong>mumkin</strong> .</td><td>mumkin</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=mumkin<br>SubjAuxCount=1</details></td><td>oʻzgarishlardan</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=oʻzgarish<br>Case=Abl<br>Number=Plur<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22153%22%20%3B%20A%20%5Bform%3D%22mumkin%22%5D%20%3B%20B%20%5Bform%3D%22o%CA%BBzgarishlardan%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>u peshonamdagi <strong>terni</strong> koʻrgan <strong>boʻlsa</strong> kerak , mendan : < < qancha yoshga kirdingiz ? > > deb soʻradi .</td><td>boʻlsa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=boʻl<br>xpos=V<br>Mood=Cnd<br>SubjAuxCount=1</details></td><td>terni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ter<br>xpos=N<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s388%22%20%3B%20A%20%5Bform%3D%22bo%CA%BBlsa%22%5D%20%3B%20B%20%5Bform%3D%22terni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>Oysha bu <strong>kitobni</strong> oʻqimagan <strong>emas</strong> .</td><td>emas</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=emas<br>Polarity=Neg<br>SubjAuxCount=1</details></td><td>kitobni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kitob<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22udtw23-16%22%20%3B%20A%20%5Bform%3D%22emas%22%5D%20%3B%20B%20%5Bform%3D%22kitobni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-TueCL</a></td></tr><tr><td>Moskva birjasi oʻzbek soʻmi bilan <strong>savdoni</strong> yoʻlga qoʻyishi <strong>mumkin</strong> .</td><td>mumkin</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=mumkin<br>SubjAuxCount=1<br>VerbForm=Fin</details></td><td>savdoni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=savdo<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22156%22%20%3B%20A%20%5Bform%3D%22mumkin%22%5D%20%3B%20B%20%5Bform%3D%22savdoni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>Oʻgʻlimning oʻzi hushyor bola , gʻalati - gʻalati <strong>paytlarni</strong> topgan boʻlsa <strong>kerak</strong> .</td><td>kerak</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=kerak<br>SubjAuxCount=2+<br>Tense=Pres<br>VerbForm=Fin</details></td><td>paytlarni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=payt<br>Case=Acc<br>Number=Plur<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22275%22%20%3B%20A%20%5Bform%3D%22kerak%22%5D%20%3B%20B%20%5Bform%3D%22paytlarni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>U <strong>sochini</strong> turmaklashi <strong>kerak</strong> edi , lekin negadir oʻsha kuni turmaklamadi .</td><td>kerak</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=kerak<br>SubjAuxCount=2+<br>Tense=Pres</details></td><td>sochini</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=soch<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cairo-17.1%22%20%3B%20A%20%5Bform%3D%22kerak%22%5D%20%3B%20B%20%5Bform%3D%22sochini%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-TueCL</a></td></tr><tr><td>Aslida bunday tadqiqotlarda biror sheva yoki lahjaning adabiy tildan farqidan oldin <strong>umumiyligini</strong> körsatib berish <strong>kerak</strong> .</td><td>kerak</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=kerak<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>umumiyligini</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=umumiylik<br>Case=Acc<br>Number=Sing<br>Number[psor]=Sing<br>Person[psor]=3<br>Poss=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s3%22%20%3B%20A%20%5Bform%3D%22kerak%22%5D%20%3B%20B%20%5Bform%3D%22umumiyligini%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td><strong>Nimani</strong> oʻqiganini <strong>emas</strong> , nimani oʻqimoqchiligini aytyapti .</td><td>emas</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=emas<br>Polarity=Neg<br>SubjAuxCount=1</details></td><td>nimani</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=nima<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22udtw23-18%22%20%3B%20A%20%5Bform%3D%22emas%22%5D%20%3B%20B%20%5Bform%3D%22Nimani%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-TueCL</a></td></tr><tr><td>Deniz bu yerga kelib , boʻsh vaqtlarida <strong>kitob</strong> oʻqir <strong>edi</strong> .</td><td>edi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=edi<br>Mood=Ind,Ind<br>SubjAuxCount=1<br>Tense=Past</details></td><td>kitob</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kitob<br>Case=Nom<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2291%22%20%3B%20A%20%5Bform%3D%22edi%22%5D%20%3B%20B%20%5Bform%3D%22kitob%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-TueCL</a></td></tr><tr><td>Butun <strong>tabiatni</strong> zavqu shavqqa toʻldirib yuborgan <strong>edi</strong> bahor .</td><td>edi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=edi<br>Mood=Ind,Ind<br>SubjAuxCount=1<br>Tense=Past</details></td><td>tabiatni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=tabiat<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22454%22%20%3B%20A%20%5Bform%3D%22edi%22%5D%20%3B%20B%20%5Bform%3D%22tabiatni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr><tr><td>lekin , oʻn yetti yoshda yetganda kishilar <strong>meni</strong> barakalla ; ofarin ; pahlavon , botir yurakli san ! olg'a ; pahlavon ; deb maqtashadigan <strong>boʻldi</strong> .</td><td>boʻldi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=boʻl<br>xpos=V<br>Mood=Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>meni</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=men<br>xpos=P<br>Case=Acc<br>Person=1<br>PronType=Prs<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s382%22%20%3B%20A%20%5Bform%3D%22bo%CA%BBldi%22%5D%20%3B%20B%20%5Bform%3D%22meni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td>shuning bilan u <strong>eshik</strong> qilmoqchi <strong>bo'libdi</strong> - da , darhol chot bilan yo'nishni boshlabdi .</td><td>bo'libdi</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=bo'l<br>xpos=V<br>Mood=Ind<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin</details></td><td>eshik</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=eshik<br>xpos=N<br>Case=Nom<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UzUDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s562%22%20%3B%20A%20%5Bform%3D%22bo%27libdi%22%5D%20%3B%20B%20%5Bform%3D%22eshik%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UzUDT</a></td></tr><tr><td><strong>Sochini</strong> turmaklashi <strong>kerak</strong> edi , lekin negadir oʻsha kuni turmaklamadi .</td><td>kerak</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=kerak<br>SubjAuxCount=2+<br>Tense=Pres</details></td><td>sochini</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=soch<br>Case=Acc<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-TueCL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cairo-17.2%22%20%3B%20A%20%5Bform%3D%22kerak%22%5D%20%3B%20B%20%5Bform%3D%22Sochini%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-TueCL</a></td></tr><tr><td>Axir , oʻshanda xalq <strong>meni</strong> bagʻriga bosgan <strong>ekan-ku</strong> ?</td><td>ekan-ku</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ekan<br>SubjAuxCount=1</details></td><td>meni</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=men<br>Case=Acc<br>Number=Sing<br>Person=1<br>PronType=Prs<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Uzbek-UT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22435%22%20%3B%20A%20%5Bform%3D%22ekan-ku%22%5D%20%3B%20B%20%5Bform%3D%22meni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Uzbek-UT</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

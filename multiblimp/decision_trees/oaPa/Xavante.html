@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 28}</script>
+  <div class="layout">
+    
+    <div class="sidebar">
+      <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Aux_obj_Person</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Xavante</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">28</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_obj_Person</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 28)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Wahitébré ma robze uptabi di , <strong>ĩsa</strong> wa <strong>te</strong> tãma sõmri wa .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>ĩsa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=sa<br>xpos=n<br><strong>Person=3</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX38.3%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22%C4%A9sa%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>hu</strong> <strong>te</strong> te wĩrĩ õ di</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>SubjAuxCount=2+<br>Tense=Pres</details></td><td>hu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=hu<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RO-236-402%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22hu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Pi’õ te <strong>te</strong> wẽ'ẽ <strong>sada'ré</strong> , ti'ranorĩ ma .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>sada'ré</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=sada'ré<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX37.8%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22sada%27r%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>ahã <strong>õhã</strong> <strong>ma</strong> ĩsa</td><td>ma</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=ma<br>xpos=aux<br>SubjAuxCount=1<br>Tense=Past</details></td><td>õhã</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=o<br>xpos=pron<br>Emph=Yes<br>Number=Sing<br><strong>Person=3</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EW-92-5%22%20%3B%20A%20%5Bform%3D%22ma%22%5D%20%3B%20B%20%5Bform%3D%22%C3%B5h%C3%A3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>uhödö</strong> <strong>ma</strong> to ĩse</td><td>ma</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=ma<br>xpos=aux<br>SubjAuxCount=1<br>Tense=Past</details></td><td>uhödö</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=uhödö<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FGIR-FW-05%22%20%3B%20A%20%5Bform%3D%22ma%22%5D%20%3B%20B%20%5Bform%3D%22uh%C3%B6d%C3%B6%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Duré <strong>abazi</strong> hã wa <strong>wate</strong> wasima 'rãzani za'ra</td><td>wate</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>abazi</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=abazi<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EMX-14%22%20%3B%20A%20%5Bform%3D%22wate%22%5D%20%3B%20B%20%5Bform%3D%22abazi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>wahã <strong>daas</strong> aima <strong>wa</strong> tisõ</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>xpos=aux<br>SubjAuxCount=1</details></td><td>daas</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=as<br>xpos=n<br>Human=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EW-3%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22daas%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>e waima da <strong>ma</strong> aibö tisõ <strong>mari</strong></td><td>ma</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=ma<br>xpos=aux<br>SubjAuxCount=1<br>Tense=Past</details></td><td>mari</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=mari<br>xpos=pron<br>PronType=Ind<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RO-223.1%22%20%3B%20A%20%5Bform%3D%22ma%22%5D%20%3B%20B%20%5Bform%3D%22mari%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>Wasina</strong> wa <strong>te</strong> ãma mro</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wasina</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=wasi<br>xpos=n<br>Case=Ins<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EMX-9%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22Wasina%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Nimame <strong>dawedezé</strong> hã iwẽ uptabi hã we <strong>te</strong> sãmra õ di</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>dawedezé</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=dawedezé<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EMX-70a%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22dawedez%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Duréi hã warazu ma <strong>te</strong> siwi <strong>tiʔa</strong> ʔre puʔu</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>tiʔa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=tiʔa<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MM-1.3%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22ti%CA%94a%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>Ti'ra</strong> te <strong>te</strong> sabu da ma wei wi .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>ti'ra</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma='ra<br>xpos=n<br><strong>Person=3</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX16.11%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22Ti%27ra%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Ĩprédu 'maipo'repu'umhã te za te tãma 'manho're , <strong>a'uwẽ</strong> norĩ ma <strong>te</strong> rowẽ za'ra da . Tahawa te nasi sõ're bötö bö .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>a'uwẽ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=a'uwẽ<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX31.7%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22a%27uw%E1%BA%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Aimama te za wei mo , <strong>marĩ</strong> ĩpire hã te <strong>te</strong> aima waihu'u da .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>marĩ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=marĩ<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX33.8%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22mar%C4%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Wa norĩ hã <strong>wa</strong> <strong>wasa</strong> waptẽrẽ za'ra ni .</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wasa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=sa<br>xpos=n<br>Number=Plur<br><strong>Person=1</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX21.5.1%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22wasa%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Warazu tiʔa te siwi ʔrepuʔu wamha <strong>wedenhõrõ</strong> <strong>te</strong> siwi sõrõ sada , ĩpa uptabi wedenhõrõ hã</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wedenhõrõ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=wedenhõrõ<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MM-1.4%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22wedenh%C3%B5r%C3%B5%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>Ti'ra</strong> <strong>te</strong> te tsabu dama wei wi .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=2+<br>Tense=Pres</details></td><td>ti'ra</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma='ra<br>xpos=n<br>Number=Sing<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL.1-11%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22Ti%27ra%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Mara ré hã , niwamhã tinhohui'wai me wapté te sõ're za'ra 'rinho're baba , <strong>a'uwẽ</strong> norĩ hã te <strong>te</strong> to za'ra da .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>a'uwẽ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=a'uwẽ<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX27.6%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22a%27uw%E1%BA%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td><strong>aihöiré</strong> <strong>wa</strong> te watsiwi tsimrõ ni õ di</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>SubjAuxCount=2+</details></td><td>aihöiré</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=aihöiré<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RO-239-406%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22aih%C3%B6ir%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Ni'wa aibö wei mori wamhã , uburé <strong>abaze</strong> hã <strong>te</strong> za tãma sõmri za'ra , sõpru wa .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>abaze</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=abaze<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL.19-6%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22abaze%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>wahã <strong>ahã</strong> <strong>wa</strong> aiamã aime</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>xpos=aux<br>SubjAuxCount=1</details></td><td>ahã</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=a<br>xpos=pron<br>Emph=Yes<br>Number=Sing<br><strong>Person=2</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EW-90.3%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22ah%C3%A3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Ni'wa <strong>te</strong> tsawi õ wamhã <strong>titsiré</strong> hã , õ norĩ hawi , da te tsawi dza'ra õ di .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>titsiré</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=titsiré<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2233.ex-10%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22titsir%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>wahã <strong>wanorĩ</strong> waʔwa hã <strong>wa</strong> aiwapari zaʔra waʔwa</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wanorĩ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=wa<br>xpos=pron<br>Number=Coll<br><strong>Person=1</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EW-91-5%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22wanor%C4%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Waptém norĩhã ba'õtõ <strong>nhimiromhuri</strong> hã te <strong>te</strong> waihu'u za'ra õ di .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>nhimiromhuri</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=nhimiromhuri<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX37.2%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22nhimiromhuri%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Höiwahö wa za we <strong>wate</strong> simro <strong>wa'ranorĩhã</strong></td><td>wate</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wa'ranorĩhã</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma='ra<br>xpos=n<br>Emph=Yes<br>Number=Coll<br><strong>Person=1</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EMX-5%22%20%3B%20A%20%5Bform%3D%22wate%22%5D%20%3B%20B%20%5Bform%3D%22wa%27ranor%C4%A9h%C3%A3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>Duréi hã warazu ma <strong>te</strong> <strong>tiʔa</strong> siwi ʔrepuʔu</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>tiʔa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=tiʔa<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22MM-1.1%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22ti%CA%94a%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>wahã <strong>wanorĩ</strong> waʔwa hã <strong>wa</strong> aimãdöʔö ʔwa</td><td>wa</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=wa<br>xpos=aux<br>SubjAuxCount=1</details></td><td>wanorĩ</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=wa<br>xpos=pron<br>Number=Coll<br><strong>Person=1</strong><br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EW-91.2%22%20%3B%20A%20%5Bform%3D%22wa%22%5D%20%3B%20B%20%5Bform%3D%22wanor%C4%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr><tr><td>E höiwi te ĩ'madö'ö za'ra wa'wa . Mare di ! Wanorĩhã <strong>höiwi</strong> wa <strong>te</strong> 'madö'ö za'ra õ di .</td><td>te</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=te<br>xpos=aux<br>SubjAuxCount=1</details></td><td>höiwi</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=höiwi<br>xpos=n<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Xavante-XDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GL-CLX33.9%22%20%3B%20A%20%5Bform%3D%22te%22%5D%20%3B%20B%20%5Bform%3D%22h%C3%B6iwi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Xavante-XDT</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

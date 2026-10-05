@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Minimal-Pair Attention Trace</title>
 <script>
   try {
@@ -123,13 +124,10 @@
      pane underneath it (.scroll-pane), so the tree (and its own pan/zoom)
      never scrolls out of view while browsing a long sample/pairs list. */
   .page {
-    max-width: 1180px;
-    margin: 0 auto;
     height: 100vh;
-    padding: 20px 24px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
     overflow: hidden;
   }
 
@@ -153,6 +151,97 @@
      silently clip away most of a long sample/pairs list rather than the
      intended pane-level scrollbar ever appearing. */
   .scroll-pane > .card { flex-shrink: 0; }
+
+  /* ── Samples / pairs drawer: overlays the bottom of the tree card (up to
+     half of it), opened by clicking a node, resized by dragging its handle. ── */
+  .drawer {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 40%; min-height: 120px; max-height: 90%;
+    display: flex; flex-direction: column;
+    background: var(--surface); border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 200;
+  }
+  .drawer[hidden] { display: none; }
+  .drawer-handle {
+    flex: 0 0 auto; height: 14px; cursor: ns-resize; touch-action: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drawer-grip { width: 44px; height: 4px; border-radius: 2px; background: var(--border); transition: background 0.15s; }
+  .drawer-handle, .drawer-bar { user-select: none; -webkit-user-select: none; }
+  body.dragging-drawer { user-select: none; -webkit-user-select: none; cursor: ns-resize; }
+  .drawer-handle:hover .drawer-grip { background: var(--text-tertiary); }
+  .drawer-bar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 0 14px 8px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-tabs { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  /* Samples and its label chips read as one group; Pairs (purple, like the
+     🔑 badge on the leaves) and its own role chips read as a second,
+     separately-outlined group, same shape. */
+  .drawer-group {
+    display: flex; align-items: center; gap: 4px; min-width: 0;
+    padding: 3px; border: 1px solid var(--border); border-radius: 24px; background: var(--surface-raised);
+  }
+  .drawer-group.pairs-group { border-color: var(--keep-light); }
+  .drawer-tab.pairs-tab { color: var(--keep); border-color: var(--keep); background: var(--surface); }
+  .drawer-tab.pairs-tab:hover { background: var(--keep-light); color: var(--keep); border-color: var(--keep); }
+  .drawer-tab.pairs-tab.active { background: var(--keep-light); color: var(--keep); border-color: var(--keep); box-shadow: inset 0 0 0 1px var(--keep); }
+  .drawer-tab {
+    font-family: var(--font-ui); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    color: var(--text-secondary); background: var(--surface-raised);
+    border: 1.5px solid var(--border); border-radius: 20px; padding: 4px 12px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .drawer-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .drawer-tab.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .drawer-tab[hidden] { display: none; }
+  .drawer-tab:disabled { opacity: 0.4; cursor: not-allowed; border-style: dashed; }
+  .drawer-tab:disabled:hover { border-color: var(--border); color: var(--text-secondary); }
+  .drawer-tab.pairs-tab:disabled, .drawer-tab.pairs-tab:disabled:hover { color: var(--keep); border-color: var(--keep); background: var(--surface); }
+  .drawer-labels {
+    display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+    padding: 0 6px 0 4px;
+  }
+  /* A chip row that's actually scrollable, not just clipped -- with enough
+     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
+     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     overflow-x:auto (rather than :hidden) lets the rest still be reached
+     instead of silently disappearing past the edge. */
+  .drawer-labels::-webkit-scrollbar { height: 4px; }
+  .drawer-labels::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .drawer-labels::-webkit-scrollbar-track { background: transparent; }
+  .drawer-labels[hidden] { display: none; }
+  .label-jump {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer;
+    font-family: var(--font-ui); font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .label-jump:hover { border-color: var(--accent); color: var(--accent); }
+  .label-jump .swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .label-jump .n { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; opacity: 0.7; }
+  /* Pairs' own role-jump chips reuse .label-jump's shape but hover/focus in
+     --keep (the Pairs tab's purple) rather than --accent, so they read as
+     belonging to Pairs the same way the tab itself does. */
+  .label-jump.pairs-role:hover { border-color: var(--keep); color: var(--keep); }
+  @keyframes labelFlash { from { background: var(--accent-light); } to { background: transparent; } }
+  .group-header-row.jump-flash { animation: labelFlash 1.4s ease; }
+  .drawer-hint {
+    margin-left: auto; min-width: 0; font-size: 12px; color: var(--text-tertiary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .drawer-close {
+    flex: 0 0 auto; width: 24px; height: 24px; padding: 0; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+    color: var(--text-secondary); font-size: 12px;
+  }
+  .drawer-close:hover { border-color: var(--accent); color: var(--accent); }
+  .drawer .scroll-pane { padding: 0; gap: 0; }
+  .drawer .scroll-pane > .card { border: none; border-radius: 0; box-shadow: none; }
+  .drawer details > summary { display: none; }
+  .drawer[data-tab="samples"] #pairsCard, .drawer[data-tab="pairs"] #sampleCard { display: none; }
 
   .card {
     background: var(--surface);
@@ -179,7 +268,26 @@
     color: var(--text-secondary);
   }
   .card-header .hint { font-size: 12px; color: var(--text-tertiary); }
+  .header-left { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
   .header-right { display: flex; align-items: center; gap: 10px; }
+  .overview-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .overview-link svg { flex-shrink: 0; }
   .theme-toggle {
     width: 24px; height: 24px;
     border: 1px solid var(--border);
@@ -211,8 +319,79 @@
   .tree-select-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
   .tree-select-btn .keep-count { font-family: var(--font-mono); font-size: 10.5px; opacity: 0.75; margin-left: 4px; }
 
+  /* ── Treebank row (pooled tree + per-treebank trees; only rendered when
+     the language has several treebanks) ── */
+  .treebank-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 18px 0; }
+  .treebank-row .tb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+  .treebank-row a.tree-select-btn { text-decoration: none; }
+  .treebank-row .tree-select-btn.tb-muted { cursor: default; opacity: 0.55; border-style: dashed; }
+  .treebank-row a.tree-select-btn.tb-muted-link { border-style: dashed; opacity: 0.85; }
+  .treebank-row .tree-select-btn.tb-muted:hover { border-color: var(--border); color: var(--text-secondary); }
+  /* Include-unk switch: a link between the as-is and incl.-unk pages,
+     pushed to the row's right edge and styled as an on/off switch so it
+     doesn't read as another treebank tab. */
+  .unk-toggle {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); text-decoration: none;
+    padding: 4px 10px 4px 6px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .unk-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .unk-toggle.on { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+  .unk-switch {
+    position: relative; width: 26px; height: 14px; border-radius: 7px;
+    background: var(--border); flex-shrink: 0; transition: background 0.15s;
+  }
+  .unk-knob {
+    position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: transform 0.15s;
+  }
+  .unk-toggle.on .unk-switch { background: var(--accent); }
+  .unk-toggle.on .unk-knob { transform: translateX(12px); background: #fff; }
+  /* Row for the include-unk switch, just above the tree. */
+  .tb-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; flex-basis: 100%; padding-bottom: 8px; }
+  /* Chevron on the left, its chips in a wrapping column to its right; when
+     the row is too narrow the switch drops beneath instead of squeezing them. */
+  .tb-excl-wrap { display: flex; align-items: flex-start; gap: 6px; flex: 1 1 300px; min-width: 0; }
+  .tb-excl-wrap .tb-excluded-toggle { flex: 0 0 auto; white-space: nowrap; margin-top: 3px; }
+  .tb-excluded-toggle {
+    font-family: var(--font-ui); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-tertiary); background: none; border: none;
+    cursor: pointer; padding: 4px 6px;
+  }
+  .tb-excluded-toggle:hover, .tb-excluded-toggle.has-current { color: var(--accent); }
+  .unk-toggle { flex-shrink: 0; }
+  /* Excluded treebanks: small chips grouped by exclusion reason, so each
+     reason is written once instead of on every pill. */
+  .tb-excluded { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; }
+  .tb-excluded[hidden] { display: none; }
+  .tb-excl-group {
+    display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 3px 10px 3px 6px; border: 1px dashed var(--border); border-radius: 16px;
+  }
+  .tb-excl-reason { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-left: 2px; }
+  .tb-chip {
+    display: inline-flex; align-items: baseline; gap: 5px;
+    font-family: var(--font-ui); font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    padding: 2px 8px; text-decoration: none;
+  }
+  .tb-chip .n { font-family: var(--font-mono); font-size: 10px; font-weight: 500; opacity: 0.7; }
+  a.tb-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .tb-chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .tb-chip.muted { opacity: 0.55; border-style: dashed; }
+  a.tb-chip.muted { opacity: 0.85; }
+  .tb-tag {
+    font-size: 10px; font-weight: 700; margin-left: 6px; padding: 1px 6px; border-radius: 10px;
+    background: var(--accent); color: #fff; letter-spacing: 0.02em;
+  }
+
   /* ── Tree panel ── */
-  .tree-wrap { position: relative; flex: 0 0 auto; }
+  .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -229,7 +408,11 @@
      own fit (see its comment below) -- rather than the card's overflow:hidden
      silently clipping a stray pixel, this lets just the canvas scroll
      horizontally while the header and tree switcher above it stay put. */
-  .tree-scroll { position: relative; overflow-x: auto; }
+  .tree-scroll {
+    position: relative; overflow: hidden;
+    flex: 1 1 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
   /* Sized by JS (sizeTreeBox()) to the tree's fitted *window* -- CANVAS_W x
      CANVAS_H scaled by whatever factor fills the card's width up to
      TREE_BOX_MAX_H -- and centered via auto margins once narrower than the
@@ -316,7 +499,7 @@
   .zoom-controls {
     position: absolute;
     right: 16px;
-    bottom: 16px;
+    top: 16px;
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -438,6 +621,11 @@
   .node-keep.yes { background: var(--keep-light); color: var(--keep); border: 1px solid var(--keep); }
   .node-keep.yes:hover { filter: brightness(1.08); }
   .node-keep.no { color: var(--text-tertiary); font-weight: 500; }
+  /* Only kept because a second_chance retry loosened the entropy bar past
+     this leaf's own H -- same keep color, dashed instead of solid so a
+     leaf that cleared the strict bar on its own still reads as the plain
+     (stronger) case. */
+  .node-keep.yes.second-chance { border-style: dashed; }
 
   /* ── Per-node class-distribution bar (real Yes/No split at that node) ── */
   .node-dist-bar-wrap { position: relative; margin-top: 4px; }
@@ -450,6 +638,7 @@
     transition: transform 0.12s ease;
   }
   .node-dist-bar .seg { height: 100%; }
+  .node-dist-bar .seg:not(:last-child) { border-right: 1px solid rgba(0, 0, 0, 0.65); }
   .node-dist-bar-wrap:hover .node-dist-bar { transform: scaleY(1.8); }
   .node-dist-bar-wrap:hover .node-dist-popover { display: flex; }
 
@@ -490,14 +679,28 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: nowrap; }
-  .node-dist-popover .dist-col { width: 40px; }
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+     wraps onto a second line within its own column instead of
+     overflowing into the neighboring column -- these columns get more
+     numerous and label-heavy as soon as an unk-split condition (Head/
+     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+  .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
+  .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
+  /* .node-slot's own transform above makes it a stacking context, so a
+     popover's z-index (.node-dist-popover/.corr-popover, both z-index: 60)
+     only wins against content inside its OWN node-slot -- against a
+     different, overlapping node-slot (stacked purely by DOM/paint order,
+     since neither has its own z-index) it can still end up underneath.
+     Bump the whole hovered slot's z-index so its popover clears every
+     other node regardless of paint order. */
+  .node-slot:has(.node-dist-bar-wrap:hover),
+  .node-slot:has(.corr-marker-wrap:hover) { z-index: 65; }
 
   .ring { fill: none; stroke-width: 3; opacity: 0.9; }
 
@@ -719,7 +922,7 @@
     border-left: 1px solid var(--border);
     background: var(--surface-raised);
   }
-  .node-dist-detail .dist-col { width: 34px; }
+  .node-dist-detail .dist-col { width: 42px; }
   .node-dist-detail .dist-col-bar-wrap { width: 30px; height: 56px; }
   .node-dist-detail .dist-col-count { font-size: 12px; }
   .node-dist-detail .dist-col-label { font-size: 9.5px; }
@@ -811,6 +1014,15 @@
     margin-left: auto;
   }
   .group-feats-toggle:hover { text-decoration: underline; }
+  /* Route toggles: same look as the features ones but their own, separate
+     open state (the route block sits one level below the feature table). */
+  .group-route-toggle {
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+    color: var(--text-secondary); background: none; border: none; cursor: pointer; padding: 0;
+  }
+  .group-route-toggle:hover { text-decoration: underline; }
+  .group-header-row .group-route-toggle { margin-left: auto; }
+  .group-header-row .group-route-toggle + .group-feats-toggle { margin-left: 12px; }
 
   /* ── Feature mini table: one row per role (nsubj/verb), one column per
      feature -- lines the two roles' values up for a direct comparison,
@@ -855,9 +1067,26 @@
      it still grows for a genuinely long word, but for the common case it
      stops that word length from being what shifts every later column
      sideways relative to the other 4 samples' tables. */
-  .node-table-wrap .feat-mini-table tbody th { min-width: 92px; }
+  .node-table-wrap .feat-mini-table tbody th.role-form-cell { min-width: 70px; }
   .feat-mini-table tbody tr + tr th, .feat-mini-table tbody tr + tr td { border-top: 1px solid var(--border-subtle); }
-  .feat-mini-table .role-form { font-weight: 700; margin-left: 4px; }
+  /* The row label and its token are separate cells so the tokens line up
+     in one column whatever the label's length (Verb / subject / swapped_...). */
+  .feat-mini-table tbody th.role-label-cell { border-right: none; padding-right: 4px; color: var(--text-secondary); font-weight: 600; }
+  .feat-mini-table tbody th.role-form-cell { padding-left: 4px; }
+  .feat-mini-table thead th:nth-child(-n+2) { border-right: none; }
+  /* Token-level fields (lemma, deprel, upos, xpos) sit after the
+     morphological features, set off by a divider and a quieter header. */
+  .feat-mini-table th.other-first, .feat-mini-table td.other-first { border-left: 2px solid var(--border); }
+  .feat-mini-table thead th.other-feat { font-style: italic; letter-spacing: 0.02em; text-transform: none; }
+  .feat-mini-table td.other-feat { background: var(--surface-raised); }
+  .feat-mini-table .role-form { font-weight: 700; margin-left: 0; }
+  .route-block { margin-top: 10px; }
+  .route-body { margin-top: 4px; }
+  .route-body[hidden] { display: none; }
+  .route-table th.route-node { color: var(--text-tertiary); font-weight: 600; }
+  .route-table td.route-branch.true { color: var(--ok); font-weight: 700; }
+  .route-table td.route-branch.false { color: var(--danger); font-weight: 700; }
+  .route-table td.route-value { font-weight: 700; color: var(--text-primary); }
   .feat-mini-table .role-form.role-a { color: var(--role-a); }
   .feat-mini-table .role-form.role-b { color: var(--role-b); }
   .feat-mini-table td b { color: var(--sample-color, var(--keep)); font-weight: 700; }
@@ -876,6 +1105,7 @@
      shown under the plain "NUMBER" table column) as distinct from a
      genuinely plain feature reading -- never render the two the same way,
      down to this smallest visual unit. */
+  .feat-mini-table td .fit-excluded { opacity: 0.5; cursor: help; }
   .feat-mini-table td .feat-bracket { color: var(--text-secondary); font-size: 0.75em; font-weight: 500; margin-left: 2px; }
   /* One line per bracket variant of a dimension (Number[abs]/Number[erg]/...),
      stacked instead of joined inline with a separator -- keeps every table
@@ -886,7 +1116,7 @@
   .feat-mini-table th.decisive, .feat-mini-table td.decisive { background: var(--sample-color-light, var(--accent-light)); }
   /* "linked" rows: a role and its reinflected swapped_ counterpart, tied
      together with a matching colored rail down the row-label cell. */
-  .feat-mini-table tr.linked-row th { box-shadow: inset 3px 0 0 var(--keep); }
+  .feat-mini-table tr.linked-row th.role-label-cell { box-shadow: inset 3px 0 0 var(--keep); }
   .feat-mini-table td.decisive.swapped { background: var(--trace-c-light); }
   .feat-mini-table td.decisive.swapped b { color: var(--trace-c); }
   /* Overrides the rule above for a bonus entry (see the general
@@ -977,6 +1207,19 @@
     color: var(--keep);
   }
   .pairs-leaf-heading .n { color: var(--text-tertiary); font-weight: 500; }
+  /* One per reinflected component (e.g. DET vs ADJ), only when a leaf's
+     pairs actually mix both directions -- see swap_roles_for_target_col --
+     so a two-direction leaf reads as two labelled runs instead of its
+     pairs interleaved with no indication of which side got reinflected. */
+  .pairs-role-header {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--keep);
+    margin: 10px 0 6px;
+  }
+  .pairs-role-header:first-child { margin-top: 0; }
+  .pairs-role-header .n { font-weight: 500; color: var(--text-tertiary); text-transform: none; letter-spacing: normal; }
+  .pairs-role-header.jump-flash { animation: labelFlash 1.4s ease; border-radius: 4px; }
   .pair-example {
     --sample-color: var(--keep); --sample-color-light: var(--keep-light);
     border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px;
@@ -1010,18 +1253,33 @@
   @media (max-width: 480px) {
     .node-table td.col-link { display: none; }
   }
+  @media (max-width: 720px) {
+    .card-header .hint { display: none; }
+    .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree-select-btn { padding: 4px 10px; }
+    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+  }
 </style>
 
 <div class="page">
   <div class="card tree-wrap">
     <div class="card-header">
-      <h2 id="treeTitle">Tree</h2>
+      <div class="header-left">
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2 id="treeTitle">Tree</h2>
+      </div>
       <div class="header-right">
-        <span class="hint">click a node to browse its samples</span>
+        <span class="hint">click a node for its samples · click it again to close</span>
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
     <div class="tree-select-row" id="treeSelectRow"></div>
+    <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
     <div class="tree-svg-box grabbable" id="treeBox">
@@ -1046,7 +1304,7 @@
       <div class="info-panel-header">
         <button type="button" class="minimize-button" id="minimizeBtn" title="Expand panel">+</button>
         <div class="language-name" id="infoPanelTitle"></div>
-        <div class="accuracy-badge"><span class="accuracy-dot"></span><span id="infoPanelAccuracy"></span> accuracy</div>
+        <div class="accuracy-badge"><span class="accuracy-dot"></span><span id="infoPanelAccuracy"></span></div>
       </div>
       <div class="info-panel-body">
         <div class="info-panel-meta" id="infoPanelMeta"></div>
@@ -1065,41 +1323,57 @@
       </div>
     </div>
     </div>
-  </div>
+    <div class="drawer" id="drawer" data-tab="samples" hidden>
+      <div class="drawer-handle" id="drawerHandle" title="Drag to resize"><span class="drawer-grip"></span></div>
+      <div class="drawer-bar">
+        <div class="drawer-tabs" role="tablist">
+          <div class="drawer-group">
+            <button type="button" class="drawer-tab active" id="tabSamples" data-tab="samples" role="tab">Samples</button>
+            <div class="drawer-labels" id="drawerLabels" hidden></div>
+          </div>
+          <div class="drawer-group pairs-group">
+            <button type="button" class="drawer-tab pairs-tab" id="tabPairs" data-tab="pairs" role="tab">🔑 Pairs</button>
+            <div class="drawer-labels pairs-roles" id="drawerPairRoles" hidden></div>
+          </div>
+        </div>
+        <span class="drawer-hint" id="drawerHint"></span>
+        <button type="button" class="drawer-close" id="drawerClose" title="Close (Esc)">✕</button>
+      </div>
+    <div class="scroll-pane" id="scrollPane">
+      <details class="card samples-card" id="sampleCard" open>
+        <summary class="card-header">
+          <h2 id="sampleGridTitle">Node samples</h2>
+          <span class="summary-right">
+            <span class="hint">click a row to trace it · up to 15 real rows per class</span>
+            <span class="chevron"></span>
+          </span>
+        </summary>
+        <div class="node-summary-row">
+          <div class="node-note" id="nodeNote"></div>
+          <div class="node-dist-detail" id="nodeDistDetail"></div>
+        </div>
+        <div class="node-table-wrap">
+          <table class="node-table">
+            <thead>
+              <tr>
+                <th></th><th>Sentence</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="sampleGrid"></tbody>
+          </table>
+        </div>
+      </details>
 
-  <div class="scroll-pane" id="scrollPane">
-    <details class="card samples-card" id="sampleCard" open>
-      <summary class="card-header">
-        <h2 id="sampleGridTitle">Node samples</h2>
-        <span class="summary-right">
-          <span class="hint">click a row to trace it · up to 15 real rows per class</span>
+      <details class="card pairs-card" id="pairsCard" open>
+        <summary>
+          <h2 id="pairsTitle">🔑 Generated minimal pairs</h2>
           <span class="chevron"></span>
-        </span>
-      </summary>
-      <div class="node-summary-row">
-        <div class="node-note" id="nodeNote"></div>
-        <div class="node-dist-detail" id="nodeDistDetail"></div>
-      </div>
-      <div class="node-table-wrap">
-        <table class="node-table">
-          <thead>
-            <tr>
-              <th></th><th>Sentence</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="sampleGrid"></tbody>
-        </table>
-      </div>
-    </details>
-
-    <details class="card pairs-card" id="pairsCard">
-      <summary>
-        <h2 id="pairsTitle">🔑 Generated minimal pairs</h2>
-        <span class="chevron"></span>
-      </summary>
-      <div class="pairs-intro" id="pairsIntro"></div>
-      <div class="pairs-list" id="pairsList"></div>
-    </details>
+        </summary>
+        <div class="pairs-intro" id="pairsIntro"></div>
+        <div class="pairs-list" id="pairsList"></div>
+      </details>
+    </div>
+    </div>
   </div>
 </div>
 
@@ -1114,7 +1388,7 @@
   // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Spanish", "accuracy": "98.3%", "baseEntropy": "0.124", "reducedEntropy": "0.124", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "16,899", "predictor": "Verb_nsubj_Number", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 16613, "color": "var(--yes)"}, {"cls": "No", "cnt": 286, "color": "var(--no)"}, {"cls": "unk", "cnt": 12505, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 16899, "H": 0.124, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 16613, "color": "var(--yes)"}, {"cls": "No", "cnt": 286, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": true, "kept": 16613, "correctSwaps": 20638}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "El 17 de mayo , los <strong>resultados</strong> preliminares de la Junta Central Electoral , basada en el 91 % de los recintos , <strong>demostr\u00f3</strong> que Fern\u00e1ndez fue reelegido con el 53 % de los votos , mientras que Vargas ten\u00eda el 40 % y Aristy el 4.96 % .", "verb": "demostr\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=demostrar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "resultados", "nsubjFeats": ["upos=NOUN", "lemma=resultado", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s385%22%20%3B%20A%20%5Bform%3D%22demostr%C3%B3%22%7C%22Demostr%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22resultados%22%7C%22Resultados%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "<strong>Antonio</strong> S\u00e1nchez Esteve , con la colaboraci\u00f3n de los arquitectos Rafael Hidalgo y Alcal\u00e1 de el Olmo y Manuel F\u00e9rn\u00e1ndez - Pujol Fern\u00e1ndez , <strong>dise\u00f1aron</strong> el inmueble que fue construido en 1936 por iniciativa municipal .", "verb": "dise\u00f1aron", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dise\u00f1ar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past"], "nsubj": "Antonio", "nsubjFeats": ["upos=PROPN", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-009-s4%22%20%3B%20A%20%5Bform%3D%22dise%C3%B1aron%22%7C%22Dise%C3%B1aron%22%5D%20%3B%20B%20%5Bform%3D%22Antonio%22%7C%22Antonio%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Este <strong>tipo</strong> de nuevos compuestos conductores <strong>resultan</strong> , por tanto , de la oxidaci\u00f3n parcial producida por el reactivo inorg\u00e1nico sobre el dador org\u00e1nico .", "verb": "resultan", "verbFeats": ["upos=VERB", "deprel=root", "lemma=resultar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres"], "nsubj": "tipo", "nsubjFeats": ["upos=NOUN", "lemma=tipo", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-dc3-13-s3%22%20%3B%20A%20%5Bform%3D%22resultan%22%7C%22Resultan%22%5D%20%3B%20B%20%5Bform%3D%22tipo%22%7C%22Tipo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Trabajamos y Germ\u00e1n de Granda , desde su aparente exabrupto , es un buen modelo de <strong>lo</strong> que <strong>llamamos</strong> cumplimiento de el deber , con una f\u00f3rmula muy olvidada por estos pagos .", "verb": "llamamos", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=llamar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres"], "nsubj": "lo", "nsubjFeats": ["upos=PRON", "Case=Acc", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PrepCase=Npr", "PronType=Dem"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-a1-4-s16%22%20%3B%20A%20%5Bform%3D%22llamamos%22%7C%22Llamamos%22%5D%20%3B%20B%20%5Bform%3D%22lo%22%7C%22Lo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La coincidencia en el tiempo de la revoluci\u00f3n y la Guerra Civil hace que en el campo militar se desarrollen diversas iniciativas coordinadas por las nuevas administraciones establecidas por la oleada revolucionaria , la mayor <strong>parte</strong> de las cuales <strong>resultar\u00e1n</strong> fallidas .", "verb": "resultar\u00e1n", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=resultar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Fut"], "nsubj": "parte", "nsubjFeats": ["upos=NOUN", "lemma=parte", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s257%22%20%3B%20A%20%5Bform%3D%22resultar%C3%A1n%22%7C%22Resultar%C3%A1n%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%7C%22Parte%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Los ministros subrayaron que , si se <strong>tiene</strong> en cuenta las <strong>disparidades</strong> en tama\u00f1o y fase de desarrollo econ\u00f3mico entre los pa\u00edses de el continente , \" son los pa\u00edses peque\u00f1os y en v\u00edas de desarrollo los que tienen que hacer mejoras en la infraestructura de transporte a el desarrollo \" .", "verb": "tiene", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=tener", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "disparidades", "nsubjFeats": ["upos=NOUN", "lemma=disparidad", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20001013-10591-s6%22%20%3B%20A%20%5Bform%3D%22tiene%22%7C%22Tiene%22%5D%20%3B%20B%20%5Bform%3D%22disparidades%22%7C%22Disparidades%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La rata se arrima a los ricos , a sus coquetonas cloacas de alto standing y su inagotable para\u00edso de desperdicios , a sus desechos apetitosos y tantas veces intactos , y desprecia la porquer\u00eda dif\u00edcilmente aprovechable de los pobres y los muertos de hambre , en cuyas alcantarillas inhabitables y sin glamour nunca se <strong>encuentra</strong> unas tristes <strong>mondas</strong> de naranja que llevar se a la boca .", "verb": "encuentra", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=encontrar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "mondas", "nsubjFeats": ["upos=NOUN", "lemma=monda", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-a12-1-s10%22%20%3B%20A%20%5Bform%3D%22encuentra%22%7C%22Encuentra%22%5D%20%3B%20B%20%5Bform%3D%22mondas%22%7C%22Mondas%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "El mismo diario a\u00f1ade que \" en una noche para olvidar , Nacional nunca se encontr\u00f3 en el terreno de juego , mientras que el <strong>rival</strong> , aprovechando su condici\u00f3n de local y el talento de su m\u00e1xima figura , el argentino Leo Rodr\u00edguez , <strong>liquidaron</strong> desde la etapa inicial el juego \" .", "verb": "liquidaron", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=liquidar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past"], "nsubj": "rival", "nsubjFeats": ["upos=NOUN", "lemma=rival", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000224-20351-s7%22%20%3B%20A%20%5Bform%3D%22liquidaron%22%7C%22Liquidaron%22%5D%20%3B%20B%20%5Bform%3D%22rival%22%7C%22Rival%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "De este modo gran <strong>cantidad</strong> de mujeres <strong>resultaron</strong> electas en 1951 por el partido para ocupar cargos legislativos : 23 diputadas nacionales , 6 senadoras nacionales , y si se cuentan a las legisladoras provinciales fueron electas en total 109 mujeres .", "verb": "resultaron", "verbFeats": ["upos=VERB", "deprel=root", "lemma=resultar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past"], "nsubj": "cantidad", "nsubjFeats": ["upos=NOUN", "lemma=cantidad", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s56%22%20%3B%20A%20%5Bform%3D%22resultaron%22%7C%22Resultaron%22%5D%20%3B%20B%20%5Bform%3D%22cantidad%22%7C%22Cantidad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Desde Pimecsefes se quiere proponer a la Generalitat aplicar <strong>lo</strong> que <strong>denominan</strong> \" el jueves comercial \" , d\u00eda en que el peque\u00f1o comercio abrir\u00eda ininterrumpidamente desde las 10.00 a las 22.00 horas .", "verb": "denominan", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=denominar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres"], "nsubj": "lo", "nsubjFeats": ["upos=PRON", "Case=Acc", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PrepCase=Npr", "PronType=Dem"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-20000701-92-s9%22%20%3B%20A%20%5Bform%3D%22denominan%22%7C%22Denominan%22%5D%20%3B%20B%20%5Bform%3D%22lo%22%7C%22Lo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Tras someter se a una reforma integral de sus instalaciones , el cuatro <strong>estrellas</strong> <strong>conserva</strong> \u00fanicamente la fachada y vigas de su estructura , previas a la obra , para ofrecer un alojamiento a la altura de el exclusivo distrito .", "verb": "conserva", "verbFeats": ["upos=VERB", "deprel=root", "lemma=conservar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "estrellas", "nsubjFeats": ["upos=NOUN", "lemma=estrella", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-001-s458%22%20%3B%20A%20%5Bform%3D%22conserva%22%7C%22Conserva%22%5D%20%3B%20B%20%5Bform%3D%22estrellas%22%7C%22Estrellas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Lo creas o no , el mill\u00f3n de <strong>unidades</strong> de 3DS vendidas en Jap\u00f3n no <strong>sabe</strong> todo lo dulce que pudieras imaginar para Nintendo .", "verb": "sabe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=saber", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "unidades", "nsubjFeats": ["upos=NOUN", "lemma=unidad", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-022-s29%22%20%3B%20A%20%5Bform%3D%22sabe%22%7C%22Sabe%22%5D%20%3B%20B%20%5Bform%3D%22unidades%22%7C%22Unidades%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Se <strong>public\u00f3</strong> diez <strong>n\u00fameros</strong> de la revista Internacionalismo entre 1964 y 1968 .", "verb": "public\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=publicar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "n\u00fameros", "nsubjFeats": ["upos=NOUN", "lemma=n\u00famero", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-014-s52%22%20%3B%20A%20%5Bform%3D%22public%C3%B3%22%7C%22Public%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%BAmeros%22%7C%22N%C3%BAmeros%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Explic\u00f3 que la <strong>mayor\u00eda</strong> de estas personas <strong>murieron</strong> soterradas en sus viviendas y muchas de ellas por resistir se a desalojar sus casas como se les pidi\u00f3 con anticipaci\u00f3n .", "verb": "murieron", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=morir", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past"], "nsubj": "mayor\u00eda", "nsubjFeats": ["upos=NOUN", "lemma=mayor\u00eda", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-011-s237%22%20%3B%20A%20%5Bform%3D%22murieron%22%7C%22Murieron%22%5D%20%3B%20B%20%5Bform%3D%22mayor%C3%ADa%22%7C%22Mayor%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "A una aerol\u00ednea estadounidense , cuyo nombre Leiva no precis\u00f3 , y a la local Isle\u00f1a Airlines se les <strong>impuso</strong> <strong>sanciones</strong> similares por la misma causa .", "verb": "impuso", "verbFeats": ["upos=VERB", "deprel=root", "lemma=imponer", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "sanciones", "nsubjFeats": ["upos=NOUN", "lemma=sanci\u00f3n", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000914-11011-s4%22%20%3B%20A%20%5Bform%3D%22impuso%22%7C%22Impuso%22%5D%20%3B%20B%20%5Bform%3D%22sanciones%22%7C%22Sanciones%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "<strong>Esto</strong> <strong>a\u00f1ade</strong> a la creencia de que Ta\u00edno significaba , o significa , \" los buenos . \"", "verb": "a\u00f1ade", "verbFeats": ["upos=VERB", "deprel=root", "lemma=a\u00f1adir", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "esto", "nsubjFeats": ["upos=PRON", "<b>Number=Sing</b>", "PronType=Dem"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s155%22%20%3B%20A%20%5Bform%3D%22a%C3%B1ade%22%7C%22A%C3%B1ade%22%5D%20%3B%20B%20%5Bform%3D%22esto%22%7C%22Esto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Adem\u00e1s , las autoridades cubanas lo acusan de ser uno de los principales responsables de los atentados con bombas en varios hoteles habaneros en el verano de 1997 , en uno de los cuales <strong>muri\u00f3</strong> el <strong>turista</strong> italiano Fabio Di Celmo , de 32 a\u00f1os , y resultaron heridas otras siete personas .", "verb": "muri\u00f3", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=morir", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "turista", "nsubjFeats": ["upos=NOUN", "lemma=turista", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20001121-15871-s5%22%20%3B%20A%20%5Bform%3D%22muri%C3%B3%22%7C%22Muri%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22turista%22%7C%22Turista%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Su <strong>requerimiento</strong> se <strong>incrementa</strong> en funci\u00f3n de las calor\u00edas consumidas en la dieta , entonces a mayor consumo cal\u00f3rico , mayor es la necesidad de vitamina B2 .", "verb": "incrementa", "verbFeats": ["upos=VERB", "deprel=root", "lemma=incrementar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "requerimiento", "nsubjFeats": ["upos=NOUN", "lemma=requerimiento", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s70%22%20%3B%20A%20%5Bform%3D%22incrementa%22%7C%22Incrementa%22%5D%20%3B%20B%20%5Bform%3D%22requerimiento%22%7C%22Requerimiento%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Lamentablemente para el boxeo mexicano el duelo n\u00famero 49 en la historia de los enfrentamientos entre sus propios campeones mundiales los dej\u00f3 con uno menos , pero el <strong>deporte</strong> <strong>recuper\u00f3</strong> su grandeza ante la gran pelea que protagonizaron Morales y Barrera .", "verb": "recuper\u00f3", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=recuperar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "deporte", "nsubjFeats": ["upos=NOUN", "lemma=deporte", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000220-16230-s4%22%20%3B%20A%20%5Bform%3D%22recuper%C3%B3%22%7C%22Recuper%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22deporte%22%7C%22Deporte%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La noci\u00f3n de que el <strong>d\u00f3lar</strong> se <strong>prepara</strong> para un ascenso sostenido provoc\u00f3 una ola de ventas especulativas que rest\u00f3 vigor a el billete verde .", "verb": "prepara", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=preparar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "d\u00f3lar", "nsubjFeats": ["upos=NOUN", "lemma=d\u00f3lar", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000221-16786-s1%22%20%3B%20A%20%5Bform%3D%22prepara%22%7C%22Prepara%22%5D%20%3B%20B%20%5Bform%3D%22d%C3%B3lar%22%7C%22D%C3%B3lar%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "En muchas ocasiones se <strong>producen</strong> <strong>asaltos</strong> a ni\u00f1os , y los alumnos , a\u00f1adi\u00f3 Mas , \" ven como algo normal que les paren por la calle y les quiten el poco dinero que llevan encima \" .", "verb": "producen", "verbFeats": ["upos=VERB", "deprel=root", "lemma=producir", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres"], "nsubj": "asaltos", "nsubjFeats": ["upos=NOUN", "lemma=asalto", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19991001-69-s13%22%20%3B%20A%20%5Bform%3D%22producen%22%7C%22Producen%22%5D%20%3B%20B%20%5Bform%3D%22asaltos%22%7C%22Asaltos%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "El <strong>regreso</strong> a el f\u00fatbol de Higuita se <strong>dio</strong> el 21 de julio de 2007 , cuando anunci\u00f3 p\u00fablicamente que jugar\u00eda en Guaros de Lara FC en la primera divisi\u00f3n de la liga de Venezuela .", "verb": "dio", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dar", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "regreso", "nsubjFeats": ["upos=NOUN", "lemma=regreso", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s270%22%20%3B%20A%20%5Bform%3D%22dio%22%7C%22Dio%22%5D%20%3B%20B%20%5Bform%3D%22regreso%22%7C%22Regreso%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "A menudo hay gente que se calla <strong>lo</strong> que <strong>sabe</strong> , pero no lo hace para obtener un beneficio econ\u00f3mico .", "verb": "sabe", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=saber", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "lo", "nsubjFeats": ["upos=PRON", "Case=Acc", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PrepCase=Npr", "PronType=Dem"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19991202-25-s18%22%20%3B%20A%20%5Bform%3D%22sabe%22%7C%22Sabe%22%5D%20%3B%20B%20%5Bform%3D%22lo%22%7C%22Lo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La nueva <strong>empresa</strong> <strong>tiene</strong> como objetivos fundamentales la creaci\u00f3n de un frente portuario catal\u00e1n que sirva para desarrollar actuaciones comerciales e industriales coordinadas entre los distintos puertos .", "verb": "tiene", "verbFeats": ["upos=VERB", "deprel=root", "lemma=tener", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres"], "nsubj": "empresa", "nsubjFeats": ["upos=NOUN", "lemma=empresa", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19981201-76-s5%22%20%3B%20A%20%5Bform%3D%22tiene%22%7C%22Tiene%22%5D%20%3B%20B%20%5Bform%3D%22empresa%22%7C%22Empresa%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Hace apenas unos d\u00edas , la <strong>banda</strong> <strong>notificaba</strong> que su primer single I Might , estar\u00e1 disponible para verano .", "verb": "notificaba", "verbFeats": ["upos=VERB", "deprel=root", "lemma=notificar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp"], "nsubj": "banda", "nsubjFeats": ["upos=NOUN", "lemma=banda", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s72%22%20%3B%20A%20%5Bform%3D%22notificaba%22%7C%22Notificaba%22%5D%20%3B%20B%20%5Bform%3D%22banda%22%7C%22Banda%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Todas estas <strong>t\u00e9cnicas</strong> se <strong>basan</strong> en la facilidad con que se puede seguir la evoluci\u00f3n y la trayectoria de cantidades pr\u00e1cticamente insignificantes de un radionucleido , a trav\u00e9s de un medio como , por ejemplo , el cuerpo humano .", "verb": "basan", "verbFeats": ["upos=VERB", "deprel=root", "lemma=basar", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres"], "nsubj": "t\u00e9cnicas", "nsubjFeats": ["upos=NOUN", "lemma=t\u00e9cnica", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-dc1-11-s2%22%20%3B%20A%20%5Bform%3D%22basan%22%7C%22Basan%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%A9cnicas%22%7C%22T%C3%A9cnicas%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Seg\u00fan la Oficina del Censo de los Estados Unidos , Cavetown tiene una superficie total de 4.93 km \u00b2 , de la cual 4.93 <strong>km</strong> \u00b2 <strong>corresponden</strong> a tierra firme y ( 0 % ) 0 km \u00b2 es agua .", "verb": "corresponden", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=corresponder", "VerbForm=Fin", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres"], "nsubj": "km", "nsubjFeats": ["upos=NOUN", "lemma=km", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s334%22%20%3B%20A%20%5Bform%3D%22corresponden%22%7C%22Corresponden%22%5D%20%3B%20B%20%5Bform%3D%22km%22%7C%22Km%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Adem\u00e1s de el asunto estrella - la intervenci\u00f3n de Gaspart en la junta - , <strong>\u00e9sta</strong> <strong>decidi\u00f3</strong> confirmar la final de la Copa de el Rey el 27 de mayo a las 21 horas en Mestalla ( Valencia ) .", "verb": "decidi\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=decidir", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "\u00e9sta", "nsubjFeats": ["upos=PRON", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Dem"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000427-20121-s14%22%20%3B%20A%20%5Bform%3D%22decidi%C3%B3%22%7C%22Decidi%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A9sta%22%7C%22%C3%89sta%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "El a\u00f1o pasado ya compartimos todas las carreras e , incluso , no solicitamos oscurecer Catalunya para que la audiencia no viera por La 2 la carrera \" , ha a\u00f1adido Oliva , quien ha recordado que el <strong>canal</strong> nacional no <strong>quiso</strong> transmitir los premios de Silverstone ni San Marino .", "verb": "quiso", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=querer", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "canal", "nsubjFeats": ["upos=NOUN", "lemma=canal", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000426-19134-s3B%22%20%3B%20A%20%5Bform%3D%22quiso%22%7C%22Quiso%22%5D%20%3B%20B%20%5Bform%3D%22canal%22%7C%22Canal%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Hace unos a\u00f1os se <strong>difundi\u00f3</strong> una <strong>noticia</strong> desde Buenos Aires que daba cuenta de un suceso curioso .", "verb": "difundi\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=difundir", "VerbForm=Fin", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past"], "nsubj": "noticia", "nsubjFeats": ["upos=NOUN", "lemma=noticia", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19990802-48-s1%22%20%3B%20A%20%5Bform%3D%22difundi%C3%B3%22%7C%22Difundi%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22noticia%22%7C%22Noticia%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}]}, "PAIRS": [{"origSentence": "La mayor <strong>parte</strong> de los \" veraneantes \" <strong>procede</strong> de la zona de Bilbao y de Madrid .", "swapSentence": "La mayor <strong>parte</strong> de los \" veraneantes \" <strong>proceden</strong> de la zona de Bilbao y de Madrid .", "nsubj": "parte", "verb": "procede", "nsubjFeats": ["lemma=parte", "upos=NOUN", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=proceder", "deprel=root", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "proceden", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-025-s159%22%20%3B%20A%20%5Bform%3D%22parte%22%7C%22Parte%22%5D%20%3B%20B%20%5Bform%3D%22procede%22%7C%22Procede%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "El anticipado fin de la operaci\u00f3n se produjo tras 17 d\u00edas de b\u00fasqueda en los que se <strong>rescataron</strong> los <strong>cuerpos</strong> de s\u00f3lo doce de los 118 tripulantes muertos en el naufragio , pero sin encontrar pruebas para confirmar la tesis oficial rusa de la colisi\u00f3n .", "swapSentence": "El anticipado fin de la operaci\u00f3n se produjo tras 17 d\u00edas de b\u00fasqueda en los que se <strong>rescat\u00f3</strong> los <strong>cuerpos</strong> de s\u00f3lo doce de los 118 tripulantes muertos en el naufragio , pero sin encontrar pruebas para confirmar la tesis oficial rusa de la colisi\u00f3n .", "nsubj": "cuerpos", "verb": "rescataron", "nsubjFeats": ["lemma=cuerpo", "upos=NOUN", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=rescatar", "deprel=acl:relcl", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "rescat\u00f3", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20001107-4683-s7%22%20%3B%20A%20%5Bform%3D%22cuerpos%22%7C%22Cuerpos%22%5D%20%3B%20B%20%5Bform%3D%22rescataron%22%7C%22Rescataron%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "El <strong>equipo</strong> espa\u00f1ol formado por Almudena Cid , Esther Dom\u00ednguez y Alba Caride <strong>acab\u00f3</strong> en cuarto lugar en la fase de clasificaci\u00f3n de los Mundiales de gimnasia r\u00edtmica que se celebran en Osaka ( Jap\u00f3n ) , lo que le asegura dos plazas , el m\u00e1ximo posible , para el concurso individual de los JJOO de Sydney .", "swapSentence": "El <strong>equipo</strong> espa\u00f1ol formado por Almudena Cid , Esther Dom\u00ednguez y Alba Caride <strong>acabaron</strong> en cuarto lugar en la fase de clasificaci\u00f3n de los Mundiales de gimnasia r\u00edtmica que se celebran en Osaka ( Jap\u00f3n ) , lo que le asegura dos plazas , el m\u00e1ximo posible , para el concurso individual de los JJOO de Sydney .", "nsubj": "equipo", "verb": "acab\u00f3", "nsubjFeats": ["lemma=equipo", "upos=NOUN", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=acabar", "deprel=root", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "acabaron", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19991001-130-s28%22%20%3B%20A%20%5Bform%3D%22equipo%22%7C%22Equipo%22%5D%20%3B%20B%20%5Bform%3D%22acab%C3%B3%22%7C%22Acab%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "El <strong>texto</strong> , explic\u00f3 , \" no <strong>cumplimenta</strong> en gran parte \" las determinaciones de la resoluci\u00f3n de fecha 20 de julio de 1998 por la que se paraliz\u00f3 una parte de el plan y suspendi\u00f3 la otra hasta su aprobaci\u00f3n definitiva , por lo que se reitera la decisi\u00f3n adoptada hace m\u00e1s de dos a\u00f1os y sigue vigente el PGOU de 1986 .", "swapSentence": "El <strong>texto</strong> , explic\u00f3 , \" no <strong>cumplimentan</strong> en gran parte \" las determinaciones de la resoluci\u00f3n de fecha 20 de julio de 1998 por la que se paraliz\u00f3 una parte de el plan y suspendi\u00f3 la otra hasta su aprobaci\u00f3n definitiva , por lo que se reitera la decisi\u00f3n adoptada hace m\u00e1s de dos a\u00f1os y sigue vigente el PGOU de 1986 .", "nsubj": "texto", "verb": "cumplimenta", "nsubjFeats": ["lemma=texto", "upos=NOUN", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=cumplimentar", "deprel=root", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "cumplimentan", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20001030-24537-s3%22%20%3B%20A%20%5Bform%3D%22texto%22%7C%22Texto%22%5D%20%3B%20B%20%5Bform%3D%22cumplimenta%22%7C%22Cumplimenta%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "El anuncio fue hecho el domingo en Porto Alegre , capital de el estado de R\u00edo Grande de o Sul , donde opera la CRT , por el presidente de TCS , Henrique Neves , <strong>quien</strong> <strong>afirm\u00f3</strong> que Telef\u00f3nica y sus socios aceptaron esa soluci\u00f3n para poner fin a la diferencia entre el precio pedido por TBS y el que est\u00e1 dispuesto a pagar TCS , \u00fanica empresa interesada en el negocio .", "swapSentence": "El anuncio fue hecho el domingo en Porto Alegre , capital de el estado de R\u00edo Grande de o Sul , donde opera la CRT , por el presidente de TCS , Henrique Neves , <strong>quien</strong> <strong>afirmaron</strong> que Telef\u00f3nica y sus socios aceptaron esa soluci\u00f3n para poner fin a la diferencia entre el precio pedido por TBS y el que est\u00e1 dispuesto a pagar TCS , \u00fanica empresa interesada en el negocio .", "nsubj": "quien", "verb": "afirm\u00f3", "nsubjFeats": ["upos=PRON", "<b>Number=Sing</b>", "PronType=Rel"], "verbFeats": ["lemma=afirmar", "deprel=acl:relcl", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "afirmaron", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000207-5606-s2%22%20%3B%20A%20%5Bform%3D%22quien%22%7C%22Quien%22%5D%20%3B%20B%20%5Bform%3D%22afirm%C3%B3%22%7C%22Afirm%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "Los <strong>nombres</strong> de condado en los Estados Unidos <strong>califican</strong> autom\u00e1ticamente como denominaci\u00f3n legal de origen para los vinos producidos con uvas cultivadas en ese condado y no requieren de un registro en el Departamento de el Tesoro de los Estados Unidos , Oficina Comercial de Impuesto sobre Alcohol y Tabaco .", "swapSentence": "Los <strong>nombres</strong> de condado en los Estados Unidos <strong>califica</strong> autom\u00e1ticamente como denominaci\u00f3n legal de origen para los vinos producidos con uvas cultivadas en ese condado y no requieren de un registro en el Departamento de el Tesoro de los Estados Unidos , Oficina Comercial de Impuesto sobre Alcohol y Tabaco .", "nsubj": "nombres", "verb": "califican", "nsubjFeats": ["lemma=nombre", "upos=NOUN", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=calificar", "deprel=root", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "califica", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-017-s382%22%20%3B%20A%20%5Bform%3D%22nombres%22%7C%22Nombres%22%5D%20%3B%20B%20%5Bform%3D%22califican%22%7C%22Califican%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Por escritura de 15 de mayo de 1579 conviene el duque Francisco con las monjas de el monasterio de Santa Clara de la Columna de Belalc\u00e1zar , C\u00f3rdoba , como cesionarias de las difuntas monjas Leonor e Isabel de Sotomayor , hijas de Alonso de Sotomayor y Elvira de Z\u00fa\u00f1iga , I condes de Belalc\u00e1zar , sobre la p\u00e9rdida de la dehesa de la Cinta , que en recompensa el <strong>duque</strong> Francisco les <strong>da</strong> parte de la dehesa de Hinojosa .", "swapSentence": "Por escritura de 15 de mayo de 1579 conviene el duque Francisco con las monjas de el monasterio de Santa Clara de la Columna de Belalc\u00e1zar , C\u00f3rdoba , como cesionarias de las difuntas monjas Leonor e Isabel de Sotomayor , hijas de Alonso de Sotomayor y Elvira de Z\u00fa\u00f1iga , I condes de Belalc\u00e1zar , sobre la p\u00e9rdida de la dehesa de la Cinta , que en recompensa el <strong>duque</strong> Francisco les <strong>dan</strong> parte de la dehesa de Hinojosa .", "nsubj": "duque", "verb": "da", "nsubjFeats": ["lemma=duque", "upos=NOUN", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=dar", "deprel=ccomp", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "dan", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s495%22%20%3B%20A%20%5Bform%3D%22duque%22%7C%22Duque%22%5D%20%3B%20B%20%5Bform%3D%22da%22%7C%22Da%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "- \u00bf Qu\u00e9 <strong>m\u00e9dicos</strong> <strong>otorgaron</strong> el certificado de defunci\u00f3n ?", "swapSentence": "- \u00bf Qu\u00e9 <strong>m\u00e9dicos</strong> <strong>otorg\u00f3</strong> el certificado de defunci\u00f3n ?", "nsubj": "m\u00e9dicos", "verb": "otorgaron", "nsubjFeats": ["lemma=m\u00e9dico", "upos=NOUN", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=otorgar", "deprel=root", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "otorg\u00f3", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s286%22%20%3B%20A%20%5Bform%3D%22m%C3%A9dicos%22%7C%22M%C3%A9dicos%22%5D%20%3B%20B%20%5Bform%3D%22otorgaron%22%7C%22Otorgaron%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "\" <strong>Esto</strong> <strong>significa</strong> que no hemos perdido fuerzas sino que a el bajar tanto el PSC ha propiciado que el PP ganara un esca\u00f1o a costa nuestra \" , seg\u00fan L\u00f3pez de Lerma , que ha afirmado que CiU se ha mantenido en la provincia de Girona .", "swapSentence": "\" <strong>Esto</strong> <strong>significan</strong> que no hemos perdido fuerzas sino que a el bajar tanto el PSC ha propiciado que el PP ganara un esca\u00f1o a costa nuestra \" , seg\u00fan L\u00f3pez de Lerma , que ha afirmado que CiU se ha mantenido en la provincia de Girona .", "nsubj": "esto", "verb": "significa", "nsubjFeats": ["upos=PRON", "<b>Number=Sing</b>", "PronType=Dem"], "verbFeats": ["lemma=significar", "deprel=root", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "significan", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000312-9968-s2%22%20%3B%20A%20%5Bform%3D%22esto%22%7C%22Esto%22%5D%20%3B%20B%20%5Bform%3D%22significa%22%7C%22Significa%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "<strong>Otras</strong> <strong>consisten</strong> en un cuartelado de Castilla , Sicilia ( s\u00f3lo con el \u00e1guila imperial ) , Arag\u00f3n y Le\u00f3n .", "swapSentence": "<strong>Otras</strong> <strong>consiste</strong> en un cuartelado de Castilla , Sicilia ( s\u00f3lo con el \u00e1guila imperial ) , Arag\u00f3n y Le\u00f3n .", "nsubj": "otras", "verb": "consisten", "nsubjFeats": ["upos=PRON", "Gender=Fem", "<b>Number=Plur</b>", "PronType=Ind"], "verbFeats": ["lemma=consistir", "deprel=root", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "consiste", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-029-s97%22%20%3B%20A%20%5Bform%3D%22otras%22%7C%22Otras%22%5D%20%3B%20B%20%5Bform%3D%22consisten%22%7C%22Consisten%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Estos <strong>fondos</strong> se <strong>emplean</strong> para respaldar diversos proyectos de desarrollo en las antiguas rep\u00fablicas sovi\u00e9ticas , incluida la Federaci\u00f3n Rusa .", "swapSentence": "Estos <strong>fondos</strong> se <strong>emplea</strong> para respaldar diversos proyectos de desarrollo en las antiguas rep\u00fablicas sovi\u00e9ticas , incluida la Federaci\u00f3n Rusa .", "nsubj": "fondos", "verb": "emplean", "nsubjFeats": ["lemma=fondo", "upos=NOUN", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=emplear", "deprel=root", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "emplea", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000620-15780-s5%22%20%3B%20A%20%5Bform%3D%22fondos%22%7C%22Fondos%22%5D%20%3B%20B%20%5Bform%3D%22emplean%22%7C%22Emplean%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraba</strong> f\u00edsicamente cerca de K\u00f3lob .", "swapSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraron</strong> f\u00edsicamente cerca de K\u00f3lob .", "nsubj": "tierra", "verb": "encontraba", "nsubjFeats": ["upos=PROPN", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=encontrar", "deprel=advcl", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "ungrammatical": "encontraron", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s159%22%20%3B%20A%20%5Bform%3D%22tierra%22%7C%22Tierra%22%5D%20%3B%20B%20%5Bform%3D%22encontraba%22%7C%22Encontraba%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraba</strong> f\u00edsicamente cerca de K\u00f3lob .", "swapSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encuentran</strong> f\u00edsicamente cerca de K\u00f3lob .", "nsubj": "tierra", "verb": "encontraba", "nsubjFeats": ["upos=PROPN", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=encontrar", "deprel=advcl", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "ungrammatical": "encuentran", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s159%22%20%3B%20A%20%5Bform%3D%22tierra%22%7C%22Tierra%22%5D%20%3B%20B%20%5Bform%3D%22encontraba%22%7C%22Encontraba%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraba</strong> f\u00edsicamente cerca de K\u00f3lob .", "swapSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontrar\u00e1n</strong> f\u00edsicamente cerca de K\u00f3lob .", "nsubj": "tierra", "verb": "encontraba", "nsubjFeats": ["upos=PROPN", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=encontrar", "deprel=advcl", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "ungrammatical": "encontrar\u00e1n", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s159%22%20%3B%20A%20%5Bform%3D%22tierra%22%7C%22Tierra%22%5D%20%3B%20B%20%5Bform%3D%22encontraba%22%7C%22Encontraba%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraba</strong> f\u00edsicamente cerca de K\u00f3lob .", "swapSentence": "Seg\u00fan la teor\u00eda , la raz\u00f3n por la que el tiempo de la tierra se midiera en el tiempo de K\u00f3lob es porque la <strong>tierra</strong> se <strong>encontraban</strong> f\u00edsicamente cerca de K\u00f3lob .", "nsubj": "tierra", "verb": "encontraba", "nsubjFeats": ["upos=PROPN", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=encontrar", "deprel=advcl", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "ungrammatical": "encontraban", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s159%22%20%3B%20A%20%5Bform%3D%22tierra%22%7C%22Tierra%22%5D%20%3B%20B%20%5Bform%3D%22encontraba%22%7C%22Encontraba%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}]};
+const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Spanish", "languageName": "Spanish", "accuracy": "98.3%", "testAccuracy": "98.2%", "testN": 1878, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "16,899", "predictor": "Verb_nsubj_Number", "rootAccuracy": "98.3%", "trainAccuracy": "98.3%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9818956336528222, "pooledTestN": 1878, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 18777, "pooledUnkRows": 10452, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "AnCora", "rows": 11279, "unkRows": 8459, "status": "ok", "excluded": false, "reason": null, "acc": 0.9867021276595744, "pooledAcc": 0.9867021276595744, "delta": 0.0, "diverges": false, "href": "Spanish/UD_Spanish-AnCora.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GSD", "rows": 6728, "unkRows": 1992, "status": "ok", "excluded": false, "reason": null, "acc": 0.9732540861812778, "pooledAcc": 0.9732540861812778, "delta": 0.0, "diverges": false, "href": "Spanish/UD_Spanish-GSD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 770, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 0.987012987012987, "pooledAcc": 0.987012987012987, "delta": 0.0, "diverges": false, "href": "Spanish/UD_Spanish-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 16615, "color": "var(--yes)"}, {"cls": "no", "cnt": 284, "color": "var(--no)"}, {"cls": "unk", "cnt": 10452, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 16899, "H": 0.1233, "acc": 0.9832, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 16615, "color": "var(--yes)"}, {"cls": "no", "cnt": 284, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 16615, "correctSwaps": 15845, "pairRoleCounts": {"B": 15845}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "<strong>Marcos</strong> Willians Herbas Camacho , \" Marcola \" , <strong>naci\u00f3</strong> en 1968 y es el l\u00edder de la organizaci\u00f3n criminal Primeiro Comando da Capital .", "verb": "naci\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=nacer", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Marcos", "nsubjFeats": ["upos=PROPN", "lemma=Marcos", "Gender=Masc", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s127%22%20%3B%20A%20%5Bform%3D%22naci%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22Marcos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Esta gente ha estado acostumbrada a empleos donde les pagaban un salario bajo : da igual lo que hicieran o <strong>lo</strong> duro que <strong>trabajasen</strong> .", "verb": "trabajasen", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=trabajar", "xpos=vmsi3p0", "Mood=Sub", "<b>Number=Plur</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "nsubj": "lo", "nsubjFeats": ["upos=PRON", "lemma=\u00e9l", "xpos=da0ns0", "Case=Acc", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PrepCase=Npr", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-n1-9-s15%22%20%3B%20A%20%5Bform%3D%22trabajasen%22%5D%20%3B%20B%20%5Bform%3D%22lo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "<strong>Lo</strong> que <strong>queremos</strong> es tranquilidad , sosiego y uni\u00f3n \" , recalc\u00f3 el m\u00e1ximo mandatario realista , quien tambi\u00e9n dijo no tener \" constancia \" de que el Athletic de Bilbao u otro club se haya interesado por el centrocampista Javier de Pedro .", "verb": "queremos", "verbFeats": ["upos=VERB", "deprel=csubj", "lemma=querer", "xpos=vmip1p0", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "lo", "nsubjFeats": ["upos=PRON", "lemma=\u00e9l", "xpos=da0ns0", "Case=Acc", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PrepCase=Npr", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000327-21717-s6B%22%20%3B%20A%20%5Bform%3D%22queremos%22%5D%20%3B%20B%20%5Bform%3D%22Lo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Los <strong>da\u00f1os</strong> por las heladas que reducir\u00e1n la cosecha de caf\u00e9 en Brasil , primer productor mundial , <strong>favorecer\u00e1</strong> la producci\u00f3n e ingresos de sus inmediatos competidores , entre ellos Colombia y los pa\u00edses cafeteros centroamericanos .", "verb": "favorecer\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=favorecer", "xpos=vmif3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Fut", "VerbForm=Fin"], "nsubj": "da\u00f1os", "nsubjFeats": ["upos=NOUN", "lemma=da\u00f1o", "xpos=ncmp000", "Gender=Masc", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000719-14827-s1%22%20%3B%20A%20%5Bform%3D%22favorecer%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22da%C3%B1os%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Antiguamente las dos calles m\u00e1s confluidas eran la de las Tiendas y la de la Feria , que salen a el Paseo para unir se con la de entrada a el pueblo , que es la de el Angosto , luego <strong>surgen</strong> un <strong>laberinto</strong> de calles , siempre adyacentes a las principales .", "verb": "surgen", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=surgir", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "laberinto", "nsubjFeats": ["upos=NOUN", "lemma=laberinto", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-001-s116%22%20%3B%20A%20%5Bform%3D%22surgen%22%5D%20%3B%20B%20%5Bform%3D%22laberinto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La <strong>mayor\u00eda</strong> de estas obras no se <strong>conservaron</strong> .", "verb": "conservaron", "verbFeats": ["upos=VERB", "deprel=root", "lemma=conservar", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "mayor\u00eda", "nsubjFeats": ["upos=NOUN", "lemma=mayor\u00eda", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s161%22%20%3B%20A%20%5Bform%3D%22conservaron%22%5D%20%3B%20B%20%5Bform%3D%22mayor%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Lo creas o no , el mill\u00f3n de <strong>unidades</strong> de 3DS vendidas en Jap\u00f3n no <strong>sabe</strong> todo lo dulce que pudieras imaginar para Nintendo .", "verb": "sabe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=saber", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "unidades", "nsubjFeats": ["upos=NOUN", "lemma=unidad", "Gender=Fem", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-022-s29%22%20%3B%20A%20%5Bform%3D%22sabe%22%5D%20%3B%20B%20%5Bform%3D%22unidades%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Sin embargo , existen extensivos an\u00e1lisis estad\u00edsticos de datos demogr\u00e1ficos y de la poblaci\u00f3n <strong>que</strong> <strong>incluyen</strong> a mujeres , especialmente en edad f\u00e9rtil .", "verb": "incluyen", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=incluir", "xpos=VBC", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "que", "nsubjFeats": ["upos=PRON", "lemma=que", "xpos=REL", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Rel", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01088099%22%20%3B%20A%20%5Bform%3D%22incluyen%22%5D%20%3B%20B%20%5Bform%3D%22que%22%5D%20%20%7D", "treebankName": "UD_Spanish-PUD"}, {"sentence": "Su <strong>punto</strong> m\u00e1s alto y caracter\u00edstico lo <strong>encontramos</strong> en el monte Kapydzhik , que llega a los 2.415 m .", "verb": "encontramos", "verbFeats": ["upos=VERB", "deprel=root", "lemma=encontrar", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "punto", "nsubjFeats": ["upos=NOUN", "lemma=punto", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-001-s203%22%20%3B%20A%20%5Bform%3D%22encontramos%22%5D%20%3B%20B%20%5Bform%3D%22punto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El <strong>resto</strong> de las anotaciones <strong>cayeron</strong> en la parte complementaria .", "verb": "cayeron", "verbFeats": ["upos=VERB", "deprel=root", "lemma=caer", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "resto", "nsubjFeats": ["upos=NOUN", "lemma=resto", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s147%22%20%3B%20A%20%5Bform%3D%22cayeron%22%5D%20%3B%20B%20%5Bform%3D%22resto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Por otra parte , estos medios opinan que la <strong>irrupci\u00f3n</strong> de cara a el verano de los comandos de j\u00f3venes de KAS , denominados Y y especializados en sabotajes , <strong>tendr\u00e1n</strong> una justificaci\u00f3n para llevar a cabo sus fechor\u00edas .", "verb": "tendr\u00e1n", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=tener", "xpos=vmif3p0", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Fut", "VerbForm=Fin"], "nsubj": "irrupci\u00f3n", "nsubjFeats": ["upos=NOUN", "lemma=irrupci\u00f3n", "xpos=ncfs000", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-r2-4-s13%22%20%3B%20A%20%5Bform%3D%22tendr%C3%A1n%22%5D%20%3B%20B%20%5Bform%3D%22irrupci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Por eso , a veces <strong>usamos</strong> el <strong>t\u00e9rmino</strong> p\u00eda - aracnoides .", "verb": "usamos", "verbFeats": ["upos=VERB", "deprel=root", "lemma=usar", "Mood=Ind", "<b>Number=Plur</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "t\u00e9rmino", "nsubjFeats": ["upos=NOUN", "lemma=t\u00e9rmino", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s412%22%20%3B%20A%20%5Bform%3D%22usamos%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%A9rmino%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "<strong>Esto</strong> , unido a los continuos intentos por denominar a el medioextreme\u00f1o y a el bajoextreme\u00f1o como ' lengua ' - el cast\u00fao , t\u00e9rmino acu\u00f1ado por el poeta de Guare\u00f1a , Luis Chamizo - <strong>hacen</strong> todav\u00eda m\u00e1s dif\u00edcil defender la verdadera lengua y m\u00e1s f\u00e1cil el rechazo de la administraci\u00f3n a la normalizaci\u00f3n y ense\u00f1anza de el extreme\u00f1o .", "verb": "hacen", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hacer", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "esto", "nsubjFeats": ["upos=PRON", "lemma=este", "<b>Number=Sing</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s449%22%20%3B%20A%20%5Bform%3D%22hacen%22%5D%20%3B%20B%20%5Bform%3D%22Esto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El presidente de el Frente Patri\u00f3tico ( FP ) , Luis Villac\u00eds , indic\u00f3 a EFE que las protestas crecer\u00e1n en intensidad pero que el <strong>grueso</strong> de las manifestaciones se <strong>dejar\u00e1n</strong> sentir el pr\u00f3ximo Lunes durante la celebraci\u00f3n de el D\u00eda Internacional de el Trabajo .", "verb": "dejar\u00e1n", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=dejar", "xpos=vmif3p0", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Fut", "VerbForm=Fin"], "nsubj": "grueso", "nsubjFeats": ["upos=NOUN", "lemma=grueso", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000427-19695-s4%22%20%3B%20A%20%5Bform%3D%22dejar%C3%A1n%22%5D%20%3B%20B%20%5Bform%3D%22grueso%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La <strong>totalidad</strong> de el su superficie y de sus costas <strong>pertenecen</strong> a el Parque Nacional Los Alerces , y en sus costas no reside poblaci\u00f3n permanente alguna .", "verb": "pertenecen", "verbFeats": ["upos=VERB", "deprel=root", "lemma=pertenecer", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "totalidad", "nsubjFeats": ["upos=NOUN", "lemma=totalidad", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-010-s135%22%20%3B%20A%20%5Bform%3D%22pertenecen%22%5D%20%3B%20B%20%5Bform%3D%22totalidad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El <strong>contenedor</strong> , fabricado en PVC y poliestireno expandido <strong>garantiza</strong> un correcto aislamiento .", "verb": "garantiza", "verbFeats": ["upos=VERB", "deprel=root", "lemma=garantizar", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "contenedor", "nsubjFeats": ["upos=NOUN", "lemma=contenedor", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-028-s186%22%20%3B%20A%20%5Bform%3D%22garantiza%22%5D%20%3B%20B%20%5Bform%3D%22contenedor%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El prefecto ( gobernador ) de el departamento de Oruro , Carlos Borth , confirm\u00f3 a EFE que el <strong>campesino</strong> Celso Mamani <strong>result\u00f3</strong> gravemente herido por la explosi\u00f3n , despu\u00e9s de cruzar la frontera con otras cuatro personas , en la madrugada de el viernes .", "verb": "result\u00f3", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=resultar", "xpos=vmis3s0", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "campesino", "nsubjFeats": ["upos=NOUN", "lemma=campesino", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000527-22163-s2%22%20%3B%20A%20%5Bform%3D%22result%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22campesino%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "As\u00ed lo ven los pescadores , y sus <strong>argumentos</strong> , romos en jur\u00eddica y pol\u00edtica , no <strong>presentan</strong> fisuras morales .", "verb": "presentan", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=presentar", "xpos=vmip3p0", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "argumentos", "nsubjFeats": ["upos=NOUN", "lemma=argumento", "xpos=ncmp000", "Gender=Masc", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-20010402-10_a-s10%22%20%3B%20A%20%5Bform%3D%22presentan%22%5D%20%3B%20B%20%5Bform%3D%22argumentos%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "La pel\u00edcula adapta la historia de Charles Dickens ' Cuento de Navidad \" , usando los personajes de Todos los <strong>perros</strong> <strong>van</strong> a el cielo .", "verb": "van", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=ir", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "perros", "nsubjFeats": ["upos=NOUN", "lemma=perro", "Gender=Masc", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s109%22%20%3B%20A%20%5Bform%3D%22van%22%5D%20%3B%20B%20%5Bform%3D%22perros%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Un secreto <strong>temblor</strong> , su segundo poemario , <strong>gana</strong> el Premio de Poes\u00eda Arcipreste de Hita.", "verb": "gana", "verbFeats": ["upos=VERB", "deprel=root", "lemma=ganar", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "temblor", "nsubjFeats": ["upos=PROPN", "lemma=temblor", "Gender=Masc", "NounType=Prop", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-007-s165%22%20%3B%20A%20%5Bform%3D%22gana%22%5D%20%3B%20B%20%5Bform%3D%22temblor%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Pero <strong>fue</strong> el entusiasta <strong>apoyo</strong> de el gobierno liberal de Robin Gray que ver\u00eda el r\u00edo desbordado .", "verb": "fue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=ser", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "apoyo", "nsubjFeats": ["upos=NOUN", "lemma=apoyo", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s279%22%20%3B%20A%20%5Bform%3D%22fue%22%5D%20%3B%20B%20%5Bform%3D%22apoyo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Su voz se escuch\u00f3 literalmente por todo el mundo , <strong>dijo</strong> <strong>Leive</strong> .", "verb": "dijo", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=decir", "xpos=VBC", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Leive", "nsubjFeats": ["upos=PROPN", "lemma=Leive", "xpos=NNP", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01053041%22%20%3B%20A%20%5Bform%3D%22dijo%22%5D%20%3B%20B%20%5Bform%3D%22Leive%22%5D%20%20%7D", "treebankName": "UD_Spanish-PUD"}, {"sentence": "Sin embargo , desde hace alg\u00fan tiempo tambi\u00e9n se <strong>utiliza</strong> como agrupaci\u00f3n funcional en la mol\u00e9cula aceptora el <strong>grupo</strong> cianimino ( =N-CN ) con el que recientemente se han sintetizado un ya elevado n\u00famero de nuevas mol\u00e9culas aceptoras , que junto con los dadores apropiados , han conducido a nuevos compuestos org\u00e1nicos conductores .", "verb": "utiliza", "verbFeats": ["upos=VERB", "deprel=root", "lemma=utilizar", "xpos=vmip3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "grupo", "nsubjFeats": ["upos=NOUN", "lemma=grupo", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-dc3-14-s2%22%20%3B%20A%20%5Bform%3D%22utiliza%22%5D%20%3B%20B%20%5Bform%3D%22grupo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Finalmente , <strong>sobreviene</strong> la <strong>muerte</strong> por par\u00e1lisis respiratoria .", "verb": "sobreviene", "verbFeats": ["upos=VERB", "deprel=root", "lemma=sobrevenir", "xpos=vmip3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "muerte", "nsubjFeats": ["upos=NOUN", "lemma=muerte", "xpos=ncfs000", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223LB-CAST-dc2-3-s9%22%20%3B%20A%20%5Bform%3D%22sobreviene%22%5D%20%3B%20B%20%5Bform%3D%22muerte%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Los <strong>monta\u00f1eros</strong> , de La Coru\u00f1a y de entre 18 y 22 a\u00f1os , <strong>llamaron</strong> a un hostal para pedir auxilio .", "verb": "llamaron", "verbFeats": ["upos=VERB", "deprel=root", "lemma=llamar", "xpos=vmis3p0", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "monta\u00f1eros", "nsubjFeats": ["upos=NOUN", "lemma=monta\u00f1ero", "xpos=ncmp000", "Gender=Masc", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-20010501-71-s2%22%20%3B%20A%20%5Bform%3D%22llamaron%22%5D%20%3B%20B%20%5Bform%3D%22monta%C3%B1eros%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "El ex <strong>senador</strong> por Nueva Jersey se <strong>burl\u00f3</strong> de el lema de el candidato republicano a la presidencia , George W. Bush , que promueve un \" conservadurismo compasivo \" .", "verb": "burl\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=burlar", "xpos=vmis3s0", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "senador", "nsubjFeats": ["upos=NOUN", "lemma=senador", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-A-20000816-10242-s15%22%20%3B%20A%20%5Bform%3D%22burl%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22senador%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "Cuando la <strong>bandera</strong> <strong>estaba</strong> pr\u00e1cticamente en manos de sus leg\u00edtimos due\u00f1os , la tropa de Milani sac\u00f3 elementos cortantes , y a\u00fan a riesgo de lastimar a sus oponentes , destruy\u00f3 lo que pudo de el bot\u00edn que no pudieron conquistar .", "verb": "estaba", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=estar", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Imp", "VerbForm=Fin"], "nsubj": "bandera", "nsubjFeats": ["upos=NOUN", "lemma=bandera", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-002-s97%22%20%3B%20A%20%5Bform%3D%22estaba%22%5D%20%3B%20B%20%5Bform%3D%22bandera%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Jamison por segundo partido consecutivo lleg\u00f3 a la marca de los 51 puntos , la mejor como profesional , y esta vez a diferencia de lo que sucedi\u00f3 el pasado lunes , que su <strong>equipo</strong> <strong>perdi\u00f3</strong> por 118-102 frente a los SuperSonics de Seattle , los Warriors lograron la victoria para ganar por tercera vez en los \u00faltimos nueve partidos que han disputado contra los Lakers en su campo de el Arena .", "verb": "perdi\u00f3", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=perder", "xpos=vmis3s0", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "equipo", "nsubjFeats": ["upos=NOUN", "lemma=equipo", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20001207-4633-s2%22%20%3B%20A%20%5Bform%3D%22perdi%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22equipo%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "\" Nadie se ir\u00e1 este a\u00f1o . Hasta diciembre , seguro \" , <strong>declar\u00f3</strong> el <strong>presidente</strong> de el Bar\u00e7a , quien quiso precisar que el caso de Litmanen era diferente .", "verb": "declar\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=declarar", "xpos=vmis3s0", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "presidente", "nsubjFeats": ["upos=NOUN", "lemma=presidente", "xpos=ncms000", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-20000903-71-s5%22%20%3B%20A%20%5Bform%3D%22declar%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22presidente%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}, {"sentence": "En Huelva , una <strong>persona</strong> <strong>falleci\u00f3</strong> en la localidad de Manzanilla tambi\u00e9n despu\u00e9s de atropellar a un caballo a las 4.05 horas .", "verb": "falleci\u00f3", "verbFeats": ["upos=VERB", "deprel=root", "lemma=fallecer", "xpos=vmis3s0", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "persona", "nsubjFeats": ["upos=NOUN", "lemma=persona", "xpos=ncfs000", "Gender=Fem", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19990802-29-s5%22%20%3B%20A%20%5Bform%3D%22falleci%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22persona%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora"}]}, "PAIRS": [{"origSentence": "En 2001 , la nueva <strong>gesti\u00f3n</strong> <strong>increment\u00f3</strong> la participaci\u00f3n de funcionarios espa\u00f1oles , lo que termin\u00f3 con el traspaso de la aerol\u00ednea a el Grupo Marsans .", "swapSentence": "En 2001 , la nueva <strong>gesti\u00f3n</strong> <strong>incrementaron</strong> la participaci\u00f3n de funcionarios espa\u00f1oles , lo que termin\u00f3 con el traspaso de la aerol\u00ednea a el Grupo Marsans .", "nsubj": "gesti\u00f3n", "verb": "increment\u00f3", "nsubjFeats": ["lemma=gesti\u00f3n", "upos=NOUN", "deprel=nsubj", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=incrementar", "deprel=root", "upos=VERB", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "incrementaron", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-025-s501%22%20%3B%20A%20%5Bform%3D%22increment%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22gesti%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "<strong>Expertos</strong> noruegos <strong>tacharon</strong> hoy de \" absurda \" la tesis rusa de el choque y de un supuesto \" acuerdo \" entre el presidente norteamericano Bill Clinton y su hom\u00f3logo ruso , Vlad\u00edmir Putin , para ocultar las causas hasta despu\u00e9s de las elecciones en Estados Unidos .", "swapSentence": "<strong>Expertos</strong> noruegos <strong>tach\u00f3</strong> hoy de \" absurda \" la tesis rusa de el choque y de un supuesto \" acuerdo \" entre el presidente norteamericano Bill Clinton y su hom\u00f3logo ruso , Vlad\u00edmir Putin , para ocultar las causas hasta despu\u00e9s de las elecciones en Estados Unidos .", "nsubj": "expertos", "verb": "tacharon", "nsubjFeats": ["lemma=experto", "upos=NOUN", "xpos=ncmp000", "deprel=nsubj", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=tachar", "deprel=root", "upos=VERB", "xpos=vmis3p0", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "tach\u00f3", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20001107-4683-s8%22%20%3B%20A%20%5Bform%3D%22tacharon%22%5D%20%3B%20B%20%5Bform%3D%22Expertos%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "<strong>Termina</strong> as\u00ed la <strong>aventura</strong> de Bakero en el banquillo ya que en los 13 partidos que ha dirigido a el Puebla , cinco de el torneo anterior y ocho de el actual , s\u00f3lo ha ganado dos encuentros , ha empatado cuatro y ha encajado siete derrotas .", "swapSentence": "<strong>terminan</strong> as\u00ed la <strong>aventura</strong> de Bakero en el banquillo ya que en los 13 partidos que ha dirigido a el Puebla , cinco de el torneo anterior y ocho de el actual , s\u00f3lo ha ganado dos encuentros , ha empatado cuatro y ha encajado siete derrotas .", "nsubj": "aventura", "verb": "termina", "nsubjFeats": ["lemma=aventura", "upos=NOUN", "xpos=ncfs000", "deprel=nsubj", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=terminar", "deprel=root", "upos=VERB", "xpos=vmip3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "terminan", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-P-19991001-130-s26%22%20%3B%20A%20%5Bform%3D%22Termina%22%5D%20%3B%20B%20%5Bform%3D%22aventura%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "El texto , explic\u00f3 , \" no cumplimenta en gran parte \" las determinaciones de la resoluci\u00f3n de fecha 20 de julio de 1998 por la que se <strong>paraliz\u00f3</strong> una <strong>parte</strong> de el plan y suspendi\u00f3 la otra hasta su aprobaci\u00f3n definitiva , por lo que se reitera la decisi\u00f3n adoptada hace m\u00e1s de dos a\u00f1os y sigue vigente el PGOU de 1986 .", "swapSentence": "El texto , explic\u00f3 , \" no cumplimenta en gran parte \" las determinaciones de la resoluci\u00f3n de fecha 20 de julio de 1998 por la que se <strong>paralizaban</strong> una <strong>parte</strong> de el plan y suspendi\u00f3 la otra hasta su aprobaci\u00f3n definitiva , por lo que se reitera la decisi\u00f3n adoptada hace m\u00e1s de dos a\u00f1os y sigue vigente el PGOU de 1986 .", "nsubj": "parte", "verb": "paraliz\u00f3", "nsubjFeats": ["lemma=parte", "upos=NOUN", "xpos=ncfs000", "deprel=nsubj", "Gender=Fem", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=paralizar", "deprel=acl:relcl", "upos=VERB", "xpos=vmis3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "paralizaban", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20001030-24537-s3%22%20%3B%20A%20%5Bform%3D%22paraliz%C3%B3%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "Ahora falta definir detalles como la posibilidad de apelar o no la decisi\u00f3n final de los \u00e1rbitros sobre el precio \" , manifest\u00f3 Neves a la prensa , mientras que <strong>fuentes</strong> de Telef\u00f3nica consultadas por EFE se <strong>abstuvieron</strong> de confirmar o desmentir la informaci\u00f3n .", "swapSentence": "Ahora falta definir detalles como la posibilidad de apelar o no la decisi\u00f3n final de los \u00e1rbitros sobre el precio \" , manifest\u00f3 Neves a la prensa , mientras que <strong>fuentes</strong> de Telef\u00f3nica consultadas por EFE se <strong>abstuvo</strong> de confirmar o desmentir la informaci\u00f3n .", "nsubj": "fuentes", "verb": "abstuvieron", "nsubjFeats": ["lemma=fuente", "upos=NOUN", "xpos=ncfp000", "deprel=nsubj", "Gender=Fem", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=abstener", "deprel=advcl", "upos=VERB", "xpos=vmis3p0", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "abstuvo", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000207-5606-s3B%22%20%3B%20A%20%5Bform%3D%22abstuvieron%22%5D%20%3B%20B%20%5Bform%3D%22fuentes%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}, {"origSentence": "Los <strong>arbustos</strong> <strong>tienen</strong> el follaje como agujas .", "swapSentence": "Los <strong>arbustos</strong> <strong>tiene</strong> el follaje como agujas .", "nsubj": "arbustos", "verb": "tienen", "nsubjFeats": ["lemma=arbusto", "upos=NOUN", "deprel=nsubj", "Gender=Masc", "<b>Number=Plur</b>", "Person=3"], "verbFeats": ["lemma=tener", "deprel=root", "upos=VERB", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "tiene", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-017-s378%22%20%3B%20A%20%5Bform%3D%22tienen%22%5D%20%3B%20B%20%5Bform%3D%22arbustos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Por escritura de 15 de mayo de 1579 <strong>conviene</strong> el <strong>duque</strong> Francisco con las monjas de el monasterio de Santa Clara de la Columna de Belalc\u00e1zar , C\u00f3rdoba , como cesionarias de las difuntas monjas Leonor e Isabel de Sotomayor , hijas de Alonso de Sotomayor y Elvira de Z\u00fa\u00f1iga , I condes de Belalc\u00e1zar , sobre la p\u00e9rdida de la dehesa de la Cinta , que en recompensa el duque Francisco les da parte de la dehesa de Hinojosa .", "swapSentence": "Por escritura de 15 de mayo de 1579 <strong>convienen</strong> el <strong>duque</strong> Francisco con las monjas de el monasterio de Santa Clara de la Columna de Belalc\u00e1zar , C\u00f3rdoba , como cesionarias de las difuntas monjas Leonor e Isabel de Sotomayor , hijas de Alonso de Sotomayor y Elvira de Z\u00fa\u00f1iga , I condes de Belalc\u00e1zar , sobre la p\u00e9rdida de la dehesa de la Cinta , que en recompensa el duque Francisco les da parte de la dehesa de Hinojosa .", "nsubj": "duque", "verb": "conviene", "nsubjFeats": ["lemma=duque", "upos=NOUN", "deprel=nsubj", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=convenir", "deprel=root", "upos=VERB", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "convienen", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s495%22%20%3B%20A%20%5Bform%3D%22conviene%22%5D%20%3B%20B%20%5Bform%3D%22duque%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "El 29 de septiembre de 1364 Bertrand Du Guesclin y Carlos de Blois fueron gravemente derrotados en la Batalla de Auray por Juan V de Breta\u00f1a ( hijo de Juan de Monfort , que lo hab\u00eda heredado ) y sir John Chandos , <strong>quienes</strong> <strong>lucharon</strong> bajo el comando pol\u00edtico y militar de la madre de el primero , Juana de Dreux .", "swapSentence": "El 29 de septiembre de 1364 Bertrand Du Guesclin y Carlos de Blois fueron gravemente derrotados en la Batalla de Auray por Juan V de Breta\u00f1a ( hijo de Juan de Monfort , que lo hab\u00eda heredado ) y sir John Chandos , <strong>quienes</strong> <strong>luch\u00f3</strong> bajo el comando pol\u00edtico y militar de la madre de el primero , Juana de Dreux .", "nsubj": "quienes", "verb": "lucharon", "nsubjFeats": ["lemma=quien", "upos=PRON", "deprel=nsubj", "<b>Number=Plur</b>", "PronType=Rel"], "verbFeats": ["lemma=luchar", "deprel=acl:relcl", "upos=VERB", "Aspect=Perf", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "luch\u00f3", "swapRole": "B", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s282%22%20%3B%20A%20%5Bform%3D%22lucharon%22%5D%20%3B%20B%20%5Bform%3D%22quienes%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD", "leaf": "0"}, {"origSentence": "Los actuales arrestos son \" una continuaci\u00f3n de los jueguecitos en nuestra contra \" , <strong>dijo</strong> <strong>D\u00fcndar</strong> .", "swapSentence": "Los actuales arrestos son \" una continuaci\u00f3n de los jueguecitos en nuestra contra \" , <strong>dijeron</strong> <strong>D\u00fcndar</strong> .", "nsubj": "D\u00fcndar", "verb": "dijo", "nsubjFeats": ["lemma=D\u00fcndar", "upos=PROPN", "xpos=NNP", "deprel=nsubj", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=decir", "deprel=parataxis", "upos=VERB", "xpos=VBC", "Aspect=Perf", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "ungrammatical": "dijeron", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n02069039%22%20%3B%20A%20%5Bform%3D%22dijo%22%5D%20%3B%20B%20%5Bform%3D%22D%C3%BCndar%22%5D%20%20%7D", "treebankName": "UD_Spanish-PUD", "leaf": "0"}, {"origSentence": "Por su parte , el candidato de ERC , Josep Seguer , que aspiraba a conseguir un esca\u00f1o , ha declarado : \" nos apena que el PP haya sacado este esca\u00f1o , aunque su <strong>candidato</strong> nos <strong>merece</strong> todo nuestro respeto \" .", "swapSentence": "Por su parte , el candidato de ERC , Josep Seguer , que aspiraba a conseguir un esca\u00f1o , ha declarado : \" nos apena que el PP haya sacado este esca\u00f1o , aunque su <strong>candidato</strong> nos <strong>merecen</strong> todo nuestro respeto \" .", "nsubj": "candidato", "verb": "merece", "nsubjFeats": ["lemma=candidato", "upos=NOUN", "xpos=ncms000", "deprel=nsubj", "Gender=Masc", "<b>Number=Sing</b>", "Person=3"], "verbFeats": ["lemma=merecer", "deprel=advcl", "upos=VERB", "xpos=vmip3s0", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "merecen", "swapRole": "B", "afterValue": "Plur", "afterFeatKey": "Number", "siblingKeys": ["Number[_missing]", "Number[nsubj]", "Number[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-AnCora%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CESS-CAST-AA-20000312-9968-s4%22%20%3B%20A%20%5Bform%3D%22merece%22%5D%20%3B%20B%20%5Bform%3D%22candidato%22%5D%20%20%7D", "treebankName": "UD_Spanish-AnCora", "leaf": "0"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1133,6 +1407,13 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   const treeBox = document.getElementById('treeBox');
   const treeViewport = document.getElementById('treeViewport');
   const scrollPane = document.getElementById('scrollPane');
+  const drawer = document.getElementById('drawer');
+  const drawerHandle = document.getElementById('drawerHandle');
+  const drawerHint = document.getElementById('drawerHint');
+  const tabSamples = document.getElementById('tabSamples');
+  const tabPairs = document.getElementById('tabPairs');
+  const drawerLabels = document.getElementById('drawerLabels');
+  const drawerPairRoles = document.getElementById('drawerPairRoles');
   const sampleGrid = document.getElementById('sampleGrid');
   const sampleGridTitle = document.getElementById('sampleGridTitle');
   const nodeNote = document.getElementById('nodeNote');
@@ -1144,6 +1425,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
   const treeSelectRow = document.getElementById('treeSelectRow');
+  const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
   const classDistLegend = document.getElementById('classDistLegend');
@@ -1197,22 +1479,21 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // offscreen on load.
   let fitScale = 1;
   let contentScale = 1;
+  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
+  // zooming are clipped only by the card's edges, not by a box sized to the
+  // canvas's own aspect ratio. The tree itself stays laid out at its native
+  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
   function sizeTreeBox() {
-    const maxW = treeScroll.clientWidth;
-    // Fullscreen drops the 460px/46%-of-viewport cap entirely -- that cap
-    // exists so the node-samples panel below stays reachable without
-    // scrolling, which no longer matters once this card is the only thing
-    // on screen; almost the full viewport height goes to the tree instead,
-    // minus the header/tree-select-row still visible above it.
-    const maxH = document.fullscreenElement === treeWrap
-      ? window.innerHeight - treeWrap.querySelector('.card-header').offsetHeight - treeSelectRow.offsetHeight - 16
-      : Math.min(window.innerHeight * 0.46, 460);
-    fitScale = Math.min(maxW / CANVAS_W, maxH / CANVAS_H);
-    contentScale = Math.min(1, fitScale);
-    treeBox.style.width = `${CANVAS_W}px`;
-    treeBox.style.transform = `scale(${contentScale})`;
-    treeScaleOuter.style.width = `${CANVAS_W * fitScale}px`;
-    treeScaleOuter.style.height = `${CANVAS_H * fitScale}px`;
+    const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
+    fitScale = 1;
+    contentScale = 1;
+    treeBox.style.width = `${w}px`;
+    treeBox.style.height = `${h}px`;
+    treeBox.style.transform = 'none';
+    treeScaleOuter.style.width = `${w}px`;
+    treeScaleOuter.style.height = `${h}px`;
+    treeViewport.style.width = `${CANVAS_W}px`;
+    treeViewport.style.height = `${CANVAS_H}px`;
   }
 
   // Both demo trees' node coordinates were hand-placed to already fit the
@@ -1240,10 +1521,13 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     // along with everything else instead of staying fixed.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
-    const boxW = treeBox.clientWidth || CANVAS_W;
-    const boxH = boxW * (CANVAS_H / CANVAS_W);
-    const toPxX = x => (x / CANVAS_W) * boxW;
-    const toPxY = y => (y / CANVAS_H) * boxH;
+    const PAD = 20;
+    const boxW = Math.max(1, treeBox.clientWidth - 2 * PAD);
+    const boxH = Math.max(1, treeBox.clientHeight - 2 * PAD);
+    // treeViewport is laid out at native canvas size, so canvas coordinates
+    // are already CSS pixels.
+    const toPxX = x => x;
+    const toPxY = y => y;
     const minPxX = Math.min(...nodes.map(n => toPxX(n.x))) - NODE_HALF_W;
     const maxPxX = Math.max(...nodes.map(n => toPxX(n.x))) + NODE_HALF_W;
     const minPxY = Math.min(...nodes.map(n => toPxY(n.y))) - NODE_HALF_H;
@@ -1252,8 +1536,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     const scaleY = boxH / (maxPxY - minPxY);
     zoom.scale = Math.min(1, scaleX, scaleY); // never zoom *in* past 1:1 just to fit
     const cx = (minPxX + maxPxX) / 2, cy = (minPxY + maxPxY) / 2;
-    zoom.tx = boxW / 2 - cx * zoom.scale;
-    zoom.ty = boxH / 2 - cy * zoom.scale;
+    zoom.tx = treeBox.clientWidth / 2 - cx * zoom.scale;
+    zoom.ty = treeBox.clientHeight / 2 - cy * zoom.scale;
     applyZoom();
   }
 
@@ -1287,18 +1571,6 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // zoom-controls, info-panel), so nothing else has to move for this.
   function isTreeFullscreen() {
     return document.fullscreenElement === treeWrap;
-  }
-  // Runs fn immediately outside fullscreen; inside it, leaves fullscreen
-  // first and waits for that to actually finish before running fn --
-  // exitFullscreen is async, and anything fn does that depends on layout
-  // outside .tree-wrap (scrolling to it, measuring it) would otherwise run
-  // while that content is still hidden behind the fullscreen element.
-  function leaveFullscreenThen(fn) {
-    if (isTreeFullscreen()) {
-      document.exitFullscreen().then(fn);
-    } else {
-      fn();
-    }
   }
   fullscreenBtn.addEventListener('click', () => {
     if (isTreeFullscreen()) {
@@ -1405,8 +1677,24 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // identifying context like deprel/upos, not agreement-relevant morphology,
   // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
   // emits a "lemma=..." entry for every row -- it just never had a matching
-  // ORDERED_FEATS column to render into.
-  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos', 'lemma'];
+  // feature column to render into.
+  // Every feature the rows carry gets a column. Morphological features come
+  // first (the usual ones in this order, any others alphabetically after),
+  // then the token-level fields, marked off visually.
+  const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
+  const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
+  function featBase(f) {
+    return f.replace(/<\/?[bi]>/g, '').split('=')[0].split('[')[0];
+  }
+  function featColumns(featLists) {
+    const seen = new Set();
+    featLists.forEach(list => list.forEach(f => { const b = featBase(f); if (b) seen.add(b); }));
+    const present = k => featLists.some(l => featEntry(l, k));
+    const rank = k => { const i = MORPH_ORDER.indexOf(k); return i < 0 ? MORPH_ORDER.length : i; };
+    const morph = [...seen].filter(k => !OTHER_FEATS.includes(k) && present(k))
+      .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    return [...morph, ...OTHER_FEATS.filter(k => seen.has(k) && present(k))];
+  }
 
   function featEntries(feats, key) {
     // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
@@ -1468,9 +1756,27 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
   // prefix: a token can carry more than one bracket of the same base
   // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected should change -- a prefix match
-  // would also overwrite the untouched sibling (e.g. relabeling the
-  // subject's unchanged Number[erg] with the object's new value).
+  // only the one actually reinflected -- plus any TRUE alias of that same
+  // argument slot -- should change. A blanket prefix match would also drop
+  // genuinely different, untouched arguments that just happen to share the
+  // base feature name (e.g. relabeling-away the subject's unrelated
+  // Number[erg] when only the indirect object's Number[io] was swapped).
+  //
+  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
+  // is the precise list of alias brackets create_pairs' own
+  // resolve_layered_head_key would have tried for the SAME slot as
+  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
+  // child's own Case, e.g. "[dat]") -- both naming conventions for one
+  // reading, not two (Basque iobj: [io] and [dat] both key off the same
+  // indirect object). The original role's value for a sibling was real
+  // (both conventions' sources happened to agree pre-swap), but the
+  // swap_bundle that produced afterValue only ever reports the ONE key it
+  // was actually generated under -- html_tree.py's own after_feat_key
+  // resolution stops at the first populated candidate, so a sibling with no
+  // after_ value has no verified post-swap reading at all. Carrying its
+  // pre-swap value over here would silently claim it was checked and found
+  // unchanged, when it simply was never checked -- so drop only those true
+  // aliases, not every bracket of the base feature.
   //
   // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
   // _v2_pair_from_row) are APPENDED rather than patched into an existing
@@ -1480,14 +1786,16 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // reinflected candidate (a ditransitive form like "zioten" does) -- real
   // data with no original entry to replace, so it has to be added as a new
   // column instead of overwriting one.
-  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats) {
+  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
+    const dropKeys = new Set(siblingKeys || []);
     const patched = afterValue == null ? feats : feats.map(f => {
-      const clean = f.replace(/<\/?b>/g, '');
+      const clean = f.replace(/<\/?[bi]>/g, '');
       const [key] = clean.split('=');
-      if (key !== targetKey) return f;
-      return `<b>${targetKey}=${afterValue}</b>`;
-    });
+      if (key === targetKey) return `<b>${targetKey}=${afterValue}</b>`;
+      if (key === decisiveFeat || dropKeys.has(key)) return null;
+      return f;
+    }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
     // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
     // value actually changed" (bold, gets the red decisive.swapped color)
@@ -1502,16 +1810,52 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // Rows flagged `linked` get a colored left rail connecting them (a role and
   // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
   // decisive cell flagged as the violation rather than the grammatical value.
+  // "Why this row is here": for each split on the way from the root to the
+  // current node, the rule, the branch this row took, and the row's own
+  // value of the column that split looks at.
+  function buildRouteTable(s, key) {
+    const route = s.route || {};
+    const path = T.PATHS[currentNode];
+    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const rows = [];
+    for (let i = 0; i + 1 < path.length; i++) {
+      const p = path[i], child = path[i + 1];
+      const val = route[String(p)];
+      if (val === undefined) continue;
+      const branch = T.NODES[child].branch;
+      rows.push(`<tr><th class="route-node">[${p}]</th><td class="route-rule">${nodeRuleDisplay(T.NODES[p])}</td>` +
+        `<td class="route-branch ${branch}">→ ${branch === 'true' ? 'True' : 'False'}</td><td class="route-value">${esc(val)}</td></tr>`);
+    }
+    if (!rows.length) return '';
+    const open = openRouteLabels.has(s.label);
+    return `<div class="route-block" data-label="${s.label}">
+      <button type="button" class="group-route-toggle" data-label="${s.label}" data-text="why this row is at node ${currentNode}" data-scroll-anchor="routerow_${key}" aria-expanded="${open}">${open ? '▾' : '▸'} why this row is at node ${currentNode}</button>
+      <div class="route-body"${open ? '' : ' hidden'}><div class="feat-mini-table-wrap"><table class="feat-mini-table route-table">
+        <thead><tr><th>node</th><th>split</th><th>answer</th><th>this row's value</th></tr></thead>
+        <tbody>${rows.join('')}</tbody></table></div></div></div>`;
+  }
+
   function buildFeatTable(decisiveFeat, rows, forceCols) {
     // forceCols lets a caller fix the same column set across several of
     // these tables (e.g. all 5 sample rows for a node) so they line up
     // visually -- left to compute its own columns, each table only shows
     // the features actually set for its own two rows, which drifts from
     // sample to sample.
-    const cols = forceCols || ORDERED_FEATS.filter(k => rows.some(r => featEntry(r.feats, k)));
-    const headHtml = cols.map(k => `<th${k === decisiveFeat ? ' class="decisive"' : ''}>${k}</th>`).join('');
+    const cols = forceCols || featColumns(rows.map(r => r.feats));
+    const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
+    const colCls = (k, i, extra) => {
+      const c = [];
+      if (extra) c.push(extra);
+      if (OTHER_FEATS.includes(k)) c.push('other-feat');
+      if (i === firstOther) c.push('other-first');
+      return c;
+    };
+    const headHtml = cols.map((k, i) => {
+      const c = colCls(k, i, k === decisiveFeat ? 'decisive' : '');
+      return `<th${c.length ? ` class="${c.join(' ')}"` : ''}>${k}</th>`;
+    }).join('');
     const rowHtml = (r) => {
-      const cells = cols.map(k => {
+      const cells = cols.map((k, ci) => {
         // Every entry for this column, not just one -- a token can carry
         // more than one bracket of the same dimension at once (see
         // featEntries), and all of them are shown, separated, so e.g. a
@@ -1520,7 +1864,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
         // entry for that exact bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
-        const cls = isDecisive ? ` class="decisive${r.variant === 'swapped' ? ' swapped' : ''}"` : '';
+        const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
+        const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
         // One line per entry, stacked vertically (feat-entry-line is
         // block-level), not joined inline with a "/" separator -- 2-3
@@ -1541,17 +1886,24 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
           const bracketHtml = e.bracket ? `<span class="feat-bracket">${e.bracket}</span>` : '';
-          return `<div class="feat-entry-line">${valueHtml}${bracketHtml}</div>`;
+          // A column kept out of the tree fit (e.g. the head's xpos or its
+          // Number, the label itself) is still shown, dimmed with a hint.
+          const fullKey = k + (e.bracket || '');
+          const blocked = (T.META.fitExcluded || []).some(x => x.role === r.role && x.feat === fullKey);
+          const line = `${valueHtml}${bracketHtml}`;
+          return `<div class="feat-entry-line">${blocked
+            ? `<span class="fit-excluded" title="Not used when fitting the tree: this feature is, or can spell out, the agreement label the tree predicts">${line}</span>`
+            : line}</div>`;
         });
         return `<td${cls}>${parts.join('')}</td>`;
       }).join('');
       const rowCls = r.linked ? ' class="linked-row"' : '';
       const roleCls = r.role ? ` role-${r.role}` : '';
-      return `<tr${rowCls}><th>${r.label} <span class="role-form${roleCls}">${r.form}</span></th>${cells}</tr>`;
+      return `<tr${rowCls}><th class="role-label-cell">${r.label}</th><th class="role-form-cell"><span class="role-form${roleCls}">${r.form}</span></th>${cells}</tr>`;
     };
     return `
       <div class="feat-mini-table-wrap"><table class="feat-mini-table">
-        <thead><tr><th></th>${headHtml}</tr></thead>
+        <thead><tr><th></th><th></th>${headHtml}</tr></thead>
         <tbody>
           ${rows.map(rowHtml).join('\n          ')}
         </tbody>
@@ -1597,7 +1949,9 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     if (!node.dist) return null;
     const majority = node.dist.reduce((a, b) => (b.cnt > a.cnt ? b : a));
     const base = SEMANTIC_BASE_HEX[majority.cls.toLowerCase()] || majority.color;
-    const t = Math.min(1, node.H * 0.72);
+    // accuracy pages: acc in [0.5, 1] -> uncertainty in [1, 0]; entropy pages: H directly.
+    const uncertainty = T.META.measure === 'accuracy' ? Math.max(0, 2 * (1 - node.acc)) : node.H;
+    const t = Math.min(1, uncertainty * 0.72);
     return interpolateHex(base, '#ffffff', t);
   }
 
@@ -1621,10 +1975,29 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
-      if (lower !== 'yes' && lower !== 'no') return part;
-      const word = lower === 'yes' ? 'agree' : 'disagree';
-      return part[0] === part[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
+      if (lower === 'yes') return 'Agree';
+      if (lower === 'no') return 'Disagree';
+      if (lower === 'unk') return 'unknown';
+      return part;
     }).join(' / ');
+  }
+
+  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
+  // short raw role token the pipeline used internally (UD upos-ish tags for
+  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
+  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
+  // reader (the Pairs tab's role chips/group headers), the same "relabel at
+  // render time, keep the raw token as the identifier everywhere else"
+  // split as displayLabel above. An unrecognized token still degrades
+  // gracefully to Titlecase rather than showing raw lowercase.
+  const ROLE_DISPLAY_NAMES = {
+    det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
+    pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
+  };
+  function displayRole(token) {
+    const key = String(token || '').toLowerCase();
+    if (ROLE_DISPLAY_NAMES[key]) return ROLE_DISPLAY_NAMES[key];
+    return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
   // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
@@ -1657,7 +2030,11 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    const segs = node.dist.map(d => {
+    // Zero-count classes are dropped before rendering, not just given 0%
+    // width -- a 0%-wide segment would still take its :not(:last-child)
+    // divider (a border-right renders regardless of width), producing a
+    // stray line with nothing on one side of it.
+    const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
     const hidden = showNodeDist ? '' : ' style="display:none"';
@@ -1701,14 +2078,17 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
 
       // Minimal pairs are only ever generated from an Agree-majority leaf
       // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from H alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose H happens to clear
+      // is computed from acc alone, with no majority-label check, so it can
+      // still come back true for a Disagree leaf whose acc happens to clear
       // the threshold; omit the badge entirely there rather than show a
       // "kept" or "not kept" note that can't ever inform anything.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      const keepHtml = !node.leaf || !isAgreeLeaf ? '' : node.keep
-        ? `<span class="node-keep yes" data-keep-toggle="1">🔑 ${node.kept.toLocaleString()} kept › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
-        : `<span class="node-keep no">not kept (H≥${T.META.keepThresholdH.toFixed(2)})</span>`;
+      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
+      // leaf unless second_chance's depth-aware retry gave leaves different
+      // ones, in which case T.META's single global number can't be trusted.
+      const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
+        ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
+        : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
       // [+] marker: flags a split rule where some other feature was >99%
       // correlated with the chosen one in the rows reaching this node (the
@@ -1733,7 +2113,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
           </div>
           <div class="node-body">
-            [${id}]&nbsp; n=${node.n}&nbsp; H=${node.H.toFixed(2)}
+            [${id}]&nbsp; n=${node.n}&nbsp; ${T.META.measure === 'accuracy' ? `acc=${node.acc.toFixed(3)}` : `H=${node.H.toFixed(2)}`}
             ${buildDistBar(node)}
             ${keepHtml}
           </div>
@@ -1744,29 +2124,9 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
       nodeBoxEl.tabIndex = 0;
       nodeBoxEl.setAttribute('role', 'button');
       nodeBoxEl.setAttribute('aria-label', `Node ${id}: ${nodeRuleDisplay(node)}`);
-      nodeBoxEl.addEventListener('click', () => selectNode(id));
+      nodeBoxEl.addEventListener('click', () => onNodeClick(id));
       nodeBoxEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(id); }
-      });
-      // Double-click is the fullscreen equivalent of the plain click above
-      // (which already ran twice by the time this fires, same as any
-      // dblclick): the node-samples table it updates lives outside
-      // .tree-wrap, in .scroll-pane, so it's not enough on its own while
-      // fullscreen -- this leaves fullscreen and jumps to it too.
-      nodeBoxEl.addEventListener('dblclick', () => {
-        leaveFullscreenThen(() => {
-          selectNode(id);
-          sampleCard.open = true;
-          // A tick after opening the <details>, not the same one: a smooth
-          // scroll started before the browser's committed the reflow from
-          // open=true can animate toward stale (still-collapsed)
-          // coordinates. setTimeout, not requestAnimationFrame -- rAF is
-          // suspended entirely while the document isn't the active,
-          // rendering one, which a plain deferred timer isn't.
-          setTimeout(() => {
-            sampleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 0);
-        });
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNodeClick(id); }
       });
       const keepEl = slot.querySelector('[data-keep-toggle]');
       if (keepEl) {
@@ -1775,34 +2135,10 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
         keepEl.setAttribute('aria-label', `View the ${node.correctSwaps.toLocaleString()} minimal pairs this leaf produced`);
         const openPairs = e => {
           e.stopPropagation();
-          // The pairs table lives outside .tree-wrap, in .scroll-pane --
-          // invisible while fullscreen (a fullscreened element is the only
-          // thing the browser renders) -- so this leaves fullscreen first.
-          leaveFullscreenThen(() => {
-            pairsCard.open = true;
-            // A tick after opening the <details>, not the same one -- see
-            // the node dblclick handler's own comment on this same pattern
-            // and why setTimeout, not requestAnimationFrame.
-            setTimeout(() => {
-              // Scroll straight to *this* leaf's own group, not just the
-              // pairs card in general -- with more than one leaf kept,
-              // landing on the top of the card could leave the one the
-              // badge was actually about scrolled well out of view. Falls
-              // back to the card itself if the group isn't found (e.g.
-              // stale T.NODES).
-              const leafGroup = pairsList.querySelector(`[data-leaf-group="${CSS.escape(id)}"]`);
-              (leafGroup || pairsCard).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              if (leafGroup) {
-                // Restart the animation even if this leaf was just jumped
-                // to a moment ago (removing the class before re-adding it
-                // forces the browser to treat it as a fresh animation, not
-                // a no-op).
-                leafGroup.classList.remove('jump-highlight');
-                void leafGroup.offsetWidth;
-                leafGroup.classList.add('jump-highlight');
-              }
-            }, 0);
-          });
+          openDrawer('pairs');
+          selectNode(id);
+          revealSelectedNode();
+          setTimeout(() => jumpToLeafGroup(id), 0);
         };
         keepEl.addEventListener('click', openPairs);
         keepEl.addEventListener('keydown', e => {
@@ -1810,6 +2146,109 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
         });
       }
     });
+  }
+
+  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // A pill is tagged when that treebank's own tree beats the pooled tree on
+  // the same held-out rows by a clear margin.
+  function buildTreebankRow() {
+    const nav = T.META.nav;
+    if (!nav) return;
+    const pct = v => (v * 100).toFixed(1) + '%';
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const pills = [`<span class="tb-label">Trees</span>`];
+    const unkView = nav.variant === 'unk';
+    const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
+    const pN = unkView ? nav.pooledUnkTestN : nav.pooledTestN;
+    // Row count the tree was actually fit on: without unk rows (as-is) or
+    // with them (incl. unk).
+    const rowsHtml = (n, unkN) => `${(unkView ? n + unkN : n).toLocaleString()} rows`;
+    const pooledInner = `Pooled<span class="keep-count">${rowsHtml(nav.pooledRows, nav.pooledUnkRows)}${pAcc == null ? '' : ' · ' + pct(pAcc)}</span>`;
+    const pooledTitle = pAcc == null ? 'All treebanks together'
+      : `All treebanks together; held-out accuracy ${pct(pAcc)} on ${pN.toLocaleString()} rows${unkView ? ' (unk rows included)' : ''}`;
+    pills.push(nav.pooledCurrent
+      ? `<span class="tree-select-btn active" title="${pooledTitle}">${pooledInner}</span>`
+      : `<a class="tree-select-btn" href="${nav.pooledHref}" title="${pooledTitle}">${pooledInner}</a>`);
+    // Treebank pills stay within the current view: the as-is trees, or (on an
+    // incl.-unk debugging page) the trees that also fit the unk rows.
+    const unkMode = nav.variant === 'unk';
+    // Excluded treebanks (never in the pooled tree or the pairs) become
+    // compact chips, grouped by reason under the chevron below.
+    const excludedItems = [];
+    nav.items.forEach(it => {
+      // In the incl.-unk view a treebank with no unk tree (e.g. a single-label
+      // one) still links to its as-is page, so its pill stays reachable.
+      const href = unkMode ? (it.unkHref || it.href) : (it.href || it.unkHref);
+      const acc = unkMode ? it.unkAcc : it.acc;
+      const noTree = it.placeholder && !(unkMode && it.unkHref);
+      if (it.excluded) {
+        const n = (unkMode ? it.rows + it.unkRows : it.rows).toLocaleString();
+        const detail = `${it.name}: ${n} rows${acc == null ? '' : ' · ' + pct(acc) + ' held-out'}. Excluded from the minimal-pair pipeline (${it.reason || it.status}); not part of the pooled tree`;
+        const inner = `${esc(it.name)}<span class="n">${n} rows${acc != null ? ' · ' + pct(acc) : noTree ? ' · ' + esc(it.status) : ''}</span>`;
+        excludedItems.push({
+          key: it.reason || it.status,
+          chip: it.current ? `<span class="tb-chip active" title="${esc(detail)}">${inner}</span>`
+            : href ? `<a class="tb-chip${noTree ? ' muted' : ''}" href="${href}" title="${esc(detail)}${noTree ? ' -- no tree, placeholder page' : ''}">${inner}</a>`
+            : `<span class="tb-chip muted" title="${esc(detail)}; no tree fitted (${esc(it.status)})">${inner}</span>`,
+        });
+        return;
+      }
+      const out = pills;
+      if (!href && !it.current) {
+        out.push(`<span class="tree-select-btn tb-muted" title="No tree fitted: ${esc(it.status)}">${esc(it.name)}<span class="keep-count">${esc(it.status)}</span></span>`);
+        return;
+      }
+      const unkOnly = !unkMode && !it.href;
+      const title = unkMode ? 'Fit on unk rows too -- not comparable with the pooled tree'
+        : unkOnly ? `${it.status} without unk rows; only the incl.-unk tree exists`
+        : it.pooledAcc == null ? ''
+        : `Own tree ${pct(it.acc)} vs pooled tree ${pct(it.pooledAcc)} on this treebank's held-out rows`;
+      const tag = !unkMode && it.diverges ? `<span class="tb-tag">differs +${(it.delta * 100).toFixed(0)}</span>` : '';
+      const accTxt = acc == null ? '' : ` · ${pct(acc)}`;
+      const note = unkOnly ? ` · ${esc(it.status)}, incl. unk only` : noTree ? ` · ${esc(it.status)}` : '';
+      const inner = `${esc(it.name)}<span class="keep-count">${rowsHtml(it.rows, it.unkRows)}${accTxt}${note}</span>${tag}`;
+      out.push(it.current
+        ? `<span class="tree-select-btn active" title="${title}">${inner}</span>`
+        : `<a class="tree-select-btn${noTree ? ' tb-muted-link' : ''}" href="${href}" title="${noTree ? esc(it.status) + ' -- no tree, placeholder page with the label counts' : title}">${inner}</a>`);
+    });
+    const excludedCount = excludedItems.length;
+    // One row above the tree: the excluded-treebanks chevron on the left (its
+    // chips open to the right of it) and the include-unk switch at the right
+    // end. The open state is remembered per browser so it survives moving
+    // between pages, e.g. via the switch.
+    let storedOpen = false;
+    try { storedOpen = localStorage.getItem('excludedOpen') === '1'; } catch (e) {}
+    const excludedOpen = storedOpen;
+    const excludedCurrent = nav.items.some(it => it.excluded && it.current);
+    const rowParts = [];
+    if (excludedCount) {
+      const groups = new Map();
+      excludedItems.forEach(x => { if (!groups.has(x.key)) groups.set(x.key, []); groups.get(x.key).push(x.chip); });
+      const groupsHtml = [...groups].map(([reason, chips]) =>
+        `<div class="tb-excl-group">${chips.join('')}<span class="tb-excl-reason">${esc(reason)}</span></div>`).join('');
+      rowParts.push(`<div class="tb-excl-wrap"><button type="button" class="tb-excluded-toggle${excludedCurrent ? ' has-current' : ''}" id="excludedToggle" aria-expanded="${excludedOpen}">${excludedOpen ? '▾' : '▸'} Excluded from pairs (${excludedCount})</button>` +
+        `<div class="tb-excluded" id="excludedList"${excludedOpen ? '' : ' hidden'}>${groupsHtml}</div></div>`);
+    }
+    if (nav.counterpartHref) {
+      rowParts.push(`<a class="unk-toggle${unkMode ? ' on' : ''}" href="${nav.counterpartHref}" role="switch" aria-checked="${unkMode}"
+        title="${unkMode ? 'Debugging view is on -- click to go back to the tree fit without unk rows' : 'Debugging view: same treebank, tree also fit on its unk rows'}"><span class="unk-switch"><span class="unk-knob"></span></span>Include rows missing annotation ("unk")</a>`);
+    }
+    if (rowParts.length) pills.push(`<div class="tb-controls">${rowParts.join('')}</div>`);
+    treebankRow.innerHTML = pills.join('');
+    treebankRow.style.display = '';
+    const excludedToggle = document.getElementById('excludedToggle');
+    if (excludedToggle) {
+      excludedToggle.addEventListener('click', () => {
+        const list = document.getElementById('excludedList');
+        list.hidden = !list.hidden;
+        excludedToggle.setAttribute('aria-expanded', String(!list.hidden));
+        excludedToggle.textContent = `${list.hidden ? '▸' : '▾'} Excluded from pairs (${excludedCount})`;
+        try { localStorage.setItem('excludedOpen', list.hidden ? '0' : '1'); } catch (e) {}
+        scheduleRefit();
+      });
+    }
+    const overview = document.querySelector('.overview-link');
+    if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
   function buildTreeSelector() {
@@ -1833,7 +2272,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
-    const onPath = new Set(T.PATHS[currentNode]);
+    const onPath = new Set(drawerOpen ? T.PATHS[currentNode] : []);
     document.querySelectorAll('.node-slot').forEach(el => {
       el.classList.toggle('current', onPath.has(Number(el.dataset.node)));
     });
@@ -1845,20 +2284,30 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
   // info-panel, not recomputed here.
   const META_ROWS = [
-    ['Language', 'language'], ['Keep threshold', 'keepThreshold'], ['accuracy', 'accuracy'],
+    ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
+    ['root accuracy', 'rootAccuracy'], ['train accuracy (smoothed)', 'trainAccuracy'],
     ['Nodes', 'nodes'], ['Depth', 'depth'],
     ['Training samples', 'trainingSamples'], ['Predictor', 'predictor'],
   ];
   function buildInfoPanel() {
+    // Pages built before languageName existed only carry the combined name.
+    if (T.META.languageName === undefined) T.META.languageName = T.META.language;
+    if (T.META.testAccuracy) T.META.testAccuracyRow = `${T.META.testAccuracy} (n=${T.META.testN})`;
+    else META_ROWS[META_ROWS.findIndex(r => r[1] === 'accuracy')][0] = 'accuracy';
     infoPanelTitle.textContent = T.META.language;
-    infoPanelAccuracy.textContent = T.META.accuracy;
-    infoPanelMeta.innerHTML = META_ROWS.map(([label, key]) => `
+    // Train = accuracy on the rows the tree was fit on; test = on its held-out
+    // split. Pages built before the test figure existed just show "accuracy".
+    infoPanelAccuracy.textContent = T.META.testAccuracy
+      ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
+      : `${T.META.accuracy} accuracy`;
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
       <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
+    const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
-      <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : ''}">
+      <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
         <span class="class-dist-label">${displayLabel(c.cls)}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
@@ -1905,6 +2354,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     currentNode = T.defaultNode;
     active.clear();
     openLabels.clear();
+    openRouteLabels.clear();
     // Leaf ids aren't unique across trees (both demo trees happen to have a
     // leaf "3"), so leaving these set would leak one tree's open/highlight
     // state onto the other tree's same-numbered leaf.
@@ -1933,6 +2383,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     currentNode = id;
     markCurrentPath();
     buildSampleGrid();
+    buildPairsList();
     render();
   }
 
@@ -1974,6 +2425,10 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // open No's, since they're a separate group with nothing to compare
   // against Yes row-for-row.
   let openLabels = new Set();
+  // Same idea one level down: which label groups have their "why this row"
+  // route tables open. Separate from openLabels (the feature tables that
+  // contain them), so opening one never opens the other.
+  let openRouteLabels = new Set();
 
   // Which leaves currently have every one of their pairs' feature tables
   // open -- keyed by leafId, not per-pair: a leaf's pairs have no Yes/No
@@ -2032,6 +2487,15 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     el.addEventListener('dblclick', () => onDouble());
   }
 
+  function setLabelRouteOpen(label, open) {
+    if (open) openRouteLabels.add(label); else openRouteLabels.delete(label);
+    document.querySelectorAll(`.route-block[data-label="${CSS.escape(label)}"] .route-body`).forEach(el => { el.hidden = !open; });
+    document.querySelectorAll(`.group-route-toggle[data-label="${CSS.escape(label)}"]`).forEach(btn => {
+      btn.textContent = (open ? '▾' : '▸') + ' ' + btn.dataset.text;
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  }
+
   function setLabelFeatsOpen(label, open) {
     if (open) openLabels.add(label); else openLabels.delete(label);
     document.querySelectorAll(`#sampleGrid tr.feat-row[data-label="${CSS.escape(label)}"]`).forEach(el => { el.hidden = !open; });
@@ -2057,11 +2521,13 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   // a hidden row's cells measure 0-width -- so this runs after that, not at
   // build time.
   function alignFeatLabelCols() {
-    const cells = [...document.querySelectorAll('#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th')];
-    if (!cells.length) return;
-    cells.forEach(c => { c.style.width = ''; });
-    const maxW = Math.max(...cells.map(c => c.getBoundingClientRect().width));
-    cells.forEach(c => { c.style.width = maxW + 'px'; });
+    ['role-label-cell', 'role-form-cell'].forEach(cls => {
+      const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
+      if (!cells.length) return;
+      cells.forEach(c => { c.style.width = ''; });
+      const maxW = Math.max(...cells.map(c => c.getBoundingClientRect().width));
+      cells.forEach(c => { c.style.width = maxW + 'px'; });
+    });
   }
 
   // Auto-derived from T.NODES/T.PATHS alone: the chain of split rules and the
@@ -2093,9 +2559,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
     // VerbForm land in the same position across all 5 -- otherwise a
     // feature only some samples have shifts every later column sideways
     // from row to row, and nothing lines up for comparison.
-    const sharedCols = ORDERED_FEATS.filter(k =>
-      samples.some(s => featEntry(s.nsubjFeats, k) || featEntry(s.verbFeats, k))
-    );
+    const sharedCols = featColumns(samples.flatMap(s => [s.nsubjFeats, s.verbFeats]));
 
     function addRow(s, idx, displayIdx) {
       const key = currentNode + '_' + idx;
@@ -2128,7 +2592,12 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
       featRow.innerHTML = `<td colspan="3">${buildFeatTable(T.decisiveFeat, [
         { label: T.roleA, form: s.nsubj, feats: s.nsubjFeats, role: 'a' },
         { label: T.roleB, form: s.verb, feats: s.verbFeats, role: 'b' },
-      ], sharedCols)}</td>`;
+      ], sharedCols)}${buildRouteTable(s, key)}</td>`;
+      featRow.querySelectorAll('.group-route-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          preservingScroll(btn, `routerow_${key}`, () => setLabelRouteOpen(s.label, !openRouteLabels.has(s.label)));
+        });
+      });
 
       row.querySelector('a').addEventListener('click', e => e.stopPropagation());
       const featBtn = row.querySelector('.group-feats-toggle');
@@ -2190,12 +2659,18 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
         const pct = (distEntry.cnt / node.n * 100).toFixed(1);
         const header = document.createElement('tr');
         header.className = 'sample-group-header';
+        header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
           <span class="group-label">${displayLabel(label)}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
+          ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
         </div></td>`;
+        const routeHdrBtn = header.querySelector('.group-route-toggle');
+        if (routeHdrBtn) routeHdrBtn.addEventListener('click', () => {
+          preservingScroll(routeHdrBtn, `routehdr_${label}`, () => setLabelRouteOpen(label, !openRouteLabels.has(label)));
+        });
         const hdrBtn = header.querySelector('.group-feats-toggle');
         hdrBtn.addEventListener('click', () => {
           preservingScroll(hdrBtn, `samplehdr_${label}`, () => setLabelFeatsOpen(label, !openLabels.has(label)));
@@ -2205,31 +2680,86 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
       idxs.forEach((idx, i) => addRow(samples[idx], idx, i + 1));
     });
     if (openLabels.size) alignFeatLabelCols();
+    buildLabelJumps(labels, node);
+  }
+
+  // One chip per label present in this node's samples, jumping to that
+  // label's group in the table -- including a unanimous (single-label)
+  // node's one chip: that count is still real signal (how many of this
+  // node's n it covers), not just a jump target, so it stays visible
+  // rather than only showing up once there's something to jump between.
+  function buildLabelJumps(labels, node) {
+    drawerLabels.innerHTML = '';
+    if (labels.length >= 1) {
+      labels.forEach(label => {
+        const entry = (node.dist || []).find(d => d.cls === label);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'label-jump';
+        btn.title = `Jump to the ${displayLabel(label)} samples`;
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+          (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
+        btn.addEventListener('click', () => {
+          // From the Pairs tab, jump means "show me these samples".
+          if (drawerTab !== 'samples') setDrawerTab('samples');
+          const header = sampleGrid.querySelector(`tr.sample-group-header[data-label="${CSS.escape(label)}"]`);
+          if (!header) return;
+          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const row = header.querySelector('.group-header-row');
+          row.classList.remove('jump-flash');
+          void row.offsetWidth;
+          row.classList.add('jump-flash');
+        });
+        drawerLabels.appendChild(btn);
+      });
+    }
+    updateLabelJumps();
+  }
+  function updateLabelJumps() {
+    drawerLabels.hidden = !drawerLabels.children.length;
+  }
+
+  function nodeHasPairs(id) {
+    const n = T.NODES[id];
+    return !!(n && n.leaf && n.keep && T.PAIRS.some(p => String(p.leaf) === String(id)));
+  }
+  // The Pairs tab is only usable on a leaf that generated pairs; if the
+  // drawer is on it when the selection moves elsewhere, fall back to Samples.
+  function syncPairsTab() {
+    const ok = nodeHasPairs(currentNode);
+    tabPairs.disabled = !ok;
+    tabPairs.title = ok ? '' : 'Only kept leaves that generated pairs have a Pairs view';
+    if (!ok && drawerTab === 'pairs') setDrawerTab('samples');
   }
 
   function buildPairsList() {
     pairsList.innerHTML = '';
-    // Caps how many real pair examples render per leaf -- T.PAIRS is a
-    // hand-picked demo subset today (a handful per leaf), but a leaf's real
-    // correct_swaps.parquet can run into the thousands, so this keeps the
-    // page from ever having to render all of them at once.
-    const PAIR_LIMIT = 15;
-    const keepLeaves = Object.entries(T.NODES).filter(([, n]) => n.keep).map(([id]) => id);
+    // Pages without a keep threshold (per-treebank trees) generate no pairs.
+    if (T.META.keepThresholdAcc == null) { pairsCard.style.display = 'none'; tabPairs.hidden = true; drawerPairRoles.hidden = true; return; }
+    // Pairs belong to leaves: only the selected node's own pairs are shown,
+    // and only when it is a kept leaf that actually generated some. T.PAIRS
+    // itself is already capped server-side (html_tree._v2_build_pairs, up
+    // to 10 rows per reinflection direction per leaf -- a leaf's real
+    // correct_swaps.parquet can run into the thousands), so nothing further
+    // needs capping here; allPairs below IS what renders.
+    const keepLeaves = nodeHasPairs(currentNode) ? [String(currentNode)] : [];
+    syncPairsTab();
     const pairsByLeaf = keepLeaves.map(leafId => [leafId, T.PAIRS.filter(p => String(p.leaf) === String(leafId))]);
-    const shownTotal = pairsByLeaf.reduce((sum, [, all]) => sum + Math.min(all.length, PAIR_LIMIT), 0);
-    const leafWord = keepLeaves.length === 1 ? 'leaf' : 'leaves';
-    pairsTitle.textContent = `🔑 Generated minimal pairs (${keepLeaves.length} ${leafWord} kept, ${shownTotal} shown)`;
+    const shownTotal = pairsByLeaf.reduce((sum, [, all]) => sum + all.length, 0);
+    pairsTitle.textContent = keepLeaves.length
+      ? `🔑 Generated minimal pairs · leaf ${keepLeaves[0]} (${shownTotal} shown)`
+      : `No minimal pairs for node ${currentNode}`;
+    updateDrawerHint();
 
-    // Which leaf/leaves, how many kept, and H vs. the keep threshold are all
+    // Which leaf/leaves, how many kept, and acc vs. the keep threshold are all
     // already on the node badges above (and repeated in pairsTitle just
     // above this); this only needs to add what those don't already say --
     // that these specific pairs come straight from correct_swaps.parquet.
-    const leafList = keepLeaves.length > 1 ? `leaves ${keepLeaves.join(' and ')}` : `leaf ${keepLeaves[0]}`;
-    pairsIntro.textContent = `Minimal pairs from ${leafList}`;
+    pairsIntro.textContent = keepLeaves.length ? `Minimal pairs from leaf ${keepLeaves[0]}` : '';
+    buildPairRoleJumps(keepLeaves.length ? keepLeaves[0] : null);
 
-    pairsByLeaf.forEach(([leafId, allPairs]) => {
-      if (allPairs.length === 0) return;
-      const leafPairs = allPairs.slice(0, PAIR_LIMIT);
+    pairsByLeaf.forEach(([leafId, leafPairs]) => {
+      if (leafPairs.length === 0) return;
       const group = document.createElement('div');
       group.className = 'pairs-leaf-group';
       // Stable target for a node's "kept › pairs" badge (see openPairs
@@ -2243,7 +2773,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
       const allOpen = openLeaves.has(leafId);
       const headingRow = document.createElement('div');
       headingRow.className = 'pairs-leaf-heading-row';
-      const shownNote = allPairs.length > PAIR_LIMIT ? `, showing ${PAIR_LIMIT} of ${allPairs.length}` : '';
+      const shownNote = leaf.correctSwaps > leafPairs.length ? `, showing ${leafPairs.length} of ${leaf.correctSwaps.toLocaleString()}` : '';
       const headingHtml = keepLeaves.length > 1
         ? `<span class="pairs-leaf-heading">Leaf ${leafId} <span class="n">— ${leaf.kept.toLocaleString()} kept, ${leaf.correctSwaps ? leaf.correctSwaps.toLocaleString() + ' pairs generated' : ''}${shownNote}</span></span>`
         : '';
@@ -2267,7 +2797,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
       pathTrace.innerHTML = buildBreadcrumb(leafId);
       group.appendChild(pathTrace);
 
-      leafPairs.forEach((p, i) => {
+      const appendPairItem = (p, i) => {
         const key = leafId + '_' + i;
         // Every pair in an open leaf shows its feature table together (no
         // per-pair open state); activePairKey is the single, separate
@@ -2290,7 +2820,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
         const swappedRow = {
           label: `swapped_${origRole.label}`,
           form: p.ungrammatical,
-          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats),
+          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats, p.siblingKeys),
           variant: 'swapped',
           linked: true,
           role: origRole.role,
@@ -2339,10 +2869,174 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHighlight(); }
         });
         group.appendChild(el);
+      };
+
+      // Group by which component this leaf's pairs actually reinflected
+      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
+      // DET-ADJ reinflects each role in turn and merges both directions into
+      // one bucket) -- same idea as the samples table's byLabel groups, so a
+      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
+      // labelled runs instead of interleaved with no indication of which
+      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
+      // or NPA's HEAD pairs) renders exactly as before -- no header, one
+      // flat list -- since there's nothing to distinguish.
+      const byRole = new Map();
+      leafPairs.forEach((p, i) => {
+        const role = p.swapRole || T.swappedRole;
+        if (!byRole.has(role)) byRole.set(role, []);
+        byRole.get(role).push(i);
       });
+      const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
+      if (roleOrder.length > 1) {
+        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        roleOrder.forEach(role => {
+          const idxs = byRole.get(role);
+          const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
+          const header = document.createElement('div');
+          header.className = 'pairs-role-header';
+          header.setAttribute('data-role-group', role);
+          header.innerHTML = `<span class="pairs-role-label">${esc(roleLabel)} reinflected</span><span class="n">${idxs.length}</span>`;
+          group.appendChild(header);
+          idxs.forEach(i => appendPairItem(leafPairs[i], i));
+        });
+      } else {
+        leafPairs.forEach((p, i) => appendPairItem(p, i));
+      }
       pairsList.appendChild(group);
     });
   }
+
+  // One chip per reinflected component present among the current leaf's
+  // pairs (only when the leaf actually mixes both -- see roleOrder above),
+  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
+  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
+  // REAL per-direction total straight from correct_swaps.parquet, not just
+  // however many of that direction happen to be materialized into T.PAIRS
+  // -- the same "real distribution, not the capped sample" convention
+  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
+  // to that component's group header (built above) rather than filtering.
+  function buildPairRoleJumps(leafId) {
+    drawerPairRoles.innerHTML = '';
+    const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
+    const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
+    if (roleOrder.length > 1) {
+      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      roleOrder.forEach(role => {
+        const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'label-jump pairs-role';
+        btn.title = `Jump to pairs with a reinflected ${roleLabel}`;
+        btn.innerHTML = `${esc(roleLabel)}<span class="n">${counts[role].toLocaleString()}</span>`;
+        btn.addEventListener('click', () => {
+          if (drawerTab !== 'pairs') setDrawerTab('pairs');
+          const header = pairsList.querySelector(`[data-role-group="${role}"]`);
+          if (!header) return;
+          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          header.classList.remove('jump-flash');
+          void header.offsetWidth;
+          header.classList.add('jump-flash');
+        });
+        drawerPairRoles.appendChild(btn);
+      });
+    }
+    drawerPairRoles.hidden = !drawerPairRoles.children.length;
+  }
+
+  // ── Samples / pairs drawer ──
+  // Click a node: open the drawer on its samples. Click another node: switch
+  // to it. Click the highlighted node (or the close button / Esc): close.
+  let drawerOpen = false;
+  let drawerTab = 'samples';
+  const DRAWER_KEY = 'treeDrawerFrac';
+  let drawerFrac = 0.4;
+  try {
+    const v = parseFloat(localStorage.getItem(DRAWER_KEY));
+    if (v >= 0.15 && v <= 0.9) drawerFrac = v;
+  } catch (e) {}
+  function applyDrawerHeight() { drawer.style.height = `${drawerFrac * 100}%`; }
+  function updateDrawerHint() {
+    drawerHint.textContent = drawerTab === 'pairs'
+      ? pairsTitle.textContent
+      : 'click a row to trace it · up to 15 real rows per class';
+  }
+  function setDrawerTab(tab) {
+    drawerTab = tab;
+    drawer.dataset.tab = tab;
+    tabSamples.classList.toggle('active', tab === 'samples');
+    tabPairs.classList.toggle('active', tab === 'pairs');
+    updateDrawerHint();
+    updateLabelJumps();
+  }
+  function openDrawer(tab) {
+    drawerOpen = true;
+    drawer.hidden = false;
+    applyDrawerHeight();
+    setDrawerTab(tab || drawerTab);
+  }
+  function closeDrawer() {
+    drawerOpen = false;
+    drawer.hidden = true;
+    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    active.clear();
+    markCurrentPath();
+    render();
+  }
+  // Pan the tree up if the drawer would cover the selected node; the shift is
+  // undone when the drawer closes so the tree isn't left displaced.
+  let revealShift = 0;
+  function revealSelectedNode() {
+    const box = nodesLayer.querySelector(`.node-slot[data-node="${CSS.escape(String(currentNode))}"] .node-box`);
+    if (!box) return;
+    const r = box.getBoundingClientRect();
+    const over = r.bottom + 12 - drawer.getBoundingClientRect().top;
+    if (over <= 0) return;
+    const room = r.top - treeScroll.getBoundingClientRect().top - 8;
+    const dy = Math.min(over, Math.max(0, room));
+    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+  }
+  function jumpToLeafGroup(id) {
+    const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
+    if (!group) return;
+    group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // remove + reflow + re-add restarts the flash even on a repeat jump
+    group.classList.remove('jump-highlight');
+    void group.offsetWidth;
+    group.classList.add('jump-highlight');
+  }
+  function onNodeClick(id) {
+    if (drawerOpen && id === currentNode) { closeDrawer(); return; }
+    const stayOnPairs = drawerOpen && drawerTab === 'pairs' && nodeHasPairs(id);
+    openDrawer(stayOnPairs ? 'pairs' : 'samples');
+    selectNode(id);
+    revealSelectedNode();
+    if (stayOnPairs) setTimeout(() => jumpToLeafGroup(id), 0);
+  }
+  tabSamples.addEventListener('click', () => setDrawerTab('samples'));
+  tabPairs.addEventListener('click', () => setDrawerTab('pairs'));
+  document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawerOpen) closeDrawer(); });
+  let draggingDrawer = false;
+  drawerHandle.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    drawerHandle.setPointerCapture(e.pointerId);
+    draggingDrawer = true;
+    document.body.classList.add('dragging-drawer');
+  });
+  drawerHandle.addEventListener('pointermove', e => {
+    if (!draggingDrawer) return;
+    const rect = treeWrap.getBoundingClientRect();
+    drawerFrac = Math.min(0.9, Math.max(0.15, (rect.bottom - e.clientY) / rect.height));
+    applyDrawerHeight();
+  });
+  const endDrawerDrag = () => {
+    if (!draggingDrawer) return;
+    draggingDrawer = false;
+    document.body.classList.remove('dragging-drawer');
+    try { localStorage.setItem(DRAWER_KEY, String(drawerFrac)); } catch (e) {}
+  };
+  drawerHandle.addEventListener('pointerup', endDrawerDrag);
+  drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
   buildTreeSelector();
   treeTitle.textContent = T.title;
@@ -2351,14 +3045,11 @@ const TREE_DATA = {"title": "Spanish \u00b7 Verb_nsubj_Number", "roleA": "nsubj"
   fitToContent();
   markCurrentPath();
   buildInfoPanel();
+  buildTreebankRow();
+  sizeTreeBox();
+  fitToContent();
   buildSampleGrid();
   buildPairsList();
-  // default: trace the Greek tree's first sample row for an immediate
-  // payoff. Feature tables start closed (openLabels is empty until a
-  // group's own toggle is clicked) -- not opened here, so the page's first
-  // paint isn't already showing every row's feature table before the
-  // reader's asked for it.
-  document.querySelectorAll('#sampleGrid tr.sample-row')[0].click();
 })();
 </script>
 

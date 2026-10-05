@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Minimal-Pair Attention Trace</title>
 <script>
   try {
@@ -123,13 +124,10 @@
      pane underneath it (.scroll-pane), so the tree (and its own pan/zoom)
      never scrolls out of view while browsing a long sample/pairs list. */
   .page {
-    max-width: 1180px;
-    margin: 0 auto;
     height: 100vh;
-    padding: 20px 24px;
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
     overflow: hidden;
   }
 
@@ -153,6 +151,97 @@
      silently clip away most of a long sample/pairs list rather than the
      intended pane-level scrollbar ever appearing. */
   .scroll-pane > .card { flex-shrink: 0; }
+
+  /* ── Samples / pairs drawer: overlays the bottom of the tree card (up to
+     half of it), opened by clicking a node, resized by dragging its handle. ── */
+  .drawer {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 40%; min-height: 120px; max-height: 90%;
+    display: flex; flex-direction: column;
+    background: var(--surface); border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 200;
+  }
+  .drawer[hidden] { display: none; }
+  .drawer-handle {
+    flex: 0 0 auto; height: 14px; cursor: ns-resize; touch-action: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drawer-grip { width: 44px; height: 4px; border-radius: 2px; background: var(--border); transition: background 0.15s; }
+  .drawer-handle, .drawer-bar { user-select: none; -webkit-user-select: none; }
+  body.dragging-drawer { user-select: none; -webkit-user-select: none; cursor: ns-resize; }
+  .drawer-handle:hover .drawer-grip { background: var(--text-tertiary); }
+  .drawer-bar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 0 14px 8px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-tabs { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  /* Samples and its label chips read as one group; Pairs (purple, like the
+     🔑 badge on the leaves) and its own role chips read as a second,
+     separately-outlined group, same shape. */
+  .drawer-group {
+    display: flex; align-items: center; gap: 4px; min-width: 0;
+    padding: 3px; border: 1px solid var(--border); border-radius: 24px; background: var(--surface-raised);
+  }
+  .drawer-group.pairs-group { border-color: var(--keep-light); }
+  .drawer-tab.pairs-tab { color: var(--keep); border-color: var(--keep); background: var(--surface); }
+  .drawer-tab.pairs-tab:hover { background: var(--keep-light); color: var(--keep); border-color: var(--keep); }
+  .drawer-tab.pairs-tab.active { background: var(--keep-light); color: var(--keep); border-color: var(--keep); box-shadow: inset 0 0 0 1px var(--keep); }
+  .drawer-tab {
+    font-family: var(--font-ui); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    color: var(--text-secondary); background: var(--surface-raised);
+    border: 1.5px solid var(--border); border-radius: 20px; padding: 4px 12px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .drawer-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .drawer-tab.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .drawer-tab[hidden] { display: none; }
+  .drawer-tab:disabled { opacity: 0.4; cursor: not-allowed; border-style: dashed; }
+  .drawer-tab:disabled:hover { border-color: var(--border); color: var(--text-secondary); }
+  .drawer-tab.pairs-tab:disabled, .drawer-tab.pairs-tab:disabled:hover { color: var(--keep); border-color: var(--keep); background: var(--surface); }
+  .drawer-labels {
+    display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+    padding: 0 6px 0 4px;
+  }
+  /* A chip row that's actually scrollable, not just clipped -- with enough
+     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
+     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     overflow-x:auto (rather than :hidden) lets the rest still be reached
+     instead of silently disappearing past the edge. */
+  .drawer-labels::-webkit-scrollbar { height: 4px; }
+  .drawer-labels::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .drawer-labels::-webkit-scrollbar-track { background: transparent; }
+  .drawer-labels[hidden] { display: none; }
+  .label-jump {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer;
+    font-family: var(--font-ui); font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .label-jump:hover { border-color: var(--accent); color: var(--accent); }
+  .label-jump .swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .label-jump .n { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; opacity: 0.7; }
+  /* Pairs' own role-jump chips reuse .label-jump's shape but hover/focus in
+     --keep (the Pairs tab's purple) rather than --accent, so they read as
+     belonging to Pairs the same way the tab itself does. */
+  .label-jump.pairs-role:hover { border-color: var(--keep); color: var(--keep); }
+  @keyframes labelFlash { from { background: var(--accent-light); } to { background: transparent; } }
+  .group-header-row.jump-flash { animation: labelFlash 1.4s ease; }
+  .drawer-hint {
+    margin-left: auto; min-width: 0; font-size: 12px; color: var(--text-tertiary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .drawer-close {
+    flex: 0 0 auto; width: 24px; height: 24px; padding: 0; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+    color: var(--text-secondary); font-size: 12px;
+  }
+  .drawer-close:hover { border-color: var(--accent); color: var(--accent); }
+  .drawer .scroll-pane { padding: 0; gap: 0; }
+  .drawer .scroll-pane > .card { border: none; border-radius: 0; box-shadow: none; }
+  .drawer details > summary { display: none; }
+  .drawer[data-tab="samples"] #pairsCard, .drawer[data-tab="pairs"] #sampleCard { display: none; }
 
   .card {
     background: var(--surface);
@@ -179,7 +268,26 @@
     color: var(--text-secondary);
   }
   .card-header .hint { font-size: 12px; color: var(--text-tertiary); }
+  .header-left { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
   .header-right { display: flex; align-items: center; gap: 10px; }
+  .overview-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .overview-link svg { flex-shrink: 0; }
   .theme-toggle {
     width: 24px; height: 24px;
     border: 1px solid var(--border);
@@ -211,8 +319,79 @@
   .tree-select-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
   .tree-select-btn .keep-count { font-family: var(--font-mono); font-size: 10.5px; opacity: 0.75; margin-left: 4px; }
 
+  /* ── Treebank row (pooled tree + per-treebank trees; only rendered when
+     the language has several treebanks) ── */
+  .treebank-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 18px 0; }
+  .treebank-row .tb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+  .treebank-row a.tree-select-btn { text-decoration: none; }
+  .treebank-row .tree-select-btn.tb-muted { cursor: default; opacity: 0.55; border-style: dashed; }
+  .treebank-row a.tree-select-btn.tb-muted-link { border-style: dashed; opacity: 0.85; }
+  .treebank-row .tree-select-btn.tb-muted:hover { border-color: var(--border); color: var(--text-secondary); }
+  /* Include-unk switch: a link between the as-is and incl.-unk pages,
+     pushed to the row's right edge and styled as an on/off switch so it
+     doesn't read as another treebank tab. */
+  .unk-toggle {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); text-decoration: none;
+    padding: 4px 10px 4px 6px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .unk-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .unk-toggle.on { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+  .unk-switch {
+    position: relative; width: 26px; height: 14px; border-radius: 7px;
+    background: var(--border); flex-shrink: 0; transition: background 0.15s;
+  }
+  .unk-knob {
+    position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: transform 0.15s;
+  }
+  .unk-toggle.on .unk-switch { background: var(--accent); }
+  .unk-toggle.on .unk-knob { transform: translateX(12px); background: #fff; }
+  /* Row for the include-unk switch, just above the tree. */
+  .tb-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; flex-basis: 100%; padding-bottom: 8px; }
+  /* Chevron on the left, its chips in a wrapping column to its right; when
+     the row is too narrow the switch drops beneath instead of squeezing them. */
+  .tb-excl-wrap { display: flex; align-items: flex-start; gap: 6px; flex: 1 1 300px; min-width: 0; }
+  .tb-excl-wrap .tb-excluded-toggle { flex: 0 0 auto; white-space: nowrap; margin-top: 3px; }
+  .tb-excluded-toggle {
+    font-family: var(--font-ui); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-tertiary); background: none; border: none;
+    cursor: pointer; padding: 4px 6px;
+  }
+  .tb-excluded-toggle:hover, .tb-excluded-toggle.has-current { color: var(--accent); }
+  .unk-toggle { flex-shrink: 0; }
+  /* Excluded treebanks: small chips grouped by exclusion reason, so each
+     reason is written once instead of on every pill. */
+  .tb-excluded { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; }
+  .tb-excluded[hidden] { display: none; }
+  .tb-excl-group {
+    display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 3px 10px 3px 6px; border: 1px dashed var(--border); border-radius: 16px;
+  }
+  .tb-excl-reason { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-left: 2px; }
+  .tb-chip {
+    display: inline-flex; align-items: baseline; gap: 5px;
+    font-family: var(--font-ui); font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    padding: 2px 8px; text-decoration: none;
+  }
+  .tb-chip .n { font-family: var(--font-mono); font-size: 10px; font-weight: 500; opacity: 0.7; }
+  a.tb-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .tb-chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .tb-chip.muted { opacity: 0.55; border-style: dashed; }
+  a.tb-chip.muted { opacity: 0.85; }
+  .tb-tag {
+    font-size: 10px; font-weight: 700; margin-left: 6px; padding: 1px 6px; border-radius: 10px;
+    background: var(--accent); color: #fff; letter-spacing: 0.02em;
+  }
+
   /* ── Tree panel ── */
-  .tree-wrap { position: relative; flex: 0 0 auto; }
+  .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -229,7 +408,11 @@
      own fit (see its comment below) -- rather than the card's overflow:hidden
      silently clipping a stray pixel, this lets just the canvas scroll
      horizontally while the header and tree switcher above it stay put. */
-  .tree-scroll { position: relative; overflow-x: auto; }
+  .tree-scroll {
+    position: relative; overflow: hidden;
+    flex: 1 1 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
   /* Sized by JS (sizeTreeBox()) to the tree's fitted *window* -- CANVAS_W x
      CANVAS_H scaled by whatever factor fills the card's width up to
      TREE_BOX_MAX_H -- and centered via auto margins once narrower than the
@@ -316,7 +499,7 @@
   .zoom-controls {
     position: absolute;
     right: 16px;
-    bottom: 16px;
+    top: 16px;
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -438,6 +621,11 @@
   .node-keep.yes { background: var(--keep-light); color: var(--keep); border: 1px solid var(--keep); }
   .node-keep.yes:hover { filter: brightness(1.08); }
   .node-keep.no { color: var(--text-tertiary); font-weight: 500; }
+  /* Only kept because a second_chance retry loosened the entropy bar past
+     this leaf's own H -- same keep color, dashed instead of solid so a
+     leaf that cleared the strict bar on its own still reads as the plain
+     (stronger) case. */
+  .node-keep.yes.second-chance { border-style: dashed; }
 
   /* ── Per-node class-distribution bar (real Yes/No split at that node) ── */
   .node-dist-bar-wrap { position: relative; margin-top: 4px; }
@@ -450,6 +638,7 @@
     transition: transform 0.12s ease;
   }
   .node-dist-bar .seg { height: 100%; }
+  .node-dist-bar .seg:not(:last-child) { border-right: 1px solid rgba(0, 0, 0, 0.65); }
   .node-dist-bar-wrap:hover .node-dist-bar { transform: scaleY(1.8); }
   .node-dist-bar-wrap:hover .node-dist-popover { display: flex; }
 
@@ -490,14 +679,28 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: nowrap; }
-  .node-dist-popover .dist-col { width: 40px; }
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+     wraps onto a second line within its own column instead of
+     overflowing into the neighboring column -- these columns get more
+     numerous and label-heavy as soon as an unk-split condition (Head/
+     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+  .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
+  .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
+  /* .node-slot's own transform above makes it a stacking context, so a
+     popover's z-index (.node-dist-popover/.corr-popover, both z-index: 60)
+     only wins against content inside its OWN node-slot -- against a
+     different, overlapping node-slot (stacked purely by DOM/paint order,
+     since neither has its own z-index) it can still end up underneath.
+     Bump the whole hovered slot's z-index so its popover clears every
+     other node regardless of paint order. */
+  .node-slot:has(.node-dist-bar-wrap:hover),
+  .node-slot:has(.corr-marker-wrap:hover) { z-index: 65; }
 
   .ring { fill: none; stroke-width: 3; opacity: 0.9; }
 
@@ -719,7 +922,7 @@
     border-left: 1px solid var(--border);
     background: var(--surface-raised);
   }
-  .node-dist-detail .dist-col { width: 34px; }
+  .node-dist-detail .dist-col { width: 42px; }
   .node-dist-detail .dist-col-bar-wrap { width: 30px; height: 56px; }
   .node-dist-detail .dist-col-count { font-size: 12px; }
   .node-dist-detail .dist-col-label { font-size: 9.5px; }
@@ -811,6 +1014,15 @@
     margin-left: auto;
   }
   .group-feats-toggle:hover { text-decoration: underline; }
+  /* Route toggles: same look as the features ones but their own, separate
+     open state (the route block sits one level below the feature table). */
+  .group-route-toggle {
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+    color: var(--text-secondary); background: none; border: none; cursor: pointer; padding: 0;
+  }
+  .group-route-toggle:hover { text-decoration: underline; }
+  .group-header-row .group-route-toggle { margin-left: auto; }
+  .group-header-row .group-route-toggle + .group-feats-toggle { margin-left: 12px; }
 
   /* ── Feature mini table: one row per role (nsubj/verb), one column per
      feature -- lines the two roles' values up for a direct comparison,
@@ -855,9 +1067,26 @@
      it still grows for a genuinely long word, but for the common case it
      stops that word length from being what shifts every later column
      sideways relative to the other 4 samples' tables. */
-  .node-table-wrap .feat-mini-table tbody th { min-width: 92px; }
+  .node-table-wrap .feat-mini-table tbody th.role-form-cell { min-width: 70px; }
   .feat-mini-table tbody tr + tr th, .feat-mini-table tbody tr + tr td { border-top: 1px solid var(--border-subtle); }
-  .feat-mini-table .role-form { font-weight: 700; margin-left: 4px; }
+  /* The row label and its token are separate cells so the tokens line up
+     in one column whatever the label's length (Verb / subject / swapped_...). */
+  .feat-mini-table tbody th.role-label-cell { border-right: none; padding-right: 4px; color: var(--text-secondary); font-weight: 600; }
+  .feat-mini-table tbody th.role-form-cell { padding-left: 4px; }
+  .feat-mini-table thead th:nth-child(-n+2) { border-right: none; }
+  /* Token-level fields (lemma, deprel, upos, xpos) sit after the
+     morphological features, set off by a divider and a quieter header. */
+  .feat-mini-table th.other-first, .feat-mini-table td.other-first { border-left: 2px solid var(--border); }
+  .feat-mini-table thead th.other-feat { font-style: italic; letter-spacing: 0.02em; text-transform: none; }
+  .feat-mini-table td.other-feat { background: var(--surface-raised); }
+  .feat-mini-table .role-form { font-weight: 700; margin-left: 0; }
+  .route-block { margin-top: 10px; }
+  .route-body { margin-top: 4px; }
+  .route-body[hidden] { display: none; }
+  .route-table th.route-node { color: var(--text-tertiary); font-weight: 600; }
+  .route-table td.route-branch.true { color: var(--ok); font-weight: 700; }
+  .route-table td.route-branch.false { color: var(--danger); font-weight: 700; }
+  .route-table td.route-value { font-weight: 700; color: var(--text-primary); }
   .feat-mini-table .role-form.role-a { color: var(--role-a); }
   .feat-mini-table .role-form.role-b { color: var(--role-b); }
   .feat-mini-table td b { color: var(--sample-color, var(--keep)); font-weight: 700; }
@@ -876,6 +1105,7 @@
      shown under the plain "NUMBER" table column) as distinct from a
      genuinely plain feature reading -- never render the two the same way,
      down to this smallest visual unit. */
+  .feat-mini-table td .fit-excluded { opacity: 0.5; cursor: help; }
   .feat-mini-table td .feat-bracket { color: var(--text-secondary); font-size: 0.75em; font-weight: 500; margin-left: 2px; }
   /* One line per bracket variant of a dimension (Number[abs]/Number[erg]/...),
      stacked instead of joined inline with a separator -- keeps every table
@@ -886,7 +1116,7 @@
   .feat-mini-table th.decisive, .feat-mini-table td.decisive { background: var(--sample-color-light, var(--accent-light)); }
   /* "linked" rows: a role and its reinflected swapped_ counterpart, tied
      together with a matching colored rail down the row-label cell. */
-  .feat-mini-table tr.linked-row th { box-shadow: inset 3px 0 0 var(--keep); }
+  .feat-mini-table tr.linked-row th.role-label-cell { box-shadow: inset 3px 0 0 var(--keep); }
   .feat-mini-table td.decisive.swapped { background: var(--trace-c-light); }
   .feat-mini-table td.decisive.swapped b { color: var(--trace-c); }
   /* Overrides the rule above for a bonus entry (see the general
@@ -977,6 +1207,19 @@
     color: var(--keep);
   }
   .pairs-leaf-heading .n { color: var(--text-tertiary); font-weight: 500; }
+  /* One per reinflected component (e.g. DET vs ADJ), only when a leaf's
+     pairs actually mix both directions -- see swap_roles_for_target_col --
+     so a two-direction leaf reads as two labelled runs instead of its
+     pairs interleaved with no indication of which side got reinflected. */
+  .pairs-role-header {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--keep);
+    margin: 10px 0 6px;
+  }
+  .pairs-role-header:first-child { margin-top: 0; }
+  .pairs-role-header .n { font-weight: 500; color: var(--text-tertiary); text-transform: none; letter-spacing: normal; }
+  .pairs-role-header.jump-flash { animation: labelFlash 1.4s ease; border-radius: 4px; }
   .pair-example {
     --sample-color: var(--keep); --sample-color-light: var(--keep-light);
     border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px;
@@ -1010,18 +1253,33 @@
   @media (max-width: 480px) {
     .node-table td.col-link { display: none; }
   }
+  @media (max-width: 720px) {
+    .card-header .hint { display: none; }
+    .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree-select-btn { padding: 4px 10px; }
+    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+  }
 </style>
 
 <div class="page">
   <div class="card tree-wrap">
     <div class="card-header">
-      <h2 id="treeTitle">Tree</h2>
+      <div class="header-left">
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2 id="treeTitle">Tree</h2>
+      </div>
       <div class="header-right">
-        <span class="hint">click a node to browse its samples</span>
+        <span class="hint">click a node for its samples · click it again to close</span>
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
     <div class="tree-select-row" id="treeSelectRow"></div>
+    <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
     <div class="tree-svg-box grabbable" id="treeBox">
@@ -1046,7 +1304,7 @@
       <div class="info-panel-header">
         <button type="button" class="minimize-button" id="minimizeBtn" title="Expand panel">+</button>
         <div class="language-name" id="infoPanelTitle"></div>
-        <div class="accuracy-badge"><span class="accuracy-dot"></span><span id="infoPanelAccuracy"></span> accuracy</div>
+        <div class="accuracy-badge"><span class="accuracy-dot"></span><span id="infoPanelAccuracy"></span></div>
       </div>
       <div class="info-panel-body">
         <div class="info-panel-meta" id="infoPanelMeta"></div>
@@ -1065,41 +1323,57 @@
       </div>
     </div>
     </div>
-  </div>
+    <div class="drawer" id="drawer" data-tab="samples" hidden>
+      <div class="drawer-handle" id="drawerHandle" title="Drag to resize"><span class="drawer-grip"></span></div>
+      <div class="drawer-bar">
+        <div class="drawer-tabs" role="tablist">
+          <div class="drawer-group">
+            <button type="button" class="drawer-tab active" id="tabSamples" data-tab="samples" role="tab">Samples</button>
+            <div class="drawer-labels" id="drawerLabels" hidden></div>
+          </div>
+          <div class="drawer-group pairs-group">
+            <button type="button" class="drawer-tab pairs-tab" id="tabPairs" data-tab="pairs" role="tab">🔑 Pairs</button>
+            <div class="drawer-labels pairs-roles" id="drawerPairRoles" hidden></div>
+          </div>
+        </div>
+        <span class="drawer-hint" id="drawerHint"></span>
+        <button type="button" class="drawer-close" id="drawerClose" title="Close (Esc)">✕</button>
+      </div>
+    <div class="scroll-pane" id="scrollPane">
+      <details class="card samples-card" id="sampleCard" open>
+        <summary class="card-header">
+          <h2 id="sampleGridTitle">Node samples</h2>
+          <span class="summary-right">
+            <span class="hint">click a row to trace it · up to 15 real rows per class</span>
+            <span class="chevron"></span>
+          </span>
+        </summary>
+        <div class="node-summary-row">
+          <div class="node-note" id="nodeNote"></div>
+          <div class="node-dist-detail" id="nodeDistDetail"></div>
+        </div>
+        <div class="node-table-wrap">
+          <table class="node-table">
+            <thead>
+              <tr>
+                <th></th><th>Sentence</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="sampleGrid"></tbody>
+          </table>
+        </div>
+      </details>
 
-  <div class="scroll-pane" id="scrollPane">
-    <details class="card samples-card" id="sampleCard" open>
-      <summary class="card-header">
-        <h2 id="sampleGridTitle">Node samples</h2>
-        <span class="summary-right">
-          <span class="hint">click a row to trace it · up to 15 real rows per class</span>
+      <details class="card pairs-card" id="pairsCard" open>
+        <summary>
+          <h2 id="pairsTitle">🔑 Generated minimal pairs</h2>
           <span class="chevron"></span>
-        </span>
-      </summary>
-      <div class="node-summary-row">
-        <div class="node-note" id="nodeNote"></div>
-        <div class="node-dist-detail" id="nodeDistDetail"></div>
-      </div>
-      <div class="node-table-wrap">
-        <table class="node-table">
-          <thead>
-            <tr>
-              <th></th><th>Sentence</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="sampleGrid"></tbody>
-        </table>
-      </div>
-    </details>
-
-    <details class="card pairs-card" id="pairsCard">
-      <summary>
-        <h2 id="pairsTitle">🔑 Generated minimal pairs</h2>
-        <span class="chevron"></span>
-      </summary>
-      <div class="pairs-intro" id="pairsIntro"></div>
-      <div class="pairs-list" id="pairsList"></div>
-    </details>
+        </summary>
+        <div class="pairs-intro" id="pairsIntro"></div>
+        <div class="pairs-list" id="pairsList"></div>
+      </details>
+    </div>
+    </div>
   </div>
 </div>
 
@@ -1114,7 +1388,7 @@
   // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Czech", "accuracy": "99.8%", "baseEntropy": "0.017", "reducedEntropy": "0.017", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "8,973", "predictor": "Verb_nsubj_Person", "keepThreshold": "entropy < 0.266765", "keepThresholdH": 0.26676498780302604}, "CLASSES": [{"cls": "Yes", "cnt": 8959, "color": "var(--yes)"}, {"cls": "No", "cnt": 14, "color": "var(--no)"}, {"cls": "unk", "cnt": 910, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 8973, "H": 0.0173, "leaf": true, "corr": [], "dist": [{"cls": "Yes", "cnt": 8959, "color": "var(--yes)"}, {"cls": "No", "cnt": 14, "color": "var(--no)"}], "rule": "predict: Yes", "predicted": "Yes", "majorityLabel": "Yes", "keep": true, "kept": 8959, "correctSwaps": 13673}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "\" Ot\u010de n\u00e1\u0161 , jen\u017e jsi na nebes\u00edch , <strong>posv\u011b\u0165</strong> se <strong>jm\u00e9no</strong> tv\u00e9 , p\u0159ij\u010f kr\u00e1lovstv\u00ed tv\u00e9 . . . \"", "verb": "posv\u011b\u0165", "verbFeats": ["upos=VERB", "deprel=root", "lemma=posv\u011btit", "VerbForm=Fin", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos"], "nsubj": "jm\u00e9no", "nsubjFeats": ["upos=NOUN", "lemma=jm\u00e9no", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas168-s1%22%20%3B%20A%20%5Bform%3D%22jm%C3%A9no%22%7C%22Jm%C3%A9no%22%5D%20%3B%20B%20%5Bform%3D%22posv%C4%9B%C5%A5%22%7C%22Posv%C4%9B%C5%A5%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "Spot\u0159ebn\u00ed <strong>p\u0159edm\u011bt</strong> , kdy\u017e b\u011bhem pou\u017e\u00edv\u00e1n\u00ed zm\u011bn\u00ed sv\u00e9 vlastnosti , <strong>d\u00e1me</strong> do sb\u011bru nebo zahod\u00edme .", "verb": "d\u00e1me", "verbFeats": ["upos=VERB", "deprel=root", "lemma=d\u00e1t", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "p\u0159edm\u011bt", "nsubjFeats": ["upos=NOUN", "lemma=p\u0159edm\u011bt", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s58w-s8%22%20%3B%20A%20%5Bform%3D%22p%C5%99edm%C4%9Bt%22%7C%22P%C5%99edm%C4%9Bt%22%5D%20%3B%20B%20%5Bform%3D%22d%C3%A1me%22%7C%22D%C3%A1me%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Proces</strong> , v n\u011bm\u017e doch\u00e1z\u00ed k formov\u00e1n\u00ed jedince jako spole\u010densk\u00e9 bytosti a j\u00edm\u017e si sou\u010dasn\u011b spole\u010dnost zaji\u0161\u0165uje tradov\u00e1n\u00ed konstitutivn\u00edch vzorc\u016f zku\u0161enosti a chov\u00e1n\u00ed stejn\u011b jako akumulovan\u00e9ho v\u011bd\u011bn\u00ed , <strong>naz\u00fdv\u00e1me</strong> socializac\u00ed .", "verb": "naz\u00fdv\u00e1me", "verbFeats": ["upos=VERB", "deprel=root", "lemma=naz\u00fdvat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "proces", "nsubjFeats": ["upos=NOUN", "lemma=proces", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s38w-s3%22%20%3B%20A%20%5Bform%3D%22proces%22%7C%22Proces%22%5D%20%3B%20B%20%5Bform%3D%22naz%C3%BDv%C3%A1me%22%7C%22Naz%C3%BDv%C3%A1me%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "\" Ot\u010de n\u00e1\u0161 , jen\u017e jsi na nebes\u00edch , posv\u011b\u0165 se jm\u00e9no tv\u00e9 , <strong>p\u0159ij\u010f</strong> <strong>kr\u00e1lovstv\u00ed</strong> tv\u00e9 . . . \"", "verb": "p\u0159ij\u010f", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=p\u0159ij\u00edt", "VerbForm=Fin", "Aspect=Perf", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "Tense=Pres"], "nsubj": "kr\u00e1lovstv\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=kr\u00e1lovstv\u00ed", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas168-s1%22%20%3B%20A%20%5Bform%3D%22kr%C3%A1lovstv%C3%AD%22%7C%22Kr%C3%A1lovstv%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99ij%C4%8F%22%7C%22P%C5%99ij%C4%8F%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "<strong>Komunist\u016f</strong> poslanc\u016f <strong>m\u00e1me</strong> v\u011bt\u0161inu .", "verb": "m\u00e1me", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u00edt", "VerbForm=Fin", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "komunist\u016f", "nsubjFeats": ["upos=NOUN", "lemma=komunista", "Animacy=Anim", "Case=Gen", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n39w-s116%22%20%3B%20A%20%5Bform%3D%22komunist%C5%AF%22%7C%22Komunist%C5%AF%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A1me%22%7C%22M%C3%A1me%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "\" <strong>Pomoz</strong> n\u00e1m samo <strong>nebe</strong> ! \" k\u0159i\u010del :", "verb": "pomoz", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=pomoci", "VerbForm=Fin", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos"], "nsubj": "nebe", "nsubjFeats": ["upos=NOUN", "lemma=nebe", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-vitamnlX010-s2%22%20%3B%20A%20%5Bform%3D%22nebe%22%7C%22Nebe%22%5D%20%3B%20B%20%5Bform%3D%22pomoz%22%7C%22Pomoz%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "Hlavn\u00ed je samoz\u0159ejm\u011b rozhodnout se pro chov ur\u010dit\u00e9ho druhu zv\u00ed\u0159at podle toho , jak\u00e9 <strong>m\u00e1me</strong> <strong>podm\u00ednky</strong> .", "verb": "m\u00e1me", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=m\u00edt", "VerbForm=Fin", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "podm\u00ednky", "nsubjFeats": ["upos=NOUN", "lemma=podm\u00ednka", "Case=Acc", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n50w-s13%22%20%3B%20A%20%5Bform%3D%22podm%C3%ADnky%22%7C%22Podm%C3%ADnky%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A1me%22%7C%22M%C3%A1me%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Speci\u00e1ln\u00ed velikost # * , # kus\u016f obkl\u00e1da\u010dek v\u00e1\u017e\u00ed # * a <strong>pot\u0159ebujeme</strong> jich na # * celkem # <strong>kus\u016f</strong> .", "verb": "pot\u0159ebujeme", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=pot\u0159ebovat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "kus\u016f", "nsubjFeats": ["upos=NOUN", "lemma=kus", "Animacy=Inan", "Case=Gen", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s58w-s121%22%20%3B%20A%20%5Bform%3D%22kus%C5%AF%22%7C%22Kus%C5%AF%22%5D%20%3B%20B%20%5Bform%3D%22pot%C5%99ebujeme%22%7C%22Pot%C5%99ebujeme%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Dal\u0161\u00ed <strong>\u00faspory</strong> <strong>dos\u00e1hneme</strong> vhodnou volbou rozm\u011br\u016f obkladov\u00fdch d\u00edl\u016f , aby by p\u0159\u00ed\u0159ezy a odpad byly co nejmen\u0161\u00ed .", "verb": "dos\u00e1hneme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dos\u00e1hnout", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "\u00faspory", "nsubjFeats": ["upos=NOUN", "lemma=\u00faspora", "Case=Gen", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s60w-s133%22%20%3B%20A%20%5Bform%3D%22%C3%BAspory%22%7C%22%C3%9Aspory%22%5D%20%3B%20B%20%5Bform%3D%22dos%C3%A1hneme%22%7C%22Dos%C3%A1hneme%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Ale v\u0161echna ta nes\u010detn\u00e1 pou\u017eit\u00ed m\u011bdi a jej\u00edch slitin n\u00e1le\u017e\u00ed dnes minulosti , nebo\u0165 <strong>m\u011b\u010f</strong> dnes <strong>pot\u0159ebujeme</strong> pro jej\u00ed elektrickou a tepelnou vodivost i pro jej\u00ed chemickou st\u00e1lost .", "verb": "pot\u0159ebujeme", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=pot\u0159ebovat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "m\u011b\u010f", "nsubjFeats": ["upos=NOUN", "lemma=m\u011b\u010f", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s08w-s59%22%20%3B%20A%20%5Bform%3D%22m%C4%9B%C4%8F%22%7C%22M%C4%9B%C4%8F%22%5D%20%3B%20B%20%5Bform%3D%22pot%C5%99ebujeme%22%7C%22Pot%C5%99ebujeme%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Kdy\u017e jsme se posadili k na\u0161emu stolu , kter\u00fd byl um\u00edst\u011bn na stran\u011b u oken , zjistili jsme , \u017ee m\u00edsto \u010dty\u0159 osob <strong>n\u00e1s</strong> tu <strong>sed\u00ed</strong> \u0161est .", "verb": "sed\u00ed", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=sed\u011bt", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "n\u00e1s", "nsubjFeats": ["upos=PRON", "lemma=j\u00e1", "Case=Gen", "Number=Plur", "<b>Person=1</b>", "PronType=Prs"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n29w-s138%22%20%3B%20A%20%5Bform%3D%22n%C3%A1s%22%7C%22N%C3%A1s%22%5D%20%3B%20B%20%5Bform%3D%22sed%C3%AD%22%7C%22Sed%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Pot\u0159ebujeme</strong> alespo\u0148 t\u0159i <strong>\u0161roubov\u00e1ky</strong> pro \u0161roubov\u00e1n\u00ed r\u016fzn\u00fdch vrut\u016f .", "verb": "pot\u0159ebujeme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=pot\u0159ebovat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "\u0161roubov\u00e1ky", "nsubjFeats": ["upos=NOUN", "lemma=\u0161roubov\u00e1k", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s60w-s149%22%20%3B%20A%20%5Bform%3D%22%C5%A1roubov%C3%A1ky%22%7C%22%C5%A0roubov%C3%A1ky%22%5D%20%3B%20B%20%5Bform%3D%22pot%C5%99ebujeme%22%7C%22Pot%C5%99ebujeme%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Vlivy</strong> , kter\u00e9 se p\u0159i skladov\u00e1n\u00ed potravin uplat\u0148uj\u00ed , <strong>d\u011bl\u00edme</strong> na klimatick\u00e9 , relativn\u00ed , vlhkost vzduchu , vliv slune\u010dn\u00edho z\u00e1\u0159en\u00ed , oxida\u010dn\u00ed p\u016fsoben\u00ed vzdu\u0161n\u00e9ho kysl\u00edku , manipula\u010dn\u00ed , biologick\u00e9 .", "verb": "d\u011bl\u00edme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=d\u011blit", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "vlivy", "nsubjFeats": ["upos=NOUN", "lemma=vliv", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s52w-s99%22%20%3B%20A%20%5Bform%3D%22vlivy%22%7C%22Vlivy%22%5D%20%3B%20B%20%5Bform%3D%22d%C4%9Bl%C3%ADme%22%7C%22D%C4%9Bl%C3%ADme%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "\" <strong>D\u011bkuji</strong> , urozen\u00fd pane , \" radostn\u011b posko\u010dil ko\u0148sk\u00fd <strong>handl\u00ed\u0159</strong> a upaloval pro h\u0159\u00edb\u011b .", "verb": "d\u011bkuji", "verbFeats": ["upos=VERB", "deprel=root", "lemma=d\u011bkovat", "VerbForm=Fin", "Mood=Ind", "Number=Sing", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "handl\u00ed\u0159", "nsubjFeats": ["upos=NOUN", "lemma=handl\u00ed\u0159", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "No", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-tri3XXXX030-s10%22%20%3B%20A%20%5Bform%3D%22handl%C3%AD%C5%99%22%7C%22Handl%C3%AD%C5%99%22%5D%20%3B%20B%20%5Bform%3D%22d%C4%9Bkuji%22%7C%22D%C4%9Bkuji%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "Je to proto , \u017ee vznikl\u00e1 d\u00edra se m\u016f\u017ee zaplnit elektronem , \u010d\u00edm\u017e <strong>vznik\u00e1</strong> <strong>d\u00edra</strong> na jin\u00e9m m\u00edst\u011b .", "verb": "vznik\u00e1", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=vznikat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "d\u00edra", "nsubjFeats": ["upos=NOUN", "lemma=d\u00edra", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s12w-s91%22%20%3B%20A%20%5Bform%3D%22d%C3%ADra%22%7C%22D%C3%ADra%22%5D%20%3B%20B%20%5Bform%3D%22vznik%C3%A1%22%7C%22Vznik%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Tomu <strong>odpov\u00edd\u00e1</strong> i <strong>rozvoj</strong> silni\u010dn\u00ed dopravy , zejm\u00e9na autobusov\u00e9 , kde \u010cSSR je rovn\u011b\u017e na vysok\u00e9 \u00farovni z hlediska napojen\u00ed obydlen\u00fdch m\u00edst na pravideln\u00e9 autobusov\u00e9 linky .", "verb": "odpov\u00edd\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=odpov\u00eddat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "rozvoj", "nsubjFeats": ["upos=NOUN", "lemma=rozvoj", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n40w-s142%22%20%3B%20A%20%5Bform%3D%22rozvoj%22%7C%22Rozvoj%22%5D%20%3B%20B%20%5Bform%3D%22odpov%C3%ADd%C3%A1%22%7C%22Odpov%C3%ADd%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>M\u011b\u0159en\u00ed</strong> spot\u0159eby kysl\u00edku <strong>m\u00e1</strong> nev\u00fdhodu v tom , \u017ee se sleduje v del\u0161\u00edm \u010dasov\u00e9m \u00faseku vyrovnan\u00e9 \u010dinnosti a nen\u00ed mo\u017en\u00e9 analyzovat spot\u0159ebu a v\u00fddej energie v jednotliv\u00fdch f\u00e1z\u00edch stahu .", "verb": "m\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=m\u00edt", "VerbForm=Fin", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "m\u011b\u0159en\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=m\u011b\u0159en\u00ed", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s16w-s168%22%20%3B%20A%20%5Bform%3D%22m%C4%9B%C5%99en%C3%AD%22%7C%22M%C4%9B%C5%99en%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A1%22%7C%22M%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "(2) <strong>Polo\u017eka</strong> \u201e B.II.2. Stavby \u201c <strong>obsahuje</strong> bez ohledu na v\u00fd\u0161i ocen\u011bn\u00ed a dobu pou\u017eitelnosti a) stavby v\u010detn\u011b budov , d\u016fln\u00ed d\u00edla a d\u016fln\u00ed stavby pod povrchem , vodn\u00ed d\u00edla a dal\u0161\u00ed stavebn\u00ed d\u00edla podle zvl\u00e1\u0161tn\u00edch pr\u00e1vn\u00edch p\u0159edpis\u016f , b) otv\u00edrky nov\u00fdch lom\u016f , p\u00edskoven a hlini\u0161\u0165 , c) technick\u00e9 rekultivace , pokud zvl\u00e1\u0161tn\u00ed pr\u00e1vn\u00ed p\u0159edpis nestanov\u00ed jinak , d) byty a nebytov\u00e9 prostory vymezen\u00e9 jako jednotky podle zvl\u00e1\u0161tn\u00edho pr\u00e1vn\u00edho p\u0159edpisu .", "verb": "obsahuje", "verbFeats": ["upos=VERB", "deprel=root", "lemma=obsahovat", "VerbForm=Fin", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "polo\u017eka", "nsubjFeats": ["upos=NOUN", "lemma=polo\u017eka", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CLTT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vyhlaska.iso-002-p11s4%22%20%3B%20A%20%5Bform%3D%22polo%C5%BEka%22%7C%22Polo%C5%BEka%22%5D%20%3B%20B%20%5Bform%3D%22obsahuje%22%7C%22Obsahuje%22%5D%20%20%7D", "treebankName": "UD_Czech-CLTT"}, {"sentence": "# listopadu <strong>prob\u011bhne</strong> do\u0161kolovac\u00ed <strong>semin\u00e1\u0159</strong> cvi\u010ditel\u016f a od # z\u00e1\u0159\u00ed do # prosince kurs pro pomocn\u00e9 cvi\u010ditele .", "verb": "prob\u011bhne", "verbFeats": ["upos=VERB", "deprel=root", "lemma=prob\u011bhnout", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "semin\u00e1\u0159", "nsubjFeats": ["upos=NOUN", "lemma=semin\u00e1\u0159", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n31w-s107%22%20%3B%20A%20%5Bform%3D%22semin%C3%A1%C5%99%22%7C%22Semin%C3%A1%C5%99%22%5D%20%3B%20B%20%5Bform%3D%22prob%C4%9Bhne%22%7C%22Prob%C4%9Bhne%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Eduard v\u011bd\u011bl , \u017ee v mal\u00e9m m\u011bst\u011b se ka\u017ed\u00e1 <strong>ud\u00e1lost</strong> rychle <strong>p\u0159em\u011b\u0148uje</strong> v legendu , ale p\u0159ece jen netu\u0161il , \u017ee i jeho bezcenn\u00e9 p\u0159\u00edb\u011bhy , jejich\u017e v\u00fdznam nikdy nep\u0159ece\u0148oval , maj\u00ed v sob\u011b takovou legendotvornou s\u00edlu ;", "verb": "p\u0159em\u011b\u0148uje", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=p\u0159em\u011b\u0148ovat", "VerbForm=Fin", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "ud\u00e1lost", "nsubjFeats": ["upos=NOUN", "lemma=ud\u00e1lost", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-ku_smlas192-s1%22%20%3B%20A%20%5Bform%3D%22ud%C3%A1lost%22%7C%22Ud%C3%A1lost%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99em%C4%9B%C5%88uje%22%7C%22P%C5%99em%C4%9B%C5%88uje%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "Pokud jsou tyto transakce v\u00fdznamn\u00e9 a nebyly uzav\u0159eny za b\u011b\u017en\u00fdch tr\u017en\u00edch podm\u00ednek , \u00fa\u010detn\u00ed <strong>jednotka</strong> <strong>uvede</strong> v\u00fd\u0161i t\u011bchto transakc\u00ed v\u010detn\u011b povahy vztahu se sp\u0159\u00edzn\u011bnou stranou a ostatn\u00ed informace o t\u011bchto transakc\u00edch , kter\u00e9 jsou nezbytn\u00e9 k pochopen\u00ed finan\u010dn\u00ed situace \u00fa\u010detn\u00ed jednotky .", "verb": "uvede", "verbFeats": ["upos=VERB", "deprel=root", "lemma=uv\u00e9st", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "jednotka", "nsubjFeats": ["upos=NOUN", "lemma=jednotka", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CLTT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vyhlaska.iso-004-p48s33%22%20%3B%20A%20%5Bform%3D%22jednotka%22%7C%22Jednotka%22%5D%20%3B%20B%20%5Bform%3D%22uvede%22%7C%22Uvede%22%5D%20%20%7D", "treebankName": "UD_Czech-CLTT"}, {"sentence": "P\u0159ekonat tyto pozitivistick\u00e9 p\u0159\u00edstupy znamen\u00e1 vyvodit d\u016fsledky z faktu , \u017ee <strong>neexistuje</strong> sociologick\u00fd empirick\u00fd <strong>v\u00fdzkum</strong> , kter\u00fd by nebyl veden obecn\u00fdmi idejemi , a dov\u00e9st tuto skute\u010dnost a\u017e k takov\u00e9 koncepci sociologick\u00e9 pr\u00e1ce , kter\u00e1 se programov\u011b hl\u00e1s\u00ed k syst\u00e9mu n\u00e1zor\u016f , je\u017e vyjad\u0159uj\u00ed z\u00e1jmy , c\u00edle a \u00fakoly d\u011blnick\u00e9 t\u0159\u00eddy .", "verb": "neexistuje", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=existovat", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "Voice=Act"], "nsubj": "v\u00fdzkum", "nsubjFeats": ["upos=NOUN", "lemma=v\u00fdzkum", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s20w-s40%22%20%3B%20A%20%5Bform%3D%22v%C3%BDzkum%22%7C%22V%C3%BDzkum%22%5D%20%3B%20B%20%5Bform%3D%22neexistuje%22%7C%22Neexistuje%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>V\u011bta</strong> zahl\u00e9dli ho p\u0159i ob\u011bd\u011b <strong>m\u016f\u017ee</strong> m\u00edt t\u0159i v\u00fdznamy , kdy\u017e ob\u011bdval , kdy\u017e ob\u011bdvali , kdy\u017e se ob\u011bdvalo .", "verb": "m\u016f\u017ee", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "v\u011bta", "nsubjFeats": ["upos=NOUN", "lemma=v\u011bta", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s35w-s40%22%20%3B%20A%20%5Bform%3D%22v%C4%9Bta%22%7C%22V%C4%9Bta%22%5D%20%3B%20B%20%5Bform%3D%22m%C5%AF%C5%BEe%22%7C%22M%C5%AF%C5%BEe%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Chce vyu\u017e\u00edt sympati\u00ed , kter\u00e9 k Toni\u010dce ji\u017e dlouho <strong>c\u00edt\u00ed</strong> star\u0161\u00ed <strong>syn</strong> Jenda , a tak zachr\u00e1nit alespo\u0148 sv\u00e9ho obl\u00edben\u011bj\u0161\u00edho .", "verb": "c\u00edt\u00ed", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=c\u00edtit", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "syn", "nsubjFeats": ["upos=NOUN", "lemma=syn", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n33w-s96%22%20%3B%20A%20%5Bform%3D%22syn%22%7C%22Syn%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%ADt%C3%AD%22%7C%22C%C3%ADt%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Vyb\u011bhnut\u00ed</strong> <strong>mus\u00ed</strong> m\u00edt charakter ostr\u00e9ho startu a nejrychlej\u0161\u00edho b\u011bhu s vyh\u00fdb\u00e1n\u00edm partner\u016f vpravo .", "verb": "mus\u00ed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=muset", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "vyb\u011bhnut\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=vyb\u011bhnut\u00ed", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s29w-s41%22%20%3B%20A%20%5Bform%3D%22vyb%C4%9Bhnut%C3%AD%22%7C%22Vyb%C4%9Bhnut%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22mus%C3%AD%22%7C%22Mus%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Odbor\u00e1\u0159i</strong> <strong>nav\u00e1\u017eou</strong> dru\u017eebn\u00ed styky se slovenskou \u0161kolou a budou podporovat dopisov\u00e1n\u00ed pracovn\u00edk\u016f i \u017e\u00e1k\u016f do socialistick\u00fdch zem\u00ed .", "verb": "nav\u00e1\u017eou", "verbFeats": ["upos=VERB", "deprel=root", "lemma=nav\u00e1zat", "VerbForm=Fin", "Aspect=Perf", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "odbor\u00e1\u0159i", "nsubjFeats": ["upos=NOUN", "lemma=odbor\u00e1\u0159", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n32w-s107%22%20%3B%20A%20%5Bform%3D%22odbor%C3%A1%C5%99i%22%7C%22Odbor%C3%A1%C5%99i%22%5D%20%3B%20B%20%5Bform%3D%22nav%C3%A1%C5%BEou%22%7C%22Nav%C3%A1%C5%BEou%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "T\u0159etin\u011b lidstva se poda\u0159ilo vyrvat moc z rukou utla\u010dovatel\u016f a nad v\u011bt\u0161inou zem\u00ed socialismu ji\u017e <strong>sv\u00edt\u00ed</strong> <strong>slunce</strong> pro v\u0161echny d\u011bti .", "verb": "sv\u00edt\u00ed", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=sv\u00edtit", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "slunce", "nsubjFeats": ["upos=NOUN", "lemma=slunce", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n07w-s6%22%20%3B%20A%20%5Bform%3D%22slunce%22%7C%22Slunce%22%5D%20%3B%20B%20%5Bform%3D%22sv%C3%ADt%C3%AD%22%7C%22Sv%C3%ADt%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Kritika</strong> <strong>nem\u016f\u017ee</strong> jinak prov\u011b\u0159ovat pravdivost sv\u00fdch soud\u016f ne\u017e tv\u016fr\u010d\u00ed prax\u00ed a \u017eivotnost\u00ed d\u00edla .", "verb": "nem\u016f\u017ee", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "VerbForm=Fin", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "Voice=Act"], "nsubj": "kritika", "nsubjFeats": ["upos=NOUN", "lemma=kritika", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s22w-s117%22%20%3B%20A%20%5Bform%3D%22kritika%22%7C%22Kritika%22%5D%20%3B%20B%20%5Bform%3D%22nem%C5%AF%C5%BEe%22%7C%22Nem%C5%AF%C5%BEe%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Podle polohy v\u016f\u010di os\u00e1m <strong>mohou</strong> krystalov\u00e9 <strong>plochy</strong> ut\u00ednat v kone\u010dn\u00e9 d\u00e9lce bu\u010f jen jednu osu a s ostatn\u00edmi b\u00fdt rovnob\u011b\u017en\u00e9 plochy jedno\u00fasekov\u00e9 , nebo osy dv\u011b a se t\u0159et\u00ed b\u00fdt rovnob\u011b\u017en\u00e9 plochy dvoj\u00fasekov\u00e9 , nebo ut\u00ednaj\u00ed v kone\u010dn\u00fdch d\u00e9lk\u00e1ch v\u0161echny t\u0159i osy plochy troj\u00fasekov\u00e9 .", "verb": "mohou", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "VerbForm=Fin", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "Voice=Act"], "nsubj": "plochy", "nsubjFeats": ["upos=NOUN", "lemma=plocha", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "label": "Yes", "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s53w-s108%22%20%3B%20A%20%5Bform%3D%22plochy%22%7C%22Plochy%22%5D%20%3B%20B%20%5Bform%3D%22mohou%22%7C%22Mohou%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}]}, "PAIRS": [{"origSentence": "Takov\u00e9 sm\u011bsn\u00e9 <strong>syst\u00e9my</strong> se <strong>naz\u00fdvaj\u00ed</strong> molekul\u00e1rn\u011b analyticky disperzn\u00ed , nebo kr\u00e1tce prav\u00e9 roztoky .", "swapSentence": "Takov\u00e9 sm\u011bsn\u00e9 <strong>syst\u00e9my</strong> se <strong>naz\u00fdv\u00e1te</strong> molekul\u00e1rn\u011b analyticky disperzn\u00ed , nebo kr\u00e1tce prav\u00e9 roztoky .", "nsubj": "syst\u00e9my", "verb": "naz\u00fdvaj\u00ed", "nsubjFeats": ["lemma=syst\u00e9m", "upos=NOUN", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=naz\u00fdvat", "deprel=root", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "naz\u00fdv\u00e1te", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s04w-s28%22%20%3B%20A%20%5Bform%3D%22syst%C3%A9my%22%7C%22Syst%C3%A9my%22%5D%20%3B%20B%20%5Bform%3D%22naz%C3%BDvaj%C3%AD%22%7C%22Naz%C3%BDvaj%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Takov\u00e9 sm\u011bsn\u00e9 <strong>syst\u00e9my</strong> se <strong>naz\u00fdvaj\u00ed</strong> molekul\u00e1rn\u011b analyticky disperzn\u00ed , nebo kr\u00e1tce prav\u00e9 roztoky .", "swapSentence": "Takov\u00e9 sm\u011bsn\u00e9 <strong>syst\u00e9my</strong> se <strong>naz\u00fdv\u00e1me</strong> molekul\u00e1rn\u011b analyticky disperzn\u00ed , nebo kr\u00e1tce prav\u00e9 roztoky .", "nsubj": "syst\u00e9my", "verb": "naz\u00fdvaj\u00ed", "nsubjFeats": ["lemma=syst\u00e9m", "upos=NOUN", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=naz\u00fdvat", "deprel=root", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "naz\u00fdv\u00e1me", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s04w-s28%22%20%3B%20A%20%5Bform%3D%22syst%C3%A9my%22%7C%22Syst%C3%A9my%22%5D%20%3B%20B%20%5Bform%3D%22naz%C3%BDvaj%C3%AD%22%7C%22Naz%C3%BDvaj%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "A ustra\u0161enci otravovali vzduch a rozvratn\u00edci s nad\u0161en\u00edm pozorovali , jak kapitalistick\u00fd <strong>sv\u011bt</strong> znovu <strong>chyst\u00e1</strong> pu\u0161ky proti sov\u011btsk\u00e9 vl\u00e1d\u011b .", "swapSentence": "A ustra\u0161enci otravovali vzduch a rozvratn\u00edci s nad\u0161en\u00edm pozorovali , jak kapitalistick\u00fd <strong>sv\u011bt</strong> znovu <strong>chyst\u00e1m</strong> pu\u0161ky proti sov\u011btsk\u00e9 vl\u00e1d\u011b .", "nsubj": "sv\u011bt", "verb": "chyst\u00e1", "nsubjFeats": ["lemma=sv\u011bt", "upos=NOUN", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=chystat", "deprel=ccomp", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "chyst\u00e1m", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n05w-s13%22%20%3B%20A%20%5Bform%3D%22sv%C4%9Bt%22%7C%22Sv%C4%9Bt%22%5D%20%3B%20B%20%5Bform%3D%22chyst%C3%A1%22%7C%22Chyst%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "A ustra\u0161enci otravovali vzduch a rozvratn\u00edci s nad\u0161en\u00edm pozorovali , jak kapitalistick\u00fd <strong>sv\u011bt</strong> znovu <strong>chyst\u00e1</strong> pu\u0161ky proti sov\u011btsk\u00e9 vl\u00e1d\u011b .", "swapSentence": "A ustra\u0161enci otravovali vzduch a rozvratn\u00edci s nad\u0161en\u00edm pozorovali , jak kapitalistick\u00fd <strong>sv\u011bt</strong> znovu <strong>chyst\u00e1\u0161</strong> pu\u0161ky proti sov\u011btsk\u00e9 vl\u00e1d\u011b .", "nsubj": "sv\u011bt", "verb": "chyst\u00e1", "nsubjFeats": ["lemma=sv\u011bt", "upos=NOUN", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=chystat", "deprel=ccomp", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "chyst\u00e1\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n05w-s13%22%20%3B%20A%20%5Bform%3D%22sv%C4%9Bt%22%7C%22Sv%C4%9Bt%22%5D%20%3B%20B%20%5Bform%3D%22chyst%C3%A1%22%7C%22Chyst%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Pokud jde o ot\u00e1zku postaven\u00ed sociologie v soustav\u011b spole\u010densk\u00fdch v\u011bd , nast\u00ednili jsme v na\u0161em dosavadn\u00edm v\u00fdkladu r\u00e1mcovou definic\u00ed spole\u010dnosti jen element\u00e1rn\u00ed obrys oblasti , v kter\u00e9 <strong>m\u00e1</strong> b\u00fdt hled\u00e1na <strong>odpov\u011b\u010f</strong> .", "swapSentence": "Pokud jde o ot\u00e1zku postaven\u00ed sociologie v soustav\u011b spole\u010densk\u00fdch v\u011bd , nast\u00ednili jsme v na\u0161em dosavadn\u00edm v\u00fdkladu r\u00e1mcovou definic\u00ed spole\u010dnosti jen element\u00e1rn\u00ed obrys oblasti , v kter\u00e9 <strong>m\u00e1\u0161</strong> b\u00fdt hled\u00e1na <strong>odpov\u011b\u010f</strong> .", "nsubj": "odpov\u011b\u010f", "verb": "m\u00e1", "nsubjFeats": ["lemma=odpov\u011b\u010f", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=m\u00edt", "deprel=acl:relcl", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "m\u00e1\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s36w-s86%22%20%3B%20A%20%5Bform%3D%22odpov%C4%9B%C4%8F%22%7C%22Odpov%C4%9B%C4%8F%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A1%22%7C%22M%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Pokud jde o ot\u00e1zku postaven\u00ed sociologie v soustav\u011b spole\u010densk\u00fdch v\u011bd , nast\u00ednili jsme v na\u0161em dosavadn\u00edm v\u00fdkladu r\u00e1mcovou definic\u00ed spole\u010dnosti jen element\u00e1rn\u00ed obrys oblasti , v kter\u00e9 <strong>m\u00e1</strong> b\u00fdt hled\u00e1na <strong>odpov\u011b\u010f</strong> .", "swapSentence": "Pokud jde o ot\u00e1zku postaven\u00ed sociologie v soustav\u011b spole\u010densk\u00fdch v\u011bd , nast\u00ednili jsme v na\u0161em dosavadn\u00edm v\u00fdkladu r\u00e1mcovou definic\u00ed spole\u010dnosti jen element\u00e1rn\u00ed obrys oblasti , v kter\u00e9 <strong>m\u00e1m</strong> b\u00fdt hled\u00e1na <strong>odpov\u011b\u010f</strong> .", "nsubj": "odpov\u011b\u010f", "verb": "m\u00e1", "nsubjFeats": ["lemma=odpov\u011b\u010f", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=m\u00edt", "deprel=acl:relcl", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "m\u00e1m", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s36w-s86%22%20%3B%20A%20%5Bform%3D%22odpov%C4%9B%C4%8F%22%7C%22Odpov%C4%9B%C4%8F%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A1%22%7C%22M%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "<strong>Slitiny</strong> u\u0161lechtil\u00fdch kov\u016f <strong>ne\u010din\u00ed</strong> , pokud jde o t\u0159\u00edd\u011bn\u00ed , zvl\u00e1\u0161tn\u00edch pot\u00ed\u017e\u00ed a\u017e na slitiny , u kter\u00fdch p\u0159eva\u017euj\u00ed neu\u0161lechtil\u00e9 kovy , zejm\u00e9na nikl a m\u011b\u010f .", "swapSentence": "<strong>Slitiny</strong> u\u0161lechtil\u00fdch kov\u016f <strong>ne\u010din\u00edme</strong> , pokud jde o t\u0159\u00edd\u011bn\u00ed , zvl\u00e1\u0161tn\u00edch pot\u00ed\u017e\u00ed a\u017e na slitiny , u kter\u00fdch p\u0159eva\u017euj\u00ed neu\u0161lechtil\u00e9 kovy , zejm\u00e9na nikl a m\u011b\u010f .", "nsubj": "slitiny", "verb": "ne\u010din\u00ed", "nsubjFeats": ["lemma=slitina", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=\u010dinit", "deprel=root", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "ne\u010din\u00edme", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s08w-s136%22%20%3B%20A%20%5Bform%3D%22slitiny%22%7C%22Slitiny%22%5D%20%3B%20B%20%5Bform%3D%22ne%C4%8Din%C3%AD%22%7C%22Ne%C4%8Din%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Kdy\u017e <strong>nejde</strong> <strong>hora</strong> k Mohamedovi , mus\u00ed Mohamed k ho\u0159e .", "swapSentence": "Kdy\u017e <strong>nejde\u0161</strong> <strong>hora</strong> k Mohamedovi , mus\u00ed Mohamed k ho\u0159e .", "nsubj": "hora", "verb": "nejde", "nsubjFeats": ["lemma=hora", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=j\u00edt", "deprel=advcl", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "nejde\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n08w-s142%22%20%3B%20A%20%5Bform%3D%22hora%22%7C%22Hora%22%5D%20%3B%20B%20%5Bform%3D%22nejde%22%7C%22Nejde%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Kdy\u017e <strong>nejde</strong> <strong>hora</strong> k Mohamedovi , mus\u00ed Mohamed k ho\u0159e .", "swapSentence": "Kdy\u017e <strong>nejdu</strong> <strong>hora</strong> k Mohamedovi , mus\u00ed Mohamed k ho\u0159e .", "nsubj": "hora", "verb": "nejde", "nsubjFeats": ["lemma=hora", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=j\u00edt", "deprel=advcl", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "nejdu", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n08w-s142%22%20%3B%20A%20%5Bform%3D%22hora%22%7C%22Hora%22%5D%20%3B%20B%20%5Bform%3D%22nejde%22%7C%22Nejde%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "<strong>V\u00edte</strong> ostatn\u011b <strong>vy</strong> , co chcete ?", "swapSentence": "<strong>v\u011bd\u00ed</strong> ostatn\u011b <strong>vy</strong> , co chcete ?", "nsubj": "vy", "verb": "v\u00edte", "nsubjFeats": ["lemma=ty", "upos=PRON", "Case=Nom", "Number=Plur", "<b>Person=2</b>"], "verbFeats": ["lemma=v\u011bd\u011bt", "deprel=root", "Mood=Ind", "Number=Plur", "<b>Person=2</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "v\u011bd\u00ed", "swapRole": "B", "afterValue": "3", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas095-s1%22%20%3B%20A%20%5Bform%3D%22vy%22%7C%22Vy%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%ADte%22%7C%22V%C3%ADte%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree", "leaf": "0"}, {"origSentence": "<strong>V\u00edte</strong> ostatn\u011b <strong>vy</strong> , co chcete ?", "swapSentence": "<strong>v\u00edme</strong> ostatn\u011b <strong>vy</strong> , co chcete ?", "nsubj": "vy", "verb": "v\u00edte", "nsubjFeats": ["lemma=ty", "upos=PRON", "Case=Nom", "Number=Plur", "<b>Person=2</b>"], "verbFeats": ["lemma=v\u011bd\u011bt", "deprel=root", "Mood=Ind", "Number=Plur", "<b>Person=2</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "v\u00edme", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas095-s1%22%20%3B%20A%20%5Bform%3D%22vy%22%7C%22Vy%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%ADte%22%7C%22V%C3%ADte%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree", "leaf": "0"}, {"origSentence": "S biotick\u00fdm principem homeost\u00e1zy <strong>souvis\u00ed</strong> i <strong>skute\u010dnost</strong> , \u017ee pro \u017eiv\u00e9ho jedince ur\u010dit\u00e9ho druhu bude optim\u00e1ln\u00ed jen zcela ur\u010dit\u00e9 prost\u0159ed\u00ed , v n\u011bm\u017e se mu bude nejl\u00e9pe \u017e\u00edt a je\u017e bude i aktivn\u011b vyhled\u00e1vat .", "swapSentence": "S biotick\u00fdm principem homeost\u00e1zy <strong>souvis\u00edm</strong> i <strong>skute\u010dnost</strong> , \u017ee pro \u017eiv\u00e9ho jedince ur\u010dit\u00e9ho druhu bude optim\u00e1ln\u00ed jen zcela ur\u010dit\u00e9 prost\u0159ed\u00ed , v n\u011bm\u017e se mu bude nejl\u00e9pe \u017e\u00edt a je\u017e bude i aktivn\u011b vyhled\u00e1vat .", "nsubj": "skute\u010dnost", "verb": "souvis\u00ed", "nsubjFeats": ["lemma=skute\u010dnost", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=souviset", "deprel=root", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "souvis\u00edm", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s17w-s69%22%20%3B%20A%20%5Bform%3D%22skute%C4%8Dnost%22%7C%22Skute%C4%8Dnost%22%5D%20%3B%20B%20%5Bform%3D%22souvis%C3%AD%22%7C%22Souvis%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "S biotick\u00fdm principem homeost\u00e1zy <strong>souvis\u00ed</strong> i <strong>skute\u010dnost</strong> , \u017ee pro \u017eiv\u00e9ho jedince ur\u010dit\u00e9ho druhu bude optim\u00e1ln\u00ed jen zcela ur\u010dit\u00e9 prost\u0159ed\u00ed , v n\u011bm\u017e se mu bude nejl\u00e9pe \u017e\u00edt a je\u017e bude i aktivn\u011b vyhled\u00e1vat .", "swapSentence": "S biotick\u00fdm principem homeost\u00e1zy <strong>souvis\u00ed\u0161</strong> i <strong>skute\u010dnost</strong> , \u017ee pro \u017eiv\u00e9ho jedince ur\u010dit\u00e9ho druhu bude optim\u00e1ln\u00ed jen zcela ur\u010dit\u00e9 prost\u0159ed\u00ed , v n\u011bm\u017e se mu bude nejl\u00e9pe \u017e\u00edt a je\u017e bude i aktivn\u011b vyhled\u00e1vat .", "nsubj": "skute\u010dnost", "verb": "souvis\u00ed", "nsubjFeats": ["lemma=skute\u010dnost", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=souviset", "deprel=root", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "souvis\u00ed\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s17w-s69%22%20%3B%20A%20%5Bform%3D%22skute%C4%8Dnost%22%7C%22Skute%C4%8Dnost%22%5D%20%3B%20B%20%5Bform%3D%22souvis%C3%AD%22%7C%22Souvis%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Tak dostaneme celkov\u00fd po\u010det dn\u016f , za kter\u00e9 pracuj\u00edc\u00edmu d\u016fchodci <strong>n\u00e1le\u017e\u00ed</strong> <strong>n\u00e1hrada</strong> mzdy .", "swapSentence": "Tak dostaneme celkov\u00fd po\u010det dn\u016f , za kter\u00e9 pracuj\u00edc\u00edmu d\u016fchodci <strong>n\u00e1le\u017e\u00ed\u0161</strong> <strong>n\u00e1hrada</strong> mzdy .", "nsubj": "n\u00e1hrada", "verb": "n\u00e1le\u017e\u00ed", "nsubjFeats": ["lemma=n\u00e1hrada", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=n\u00e1le\u017eet", "deprel=acl:relcl", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "n\u00e1le\u017e\u00ed\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a04w-s61%22%20%3B%20A%20%5Bform%3D%22n%C3%A1hrada%22%7C%22N%C3%A1hrada%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A1le%C5%BE%C3%AD%22%7C%22N%C3%A1le%C5%BE%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Tak dostaneme celkov\u00fd po\u010det dn\u016f , za kter\u00e9 pracuj\u00edc\u00edmu d\u016fchodci <strong>n\u00e1le\u017e\u00ed</strong> <strong>n\u00e1hrada</strong> mzdy .", "swapSentence": "Tak dostaneme celkov\u00fd po\u010det dn\u016f , za kter\u00e9 pracuj\u00edc\u00edmu d\u016fchodci <strong>n\u00e1le\u017e\u00edm</strong> <strong>n\u00e1hrada</strong> mzdy .", "nsubj": "n\u00e1hrada", "verb": "n\u00e1le\u017e\u00ed", "nsubjFeats": ["lemma=n\u00e1hrada", "upos=NOUN", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=n\u00e1le\u017eet", "deprel=acl:relcl", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "ungrammatical": "n\u00e1le\u017e\u00edm", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a04w-s61%22%20%3B%20A%20%5Bform%3D%22n%C3%A1hrada%22%7C%22N%C3%A1hrada%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A1le%C5%BE%C3%AD%22%7C%22N%C3%A1le%C5%BE%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}]};
+const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Czech", "languageName": "Czech", "accuracy": "99.9%", "testAccuracy": "100.0%", "testN": 3458, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "31,117", "predictor": "Verb_nsubj_Person", "rootAccuracy": "99.9%", "trainAccuracy": "99.9%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9988435964151489, "pooledTestN": 3459, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 34575, "pooledUnkRows": 1910, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "CAC", "rows": 7589, "unkRows": 411, "status": "ok", "excluded": false, "reason": null, "acc": 0.997364953886693, "pooledAcc": 0.997364953886693, "delta": 0.0, "diverges": false, "href": "Czech/UD_Czech-CAC.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "CLTT", "rows": 596, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Czech/UD_Czech-CLTT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "FicTree", "rows": 1568, "unkRows": 233, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Czech/UD_Czech-FicTree.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PDTC", "rows": 24605, "unkRows": 1255, "status": "ok", "excluded": false, "reason": null, "acc": 0.9991873222267371, "pooledAcc": 0.9991873222267371, "delta": 0.0, "diverges": false, "href": "Czech/UD_Czech-PDTC.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 217, "unkRows": 10, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Czech/UD_Czech-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 31090, "color": "var(--yes)"}, {"cls": "no", "cnt": 27, "color": "var(--no)"}, {"cls": "unk", "cnt": 1910, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 31117, "H": 0.0102, "acc": 0.9991, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 31090, "color": "var(--yes)"}, {"cls": "no", "cnt": 27, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 31090, "correctSwaps": 52376, "pairRoleCounts": {"B": 52376}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Trend se nezm\u011bnil a st\u00e1le <strong>n\u00e1s</strong> <strong>p\u0159ib\u00fdv\u00e1</strong> ka\u017ed\u00fdm rokem 94 milion\u016f .", "verb": "p\u0159ib\u00fdv\u00e1", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=p\u0159ib\u00fdvat", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "n\u00e1s", "nsubjFeats": ["upos=PRON", "lemma=my", "xpos=PP-P2--1-------", "Case=Gen", "Number=Plur", "<b>Person=1</b>", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln94208-79-p7s8%22%20%3B%20A%20%5Bform%3D%22p%C5%99ib%C3%BDv%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A1s%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Podklady pro pr\u016fb\u011b\u017en\u00e9 oponentn\u00ed \u0159\u00edzen\u00ed tvo\u0159\u00ed zpr\u00e1va o v\u00fdsledc\u00edch , v n\u00ed\u017e bude shrnuto obdob\u00ed od po\u010d\u00e1tku dodne\u0161ka , <strong>osnova</strong> <strong>viz</strong> n\u00ed\u017ee , ve form\u011b p\u0159\u00edlohy ke zpr\u00e1v\u011b v\u00fdb\u011brov\u00fd bibliografick\u00fd p\u0159ehled publikovan\u00fdch v tisku jsouc\u00edch v\u00fdsledk\u016f , dal\u0161\u00ed materi\u00e1ly .", "verb": "viz", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=viz", "xpos=Vi-S---2--A---1", "Aspect=Perf", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "VerbForm=Fin"], "nsubj": "osnova", "nsubjFeats": ["upos=NOUN", "lemma=osnova", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22a14w-s78%22%20%3B%20A%20%5Bform%3D%22viz%22%5D%20%3B%20B%20%5Bform%3D%22osnova%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Ale v\u0161echna ta nes\u010detn\u00e1 pou\u017eit\u00ed m\u011bdi a jej\u00edch slitin n\u00e1le\u017e\u00ed dnes minulosti , nebo\u0165 <strong>m\u011b\u010f</strong> dnes <strong>pot\u0159ebujeme</strong> pro jej\u00ed elektrickou a tepelnou vodivost i pro jej\u00ed chemickou st\u00e1lost .", "verb": "pot\u0159ebujeme", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=pot\u0159ebovat", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "m\u011b\u010f", "nsubjFeats": ["upos=NOUN", "lemma=m\u011b\u010f", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s08w-s59%22%20%3B%20A%20%5Bform%3D%22pot%C5%99ebujeme%22%5D%20%3B%20B%20%5Bform%3D%22m%C4%9B%C4%8F%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>Pot\u0159ebujeme</strong> alespo\u0148 t\u0159i <strong>\u0161roubov\u00e1ky</strong> pro \u0161roubov\u00e1n\u00ed r\u016fzn\u00fdch vrut\u016f .", "verb": "pot\u0159ebujeme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=pot\u0159ebovat", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "\u0161roubov\u00e1ky", "nsubjFeats": ["upos=NOUN", "lemma=\u0161roubov\u00e1k", "xpos=NNIP4-----A----", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s60w-s149%22%20%3B%20A%20%5Bform%3D%22Pot%C5%99ebujeme%22%5D%20%3B%20B%20%5Bform%3D%22%C5%A1roubov%C3%A1ky%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Spot\u0159ebn\u00ed <strong>p\u0159edm\u011bt</strong> , kdy\u017e b\u011bhem pou\u017e\u00edv\u00e1n\u00ed zm\u011bn\u00ed sv\u00e9 vlastnosti , <strong>d\u00e1me</strong> do sb\u011bru nebo zahod\u00edme .", "verb": "d\u00e1me", "verbFeats": ["upos=VERB", "deprel=root", "lemma=d\u00e1t", "xpos=VB-P---1P-AA---", "Aspect=Perf", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "p\u0159edm\u011bt", "nsubjFeats": ["upos=NOUN", "lemma=p\u0159edm\u011bt", "xpos=NNIS4-----A----", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s58w-s8%22%20%3B%20A%20%5Bform%3D%22d%C3%A1me%22%5D%20%3B%20B%20%5Bform%3D%22p%C5%99edm%C4%9Bt%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "\" Ot\u010de n\u00e1\u0161 , jen\u017e jsi na nebes\u00edch , posv\u011b\u0165 se jm\u00e9no tv\u00e9 , <strong>p\u0159ij\u010f</strong> <strong>kr\u00e1lovstv\u00ed</strong> tv\u00e9 . . . \"", "verb": "p\u0159ij\u010f", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=p\u0159ij\u00edt", "xpos=Vi-S---2--A----", "Aspect=Perf", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "nsubj": "kr\u00e1lovstv\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=kr\u00e1lovstv\u00ed", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas168-s1%22%20%3B%20A%20%5Bform%3D%22p%C5%99ij%C4%8F%22%5D%20%3B%20B%20%5Bform%3D%22kr%C3%A1lovstv%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "<strong>Vlivy</strong> , kter\u00e9 se p\u0159i skladov\u00e1n\u00ed potravin uplat\u0148uj\u00ed , <strong>d\u011bl\u00edme</strong> na klimatick\u00e9 , relativn\u00ed , vlhkost vzduchu , vliv slune\u010dn\u00edho z\u00e1\u0159en\u00ed , oxida\u010dn\u00ed p\u016fsoben\u00ed vzdu\u0161n\u00e9ho kysl\u00edku , manipula\u010dn\u00ed , biologick\u00e9 .", "verb": "d\u011bl\u00edme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=d\u011blit", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "vlivy", "nsubjFeats": ["upos=NOUN", "lemma=vliv", "xpos=NNIP1-----A----", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s52w-s99%22%20%3B%20A%20%5Bform%3D%22d%C4%9Bl%C3%ADme%22%5D%20%3B%20B%20%5Bform%3D%22Vlivy%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Nejde n\u00e1m o p\u0159ehled historick\u00fd , a proto zcela <strong>pom\u00edj\u00edme</strong> <strong>teorie</strong> jakkoliv historicky v\u00fdznamn\u00e9 , kter\u00e9 jsou dnes ji\u017e evidentn\u011b neudr\u017eiteln\u00e9 , jako byla Mesmerova teorie \u017eivo\u010di\u0161n\u00e9ho magnetismu , Charcotova teorie um\u011ble vyvolan\u00e9 hysterie \u010di Babinsk\u00e9ho teorie v\u011bdom\u00e9 simulace .", "verb": "pom\u00edj\u00edme", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=pom\u00edjet", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "teorie", "nsubjFeats": ["upos=NOUN", "lemma=teorie", "xpos=NNFP4-----A----", "Case=Acc", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s49w-s2%22%20%3B%20A%20%5Bform%3D%22pom%C3%ADj%C3%ADme%22%5D%20%3B%20B%20%5Bform%3D%22teorie%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Ctihodn\u00e9 lond\u00fdnsk\u00e9 Timesy z 23 . prosince pou\u017eily osv\u011bd\u010denou metodu : <strong>nena\u0159\u00edkejte</strong> <strong>Britov\u00e9</strong> , jinde je mnohem h\u016f\u0159 .", "verb": "nena\u0159\u00edkejte", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=na\u0159\u00edkat", "xpos=Vi-P---2--N-I--", "Aspect=Imp", "Mood=Imp", "Number=Plur", "<b>Person=2</b>", "Polarity=Neg", "VerbForm=Fin"], "nsubj": "Britov\u00e9", "nsubjFeats": ["upos=PROPN", "lemma=Brit", "xpos=NNMP1-----A----", "Animacy=Anim", "Case=Nom", "Gender=Masc", "NameType=Nat", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22lnd91301-012-p4s1%22%20%3B%20A%20%5Bform%3D%22nena%C5%99%C3%ADkejte%22%5D%20%3B%20B%20%5Bform%3D%22Britov%C3%A9%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "<strong>Proces</strong> , v n\u011bm\u017e doch\u00e1z\u00ed k formov\u00e1n\u00ed jedince jako spole\u010densk\u00e9 bytosti a j\u00edm\u017e si sou\u010dasn\u011b spole\u010dnost zaji\u0161\u0165uje tradov\u00e1n\u00ed konstitutivn\u00edch vzorc\u016f zku\u0161enosti a chov\u00e1n\u00ed stejn\u011b jako akumulovan\u00e9ho v\u011bd\u011bn\u00ed , <strong>naz\u00fdv\u00e1me</strong> socializac\u00ed .", "verb": "naz\u00fdv\u00e1me", "verbFeats": ["upos=VERB", "deprel=root", "lemma=naz\u00fdvat", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "proces", "nsubjFeats": ["upos=NOUN", "lemma=proces", "xpos=NNIS4-----A----", "Animacy=Inan", "Case=Acc", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s38w-s3%22%20%3B%20A%20%5Bform%3D%22naz%C3%BDv%C3%A1me%22%5D%20%3B%20B%20%5Bform%3D%22Proces%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Dal\u0161\u00ed <strong>\u00faspory</strong> <strong>dos\u00e1hneme</strong> vhodnou volbou rozm\u011br\u016f obkladov\u00fdch d\u00edl\u016f , aby by p\u0159\u00ed\u0159ezy a odpad byly co nejmen\u0161\u00ed .", "verb": "dos\u00e1hneme", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dos\u00e1hnout", "xpos=VB-P---1P-AA---", "Aspect=Perf", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "\u00faspory", "nsubjFeats": ["upos=NOUN", "lemma=\u00faspora", "xpos=NNFS2-----A----", "Case=Gen", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s60w-s133%22%20%3B%20A%20%5Bform%3D%22dos%C3%A1hneme%22%5D%20%3B%20B%20%5Bform%3D%22%C3%BAspory%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Ta pak vys\u00e9v\u00e1me na ja\u0159e p\u0159\u00edmo na ur\u010den\u00e9 stanovi\u0161t\u011b , nikoliv tedy do truhl\u00edk\u016f , anebo <strong>semena</strong> <strong>nech\u00e1v\u00e1me</strong> samovoln\u011b vypadat do voln\u00e9 p\u016fdy .", "verb": "nech\u00e1v\u00e1me", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=nech\u00e1vat", "xpos=VB-P---1P-AA---", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=1</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "semena", "nsubjFeats": ["upos=NOUN", "lemma=semeno", "xpos=NNNP4-----A----", "Case=Acc", "Gender=Neut", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s61w-s30%22%20%3B%20A%20%5Bform%3D%22nech%C3%A1v%C3%A1me%22%5D%20%3B%20B%20%5Bform%3D%22semena%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "Kdy\u017e to p\u016fjde ka\u017ed\u00fd rok takhle - <strong>P\u00e1nb\u016fh</strong> <strong>zapla\u0165</strong> , usm\u00edv\u00e1 se opat Michael Josef Pojezdn\u00fd .", "verb": "zapla\u0165", "verbFeats": ["upos=VERB", "deprel=root", "lemma=zaplatit", "xpos=Vi-S---2--A-P--", "Aspect=Perf", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin"], "nsubj": "p\u00e1nb\u016fh", "nsubjFeats": ["upos=NOUN", "lemma=p\u00e1nb\u016fh", "xpos=NNMS1-----A----", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln95042-023-p7s5%22%20%3B%20A%20%5Bform%3D%22zapla%C5%A5%22%5D%20%3B%20B%20%5Bform%3D%22P%C3%A1nb%C5%AFh%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "\" <strong>Pomoz</strong> n\u00e1m samo <strong>nebe</strong> ! \" k\u0159i\u010del :", "verb": "pomoz", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=pomoci", "xpos=Vi-S---2--A----", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "VerbForm=Fin"], "nsubj": "nebe", "nsubjFeats": ["upos=NOUN", "lemma=nebe", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-vitamnlX010-s2%22%20%3B%20A%20%5Bform%3D%22Pomoz%22%5D%20%3B%20B%20%5Bform%3D%22nebe%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "\" Ot\u010de n\u00e1\u0161 , jen\u017e jsi na nebes\u00edch , <strong>posv\u011b\u0165</strong> se <strong>jm\u00e9no</strong> tv\u00e9 , p\u0159ij\u010f kr\u00e1lovstv\u00ed tv\u00e9 . . . \"", "verb": "posv\u011b\u0165", "verbFeats": ["upos=VERB", "deprel=root", "lemma=posv\u011btit", "xpos=Vi-S---2--A----", "Mood=Imp", "Number=Sing", "<b>Person=2</b>", "Polarity=Pos", "VerbForm=Fin"], "nsubj": "jm\u00e9no", "nsubjFeats": ["upos=NOUN", "lemma=jm\u00e9no", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas168-s1%22%20%3B%20A%20%5Bform%3D%22posv%C4%9B%C5%A5%22%5D%20%3B%20B%20%5Bform%3D%22jm%C3%A9no%22%5D%20%20%7D", "treebankName": "UD_Czech-FicTree"}, {"sentence": "<strong>N\u00e1pad</strong> zdrav\u00e9ho rozumu p\u0159ece <strong>dovoluje</strong> myslet cokoliv .", "verb": "dovoluje", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dovolovat", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "n\u00e1pad", "nsubjFeats": ["upos=NOUN", "lemma=n\u00e1pad", "xpos=NNIS1-----A----", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9301-032-p10s6B%22%20%3B%20A%20%5Bform%3D%22dovoluje%22%5D%20%3B%20B%20%5Bform%3D%22N%C3%A1pad%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Tady <strong>podobnost</strong> hled\u00e1n\u00ed ide\u00e1ln\u00edho \u0159editele pro velkou muzejn\u00ed instituci , schopn\u00e9ho lodivoda , kter\u00fd ji provede turbuluj\u00edc\u00edmi \u010dasy , <strong>kon\u010d\u00ed</strong> .", "verb": "kon\u010d\u00ed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=kon\u010dit", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "podobnost", "nsubjFeats": ["upos=NOUN", "lemma=podobnost", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln94205-91-p6s1%22%20%3B%20A%20%5Bform%3D%22kon%C4%8D%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22podobnost%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Obvykle se <strong>hv\u011bzd\u00e1rna</strong> <strong>star\u00e1</strong> o v\u00fduku na n\u011bkolika \u0161kol\u00e1ch v okol\u00ed .", "verb": "star\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=starat", "xpos=VB-S---3P-AA---", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "hv\u011bzd\u00e1rna", "nsubjFeats": ["upos=NOUN", "lemma=hv\u011bzd\u00e1rna", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s64w-s107%22%20%3B%20A%20%5Bform%3D%22star%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22hv%C4%9Bzd%C3%A1rna%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "<strong>\u0158e\u010d</strong> se <strong>skl\u00e1d\u00e1</strong> ze samohl\u00e1sek a souhl\u00e1sek .", "verb": "skl\u00e1d\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=skl\u00e1dat", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "\u0159e\u010d", "nsubjFeats": ["upos=NOUN", "lemma=\u0159e\u010d", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9211-027-p21s1%22%20%3B%20A%20%5Bform%3D%22skl%C3%A1d%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22%C5%98e%C4%8D%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Mo\u017en\u00e1 , \u017ee <strong>on</strong> s\u00e1m \u017e\u00e1dn\u00e9 temn\u00e9 \u00famysly <strong>nem\u00e1</strong> .", "verb": "nem\u00e1", "verbFeats": ["upos=VERB", "deprel=dep", "lemma=m\u00edt", "xpos=VB-S---3P-NAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "on", "nsubjFeats": ["upos=PRON", "lemma=on", "xpos=PEYS1--3-------", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln95044-073-p6s12%22%20%3B%20A%20%5Bform%3D%22nem%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22on%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "\u0160pi\u010dkov\u00e9 <strong>zdroje</strong> <strong>mohou</strong> b\u00fdt um\u00edst\u011bny bu\u010f p\u0159\u00edmo v tepl\u00e1rn\u011b , nebo na vhodn\u00e9m m\u00edst\u011b rozvodn\u00e9 soustavy .", "verb": "mohou", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "xpos=VB-P---3P-AA--1", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "zdroje", "nsubjFeats": ["upos=NOUN", "lemma=zdroj", "xpos=NNIP1-----A----", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22s56w-s87%22%20%3B%20A%20%5Bform%3D%22mohou%22%5D%20%3B%20B%20%5Bform%3D%22zdroje%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC"}, {"sentence": "N\u00e1klady <strong>nese</strong> n\u011bmeck\u00e1 <strong>firma</strong> , proto\u017ee m\u00e1me spole\u010dn\u00fd c\u00edl .", "verb": "nese", "verbFeats": ["upos=VERB", "deprel=root", "lemma=n\u00e9st", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "firma", "nsubjFeats": ["upos=NOUN", "lemma=firma", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cmpr9407-016-p7s5%22%20%3B%20A%20%5Bform%3D%22nese%22%5D%20%3B%20B%20%5Bform%3D%22firma%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Tren\u00e9r KOPECK\u00dd : \" Nejde jen o d\u016fle\u017eit\u00e9 body , cht\u011bli bychom pochopiteln\u011b postoupit ze skupiny do z\u00e1v\u011bre\u010dn\u00fdch boj\u016f , ale i o roz\u0161\u00ed\u0159en\u00ed reprezenta\u010dn\u00edho k\u00e1dru v budoucnu - <strong>\u0159ada</strong> hr\u00e1\u010d\u016f <strong>m\u00e1</strong> p\u0159edpoklady se do M\u00e1\u010dalova v\u00fdb\u011bru postupem \u010dasu dostat .", "verb": "m\u00e1", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=m\u00edt", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "\u0159ada", "nsubjFeats": ["upos=NOUN", "lemma=\u0159ada", "xpos=NNFS1-----A----", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf920901-063-p4s1%22%20%3B%20A%20%5Bform%3D%22m%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22%C5%99ada%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "(3) \u00da\u010detn\u00ed z\u00e1pisy <strong>nesm\u011bj\u00ed</strong> \u00fa\u010detn\u00ed <strong>jednotky</strong> prov\u00e1d\u011bt mimo \u00fa\u010detn\u00ed knihy .", "verb": "nesm\u011bj\u00ed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=sm\u011bt", "xpos=VB-P---3P-NA---", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Neg", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "jednotky", "nsubjFeats": ["upos=NOUN", "lemma=jednotka", "xpos=NNFP4-----A----", "Case=Acc", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CLTT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22zakon.iso-002-p13s6%22%20%3B%20A%20%5Bform%3D%22nesm%C4%9Bj%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22jednotky%22%5D%20%20%7D", "treebankName": "UD_Czech-CLTT"}, {"sentence": "Zde <strong>za\u010d\u00edn\u00e1</strong> mysliveck\u00e9 <strong>hospoda\u0159en\u00ed</strong> na p\u016fd\u011b \u0161lechty a vznik\u00e1 kasta myslivc\u016f z povol\u00e1n\u00ed , jejich\u017e hlavn\u00ed starost\u00ed bylo pe\u010dovat o zv\u011b\u0159 v obor\u00e1ch a ba\u017eantnic\u00edch , budovan\u00fdch s nov\u00fdmi barokn\u00edmi s\u00eddly .", "verb": "za\u010d\u00edn\u00e1", "verbFeats": ["upos=VERB", "deprel=root", "lemma=za\u010d\u00ednat", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "hospoda\u0159en\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=hospoda\u0159en\u00ed", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9211-029-p8s5%22%20%3B%20A%20%5Bform%3D%22za%C4%8D%C3%ADn%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22hospoda%C5%99en%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Nebude - li m\u00edt naopak \u017ealoba v\u0161echny n\u00e1le\u017eitosti , <strong>m\u016f\u017ee</strong> b\u00fdt <strong>\u0159\u00edzen\u00ed</strong> zastaveno anebo \u017ealoba zam\u00edtnuta .", "verb": "m\u016f\u017ee", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "\u0159\u00edzen\u00ed", "nsubjFeats": ["upos=NOUN", "lemma=\u0159\u00edzen\u00ed", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf930713-043-p10s4%22%20%3B%20A%20%5Bform%3D%22m%C5%AF%C5%BEe%22%5D%20%3B%20B%20%5Bform%3D%22%C5%99%C3%ADzen%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Velice dob\u0159e se <strong>dr\u017e\u00ed</strong> i <strong>index</strong> slu\u017eeb , kter\u00fd dok\u00e1zal p\u0159ekro\u010dit dvoutis\u00edcovou hranici .", "verb": "dr\u017e\u00ed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=dr\u017eet", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "index", "nsubjFeats": ["upos=NOUN", "lemma=index", "xpos=NNIS1-----A----", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln94204-9-p5s4%22%20%3B%20A%20%5Bform%3D%22dr%C5%BE%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22index%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "<strong>Havel</strong> si kritick\u00e1 slova \" do vlastn\u00edch \u0159ad \" <strong>m\u016f\u017ee</strong> dovolit .", "verb": "m\u016f\u017ee", "verbFeats": ["upos=VERB", "deprel=root", "lemma=moci", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "Havel", "nsubjFeats": ["upos=PROPN", "lemma=Havel", "xpos=NNMS1-----A----", "Animacy=Anim", "Case=Nom", "Gender=Masc", "NameType=Giv", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ln95047-071-p4s2%22%20%3B%20A%20%5Bform%3D%22m%C5%AF%C5%BEe%22%5D%20%3B%20B%20%5Bform%3D%22Havel%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "Kloub vsazen\u00fd robotem tak\u00e9 daleko jemn\u011bji zapad\u00e1 do kloubn\u00ed jamky - <strong>plochy</strong> kloubu a jamky se <strong>dot\u00fdkaj\u00ed</strong> na 90 % plochy , zat\u00edmco p\u0159i operaci skv\u011ble proveden\u00e9 lidmi je dosud tento styk 40 % .", "verb": "dot\u00fdkaj\u00ed", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=dot\u00fdkat", "xpos=VB-P---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "plochy", "nsubjFeats": ["upos=NOUN", "lemma=plocha", "xpos=NNFP1-----A----", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9301-025-p10s4%22%20%3B%20A%20%5Bform%3D%22dot%C3%BDkaj%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22plochy%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}, {"sentence": "\" Rodi\u010de plat\u00ed stejn\u00e9 dan\u011b , a\u0165 u\u017e jejich <strong>d\u00edt\u011b</strong> <strong>skon\u010d\u00ed</strong> se \u0161kolou v 15 letech , nebo vystuduje dv\u011b vysok\u00e9 \u0161koly , a\u010dkoliv investice st\u00e1tu jsou v obou t\u011bchto p\u0159\u00edpadech velmi r\u016fzn\u00e9 .", "verb": "skon\u010d\u00ed", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=skon\u010dit", "xpos=VB-S---3P-AAP--", "Aspect=Perf", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "nsubj": "d\u00edt\u011b", "nsubjFeats": ["upos=NOUN", "lemma=d\u00edt\u011b", "xpos=NNNS1-----A----", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf920924-018-p2s17%22%20%3B%20A%20%5Bform%3D%22skon%C4%8D%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22d%C3%ADt%C4%9B%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC"}]}, "PAIRS": [{"origSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuje</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "swapSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuje\u0161</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "nsubj": "firma", "verb": "respektuje", "nsubjFeats": ["lemma=firma", "upos=NOUN", "xpos=NNFS1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=respektovat", "deprel=root", "upos=VERB", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "respektuje\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cmpr9415-048-p14s5%22%20%3B%20A%20%5Bform%3D%22respektuje%22%5D%20%3B%20B%20%5Bform%3D%22Firma%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuje</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "swapSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuji</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "nsubj": "firma", "verb": "respektuje", "nsubjFeats": ["lemma=firma", "upos=NOUN", "xpos=NNFS1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=respektovat", "deprel=root", "upos=VERB", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "respektuji", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cmpr9415-048-p14s5%22%20%3B%20A%20%5Bform%3D%22respektuje%22%5D%20%3B%20B%20%5Bform%3D%22Firma%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuje</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "swapSentence": "<strong>Firma</strong> v\u0161ak <strong>respektuju</strong> vlivy \" vy\u0161\u0161\u00ed moci \" a pro tyto p\u0159\u00edpady je v\u017edy p\u0159ipraven n\u00e1hradn\u00ed v\u00fdrobn\u00ed program .", "nsubj": "firma", "verb": "respektuje", "nsubjFeats": ["lemma=firma", "upos=NOUN", "xpos=NNFS1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=respektovat", "deprel=root", "upos=VERB", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "respektuju", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cmpr9415-048-p14s5%22%20%3B%20A%20%5Bform%3D%22respektuje%22%5D%20%3B%20B%20%5Bform%3D%22Firma%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "<strong>Kompetence</strong> , kter\u00e9 si federace ponech\u00e1v\u00e1 , st\u00e1le je\u0161t\u011b <strong>znamenaj\u00ed</strong> spole\u010dn\u00fd st\u00e1t .", "swapSentence": "<strong>Kompetence</strong> , kter\u00e9 si federace ponech\u00e1v\u00e1 , st\u00e1le je\u0161t\u011b <strong>znamen\u00e1me</strong> spole\u010dn\u00fd st\u00e1t .", "nsubj": "kompetence", "verb": "znamenaj\u00ed", "nsubjFeats": ["lemma=kompetence", "upos=NOUN", "xpos=NNFP1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=znamenat", "deprel=root", "upos=VERB", "xpos=VB-P---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "znamen\u00e1me", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf920923-093-p2s8%22%20%3B%20A%20%5Bform%3D%22znamenaj%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22Kompetence%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "K \u010demu v\u0161ak takov\u00fd sp\u011bch , kdy\u017e sch\u016fze FS je \u0159\u00e1dn\u011b svol\u00e1na na 22 . z\u00e1\u0159\u00ed , p\u0159i\u010dem\u017e do t\u00e9 doby <strong>mus\u00ed</strong> <strong>v\u00fdbory</strong> FS projednat legislativn\u00ed p\u0159edlohy t\u00fdkaj\u00edc\u00ed se pr\u00e1v\u011b st\u00e1topr\u00e1vn\u00edch probl\u00e9m\u016f , kter\u00e9 parlamentu p\u0159edlo\u017e\u00ed vl\u00e1da ? !", "swapSentence": "K \u010demu v\u0161ak takov\u00fd sp\u011bch , kdy\u017e sch\u016fze FS je \u0159\u00e1dn\u011b svol\u00e1na na 22 . z\u00e1\u0159\u00ed , p\u0159i\u010dem\u017e do t\u00e9 doby <strong>mus\u00edme</strong> <strong>v\u00fdbory</strong> FS projednat legislativn\u00ed p\u0159edlohy t\u00fdkaj\u00edc\u00ed se pr\u00e1v\u011b st\u00e1topr\u00e1vn\u00edch probl\u00e9m\u016f , kter\u00e9 parlamentu p\u0159edlo\u017e\u00ed vl\u00e1da ? !", "nsubj": "v\u00fdbory", "verb": "mus\u00ed", "nsubjFeats": ["lemma=v\u00fdbor", "upos=NOUN", "xpos=NNIP1-----A----", "deprel=nsubj", "Animacy=Inan", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=muset", "deprel=conj", "upos=VERB", "xpos=VB-P---3P-AAI-1", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "mus\u00edme", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf920901-024-p2s6%22%20%3B%20A%20%5Bform%3D%22mus%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%BDbory%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "V\u011bd\u011bl , \u017ee v t\u00e9to chv\u00edli je u\u017e na nohou cel\u00fd apar\u00e1t a \u017ee po jeho stop\u00e1ch <strong>jde</strong> slu\u017eebn\u00ed <strong>pes</strong> .", "swapSentence": "V\u011bd\u011bl , \u017ee v t\u00e9to chv\u00edli je u\u017e na nohou cel\u00fd apar\u00e1t a \u017ee po jeho stop\u00e1ch <strong>jde\u0161</strong> slu\u017eebn\u00ed <strong>pes</strong> .", "nsubj": "pes", "verb": "jde", "nsubjFeats": ["lemma=pes", "upos=NOUN", "xpos=NNMS1-----A----", "deprel=nsubj", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=j\u00edt", "deprel=conj", "upos=VERB", "xpos=VB-S---3P-AA---", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "jde\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n38w-s209%22%20%3B%20A%20%5Bform%3D%22jde%22%5D%20%3B%20B%20%5Bform%3D%22pes%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "V\u011bd\u011bl , \u017ee v t\u00e9to chv\u00edli je u\u017e na nohou cel\u00fd apar\u00e1t a \u017ee po jeho stop\u00e1ch <strong>jde</strong> slu\u017eebn\u00ed <strong>pes</strong> .", "swapSentence": "V\u011bd\u011bl , \u017ee v t\u00e9to chv\u00edli je u\u017e na nohou cel\u00fd apar\u00e1t a \u017ee po jeho stop\u00e1ch <strong>jdu</strong> slu\u017eebn\u00ed <strong>pes</strong> .", "nsubj": "pes", "verb": "jde", "nsubjFeats": ["lemma=pes", "upos=NOUN", "xpos=NNMS1-----A----", "deprel=nsubj", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "verbFeats": ["lemma=j\u00edt", "deprel=conj", "upos=VERB", "xpos=VB-S---3P-AA---", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "jdu", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-CAC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n38w-s209%22%20%3B%20A%20%5Bform%3D%22jde%22%5D%20%3B%20B%20%5Bform%3D%22pes%22%5D%20%20%7D", "treebankName": "UD_Czech-CAC", "leaf": "0"}, {"origSentence": "Tento z\u00e1v\u011br <strong>podporuje</strong> pruhovit\u00e9 <strong>zabarven\u00ed</strong> na vnit\u0159n\u00ed stran\u011b mozkovny , kter\u00e9 jednak ukazuje p\u016fvodn\u00ed hladinu mozkov\u00e9 ka\u0161e , vznikl\u00e9 p\u0159i rozpadu mozkov\u00e9 tk\u00e1n\u011b hnilobou , jednak n\u00e1s informuje o poloze hlavy zem\u0159el\u00e9ho v hrob\u011b .", "swapSentence": "Tento z\u00e1v\u011br <strong>podporuje\u0161</strong> pruhovit\u00e9 <strong>zabarven\u00ed</strong> na vnit\u0159n\u00ed stran\u011b mozkovny , kter\u00e9 jednak ukazuje p\u016fvodn\u00ed hladinu mozkov\u00e9 ka\u0161e , vznikl\u00e9 p\u0159i rozpadu mozkov\u00e9 tk\u00e1n\u011b hnilobou , jednak n\u00e1s informuje o poloze hlavy zem\u0159el\u00e9ho v hrob\u011b .", "nsubj": "zabarven\u00ed", "verb": "podporuje", "nsubjFeats": ["lemma=zabarven\u00ed", "upos=NOUN", "xpos=NNNS1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun"], "verbFeats": ["lemma=podporovat", "deprel=root", "upos=VERB", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "podporuje\u0161", "swapRole": "B", "afterValue": "2", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9303-046-p59s1%22%20%3B%20A%20%5Bform%3D%22podporuje%22%5D%20%3B%20B%20%5Bform%3D%22zabarven%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "Tento z\u00e1v\u011br <strong>podporuje</strong> pruhovit\u00e9 <strong>zabarven\u00ed</strong> na vnit\u0159n\u00ed stran\u011b mozkovny , kter\u00e9 jednak ukazuje p\u016fvodn\u00ed hladinu mozkov\u00e9 ka\u0161e , vznikl\u00e9 p\u0159i rozpadu mozkov\u00e9 tk\u00e1n\u011b hnilobou , jednak n\u00e1s informuje o poloze hlavy zem\u0159el\u00e9ho v hrob\u011b .", "swapSentence": "Tento z\u00e1v\u011br <strong>podporuji</strong> pruhovit\u00e9 <strong>zabarven\u00ed</strong> na vnit\u0159n\u00ed stran\u011b mozkovny , kter\u00e9 jednak ukazuje p\u016fvodn\u00ed hladinu mozkov\u00e9 ka\u0161e , vznikl\u00e9 p\u0159i rozpadu mozkov\u00e9 tk\u00e1n\u011b hnilobou , jednak n\u00e1s informuje o poloze hlavy zem\u0159el\u00e9ho v hrob\u011b .", "nsubj": "zabarven\u00ed", "verb": "podporuje", "nsubjFeats": ["lemma=zabarven\u00ed", "upos=NOUN", "xpos=NNNS1-----A----", "deprel=nsubj", "Case=Nom", "Gender=Neut", "Number=Sing", "<b>Person=3</b>", "VerbForm=Vnoun"], "verbFeats": ["lemma=podporovat", "deprel=root", "upos=VERB", "xpos=VB-S---3P-AAI--", "Aspect=Imp", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "podporuji", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22vesm9303-046-p59s1%22%20%3B%20A%20%5Bform%3D%22podporuje%22%5D%20%3B%20B%20%5Bform%3D%22zabarven%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}, {"origSentence": "<strong>Z\u00e1jemci</strong> se <strong>mohou</strong> hl\u00e1sit v CK Jedotour v OD Prior .", "swapSentence": "<strong>Z\u00e1jemci</strong> se <strong>m\u016f\u017eeme</strong> hl\u00e1sit v CK Jedotour v OD Prior .", "nsubj": "z\u00e1jemci", "verb": "mohou", "nsubjFeats": ["lemma=z\u00e1jemce", "upos=NOUN", "xpos=NNMP1-----A----", "deprel=nsubj", "Animacy=Anim", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "verbFeats": ["lemma=moci", "deprel=root", "upos=VERB", "xpos=VB-P---3P-AAI-1", "Aspect=Imp", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "Polarity=Pos", "Tense=Pres", "VerbForm=Fin", "Voice=Act"], "ungrammatical": "m\u016f\u017eeme", "swapRole": "B", "afterValue": "1", "afterFeatKey": "Person", "siblingKeys": ["Person[nom]", "Person[nsubj]", "Person[subj]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Czech-PDTC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mf920902-065-p2s3%22%20%3B%20A%20%5Bform%3D%22mohou%22%5D%20%3B%20B%20%5Bform%3D%22Z%C3%A1jemci%22%5D%20%20%7D", "treebankName": "UD_Czech-PDTC", "leaf": "0"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1133,6 +1407,13 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   const treeBox = document.getElementById('treeBox');
   const treeViewport = document.getElementById('treeViewport');
   const scrollPane = document.getElementById('scrollPane');
+  const drawer = document.getElementById('drawer');
+  const drawerHandle = document.getElementById('drawerHandle');
+  const drawerHint = document.getElementById('drawerHint');
+  const tabSamples = document.getElementById('tabSamples');
+  const tabPairs = document.getElementById('tabPairs');
+  const drawerLabels = document.getElementById('drawerLabels');
+  const drawerPairRoles = document.getElementById('drawerPairRoles');
   const sampleGrid = document.getElementById('sampleGrid');
   const sampleGridTitle = document.getElementById('sampleGridTitle');
   const nodeNote = document.getElementById('nodeNote');
@@ -1144,6 +1425,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
   const treeSelectRow = document.getElementById('treeSelectRow');
+  const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
   const classDistLegend = document.getElementById('classDistLegend');
@@ -1197,22 +1479,21 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // offscreen on load.
   let fitScale = 1;
   let contentScale = 1;
+  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
+  // zooming are clipped only by the card's edges, not by a box sized to the
+  // canvas's own aspect ratio. The tree itself stays laid out at its native
+  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
   function sizeTreeBox() {
-    const maxW = treeScroll.clientWidth;
-    // Fullscreen drops the 460px/46%-of-viewport cap entirely -- that cap
-    // exists so the node-samples panel below stays reachable without
-    // scrolling, which no longer matters once this card is the only thing
-    // on screen; almost the full viewport height goes to the tree instead,
-    // minus the header/tree-select-row still visible above it.
-    const maxH = document.fullscreenElement === treeWrap
-      ? window.innerHeight - treeWrap.querySelector('.card-header').offsetHeight - treeSelectRow.offsetHeight - 16
-      : Math.min(window.innerHeight * 0.46, 460);
-    fitScale = Math.min(maxW / CANVAS_W, maxH / CANVAS_H);
-    contentScale = Math.min(1, fitScale);
-    treeBox.style.width = `${CANVAS_W}px`;
-    treeBox.style.transform = `scale(${contentScale})`;
-    treeScaleOuter.style.width = `${CANVAS_W * fitScale}px`;
-    treeScaleOuter.style.height = `${CANVAS_H * fitScale}px`;
+    const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
+    fitScale = 1;
+    contentScale = 1;
+    treeBox.style.width = `${w}px`;
+    treeBox.style.height = `${h}px`;
+    treeBox.style.transform = 'none';
+    treeScaleOuter.style.width = `${w}px`;
+    treeScaleOuter.style.height = `${h}px`;
+    treeViewport.style.width = `${CANVAS_W}px`;
+    treeViewport.style.height = `${CANVAS_H}px`;
   }
 
   // Both demo trees' node coordinates were hand-placed to already fit the
@@ -1240,10 +1521,13 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     // along with everything else instead of staying fixed.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
-    const boxW = treeBox.clientWidth || CANVAS_W;
-    const boxH = boxW * (CANVAS_H / CANVAS_W);
-    const toPxX = x => (x / CANVAS_W) * boxW;
-    const toPxY = y => (y / CANVAS_H) * boxH;
+    const PAD = 20;
+    const boxW = Math.max(1, treeBox.clientWidth - 2 * PAD);
+    const boxH = Math.max(1, treeBox.clientHeight - 2 * PAD);
+    // treeViewport is laid out at native canvas size, so canvas coordinates
+    // are already CSS pixels.
+    const toPxX = x => x;
+    const toPxY = y => y;
     const minPxX = Math.min(...nodes.map(n => toPxX(n.x))) - NODE_HALF_W;
     const maxPxX = Math.max(...nodes.map(n => toPxX(n.x))) + NODE_HALF_W;
     const minPxY = Math.min(...nodes.map(n => toPxY(n.y))) - NODE_HALF_H;
@@ -1252,8 +1536,8 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     const scaleY = boxH / (maxPxY - minPxY);
     zoom.scale = Math.min(1, scaleX, scaleY); // never zoom *in* past 1:1 just to fit
     const cx = (minPxX + maxPxX) / 2, cy = (minPxY + maxPxY) / 2;
-    zoom.tx = boxW / 2 - cx * zoom.scale;
-    zoom.ty = boxH / 2 - cy * zoom.scale;
+    zoom.tx = treeBox.clientWidth / 2 - cx * zoom.scale;
+    zoom.ty = treeBox.clientHeight / 2 - cy * zoom.scale;
     applyZoom();
   }
 
@@ -1287,18 +1571,6 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // zoom-controls, info-panel), so nothing else has to move for this.
   function isTreeFullscreen() {
     return document.fullscreenElement === treeWrap;
-  }
-  // Runs fn immediately outside fullscreen; inside it, leaves fullscreen
-  // first and waits for that to actually finish before running fn --
-  // exitFullscreen is async, and anything fn does that depends on layout
-  // outside .tree-wrap (scrolling to it, measuring it) would otherwise run
-  // while that content is still hidden behind the fullscreen element.
-  function leaveFullscreenThen(fn) {
-    if (isTreeFullscreen()) {
-      document.exitFullscreen().then(fn);
-    } else {
-      fn();
-    }
   }
   fullscreenBtn.addEventListener('click', () => {
     if (isTreeFullscreen()) {
@@ -1405,8 +1677,24 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // identifying context like deprel/upos, not agreement-relevant morphology,
   // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
   // emits a "lemma=..." entry for every row -- it just never had a matching
-  // ORDERED_FEATS column to render into.
-  const ORDERED_FEATS = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex', 'deprel', 'upos', 'lemma'];
+  // feature column to render into.
+  // Every feature the rows carry gets a column. Morphological features come
+  // first (the usual ones in this order, any others alphabetically after),
+  // then the token-level fields, marked off visually.
+  const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
+  const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
+  function featBase(f) {
+    return f.replace(/<\/?[bi]>/g, '').split('=')[0].split('[')[0];
+  }
+  function featColumns(featLists) {
+    const seen = new Set();
+    featLists.forEach(list => list.forEach(f => { const b = featBase(f); if (b) seen.add(b); }));
+    const present = k => featLists.some(l => featEntry(l, k));
+    const rank = k => { const i = MORPH_ORDER.indexOf(k); return i < 0 ? MORPH_ORDER.length : i; };
+    const morph = [...seen].filter(k => !OTHER_FEATS.includes(k) && present(k))
+      .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    return [...morph, ...OTHER_FEATS.filter(k => seen.has(k) && present(k))];
+  }
 
   function featEntries(feats, key) {
     // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
@@ -1468,9 +1756,27 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
   // prefix: a token can carry more than one bracket of the same base
   // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected should change -- a prefix match
-  // would also overwrite the untouched sibling (e.g. relabeling the
-  // subject's unchanged Number[erg] with the object's new value).
+  // only the one actually reinflected -- plus any TRUE alias of that same
+  // argument slot -- should change. A blanket prefix match would also drop
+  // genuinely different, untouched arguments that just happen to share the
+  // base feature name (e.g. relabeling-away the subject's unrelated
+  // Number[erg] when only the indirect object's Number[io] was swapped).
+  //
+  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
+  // is the precise list of alias brackets create_pairs' own
+  // resolve_layered_head_key would have tried for the SAME slot as
+  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
+  // child's own Case, e.g. "[dat]") -- both naming conventions for one
+  // reading, not two (Basque iobj: [io] and [dat] both key off the same
+  // indirect object). The original role's value for a sibling was real
+  // (both conventions' sources happened to agree pre-swap), but the
+  // swap_bundle that produced afterValue only ever reports the ONE key it
+  // was actually generated under -- html_tree.py's own after_feat_key
+  // resolution stops at the first populated candidate, so a sibling with no
+  // after_ value has no verified post-swap reading at all. Carrying its
+  // pre-swap value over here would silently claim it was checked and found
+  // unchanged, when it simply was never checked -- so drop only those true
+  // aliases, not every bracket of the base feature.
   //
   // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
   // _v2_pair_from_row) are APPENDED rather than patched into an existing
@@ -1480,14 +1786,16 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // reinflected candidate (a ditransitive form like "zioten" does) -- real
   // data with no original entry to replace, so it has to be added as a new
   // column instead of overwriting one.
-  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats) {
+  function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
+    const dropKeys = new Set(siblingKeys || []);
     const patched = afterValue == null ? feats : feats.map(f => {
-      const clean = f.replace(/<\/?b>/g, '');
+      const clean = f.replace(/<\/?[bi]>/g, '');
       const [key] = clean.split('=');
-      if (key !== targetKey) return f;
-      return `<b>${targetKey}=${afterValue}</b>`;
-    });
+      if (key === targetKey) return `<b>${targetKey}=${afterValue}</b>`;
+      if (key === decisiveFeat || dropKeys.has(key)) return null;
+      return f;
+    }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
     // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
     // value actually changed" (bold, gets the red decisive.swapped color)
@@ -1502,16 +1810,52 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // Rows flagged `linked` get a colored left rail connecting them (a role and
   // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
   // decisive cell flagged as the violation rather than the grammatical value.
+  // "Why this row is here": for each split on the way from the root to the
+  // current node, the rule, the branch this row took, and the row's own
+  // value of the column that split looks at.
+  function buildRouteTable(s, key) {
+    const route = s.route || {};
+    const path = T.PATHS[currentNode];
+    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const rows = [];
+    for (let i = 0; i + 1 < path.length; i++) {
+      const p = path[i], child = path[i + 1];
+      const val = route[String(p)];
+      if (val === undefined) continue;
+      const branch = T.NODES[child].branch;
+      rows.push(`<tr><th class="route-node">[${p}]</th><td class="route-rule">${nodeRuleDisplay(T.NODES[p])}</td>` +
+        `<td class="route-branch ${branch}">→ ${branch === 'true' ? 'True' : 'False'}</td><td class="route-value">${esc(val)}</td></tr>`);
+    }
+    if (!rows.length) return '';
+    const open = openRouteLabels.has(s.label);
+    return `<div class="route-block" data-label="${s.label}">
+      <button type="button" class="group-route-toggle" data-label="${s.label}" data-text="why this row is at node ${currentNode}" data-scroll-anchor="routerow_${key}" aria-expanded="${open}">${open ? '▾' : '▸'} why this row is at node ${currentNode}</button>
+      <div class="route-body"${open ? '' : ' hidden'}><div class="feat-mini-table-wrap"><table class="feat-mini-table route-table">
+        <thead><tr><th>node</th><th>split</th><th>answer</th><th>this row's value</th></tr></thead>
+        <tbody>${rows.join('')}</tbody></table></div></div></div>`;
+  }
+
   function buildFeatTable(decisiveFeat, rows, forceCols) {
     // forceCols lets a caller fix the same column set across several of
     // these tables (e.g. all 5 sample rows for a node) so they line up
     // visually -- left to compute its own columns, each table only shows
     // the features actually set for its own two rows, which drifts from
     // sample to sample.
-    const cols = forceCols || ORDERED_FEATS.filter(k => rows.some(r => featEntry(r.feats, k)));
-    const headHtml = cols.map(k => `<th${k === decisiveFeat ? ' class="decisive"' : ''}>${k}</th>`).join('');
+    const cols = forceCols || featColumns(rows.map(r => r.feats));
+    const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
+    const colCls = (k, i, extra) => {
+      const c = [];
+      if (extra) c.push(extra);
+      if (OTHER_FEATS.includes(k)) c.push('other-feat');
+      if (i === firstOther) c.push('other-first');
+      return c;
+    };
+    const headHtml = cols.map((k, i) => {
+      const c = colCls(k, i, k === decisiveFeat ? 'decisive' : '');
+      return `<th${c.length ? ` class="${c.join(' ')}"` : ''}>${k}</th>`;
+    }).join('');
     const rowHtml = (r) => {
-      const cells = cols.map(k => {
+      const cells = cols.map((k, ci) => {
         // Every entry for this column, not just one -- a token can carry
         // more than one bracket of the same dimension at once (see
         // featEntries), and all of them are shown, separated, so e.g. a
@@ -1520,7 +1864,8 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
         // entry for that exact bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
-        const cls = isDecisive ? ` class="decisive${r.variant === 'swapped' ? ' swapped' : ''}"` : '';
+        const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
+        const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
         // One line per entry, stacked vertically (feat-entry-line is
         // block-level), not joined inline with a "/" separator -- 2-3
@@ -1541,17 +1886,24 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
           const bracketHtml = e.bracket ? `<span class="feat-bracket">${e.bracket}</span>` : '';
-          return `<div class="feat-entry-line">${valueHtml}${bracketHtml}</div>`;
+          // A column kept out of the tree fit (e.g. the head's xpos or its
+          // Number, the label itself) is still shown, dimmed with a hint.
+          const fullKey = k + (e.bracket || '');
+          const blocked = (T.META.fitExcluded || []).some(x => x.role === r.role && x.feat === fullKey);
+          const line = `${valueHtml}${bracketHtml}`;
+          return `<div class="feat-entry-line">${blocked
+            ? `<span class="fit-excluded" title="Not used when fitting the tree: this feature is, or can spell out, the agreement label the tree predicts">${line}</span>`
+            : line}</div>`;
         });
         return `<td${cls}>${parts.join('')}</td>`;
       }).join('');
       const rowCls = r.linked ? ' class="linked-row"' : '';
       const roleCls = r.role ? ` role-${r.role}` : '';
-      return `<tr${rowCls}><th>${r.label} <span class="role-form${roleCls}">${r.form}</span></th>${cells}</tr>`;
+      return `<tr${rowCls}><th class="role-label-cell">${r.label}</th><th class="role-form-cell"><span class="role-form${roleCls}">${r.form}</span></th>${cells}</tr>`;
     };
     return `
       <div class="feat-mini-table-wrap"><table class="feat-mini-table">
-        <thead><tr><th></th>${headHtml}</tr></thead>
+        <thead><tr><th></th><th></th>${headHtml}</tr></thead>
         <tbody>
           ${rows.map(rowHtml).join('\n          ')}
         </tbody>
@@ -1597,7 +1949,9 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     if (!node.dist) return null;
     const majority = node.dist.reduce((a, b) => (b.cnt > a.cnt ? b : a));
     const base = SEMANTIC_BASE_HEX[majority.cls.toLowerCase()] || majority.color;
-    const t = Math.min(1, node.H * 0.72);
+    // accuracy pages: acc in [0.5, 1] -> uncertainty in [1, 0]; entropy pages: H directly.
+    const uncertainty = T.META.measure === 'accuracy' ? Math.max(0, 2 * (1 - node.acc)) : node.H;
+    const t = Math.min(1, uncertainty * 0.72);
     return interpolateHex(base, '#ffffff', t);
   }
 
@@ -1621,10 +1975,29 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
-      if (lower !== 'yes' && lower !== 'no') return part;
-      const word = lower === 'yes' ? 'agree' : 'disagree';
-      return part[0] === part[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
+      if (lower === 'yes') return 'Agree';
+      if (lower === 'no') return 'Disagree';
+      if (lower === 'unk') return 'unknown';
+      return part;
     }).join(' / ');
+  }
+
+  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
+  // short raw role token the pipeline used internally (UD upos-ish tags for
+  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
+  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
+  // reader (the Pairs tab's role chips/group headers), the same "relabel at
+  // render time, keep the raw token as the identifier everywhere else"
+  // split as displayLabel above. An unrecognized token still degrades
+  // gracefully to Titlecase rather than showing raw lowercase.
+  const ROLE_DISPLAY_NAMES = {
+    det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
+    pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
+  };
+  function displayRole(token) {
+    const key = String(token || '').toLowerCase();
+    if (ROLE_DISPLAY_NAMES[key]) return ROLE_DISPLAY_NAMES[key];
+    return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
   // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
@@ -1657,7 +2030,11 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    const segs = node.dist.map(d => {
+    // Zero-count classes are dropped before rendering, not just given 0%
+    // width -- a 0%-wide segment would still take its :not(:last-child)
+    // divider (a border-right renders regardless of width), producing a
+    // stray line with nothing on one side of it.
+    const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
     const hidden = showNodeDist ? '' : ' style="display:none"';
@@ -1701,14 +2078,17 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
 
       // Minimal pairs are only ever generated from an Agree-majority leaf
       // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from H alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose H happens to clear
+      // is computed from acc alone, with no majority-label check, so it can
+      // still come back true for a Disagree leaf whose acc happens to clear
       // the threshold; omit the badge entirely there rather than show a
       // "kept" or "not kept" note that can't ever inform anything.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      const keepHtml = !node.leaf || !isAgreeLeaf ? '' : node.keep
-        ? `<span class="node-keep yes" data-keep-toggle="1">🔑 ${node.kept.toLocaleString()} kept › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
-        : `<span class="node-keep no">not kept (H≥${T.META.keepThresholdH.toFixed(2)})</span>`;
+      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
+      // leaf unless second_chance's depth-aware retry gave leaves different
+      // ones, in which case T.META's single global number can't be trusted.
+      const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
+        ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
+        : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
       // [+] marker: flags a split rule where some other feature was >99%
       // correlated with the chosen one in the rows reaching this node (the
@@ -1733,7 +2113,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
           </div>
           <div class="node-body">
-            [${id}]&nbsp; n=${node.n}&nbsp; H=${node.H.toFixed(2)}
+            [${id}]&nbsp; n=${node.n}&nbsp; ${T.META.measure === 'accuracy' ? `acc=${node.acc.toFixed(3)}` : `H=${node.H.toFixed(2)}`}
             ${buildDistBar(node)}
             ${keepHtml}
           </div>
@@ -1744,29 +2124,9 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
       nodeBoxEl.tabIndex = 0;
       nodeBoxEl.setAttribute('role', 'button');
       nodeBoxEl.setAttribute('aria-label', `Node ${id}: ${nodeRuleDisplay(node)}`);
-      nodeBoxEl.addEventListener('click', () => selectNode(id));
+      nodeBoxEl.addEventListener('click', () => onNodeClick(id));
       nodeBoxEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(id); }
-      });
-      // Double-click is the fullscreen equivalent of the plain click above
-      // (which already ran twice by the time this fires, same as any
-      // dblclick): the node-samples table it updates lives outside
-      // .tree-wrap, in .scroll-pane, so it's not enough on its own while
-      // fullscreen -- this leaves fullscreen and jumps to it too.
-      nodeBoxEl.addEventListener('dblclick', () => {
-        leaveFullscreenThen(() => {
-          selectNode(id);
-          sampleCard.open = true;
-          // A tick after opening the <details>, not the same one: a smooth
-          // scroll started before the browser's committed the reflow from
-          // open=true can animate toward stale (still-collapsed)
-          // coordinates. setTimeout, not requestAnimationFrame -- rAF is
-          // suspended entirely while the document isn't the active,
-          // rendering one, which a plain deferred timer isn't.
-          setTimeout(() => {
-            sampleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 0);
-        });
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNodeClick(id); }
       });
       const keepEl = slot.querySelector('[data-keep-toggle]');
       if (keepEl) {
@@ -1775,34 +2135,10 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
         keepEl.setAttribute('aria-label', `View the ${node.correctSwaps.toLocaleString()} minimal pairs this leaf produced`);
         const openPairs = e => {
           e.stopPropagation();
-          // The pairs table lives outside .tree-wrap, in .scroll-pane --
-          // invisible while fullscreen (a fullscreened element is the only
-          // thing the browser renders) -- so this leaves fullscreen first.
-          leaveFullscreenThen(() => {
-            pairsCard.open = true;
-            // A tick after opening the <details>, not the same one -- see
-            // the node dblclick handler's own comment on this same pattern
-            // and why setTimeout, not requestAnimationFrame.
-            setTimeout(() => {
-              // Scroll straight to *this* leaf's own group, not just the
-              // pairs card in general -- with more than one leaf kept,
-              // landing on the top of the card could leave the one the
-              // badge was actually about scrolled well out of view. Falls
-              // back to the card itself if the group isn't found (e.g.
-              // stale T.NODES).
-              const leafGroup = pairsList.querySelector(`[data-leaf-group="${CSS.escape(id)}"]`);
-              (leafGroup || pairsCard).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              if (leafGroup) {
-                // Restart the animation even if this leaf was just jumped
-                // to a moment ago (removing the class before re-adding it
-                // forces the browser to treat it as a fresh animation, not
-                // a no-op).
-                leafGroup.classList.remove('jump-highlight');
-                void leafGroup.offsetWidth;
-                leafGroup.classList.add('jump-highlight');
-              }
-            }, 0);
-          });
+          openDrawer('pairs');
+          selectNode(id);
+          revealSelectedNode();
+          setTimeout(() => jumpToLeafGroup(id), 0);
         };
         keepEl.addEventListener('click', openPairs);
         keepEl.addEventListener('keydown', e => {
@@ -1810,6 +2146,109 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
         });
       }
     });
+  }
+
+  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // A pill is tagged when that treebank's own tree beats the pooled tree on
+  // the same held-out rows by a clear margin.
+  function buildTreebankRow() {
+    const nav = T.META.nav;
+    if (!nav) return;
+    const pct = v => (v * 100).toFixed(1) + '%';
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const pills = [`<span class="tb-label">Trees</span>`];
+    const unkView = nav.variant === 'unk';
+    const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
+    const pN = unkView ? nav.pooledUnkTestN : nav.pooledTestN;
+    // Row count the tree was actually fit on: without unk rows (as-is) or
+    // with them (incl. unk).
+    const rowsHtml = (n, unkN) => `${(unkView ? n + unkN : n).toLocaleString()} rows`;
+    const pooledInner = `Pooled<span class="keep-count">${rowsHtml(nav.pooledRows, nav.pooledUnkRows)}${pAcc == null ? '' : ' · ' + pct(pAcc)}</span>`;
+    const pooledTitle = pAcc == null ? 'All treebanks together'
+      : `All treebanks together; held-out accuracy ${pct(pAcc)} on ${pN.toLocaleString()} rows${unkView ? ' (unk rows included)' : ''}`;
+    pills.push(nav.pooledCurrent
+      ? `<span class="tree-select-btn active" title="${pooledTitle}">${pooledInner}</span>`
+      : `<a class="tree-select-btn" href="${nav.pooledHref}" title="${pooledTitle}">${pooledInner}</a>`);
+    // Treebank pills stay within the current view: the as-is trees, or (on an
+    // incl.-unk debugging page) the trees that also fit the unk rows.
+    const unkMode = nav.variant === 'unk';
+    // Excluded treebanks (never in the pooled tree or the pairs) become
+    // compact chips, grouped by reason under the chevron below.
+    const excludedItems = [];
+    nav.items.forEach(it => {
+      // In the incl.-unk view a treebank with no unk tree (e.g. a single-label
+      // one) still links to its as-is page, so its pill stays reachable.
+      const href = unkMode ? (it.unkHref || it.href) : (it.href || it.unkHref);
+      const acc = unkMode ? it.unkAcc : it.acc;
+      const noTree = it.placeholder && !(unkMode && it.unkHref);
+      if (it.excluded) {
+        const n = (unkMode ? it.rows + it.unkRows : it.rows).toLocaleString();
+        const detail = `${it.name}: ${n} rows${acc == null ? '' : ' · ' + pct(acc) + ' held-out'}. Excluded from the minimal-pair pipeline (${it.reason || it.status}); not part of the pooled tree`;
+        const inner = `${esc(it.name)}<span class="n">${n} rows${acc != null ? ' · ' + pct(acc) : noTree ? ' · ' + esc(it.status) : ''}</span>`;
+        excludedItems.push({
+          key: it.reason || it.status,
+          chip: it.current ? `<span class="tb-chip active" title="${esc(detail)}">${inner}</span>`
+            : href ? `<a class="tb-chip${noTree ? ' muted' : ''}" href="${href}" title="${esc(detail)}${noTree ? ' -- no tree, placeholder page' : ''}">${inner}</a>`
+            : `<span class="tb-chip muted" title="${esc(detail)}; no tree fitted (${esc(it.status)})">${inner}</span>`,
+        });
+        return;
+      }
+      const out = pills;
+      if (!href && !it.current) {
+        out.push(`<span class="tree-select-btn tb-muted" title="No tree fitted: ${esc(it.status)}">${esc(it.name)}<span class="keep-count">${esc(it.status)}</span></span>`);
+        return;
+      }
+      const unkOnly = !unkMode && !it.href;
+      const title = unkMode ? 'Fit on unk rows too -- not comparable with the pooled tree'
+        : unkOnly ? `${it.status} without unk rows; only the incl.-unk tree exists`
+        : it.pooledAcc == null ? ''
+        : `Own tree ${pct(it.acc)} vs pooled tree ${pct(it.pooledAcc)} on this treebank's held-out rows`;
+      const tag = !unkMode && it.diverges ? `<span class="tb-tag">differs +${(it.delta * 100).toFixed(0)}</span>` : '';
+      const accTxt = acc == null ? '' : ` · ${pct(acc)}`;
+      const note = unkOnly ? ` · ${esc(it.status)}, incl. unk only` : noTree ? ` · ${esc(it.status)}` : '';
+      const inner = `${esc(it.name)}<span class="keep-count">${rowsHtml(it.rows, it.unkRows)}${accTxt}${note}</span>${tag}`;
+      out.push(it.current
+        ? `<span class="tree-select-btn active" title="${title}">${inner}</span>`
+        : `<a class="tree-select-btn${noTree ? ' tb-muted-link' : ''}" href="${href}" title="${noTree ? esc(it.status) + ' -- no tree, placeholder page with the label counts' : title}">${inner}</a>`);
+    });
+    const excludedCount = excludedItems.length;
+    // One row above the tree: the excluded-treebanks chevron on the left (its
+    // chips open to the right of it) and the include-unk switch at the right
+    // end. The open state is remembered per browser so it survives moving
+    // between pages, e.g. via the switch.
+    let storedOpen = false;
+    try { storedOpen = localStorage.getItem('excludedOpen') === '1'; } catch (e) {}
+    const excludedOpen = storedOpen;
+    const excludedCurrent = nav.items.some(it => it.excluded && it.current);
+    const rowParts = [];
+    if (excludedCount) {
+      const groups = new Map();
+      excludedItems.forEach(x => { if (!groups.has(x.key)) groups.set(x.key, []); groups.get(x.key).push(x.chip); });
+      const groupsHtml = [...groups].map(([reason, chips]) =>
+        `<div class="tb-excl-group">${chips.join('')}<span class="tb-excl-reason">${esc(reason)}</span></div>`).join('');
+      rowParts.push(`<div class="tb-excl-wrap"><button type="button" class="tb-excluded-toggle${excludedCurrent ? ' has-current' : ''}" id="excludedToggle" aria-expanded="${excludedOpen}">${excludedOpen ? '▾' : '▸'} Excluded from pairs (${excludedCount})</button>` +
+        `<div class="tb-excluded" id="excludedList"${excludedOpen ? '' : ' hidden'}>${groupsHtml}</div></div>`);
+    }
+    if (nav.counterpartHref) {
+      rowParts.push(`<a class="unk-toggle${unkMode ? ' on' : ''}" href="${nav.counterpartHref}" role="switch" aria-checked="${unkMode}"
+        title="${unkMode ? 'Debugging view is on -- click to go back to the tree fit without unk rows' : 'Debugging view: same treebank, tree also fit on its unk rows'}"><span class="unk-switch"><span class="unk-knob"></span></span>Include rows missing annotation ("unk")</a>`);
+    }
+    if (rowParts.length) pills.push(`<div class="tb-controls">${rowParts.join('')}</div>`);
+    treebankRow.innerHTML = pills.join('');
+    treebankRow.style.display = '';
+    const excludedToggle = document.getElementById('excludedToggle');
+    if (excludedToggle) {
+      excludedToggle.addEventListener('click', () => {
+        const list = document.getElementById('excludedList');
+        list.hidden = !list.hidden;
+        excludedToggle.setAttribute('aria-expanded', String(!list.hidden));
+        excludedToggle.textContent = `${list.hidden ? '▸' : '▾'} Excluded from pairs (${excludedCount})`;
+        try { localStorage.setItem('excludedOpen', list.hidden ? '0' : '1'); } catch (e) {}
+        scheduleRefit();
+      });
+    }
+    const overview = document.querySelector('.overview-link');
+    if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
   function buildTreeSelector() {
@@ -1833,7 +2272,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
-    const onPath = new Set(T.PATHS[currentNode]);
+    const onPath = new Set(drawerOpen ? T.PATHS[currentNode] : []);
     document.querySelectorAll('.node-slot').forEach(el => {
       el.classList.toggle('current', onPath.has(Number(el.dataset.node)));
     });
@@ -1845,20 +2284,30 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
   // info-panel, not recomputed here.
   const META_ROWS = [
-    ['Language', 'language'], ['Keep threshold', 'keepThreshold'], ['accuracy', 'accuracy'],
+    ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
+    ['root accuracy', 'rootAccuracy'], ['train accuracy (smoothed)', 'trainAccuracy'],
     ['Nodes', 'nodes'], ['Depth', 'depth'],
     ['Training samples', 'trainingSamples'], ['Predictor', 'predictor'],
   ];
   function buildInfoPanel() {
+    // Pages built before languageName existed only carry the combined name.
+    if (T.META.languageName === undefined) T.META.languageName = T.META.language;
+    if (T.META.testAccuracy) T.META.testAccuracyRow = `${T.META.testAccuracy} (n=${T.META.testN})`;
+    else META_ROWS[META_ROWS.findIndex(r => r[1] === 'accuracy')][0] = 'accuracy';
     infoPanelTitle.textContent = T.META.language;
-    infoPanelAccuracy.textContent = T.META.accuracy;
-    infoPanelMeta.innerHTML = META_ROWS.map(([label, key]) => `
+    // Train = accuracy on the rows the tree was fit on; test = on its held-out
+    // split. Pages built before the test figure existed just show "accuracy".
+    infoPanelAccuracy.textContent = T.META.testAccuracy
+      ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
+      : `${T.META.accuracy} accuracy`;
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
       <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
+    const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
-      <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : ''}">
+      <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
         <span class="class-dist-label">${displayLabel(c.cls)}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
@@ -1905,6 +2354,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     currentNode = T.defaultNode;
     active.clear();
     openLabels.clear();
+    openRouteLabels.clear();
     // Leaf ids aren't unique across trees (both demo trees happen to have a
     // leaf "3"), so leaving these set would leak one tree's open/highlight
     // state onto the other tree's same-numbered leaf.
@@ -1933,6 +2383,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     currentNode = id;
     markCurrentPath();
     buildSampleGrid();
+    buildPairsList();
     render();
   }
 
@@ -1974,6 +2425,10 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // open No's, since they're a separate group with nothing to compare
   // against Yes row-for-row.
   let openLabels = new Set();
+  // Same idea one level down: which label groups have their "why this row"
+  // route tables open. Separate from openLabels (the feature tables that
+  // contain them), so opening one never opens the other.
+  let openRouteLabels = new Set();
 
   // Which leaves currently have every one of their pairs' feature tables
   // open -- keyed by leafId, not per-pair: a leaf's pairs have no Yes/No
@@ -2032,6 +2487,15 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     el.addEventListener('dblclick', () => onDouble());
   }
 
+  function setLabelRouteOpen(label, open) {
+    if (open) openRouteLabels.add(label); else openRouteLabels.delete(label);
+    document.querySelectorAll(`.route-block[data-label="${CSS.escape(label)}"] .route-body`).forEach(el => { el.hidden = !open; });
+    document.querySelectorAll(`.group-route-toggle[data-label="${CSS.escape(label)}"]`).forEach(btn => {
+      btn.textContent = (open ? '▾' : '▸') + ' ' + btn.dataset.text;
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  }
+
   function setLabelFeatsOpen(label, open) {
     if (open) openLabels.add(label); else openLabels.delete(label);
     document.querySelectorAll(`#sampleGrid tr.feat-row[data-label="${CSS.escape(label)}"]`).forEach(el => { el.hidden = !open; });
@@ -2057,11 +2521,13 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   // a hidden row's cells measure 0-width -- so this runs after that, not at
   // build time.
   function alignFeatLabelCols() {
-    const cells = [...document.querySelectorAll('#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th')];
-    if (!cells.length) return;
-    cells.forEach(c => { c.style.width = ''; });
-    const maxW = Math.max(...cells.map(c => c.getBoundingClientRect().width));
-    cells.forEach(c => { c.style.width = maxW + 'px'; });
+    ['role-label-cell', 'role-form-cell'].forEach(cls => {
+      const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
+      if (!cells.length) return;
+      cells.forEach(c => { c.style.width = ''; });
+      const maxW = Math.max(...cells.map(c => c.getBoundingClientRect().width));
+      cells.forEach(c => { c.style.width = maxW + 'px'; });
+    });
   }
 
   // Auto-derived from T.NODES/T.PATHS alone: the chain of split rules and the
@@ -2093,9 +2559,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
     // VerbForm land in the same position across all 5 -- otherwise a
     // feature only some samples have shifts every later column sideways
     // from row to row, and nothing lines up for comparison.
-    const sharedCols = ORDERED_FEATS.filter(k =>
-      samples.some(s => featEntry(s.nsubjFeats, k) || featEntry(s.verbFeats, k))
-    );
+    const sharedCols = featColumns(samples.flatMap(s => [s.nsubjFeats, s.verbFeats]));
 
     function addRow(s, idx, displayIdx) {
       const key = currentNode + '_' + idx;
@@ -2128,7 +2592,12 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
       featRow.innerHTML = `<td colspan="3">${buildFeatTable(T.decisiveFeat, [
         { label: T.roleA, form: s.nsubj, feats: s.nsubjFeats, role: 'a' },
         { label: T.roleB, form: s.verb, feats: s.verbFeats, role: 'b' },
-      ], sharedCols)}</td>`;
+      ], sharedCols)}${buildRouteTable(s, key)}</td>`;
+      featRow.querySelectorAll('.group-route-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          preservingScroll(btn, `routerow_${key}`, () => setLabelRouteOpen(s.label, !openRouteLabels.has(s.label)));
+        });
+      });
 
       row.querySelector('a').addEventListener('click', e => e.stopPropagation());
       const featBtn = row.querySelector('.group-feats-toggle');
@@ -2190,12 +2659,18 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
         const pct = (distEntry.cnt / node.n * 100).toFixed(1);
         const header = document.createElement('tr');
         header.className = 'sample-group-header';
+        header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
           <span class="group-label">${displayLabel(label)}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
+          ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
         </div></td>`;
+        const routeHdrBtn = header.querySelector('.group-route-toggle');
+        if (routeHdrBtn) routeHdrBtn.addEventListener('click', () => {
+          preservingScroll(routeHdrBtn, `routehdr_${label}`, () => setLabelRouteOpen(label, !openRouteLabels.has(label)));
+        });
         const hdrBtn = header.querySelector('.group-feats-toggle');
         hdrBtn.addEventListener('click', () => {
           preservingScroll(hdrBtn, `samplehdr_${label}`, () => setLabelFeatsOpen(label, !openLabels.has(label)));
@@ -2205,31 +2680,86 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
       idxs.forEach((idx, i) => addRow(samples[idx], idx, i + 1));
     });
     if (openLabels.size) alignFeatLabelCols();
+    buildLabelJumps(labels, node);
+  }
+
+  // One chip per label present in this node's samples, jumping to that
+  // label's group in the table -- including a unanimous (single-label)
+  // node's one chip: that count is still real signal (how many of this
+  // node's n it covers), not just a jump target, so it stays visible
+  // rather than only showing up once there's something to jump between.
+  function buildLabelJumps(labels, node) {
+    drawerLabels.innerHTML = '';
+    if (labels.length >= 1) {
+      labels.forEach(label => {
+        const entry = (node.dist || []).find(d => d.cls === label);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'label-jump';
+        btn.title = `Jump to the ${displayLabel(label)} samples`;
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+          (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
+        btn.addEventListener('click', () => {
+          // From the Pairs tab, jump means "show me these samples".
+          if (drawerTab !== 'samples') setDrawerTab('samples');
+          const header = sampleGrid.querySelector(`tr.sample-group-header[data-label="${CSS.escape(label)}"]`);
+          if (!header) return;
+          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const row = header.querySelector('.group-header-row');
+          row.classList.remove('jump-flash');
+          void row.offsetWidth;
+          row.classList.add('jump-flash');
+        });
+        drawerLabels.appendChild(btn);
+      });
+    }
+    updateLabelJumps();
+  }
+  function updateLabelJumps() {
+    drawerLabels.hidden = !drawerLabels.children.length;
+  }
+
+  function nodeHasPairs(id) {
+    const n = T.NODES[id];
+    return !!(n && n.leaf && n.keep && T.PAIRS.some(p => String(p.leaf) === String(id)));
+  }
+  // The Pairs tab is only usable on a leaf that generated pairs; if the
+  // drawer is on it when the selection moves elsewhere, fall back to Samples.
+  function syncPairsTab() {
+    const ok = nodeHasPairs(currentNode);
+    tabPairs.disabled = !ok;
+    tabPairs.title = ok ? '' : 'Only kept leaves that generated pairs have a Pairs view';
+    if (!ok && drawerTab === 'pairs') setDrawerTab('samples');
   }
 
   function buildPairsList() {
     pairsList.innerHTML = '';
-    // Caps how many real pair examples render per leaf -- T.PAIRS is a
-    // hand-picked demo subset today (a handful per leaf), but a leaf's real
-    // correct_swaps.parquet can run into the thousands, so this keeps the
-    // page from ever having to render all of them at once.
-    const PAIR_LIMIT = 15;
-    const keepLeaves = Object.entries(T.NODES).filter(([, n]) => n.keep).map(([id]) => id);
+    // Pages without a keep threshold (per-treebank trees) generate no pairs.
+    if (T.META.keepThresholdAcc == null) { pairsCard.style.display = 'none'; tabPairs.hidden = true; drawerPairRoles.hidden = true; return; }
+    // Pairs belong to leaves: only the selected node's own pairs are shown,
+    // and only when it is a kept leaf that actually generated some. T.PAIRS
+    // itself is already capped server-side (html_tree._v2_build_pairs, up
+    // to 10 rows per reinflection direction per leaf -- a leaf's real
+    // correct_swaps.parquet can run into the thousands), so nothing further
+    // needs capping here; allPairs below IS what renders.
+    const keepLeaves = nodeHasPairs(currentNode) ? [String(currentNode)] : [];
+    syncPairsTab();
     const pairsByLeaf = keepLeaves.map(leafId => [leafId, T.PAIRS.filter(p => String(p.leaf) === String(leafId))]);
-    const shownTotal = pairsByLeaf.reduce((sum, [, all]) => sum + Math.min(all.length, PAIR_LIMIT), 0);
-    const leafWord = keepLeaves.length === 1 ? 'leaf' : 'leaves';
-    pairsTitle.textContent = `🔑 Generated minimal pairs (${keepLeaves.length} ${leafWord} kept, ${shownTotal} shown)`;
+    const shownTotal = pairsByLeaf.reduce((sum, [, all]) => sum + all.length, 0);
+    pairsTitle.textContent = keepLeaves.length
+      ? `🔑 Generated minimal pairs · leaf ${keepLeaves[0]} (${shownTotal} shown)`
+      : `No minimal pairs for node ${currentNode}`;
+    updateDrawerHint();
 
-    // Which leaf/leaves, how many kept, and H vs. the keep threshold are all
+    // Which leaf/leaves, how many kept, and acc vs. the keep threshold are all
     // already on the node badges above (and repeated in pairsTitle just
     // above this); this only needs to add what those don't already say --
     // that these specific pairs come straight from correct_swaps.parquet.
-    const leafList = keepLeaves.length > 1 ? `leaves ${keepLeaves.join(' and ')}` : `leaf ${keepLeaves[0]}`;
-    pairsIntro.textContent = `Minimal pairs from ${leafList}`;
+    pairsIntro.textContent = keepLeaves.length ? `Minimal pairs from leaf ${keepLeaves[0]}` : '';
+    buildPairRoleJumps(keepLeaves.length ? keepLeaves[0] : null);
 
-    pairsByLeaf.forEach(([leafId, allPairs]) => {
-      if (allPairs.length === 0) return;
-      const leafPairs = allPairs.slice(0, PAIR_LIMIT);
+    pairsByLeaf.forEach(([leafId, leafPairs]) => {
+      if (leafPairs.length === 0) return;
       const group = document.createElement('div');
       group.className = 'pairs-leaf-group';
       // Stable target for a node's "kept › pairs" badge (see openPairs
@@ -2243,7 +2773,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
       const allOpen = openLeaves.has(leafId);
       const headingRow = document.createElement('div');
       headingRow.className = 'pairs-leaf-heading-row';
-      const shownNote = allPairs.length > PAIR_LIMIT ? `, showing ${PAIR_LIMIT} of ${allPairs.length}` : '';
+      const shownNote = leaf.correctSwaps > leafPairs.length ? `, showing ${leafPairs.length} of ${leaf.correctSwaps.toLocaleString()}` : '';
       const headingHtml = keepLeaves.length > 1
         ? `<span class="pairs-leaf-heading">Leaf ${leafId} <span class="n">— ${leaf.kept.toLocaleString()} kept, ${leaf.correctSwaps ? leaf.correctSwaps.toLocaleString() + ' pairs generated' : ''}${shownNote}</span></span>`
         : '';
@@ -2267,7 +2797,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
       pathTrace.innerHTML = buildBreadcrumb(leafId);
       group.appendChild(pathTrace);
 
-      leafPairs.forEach((p, i) => {
+      const appendPairItem = (p, i) => {
         const key = leafId + '_' + i;
         // Every pair in an open leaf shows its feature table together (no
         // per-pair open state); activePairKey is the single, separate
@@ -2290,7 +2820,7 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
         const swappedRow = {
           label: `swapped_${origRole.label}`,
           form: p.ungrammatical,
-          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats),
+          feats: applyAfterFeat(origRole.feats, T.decisiveFeat, p.afterValue, p.afterFeatKey, p.bonusAfterFeats, p.siblingKeys),
           variant: 'swapped',
           linked: true,
           role: origRole.role,
@@ -2339,10 +2869,174 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHighlight(); }
         });
         group.appendChild(el);
+      };
+
+      // Group by which component this leaf's pairs actually reinflected
+      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
+      // DET-ADJ reinflects each role in turn and merges both directions into
+      // one bucket) -- same idea as the samples table's byLabel groups, so a
+      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
+      // labelled runs instead of interleaved with no indication of which
+      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
+      // or NPA's HEAD pairs) renders exactly as before -- no header, one
+      // flat list -- since there's nothing to distinguish.
+      const byRole = new Map();
+      leafPairs.forEach((p, i) => {
+        const role = p.swapRole || T.swappedRole;
+        if (!byRole.has(role)) byRole.set(role, []);
+        byRole.get(role).push(i);
       });
+      const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
+      if (roleOrder.length > 1) {
+        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        roleOrder.forEach(role => {
+          const idxs = byRole.get(role);
+          const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
+          const header = document.createElement('div');
+          header.className = 'pairs-role-header';
+          header.setAttribute('data-role-group', role);
+          header.innerHTML = `<span class="pairs-role-label">${esc(roleLabel)} reinflected</span><span class="n">${idxs.length}</span>`;
+          group.appendChild(header);
+          idxs.forEach(i => appendPairItem(leafPairs[i], i));
+        });
+      } else {
+        leafPairs.forEach((p, i) => appendPairItem(p, i));
+      }
       pairsList.appendChild(group);
     });
   }
+
+  // One chip per reinflected component present among the current leaf's
+  // pairs (only when the leaf actually mixes both -- see roleOrder above),
+  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
+  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
+  // REAL per-direction total straight from correct_swaps.parquet, not just
+  // however many of that direction happen to be materialized into T.PAIRS
+  // -- the same "real distribution, not the capped sample" convention
+  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
+  // to that component's group header (built above) rather than filtering.
+  function buildPairRoleJumps(leafId) {
+    drawerPairRoles.innerHTML = '';
+    const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
+    const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
+    if (roleOrder.length > 1) {
+      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      roleOrder.forEach(role => {
+        const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'label-jump pairs-role';
+        btn.title = `Jump to pairs with a reinflected ${roleLabel}`;
+        btn.innerHTML = `${esc(roleLabel)}<span class="n">${counts[role].toLocaleString()}</span>`;
+        btn.addEventListener('click', () => {
+          if (drawerTab !== 'pairs') setDrawerTab('pairs');
+          const header = pairsList.querySelector(`[data-role-group="${role}"]`);
+          if (!header) return;
+          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          header.classList.remove('jump-flash');
+          void header.offsetWidth;
+          header.classList.add('jump-flash');
+        });
+        drawerPairRoles.appendChild(btn);
+      });
+    }
+    drawerPairRoles.hidden = !drawerPairRoles.children.length;
+  }
+
+  // ── Samples / pairs drawer ──
+  // Click a node: open the drawer on its samples. Click another node: switch
+  // to it. Click the highlighted node (or the close button / Esc): close.
+  let drawerOpen = false;
+  let drawerTab = 'samples';
+  const DRAWER_KEY = 'treeDrawerFrac';
+  let drawerFrac = 0.4;
+  try {
+    const v = parseFloat(localStorage.getItem(DRAWER_KEY));
+    if (v >= 0.15 && v <= 0.9) drawerFrac = v;
+  } catch (e) {}
+  function applyDrawerHeight() { drawer.style.height = `${drawerFrac * 100}%`; }
+  function updateDrawerHint() {
+    drawerHint.textContent = drawerTab === 'pairs'
+      ? pairsTitle.textContent
+      : 'click a row to trace it · up to 15 real rows per class';
+  }
+  function setDrawerTab(tab) {
+    drawerTab = tab;
+    drawer.dataset.tab = tab;
+    tabSamples.classList.toggle('active', tab === 'samples');
+    tabPairs.classList.toggle('active', tab === 'pairs');
+    updateDrawerHint();
+    updateLabelJumps();
+  }
+  function openDrawer(tab) {
+    drawerOpen = true;
+    drawer.hidden = false;
+    applyDrawerHeight();
+    setDrawerTab(tab || drawerTab);
+  }
+  function closeDrawer() {
+    drawerOpen = false;
+    drawer.hidden = true;
+    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    active.clear();
+    markCurrentPath();
+    render();
+  }
+  // Pan the tree up if the drawer would cover the selected node; the shift is
+  // undone when the drawer closes so the tree isn't left displaced.
+  let revealShift = 0;
+  function revealSelectedNode() {
+    const box = nodesLayer.querySelector(`.node-slot[data-node="${CSS.escape(String(currentNode))}"] .node-box`);
+    if (!box) return;
+    const r = box.getBoundingClientRect();
+    const over = r.bottom + 12 - drawer.getBoundingClientRect().top;
+    if (over <= 0) return;
+    const room = r.top - treeScroll.getBoundingClientRect().top - 8;
+    const dy = Math.min(over, Math.max(0, room));
+    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+  }
+  function jumpToLeafGroup(id) {
+    const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
+    if (!group) return;
+    group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // remove + reflow + re-add restarts the flash even on a repeat jump
+    group.classList.remove('jump-highlight');
+    void group.offsetWidth;
+    group.classList.add('jump-highlight');
+  }
+  function onNodeClick(id) {
+    if (drawerOpen && id === currentNode) { closeDrawer(); return; }
+    const stayOnPairs = drawerOpen && drawerTab === 'pairs' && nodeHasPairs(id);
+    openDrawer(stayOnPairs ? 'pairs' : 'samples');
+    selectNode(id);
+    revealSelectedNode();
+    if (stayOnPairs) setTimeout(() => jumpToLeafGroup(id), 0);
+  }
+  tabSamples.addEventListener('click', () => setDrawerTab('samples'));
+  tabPairs.addEventListener('click', () => setDrawerTab('pairs'));
+  document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawerOpen) closeDrawer(); });
+  let draggingDrawer = false;
+  drawerHandle.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    drawerHandle.setPointerCapture(e.pointerId);
+    draggingDrawer = true;
+    document.body.classList.add('dragging-drawer');
+  });
+  drawerHandle.addEventListener('pointermove', e => {
+    if (!draggingDrawer) return;
+    const rect = treeWrap.getBoundingClientRect();
+    drawerFrac = Math.min(0.9, Math.max(0.15, (rect.bottom - e.clientY) / rect.height));
+    applyDrawerHeight();
+  });
+  const endDrawerDrag = () => {
+    if (!draggingDrawer) return;
+    draggingDrawer = false;
+    document.body.classList.remove('dragging-drawer');
+    try { localStorage.setItem(DRAWER_KEY, String(drawerFrac)); } catch (e) {}
+  };
+  drawerHandle.addEventListener('pointerup', endDrawerDrag);
+  drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
   buildTreeSelector();
   treeTitle.textContent = T.title;
@@ -2351,14 +3045,11 @@ const TREE_DATA = {"title": "Czech \u00b7 Verb_nsubj_Person", "roleA": "nsubj", 
   fitToContent();
   markCurrentPath();
   buildInfoPanel();
+  buildTreebankRow();
+  sizeTreeBox();
+  fitToContent();
   buildSampleGrid();
   buildPairsList();
-  // default: trace the Greek tree's first sample row for an immediate
-  // payoff. Feature tables start closed (openLabels is empty until a
-  // group's own toggle is clicked) -- not opened here, so the page's first
-  // paint isn't already showing every row's feature table before the
-  // reader's asked for it.
-  document.querySelectorAll('#sampleGrid tr.sample-row')[0].click();
 })();
 </script>
 

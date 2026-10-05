@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 21}</script>
+  <div class="layout">
+    
+    <div class="sidebar">
+      <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Aux_obj_Person</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Ruuli</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">21</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_obj_Person</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 21)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td><strong>Nkwiza</strong> kukimalirya <strong>kini</strong> .</td><td>nkwiza</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=iza<br>Aspect=Prog<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>kini</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ni<br>Deixis=Prox<br>NounClass=Bantu7<br><strong>Person=3</strong><br>PronType=Dem<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22film_Inception_52%22%20%3B%20A%20%5Bform%3D%22Nkwiza%22%5D%20%3B%20B%20%5Bform%3D%22kini%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Nti amabeere ganu nje g' ogadya , <strong>ngo</strong> gayoncerye <strong>onaani</strong> ?</td><td>ngo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu6<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>onaani</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=naani<br>PronType=Int<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenTale_Sokoso_17%22%20%3B%20A%20%5Bform%3D%22ngo%22%5D%20%3B%20B%20%5Bform%3D%22onaani%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Ati okutema ebibira <strong>nikwo</strong> kuleetere <strong>eengubbe</strong> .</td><td>nikwo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu15<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>eengubbe</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ngubbe<br>NounClass=Bantu1<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola2_143%22%20%3B%20A%20%5Bform%3D%22nikwo%22%5D%20%3B%20B%20%5Bform%3D%22eengubbe%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>Tukwiza</strong> okufuna <strong>we</strong> twabba .</td><td>tukwiza</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=iza<br>Aspect=Prog<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>we</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=e<br>NounClass=Bantu16<br>PronType=Rel<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntax_24c%22%20%3B%20A%20%5Bform%3D%22Tukwiza%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>tukwiza</strong> okufuna <strong>we</strong> twaba .</td><td>tukwiza</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=iza<br>Aspect=Prog<br>Mood=Ind<br>SubjAuxCount=1<br>Tense=Pres<br>VerbForm=Fin</details></td><td>we</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=e<br>NounClass=Bantu16<br>PronType=Rel<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22graphy_Nakasongola1_36%22%20%3B%20A%20%5Bform%3D%22tukwiza%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>niye</strong> aliire <strong>omwana</strong> wange . "</td><td>niye</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu1<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>omwana</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=mwana<br>NounClass=Bantu1<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenTale_Gweero_5%22%20%3B%20A%20%5Bform%3D%22niye%22%5D%20%3B%20B%20%5Bform%3D%22omwana%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>era te n’ omukoi waamwe ni <strong>mba</strong> mmuleeteire <strong>kaita</strong></td><td>mba</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=bba<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>kaita</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kaita<br>NounClass=Bantu12<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola1b_147%22%20%3B%20A%20%5Bform%3D%22mba%22%5D%20%3B%20B%20%5Bform%3D%22kaita%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>Tukwaba</strong> kwalika abaana <strong>amabara</strong> .</td><td>tukwaba</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=aba<br>Aspect=Prog<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>amabara</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=ibara<br>NounClass=Bantu6<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntax_42a%22%20%3B%20A%20%5Bform%3D%22Tukwaba%22%5D%20%3B%20B%20%5Bform%3D%22amabara%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>naika okwibula , ni yayikire okwiwula , yete <strong>ekintu</strong> <strong>yali</strong> yakimanyiriire ,</td><td>yali</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=li<br>NounClass=Bantu1<br>SubjAuxCount=1<br>Tense=Past</details></td><td>ekintu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kintu<br>NounClass=Bantu7<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenTale_Sokoso_35%22%20%3B%20A%20%5Bform%3D%22yali%22%5D%20%3B%20B%20%5Bform%3D%22ekintu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>Enzala</strong> <strong>baali</strong> bakyali kugiwuura ,</td><td>baali</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=li<br>NounClass=Bantu2<br>SubjAuxCount=2+<br>Tense=Past</details></td><td>enzala</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=nzala<br>NounClass=Bantu9<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola2_291%22%20%3B%20A%20%5Bform%3D%22baali%22%5D%20%3B%20B%20%5Bform%3D%22Enzala%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Nakoba <strong>tukwaba</strong> kulya <strong>makurooni</strong> .</td><td>tukwaba</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=aba<br>Aspect=Prog<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>makurooni</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=makurooni<br>NounClass=Bantu6<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola2_2%22%20%3B%20A%20%5Bform%3D%22tukwaba%22%5D%20%3B%20B%20%5Bform%3D%22makurooni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Nadala abantu <strong>ababbanga</strong> bakwetaaga <strong>emiyo</strong> gini okukekesya ebiteere …</td><td>ababbanga</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=bba<br>Aspect=Hab<br>NounClass=Bantu2<br>Referent=Yes<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>emiyo</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=muyo<br>NounClass=Bantu4<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntax_36a%22%20%3B%20A%20%5Bform%3D%22ababbanga%22%5D%20%3B%20B%20%5Bform%3D%22emiyo%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Ati awo <strong>nigyo</strong> twafuniire <strong>omukisa</strong> ,</td><td>nigyo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu23<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>omukisa</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=mukisa<br>NounClass=Bantu3<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22graphy_Nakasongola1_138%22%20%3B%20A%20%5Bform%3D%22nigyo%22%5D%20%3B%20B%20%5Bform%3D%22omukisa%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Ganu amabeere ganu g' okubona ganu agafuukure obusapatu , <strong>nigo</strong> gaakoore <strong>ki</strong> ?</td><td>nigo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu6<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>ki</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=ki<br>PronType=Int<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenTale_Sokoso_61%22%20%3B%20A%20%5Bform%3D%22nigo%22%5D%20%3B%20B%20%5Bform%3D%22ki%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Sir Walter Raleigh yawandiikire nti " Ebyafaayo kye biruubiira <strong>nikwo</strong> kutwegesya <strong>ebintu</strong> ebya biro bidi ebyayakaire " .</td><td>nikwo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu15<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>ebintu</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=kintu<br>NounClass=Bantu8<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22nonfiction_Aniinire_35%22%20%3B%20A%20%5Bform%3D%22nikwo%22%5D%20%3B%20B%20%5Bform%3D%22ebintu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Okulowooza nti eyaizire <strong>tiniye</strong> yayegeserye <strong>Omuduuli</strong> ?</td><td>tiniye</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>omuduuli</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=muduuli<br>NounClass=Bantu1<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola2_1%22%20%3B%20A%20%5Bform%3D%22tiniye%22%5D%20%3B%20B%20%5Bform%3D%22Omuduuli%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td><strong>nigyo</strong> nasomeire <strong>eidaala</strong> elikusoka omu byanyegesya byani bya Uganda .</td><td>nigyo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu23<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>eidaala</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=idaala<br>NounClass=Bantu5<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22graphy_Nakasongola1_11%22%20%3B%20A%20%5Bform%3D%22nigyo%22%5D%20%3B%20B%20%5Bform%3D%22eidaala%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>kubanga <strong>abakaire</strong> bange <strong>mbaire</strong> nkyabendya</td><td>mbaire</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=bba<br>Aspect=Perf<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>abakaire</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=mukaire<br>NounClass=Bantu2<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola1b_31%22%20%3B%20A%20%5Bform%3D%22mbaire%22%5D%20%3B%20B%20%5Bform%3D%22abakaire%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>abantu ba Rwampanga edi <strong>babbaire</strong> bakwesiganga <strong>ennyanja</strong></td><td>babbaire</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=aux<br>lemma=bba<br>Aspect=Perf<br>NounClass=Bantu2<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>ennyanja</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=nnyanja<br>NounClass=Bantu9<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenConv_Nakasongola2_98%22%20%3B%20A%20%5Bform%3D%22babbaire%22%5D%20%3B%20B%20%5Bform%3D%22ennyanja%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Kanu akabina kanu k' okubona , <strong>niko</strong> kaabyayire <strong>kiki</strong> ?</td><td>niko</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu12<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>kiki</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=kiki<br>PronType=Int<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22spokenTale_Sokoso_58%22%20%3B%20A%20%5Bform%3D%22niko%22%5D%20%3B%20B%20%5Bform%3D%22kiki%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr><tr><td>Eyo nga <strong>nigyo</strong> nasomeire <strong>epuraimare</strong> ,</td><td>nigyo</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>deprel=cop<br>lemma=ni<br>xpos=COP<br>InfStruct=Foc<br>NounClass=Bantu23<br>SubjAuxCount=1<br>Tense=Pres</details></td><td>epuraimare</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=puraimare<br>NounClass=Bantu9<br>Referent=Yes<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Ruuli-RDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22graphy_Nakasongola1_10%22%20%3B%20A%20%5Bform%3D%22nigyo%22%5D%20%3B%20B%20%5Bform%3D%22epuraimare%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ruuli-RDT</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

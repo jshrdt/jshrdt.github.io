@@ -45,6 +45,14 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
     }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
     h2 { font-size: 1.1rem; margin: 0; }
     p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
     .label { display: inline-block; padding: 0.3rem 0.9rem;
@@ -57,6 +65,16 @@
                  border-bottom: 1px solid var(--border); }
     .meta-key { color: var(--text-tertiary); }
     .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
     .main { padding: 1.5rem; }
     .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
                 letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
@@ -76,19 +94,26 @@
   </style>
 </head>
 <body>
-  <script type="application/json" id="label-distribution">{"unk": 3}</script>
+  <script type="application/json" id="label-distribution">{"unk": 2}</script>
   <div class="layout">
+    
     <div class="sidebar">
       <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
         <h2>Single label</h2>
         <p>All training samples for <b>Verb_iobj_Number</b> share one agreement label — no decision tree was needed.</p>
       </div>
-      <div class="labels"><div class="label">unk</div></div>
-      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Kazakh</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">3</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_iobj_Number</span></div></div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Kazakh</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">2</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_iobj_Number</span></div></div>
     </div>
     <div class="main">
-      <h3>Example items (sample of 3)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>iobj_form</th><th>iobj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Өліп бара жатырмын десең , қойға бір <strong>тайын</strong> <strong>мінгізбейді</strong> .</td><td>мінгізбейді</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=мінгіз<br>VerbForm=Fin<br>Aspect=Hab<br>Mood=Ind<br>Polarity=Neg<br>Tense=Pres</details></td><td>тайын</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=тай<br>Case=Acc<br>Number[psor]=Plur,Sing<br>Person[psor]=3</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Kazakh-KTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kdt.tagged.txt%3A27%3A424%22%20%3B%20A%20%5Bform%3D%22%D0%BC%D1%96%D0%BD%D0%B3%D1%96%D0%B7%D0%B1%D0%B5%D0%B9%D0%B4%D1%96%22%7C%22%D0%9C%D1%96%D0%BD%D0%B3%D1%96%D0%B7%D0%B1%D0%B5%D0%B9%D0%B4%D1%96%22%5D%20%3B%20B%20%5Bform%3D%22%D1%82%D0%B0%D0%B9%D1%8B%D0%BD%22%7C%22%D0%A2%D0%B0%D0%B9%D1%8B%D0%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Kazakh-KTB</a></td></tr><tr><td>Еркек , әйел деп айырмайды , бала біткенді " балақайым " дейді , <strong>кісіге</strong> өмірі қатты сөз <strong>айтпайды</strong> .</td><td>айтпайды</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=root<br>lemma=айт<br>VerbForm=Fin<br>Aspect=Hab<br>Mood=Ind<br>Polarity=Neg<br>Tense=Pres</details></td><td>кісіге</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=кісі<br>Case=Dat</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Kazakh-KTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kdt.tagged.txt%3A152%3A2410%22%20%3B%20A%20%5Bform%3D%22%D0%B0%D0%B9%D1%82%D0%BF%D0%B0%D0%B9%D0%B4%D1%8B%22%7C%22%D0%90%D0%B9%D1%82%D0%BF%D0%B0%D0%B9%D0%B4%D1%8B%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D1%96%D1%81%D1%96%D0%B3%D0%B5%22%7C%22%D0%9A%D1%96%D1%81%D1%96%D0%B3%D0%B5%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Kazakh-KTB</a></td></tr><tr><td>Осы <strong>істен</strong> <strong>қорыққаннан</strong> нашар ауылдар өздері шақырып семіз малын сойып беретін .</td><td>қорыққаннан</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>deprel=advcl<br>lemma=қорық<br>VerbForm=Ger<br>Case=Abl<br>Tense=Past</details></td><td>істен</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=іс<br>Case=Abl</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Kazakh-KTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kdt.tagged.txt%3A213%3A3378%22%20%3B%20A%20%5Bform%3D%22%D2%9B%D0%BE%D1%80%D1%8B%D2%9B%D2%9B%D0%B0%D0%BD%D0%BD%D0%B0%D0%BD%22%7C%22%D2%9A%D0%BE%D1%80%D1%8B%D2%9B%D2%9B%D0%B0%D0%BD%D0%BD%D0%B0%D0%BD%22%5D%20%3B%20B%20%5Bform%3D%22%D1%96%D1%81%D1%82%D0%B5%D0%BD%22%7C%22%D0%86%D1%81%D1%82%D0%B5%D0%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Kazakh-KTB</a></td></tr></tbody></table>
+      <h3>Example items (sample of 2)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>iobj_form</th><th>iobj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Еркек , әйел деп айырмайды , бала біткенді " балақайым " дейді , <strong>кісіге</strong> өмірі қатты сөз <strong>айтпайды</strong> .</td><td>айтпайды</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>lemma=айт<br>Aspect=Hab<br>Mood=Ind<br>Polarity=Neg<br>Tense=Pres<br>VerbForm=Fin</details></td><td>кісіге</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=кісі<br>Case=Dat<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Kazakh-KTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kdt.tagged.txt%3A152%3A2410%22%20%3B%20A%20%5Bform%3D%22%D0%B0%D0%B9%D1%82%D0%BF%D0%B0%D0%B9%D0%B4%D1%8B%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D1%96%D1%81%D1%96%D0%B3%D0%B5%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Kazakh-KTB</a></td></tr><tr><td>Өліп бара жатырмын десең , қойға бір <strong>тайын</strong> <strong>мінгізбейді</strong> .</td><td>мінгізбейді</td><td><details class='feat-details'><summary>features...</summary>upos=VERB<br>lemma=мінгіз<br>Aspect=Hab<br>Mood=Ind<br>Polarity=Neg<br>Tense=Pres<br>VerbForm=Fin</details></td><td>тайын</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=тай<br>Case=Acc<br>Number[psor]=Plur,Sing<br>Person[psor]=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Kazakh-KTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kdt.tagged.txt%3A27%3A424%22%20%3B%20A%20%5Bform%3D%22%D0%BC%D1%96%D0%BD%D0%B3%D1%96%D0%B7%D0%B1%D0%B5%D0%B9%D0%B4%D1%96%22%5D%20%3B%20B%20%5Bform%3D%22%D1%82%D0%B0%D0%B9%D1%8B%D0%BD%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Kazakh-KTB</a></td></tr></tbody></table>
     </div>
   </div>
   <script>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 12}</script>
+  <div class="layout">
+    
+    <div class="sidebar">
+      <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>Aux_iobj_Number</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Tamil</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">12</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_iobj_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 12)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>iobj_form</th><th>iobj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>மத்திய மனிதவள மேம்பாட்டுத்துறை அமைச்சர் கபில் சிபல் உயர்கல்வியில் கூடுதல் கவனம் செலுத்துவதை விட்டு பள்ளிக் கல்வி வளர்ச்சி மீது கவனம் செலுத்த வேண்டும் என்று காங்கிரஸ் கட்சியின் மூத்த தலைவர் திக்விஜய் சிங் <strong>கருத்து</strong> தெரிவித்த் <strong>உள்ளார்</strong> .</td><td>உள்ளார்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T3SHAA<br>Mood=Ind<br>Polarity=Pos<br>Polite=Form<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>கருத்து</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=கருத்து<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s202%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AE%BE%E0%AE%B0%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AE%B0%E0%AF%81%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AF%81%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>இந்த மாநாட்டில் கட்சி சாராத இளைஞர்கள் அதிகளவில் பங்கேற்க வேண்டும் என <strong>அழைப்பு</strong> விடுத்த் <strong>உள்ளோம்</strong> என்றார் வைகோ .</td><td>உள்ளோம்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T1PAAA<br>Animacy=Anim<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>அழைப்பு</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=அழைப்பு<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s141%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AF%8B%E0%AE%AE%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%85%E0%AE%B4%E0%AF%88%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AF%81%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>ராஜா <strong>குமாருக்கு</strong> இதைப் புரிய <strong>வைத்தான்</strong> .</td><td>வைத்தான்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=வை<br>SubjAuxCount=1<br>Tense=Past</details></td><td>குமாருக்கு</td><td><details class='feat-details'><summary>features...</summary>upos=PROPN<br>lemma=குமார்<br>Case=Dat<br>NounType=Prop<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-MWTT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22530%22%20%3B%20A%20%5Bform%3D%22%E0%AE%B5%E0%AF%88%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%BE%E0%AE%A9%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AF%81%E0%AE%AE%E0%AE%BE%E0%AE%B0%E0%AF%81%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AF%81%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-MWTT</a></td></tr><tr><td>ஒபாமா முஸ்லீம் என 18 சதவீத மக்கள் நம்புவத் ஆக பியு ஆராய்ச்சி மையம் இம்மாதத் தொடக்கத்தில் கருத்துக் <strong>கணிப்பு</strong> வெளியிட்ட் <strong>இருந்தது</strong> .</td><td>இருந்தது</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=இரு<br>xpos=VR-D3SNAA<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin<br>Voice=Act</details></td><td>கணிப்பு</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=கணிப்பு<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s72%22%20%3B%20A%20%5Bform%3D%22%E0%AE%87%E0%AE%B0%E0%AF%81%E0%AE%A8%E0%AF%8D%E0%AE%A4%E0%AE%A4%E0%AF%81%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AE%A3%E0%AE%BF%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AF%81%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>பாஜகவ் உடன் கூட்டணி வைத்துக் கொண்டு மதச்சார்பின்மை குறித்து பிகார் முதல்வர் நிதீஷ் குமார் எப்படி பேச முடியும் என்று <strong>கேள்வி</strong> எழுப்பி <strong>உள்ளார்</strong> காங்கிரஸ் பொதுச் செயலாளர் ராகுல் காந்தி .</td><td>உள்ளார்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T3SHAA<br>Mood=Ind<br>Polarity=Pos<br>Polite=Form<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>கேள்வி</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=கேள்வி<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s60%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AE%BE%E0%AE%B0%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AF%87%E0%AE%B3%E0%AF%8D%E0%AE%B5%E0%AE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>2. <strong>இருவர்</strong> உம் திருமண வயதை எட்டியிருக்க <strong>வேண்டும்</strong> .</td><td>வேண்டும்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=வேண்டு<br>xpos=VR-F3SNAA<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>Tense=Fut<br>VerbForm=Fin<br>Voice=Act</details></td><td>இருவர்</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=இருவர்<br>xpos=NNN-3PA--<br>Animacy=Anim<br>Case=Nom<br>Gender=Com<br><strong>Number=Plur</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s59%22%20%3B%20A%20%5Bform%3D%22%E0%AE%B5%E0%AF%87%E0%AE%A3%E0%AF%8D%E0%AE%9F%E0%AF%81%E0%AE%AE%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%87%E0%AE%B0%E0%AF%81%E0%AE%B5%E0%AE%B0%E0%AF%8D%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>இதையடுத்து , புகார் மனுவில் குறிப்பிடப் பட்டு உள்ள விவரங்கள் மற்றும் ஆவணங்களை அடிப்படைய் ஆகக் கொண்டு , இந்திய குற்றவியல் சட்டத்தின் 409 , 420 , 468 , 477 ( ஏ ) , 120 ( பி ) ஆகிய பிரிவுகளின் <strong>கீழ்</strong> , லலித் மோடி , வேணு நாயர் , ஆண்ரூ ஜார்ஜியோ , சீமஸ் ஓபிரயன் , ஹரீஷ் கிருஷ்ணமாச்சாரி , அஜய் வர்மா ஆகியோர் மீது மாநகர மத்திய குற்றப் பிரிவு போலீஸார் வழக்குப் பதிவு செய்து விசாரணையை தொடங்கிய் <strong>உள்ளனர்</strong> .</td><td>உள்ளனர்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T3PAAA<br>Animacy=Anim<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>கீழ்</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=கீழ்<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s17%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AE%A9%E0%AE%B0%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AF%80%E0%AE%B4%E0%AF%8D%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>சென்னையில் கஸ்தூரிபா காந்தி தாய் சேய் நல மருத்துவமனையின் 125-ம் ஆண்டு விழா - சேப்பாக்கம் சட்டப் பேரவை உறுப்பினர் தொகுதி மேம்பாட்டு நிதிய் இலிருந்து கட்டப்பட்ட கட்டடங்களின் திறப்பு <strong>விழா</strong> - இதய நோய் மற்றும் மகளிர் கருப்பை வாய் , மார்பகப் புற்றுநோய்த் தடுப்புத் திட்டங்களை வியாழக்கிழமை தொடங்கி <strong>வைத்து</strong> முதல்வர் கருணாநிதி பேசியத் ஆவது : .</td><td>வைத்து</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=வை<br>xpos=VT-T---AA<br>Polarity=Pos<br>SubjAuxCount=1<br>VerbForm=Part<br>Voice=Act</details></td><td>விழா</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=விழா<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s383%22%20%3B%20A%20%5Bform%3D%22%E0%AE%B5%E0%AF%88%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AF%81%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%B5%E0%AE%BF%E0%AE%B4%E0%AE%BE%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>ஜார்ஜ் வாஷிங்டன் பல்கலைக் கழக மாணவர்கள் இடம் பேசிய <strong>அவர்</strong> , ஒபாமாவின் இந்தியப் பயணம் இரு நாடுகள் இடையில் ஆன உறவை மேலும் வலுப்படுத்துவத் ஓடு , அனைத்துத் துறைகளில் உம் இணைந்து செயல்படுவதற்க் ஆன வாய்ப்புகளைப் பிரகாசப்படுத்திய் <strong>உள்ளது</strong> .</td><td>உள்ளது</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T3SNAA<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>அவர்</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>lemma=அவர்<br>xpos=RpN-3SH--<br>Case=Nom<br>Gender=Com<br><strong>Number=Sing</strong><br>Person=3<br>Polite=Form<br>PronType=Prs<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s36%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AE%A4%E0%AF%81%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%85%E0%AE%B5%E0%AE%B0%E0%AF%8D%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>முன்னதாக , எம்பிக்களுக்க் ஆன ஊதியத்தை ரூ 16 ஆயிரத்த் இலிருந்து ரூ 80 ஆயிரம் ஆக உயர்த்தி வழங்க வேண்டும் என நாடாளுமன்ற கூட்டுக் குழு <strong>பரிந்துரை</strong> செய்த் <strong>இருந்தது</strong> .</td><td>இருந்தது</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=இரு<br>xpos=VR-D3SNAA<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>Tense=Past<br>VerbForm=Fin<br>Voice=Act</details></td><td>பரிந்துரை</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=பரிந்துரை<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s32%22%20%3B%20A%20%5Bform%3D%22%E0%AE%87%E0%AE%B0%E0%AF%81%E0%AE%A8%E0%AF%8D%E0%AE%A4%E0%AE%A4%E0%AF%81%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%AA%E0%AE%B0%E0%AE%BF%E0%AE%A8%E0%AF%8D%E0%AE%A4%E0%AF%81%E0%AE%B0%E0%AF%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>இந்த மாறுபாடுகளை இந்தியா உடனடியாக <strong>சரி</strong> செய்ய <strong>வேண்டும்</strong> என்று இந்திய-அமெரிக்க உறவு மேம்பாடு குறித்த அறிக்கையில் குறிப்பிடப் பட்ட் உள்ளது .</td><td>வேண்டும்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=வேண்டு<br>xpos=VR-F3SNAA<br>Mood=Ind<br>Polarity=Pos<br>SubjAuxCount=1<br>Tense=Fut<br>VerbForm=Fin<br>Voice=Act</details></td><td>சரி</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=சரி<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s66%22%20%3B%20A%20%5Bform%3D%22%E0%AE%B5%E0%AF%87%E0%AE%A3%E0%AF%8D%E0%AE%9F%E0%AF%81%E0%AE%AE%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%9A%E0%AE%B0%E0%AE%BF%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr><tr><td>மத்திய அரசு புதிதாகக் கொண்டுவந்த் உள்ள தொல்பொருள் ஆய்வுச் சட்டம் மக்களின் அடிப்படை உரிமைகளைப் பறிக்கும் வகையில் உள்ளதால் அதை திரும்பப் பெற வேண்டும் என மதிமுக பொதுச்செயலர் வைகோ <strong>கோரிக்கை</strong> விடுத்த் <strong>உள்ளார்</strong> .</td><td>உள்ளார்</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>lemma=உள்<br>xpos=VR-T3SHAA<br>Mood=Ind<br>Polarity=Pos<br>Polite=Form<br>SubjAuxCount=1<br>VerbForm=Fin<br>Voice=Act</details></td><td>கோரிக்கை</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>lemma=கோரிக்கை<br>xpos=NNN-3SN--<br>Case=Nom<br>Gender=Neut<br><strong>Number=Sing</strong><br>Person=3<br>deprel=iobj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Tamil-TTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s7%22%20%3B%20A%20%5Bform%3D%22%E0%AE%89%E0%AE%B3%E0%AF%8D%E0%AE%B3%E0%AE%BE%E0%AE%B0%E0%AF%8D%22%5D%20%3B%20B%20%5Bform%3D%22%E0%AE%95%E0%AF%8B%E0%AE%B0%E0%AE%BF%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AF%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Tamil-TTB</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

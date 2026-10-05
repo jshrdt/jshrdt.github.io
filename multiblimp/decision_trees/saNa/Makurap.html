@@ -45,6 +45,14 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
     }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
     h2 { font-size: 1.1rem; margin: 0; }
     p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
     .label { display: inline-block; padding: 0.3rem 0.9rem;
@@ -57,6 +65,16 @@
                  border-bottom: 1px solid var(--border); }
     .meta-key { color: var(--text-tertiary); }
     .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
     .main { padding: 1.5rem; }
     .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
                 letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
@@ -78,17 +96,24 @@
 <body>
   <script type="application/json" id="label-distribution">{"unk": 1}</script>
   <div class="layout">
+    
     <div class="sidebar">
       <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
         <h2>Single label</h2>
         <p>All training samples for <b>Aux_nsubj_Number</b> share one agreement label — no decision tree was needed.</p>
       </div>
-      <div class="labels"><div class="label">unk</div></div>
-      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Makurap</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">1</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_nsubj_Number</span></div></div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Makurap</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">1</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Aux_nsubj_Number</span></div></div>
     </div>
     <div class="main">
       <h3>Example items (sample of 1)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>nsubj_form</th><th>nsubj_features</th><th>Aux_form</th><th>Aux_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>nãpẽrenã <strong>kito</strong> eapītera <strong>pīxe</strong></td><td>kito</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN</details></td><td>pīxe</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Makurap-TuDeT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2212%22%20%3B%20A%20%5Bform%3D%22p%C4%ABxe%22%7C%22P%C4%ABxe%22%5D%20%3B%20B%20%5Bform%3D%22kito%22%7C%22Kito%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Makurap-TuDeT</a></td></tr></tbody></table>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Aux_form</th><th>Aux_features</th><th>nsubj_form</th><th>nsubj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>nãpẽrenã <strong>kito</strong> eapītera <strong>pīxe</strong></td><td>pīxe</td><td><details class='feat-details'><summary>features...</summary>upos=AUX<br>SubjAuxCount=1</details></td><td>kito</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Makurap-TuDeT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2212%22%20%3B%20A%20%5Bform%3D%22p%C4%ABxe%22%5D%20%3B%20B%20%5Bform%3D%22kito%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Makurap-TuDeT</a></td></tr></tbody></table>
     </div>
   </div>
   <script>

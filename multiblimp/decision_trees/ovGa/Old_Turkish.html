@@ -45,6 +45,14 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
     }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
     h2 { font-size: 1.1rem; margin: 0; }
     p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
     .label { display: inline-block; padding: 0.3rem 0.9rem;
@@ -57,6 +65,16 @@
                  border-bottom: 1px solid var(--border); }
     .meta-key { color: var(--text-tertiary); }
     .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
     .main { padding: 1.5rem; }
     .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
                 letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
@@ -78,17 +96,24 @@
 <body>
   <script type="application/json" id="label-distribution">{"unk": 4}</script>
   <div class="layout">
+    
     <div class="sidebar">
       <div>
+        <a href="index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
         <h2>Single label</h2>
         <p>All training samples for <b>Verb_obj_Gender</b> share one agreement label — no decision tree was needed.</p>
       </div>
-      <div class="labels"><div class="label">unk</div></div>
-      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Old_Turkish</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">entropy &lt; 0.266765</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">4</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_obj_Gender</span></div></div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Old_Turkish</span></div><div class="meta-row"><span class="meta-key">Keep threshold</span><span class="meta-val">leaf accuracy &gt; 0.95</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">4</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">Verb_obj_Gender</span></div></div>
     </div>
     <div class="main">
       <h3>Example items (sample of 4)</h3>
-      <table class='ex-table'><thead><tr><th>sen_str</th><th>obj_form</th><th>obj_features</th><th>Verb_form</th><th>Verb_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>𐰇𐰇𐰲 𐰆𐱃𐰔 <strong>𐰉𐰞𐰴</strong> : <strong>𐰽𐰃𐰃</strong> 𐰑𐰃 :</td><td>𐰉𐰞𐰴</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN</details></td><td>𐰽𐰃𐰃</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22uuc_otz_balk__swwdw__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%89%F0%90%B0%9E%F0%90%B0%B4%22%7C%22%F0%90%B0%89%F0%90%B0%9E%F0%90%B0%B4%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%BD%F0%90%B0%83%F0%90%B0%83%22%7C%22%F0%90%B0%BD%F0%90%B0%83%F0%90%B0%83%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td>𐱃𐰆𐰴𐰔 <strong>𐰀𐰼</strong> 𐰃 𐰤𐰃 : <strong>𐰽𐰣𐰲</strong> 𐰑𐰃 :</td><td>𐰀𐰼</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN</details></td><td>𐰽𐰣𐰲</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22tokz_eerini__sancdi__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%80%F0%90%B0%BC%22%7C%22%F0%90%B0%80%F0%90%B0%BC%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%BD%F0%90%B0%A3%F0%90%B0%B2%22%7C%22%F0%90%B0%BD%F0%90%B0%A3%F0%90%B0%B2%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td><strong>𐰴𐰣</strong> 𐰃 𐰣𐰃 <strong>𐰴𐰆𐰑</strong> 𐰯 : 𐱃𐰉𐰍𐰲 𐰴𐰀 : 𐰖𐰣𐰀 𐰃𐰲𐰚 𐰓𐰃 :</td><td>𐰴𐰣</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN</details></td><td>𐰴𐰆𐰑</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kanwnw_kodp__tabgcka__yana_ickdi__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%B4%F0%90%B0%A3%22%7C%22%F0%90%B0%B4%F0%90%B0%A3%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%B4%F0%90%B0%86%F0%90%B0%91%22%7C%22%F0%90%B0%B4%F0%90%B0%86%F0%90%B0%91%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td>𐰋𐰃𐰼 : <strong>𐰀𐰼</strong> 𐰏 : 𐰆𐰴 𐰣 <strong>𐰆𐰆𐰺</strong> 𐱃𐰃 :</td><td>𐰀𐰼</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN</details></td><td>𐰆𐰆𐰺</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bir__eerg__okn_oortw__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%80%F0%90%B0%BC%22%7C%22%F0%90%B0%80%F0%90%B0%BC%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%86%F0%90%B0%86%F0%90%B0%BA%22%7C%22%F0%90%B0%86%F0%90%B0%86%F0%90%B0%BA%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr></tbody></table>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>Verb_form</th><th>Verb_features</th><th>obj_form</th><th>obj_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>𐰇𐰇𐰲 𐰆𐱃𐰔 <strong>𐰉𐰞𐰴</strong> : <strong>𐰽𐰃𐰃</strong> 𐰑𐰃 :</td><td>𐰽𐰃𐰃</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td>𐰉𐰞𐰴</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22uuc_otz_balk__swwdw__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%BD%F0%90%B0%83%F0%90%B0%83%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%89%F0%90%B0%9E%F0%90%B0%B4%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td>𐱃𐰆𐰴𐰔 <strong>𐰀𐰼</strong> 𐰃 𐰤𐰃 : <strong>𐰽𐰣𐰲</strong> 𐰑𐰃 :</td><td>𐰽𐰣𐰲</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td>𐰀𐰼</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22tokz_eerini__sancdi__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%BD%F0%90%B0%A3%F0%90%B0%B2%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%80%F0%90%B0%BC%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td><strong>𐰴𐰣</strong> 𐰃 𐰣𐰃 <strong>𐰴𐰆𐰑</strong> 𐰯 : 𐱃𐰉𐰍𐰲 𐰴𐰀 : 𐰖𐰣𐰀 𐰃𐰲𐰚 𐰓𐰃 :</td><td>𐰴𐰆𐰑</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td>𐰴𐰣</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kanwnw_kodp__tabgcka__yana_ickdi__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%B4%F0%90%B0%86%F0%90%B0%91%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%B4%F0%90%B0%A3%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr><tr><td>𐰋𐰃𐰼 : <strong>𐰀𐰼</strong> 𐰏 : 𐰆𐰴 𐰣 <strong>𐰆𐰆𐰺</strong> 𐱃𐰃 :</td><td>𐰆𐰆𐰺</td><td><details class='feat-details'><summary>features...</summary>upos=VERB</details></td><td>𐰀𐰼</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Old_Turkish-Clausal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bir__eerg__okn_oortw__%22%20%3B%20A%20%5Bform%3D%22%F0%90%B0%86%F0%90%B0%86%F0%90%B0%BA%22%5D%20%3B%20B%20%5Bform%3D%22%F0%90%B0%80%F0%90%B0%BC%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Old_Turkish-Clausal</a></td></tr></tbody></table>
     </div>
   </div>
   <script>
