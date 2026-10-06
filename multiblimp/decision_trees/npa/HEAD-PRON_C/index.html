@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        try {
+            var t = localStorage.getItem('sva-dt-theme');
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
+    <title>MultiBLiMP 2.0 - NP HEAD–PRON (Case) Agreement Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f5f4;
+            --card: #ffffff;
+            --text: #1c1917;
+            --text-muted: #78716c;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --border: #e7e5e4;
+            --hover: #f5f5f5;
+            --detail-bg: #fafaf9;
+            --detail-border: #e7e5e4;
+            --warn: #d97706;
+            --keep: #7c3aed;
+            --role-a: #d97706;
+            --font-body: 'DM Sans', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            /* percentage colour scale: vermilion -> violet -> teal. A single
+               steady hue rotation from 358deg down to 176deg (the "short
+               way", through magenta/violet/blue), never wrapping the other
+               way through orange/yellow/green. Red only ever appears at the
+               very 0% endpoint, never as a colour the gradient sweeps
+               through on its way elsewhere; green never appears at all. */
+            --pct-lo-h: 358; --pct-lo-s: 75%; --pct-lo-l: 48%;
+            --pct-hi-h: 176; --pct-hi-s: 55%; --pct-hi-l: 36%;
+            /* Same rotation's 25/50/75% waypoints, only needed so the small
+               static legend bar (a plain CSS linear-gradient, which
+               interpolates colour stops through RGB, not around the hue
+               wheel) can approximate the true polar path pctColor()
+               computes per-cell below. */
+            --pct-q1-h: 312;  --pct-q1-s: 70%; --pct-q1-l: 45%;
+            --pct-mid-h: 267; --pct-mid-s: 65%; --pct-mid-l: 42%;
+            --pct-q3-h: 222;  --pct-q3-s: 60%; --pct-q3-l: 39%;
+        }
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #16140f; --card: #221f19; --text: #f0ede6; --text-muted: #a39a8a;
+            --accent: #6ea8ff; --accent-soft: #1c2a42; --border: #38332a; --hover: #2a261e;
+            --detail-bg: #1c1a15; --detail-border: #38332a; --warn: #fbbf24; --keep: #b18cf5;
+            --role-a: #f0a743;
+            --pct-lo-l: 58%; --pct-hi-l: 56%;
+            --pct-q1-l: 57%; --pct-mid-l: 57%; --pct-q3-l: 57%;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                color-scheme: dark;
+                --bg: #16140f; --card: #221f19; --text: #f0ede6; --text-muted: #a39a8a;
+                --accent: #6ea8ff; --accent-soft: #1c2a42; --border: #38332a; --hover: #2a261e;
+                --detail-bg: #1c1a15; --detail-border: #38332a; --warn: #fbbf24; --keep: #b18cf5;
+                --role-a: #f0a743;
+                --pct-lo-l: 58%; --pct-hi-l: 56%;
+                --pct-q1-l: 57%; --pct-mid-l: 57%; --pct-q3-l: 57%;
+            }
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.75rem;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .title-section { flex: 1; min-width: 260px; }
+        h1 { margin: 0 0 0.5rem 0; font-size: 1.75rem; font-weight: 600; text-wrap: balance; }
+        .subtitle { color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; max-width: 62ch; }
+        .top-controls { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; padding-top: 0.25rem; }
+        .theme-toggle {
+            width: 2.1rem; height: 2.1rem;
+            border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text-muted);
+            font-size: 0.9rem; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0; transition: border-color .15s, color .15s, background .15s;
+        }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 0.875rem; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text-muted);
+            font-family: inherit; font-size: 0.875rem; font-weight: 500;
+            text-decoration: none; transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); text-decoration: none; }
+        .top-controls label { font-size: 0.875rem; font-weight: 500; color: var(--text-muted); }
+        select {
+            padding: 0.5rem 2rem 0.5rem 0.875rem; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text); font-family: inherit;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2357534e' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.625rem center;
+        }
+        select:hover { border-color: var(--accent); }
+        select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+        #scatterPlot {
+            width: 100%; height: 500px; margin-bottom: 1.5rem;
+            border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+        }
+        .trivial-note, .sparse-note {
+            font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;
+            padding: 0.6rem 0.875rem; background: var(--detail-bg); border: 1px solid var(--border); border-radius: 6px;
+        }
+        .no-data-note {
+            font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.35rem;
+            padding: 0.6rem 0.875rem 0.1rem; background: var(--detail-bg);
+            border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0;
+        }
+        .no-data-list {
+            font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.25rem;
+            padding: 0.1rem 0.875rem 0.6rem 2rem; column-width: 16rem; column-gap: 1.5rem; background: var(--detail-bg);
+            border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px;
+        }
+        .no-data-list li { margin: 0.15rem 0; break-inside: avoid; }
+.no-data-list.four-cols { column-count: 4; column-width: auto; }
+        .notes-disclosure { margin-bottom: 1.25rem; }
+        .notes-disclosure > summary {
+            cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; color: var(--text-muted); padding: 0.6rem 0.875rem;
+            background: var(--detail-bg); border: 1px solid var(--border); border-radius: 6px;
+            user-select: none;
+        }
+        .notes-disclosure > summary::-webkit-details-marker { display: none; }
+        .notes-disclosure > summary .chevron { display: inline-flex; transition: transform .15s ease; flex-shrink: 0; }
+        .notes-disclosure[open] > summary .chevron { transform: rotate(90deg); }
+        .notes-disclosure-body { margin-top: 0.5rem; }
+        .notes-disclosure-body > *:last-child { margin-bottom: 0; }
+
+        .table-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1rem; margin-bottom: 0.85rem; }
+        input.lang-search {
+            padding: 0.5rem 0.875rem; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text); font-family: inherit; font-size: 0.85rem;
+            width: 100%; max-width: 280px; flex: 1 1 200px;
+        }
+        input.lang-search:focus { outline: none; border-color: var(--accent); }
+        .count-note { font-size: 0.8rem; color: var(--text-muted); }
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+
+        .legend-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .threshold-badge {
+            font-size: 0.78rem; font-weight: 500; color: var(--text-muted);
+            background: var(--detail-bg); border: 1px solid var(--detail-border);
+            border-radius: 999px; padding: 0.3rem 0.75rem; cursor: default;
+        }
+        .controls { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 0.9rem; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text-muted); font-family: inherit;
+            font-size: 0.82rem; font-weight: 500; cursor: pointer;
+            transition: border-color .15s, color .15s, background .15s;
+        }
+        .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .toggle-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .toggle-btn.active::before {
+            content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); margin-right: 0.35rem;
+        }
+
+        /* legend modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(15, 13, 9, 0.5);
+            align-items: center; justify-content: center; padding: 2rem; z-index: 50;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            width: 100%; max-width: 660px; max-height: 82vh; overflow-y: auto;
+            padding: 1.75rem 2rem 2rem; box-shadow: 0 16px 48px rgba(0,0,0,0.28);
+        }
+        .modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.4rem; gap: 1rem; }
+        .modal-head h2 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+        .modal-head p { margin: 0.3rem 0 0; font-size: 0.82rem; color: var(--text-muted); }
+        .modal-close {
+            background: none; border: 1px solid var(--border); border-radius: 6px;
+            width: 1.9rem; height: 1.9rem; flex-shrink: 0; display: inline-flex;
+            align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted);
+            transition: color .15s, border-color .15s, background .15s;
+        }
+        .modal-close:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+        .modal.modal-wide { max-width: 1100px; }
+
+        /* examples modal: the pre-rendered HTML from sva_trees.create_pairs.
+           bucket_examples_html (same markup/classes the former standalone
+           flowchart page used) is dropped in as-is, so these rules mirror
+           that page's example-table CSS, translated onto this page's tokens. */
+        .examples-scroll { overflow-x: auto; max-width: 100%; }
+        .examples-scroll table.examples {
+            border-collapse: collapse; margin-top: 0.4rem; font-size: 0.78rem;
+            font-family: var(--font-mono);
+        }
+        .examples-scroll table.examples th, .examples-scroll table.examples td {
+            border-bottom: 1px solid var(--detail-border); padding: 6px 9px;
+            text-align: left; white-space: nowrap; vertical-align: top;
+        }
+        .examples-scroll table.examples th {
+            color: var(--text-muted); font-weight: 700; font-family: var(--font-mono);
+            text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.66rem; white-space: nowrap;
+        }
+        .examples-scroll table.examples tbody tr:hover td { background: var(--hover); }
+        .examples-scroll table.examples td.sentence { white-space: normal; max-width: 320px; line-height: 1.45; }
+        .examples-scroll table.examples td.sentence strong {
+            color: var(--role-a); font-weight: 700; text-decoration: underline;
+            text-decoration-color: var(--role-a); text-decoration-thickness: 2px; text-underline-offset: 2px;
+        }
+        .examples-scroll table.examples td.feats { white-space: normal; max-width: 190px; color: var(--text-muted); }
+        .examples-scroll table.examples td.feats strong.swap-feat { color: var(--keep); font-weight: 700; }
+        .examples-scroll table.examples td.feats .swap-feat-badge { color: var(--keep); font-weight: 600; }
+        .examples-scroll table.examples td.treebank a { color: var(--accent); text-decoration: none; }
+        .examples-scroll table.examples td.treebank a:hover { text-decoration: underline; }
+        .examples-scroll table.examples details { margin: 0; }
+        .examples-scroll table.examples summary {
+            cursor: pointer; color: var(--accent); font-family: var(--font-mono);
+            font-weight: 600; font-size: 0.72rem; list-style: none;
+        }
+        .examples-scroll table.examples summary::-webkit-details-marker { display: none; }
+        .examples-scroll table.examples summary::before { content: "▸ "; }
+        .examples-scroll table.examples details[open] summary::before { content: "▾ "; }
+        p.empty { color: var(--text-muted); font-size: 0.78rem; margin: 0.4rem 0 0; }
+
+        .legend-section { margin-bottom: 1.4rem; }
+        .legend-section:last-child { margin-bottom: 0; }
+        .legend-section h3 {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+            margin: 0 0 0.65rem; font-weight: 600; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+        }
+        dl.legend-list { margin: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+        dl.legend-list div { display: flex; gap: 1rem; align-items: baseline; }
+        dl.legend-list dt { flex: 0 0 152px; font-weight: 600; font-size: 0.82rem; color: var(--text); }
+        dl.legend-list dd { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; }
+        .ratio-scroll { overflow-x: auto; border: 1px solid var(--detail-border); border-radius: 8px; }
+        table.ratio-table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 0.78rem; }
+        table.ratio-table th, table.ratio-table td {
+            padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--detail-border);
+            text-align: left; vertical-align: top; line-height: 1.4;
+        }
+        table.ratio-table thead th {
+            font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
+            font-weight: 600; background: var(--hover); border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        table.ratio-table tbody tr:last-child td { border-bottom: none; }
+        table.ratio-table code {
+            background: var(--hover); border: 1px solid var(--border); border-radius: 4px;
+            padding: 0.05rem 0.3rem; font-size: 0.72rem; white-space: nowrap;
+        }
+        table.ratio-table td:nth-child(4) { color: var(--text-muted); }
+
+        .legend-group { display: flex; align-items: center; gap: 0.9rem; }
+        .scale-legend { display: flex; align-items: center; gap: 0.4rem; font-size: 0.74rem; color: var(--text-muted); }
+        .scale-legend .legend-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.15rem; }
+        .scale-legend .bar {
+            width: 68px; height: 8px; border-radius: 4px; border: 1px solid var(--border);
+            background: linear-gradient(to right,
+              hsl(var(--pct-lo-h) var(--pct-lo-s) var(--pct-lo-l)) 0%,
+              hsl(var(--pct-q1-h) var(--pct-q1-s) var(--pct-q1-l)) 25%,
+              hsl(var(--pct-mid-h) var(--pct-mid-s) var(--pct-mid-l)) 50%,
+              hsl(var(--pct-q3-h) var(--pct-q3-s) var(--pct-q3-l)) 75%,
+              hsl(var(--pct-hi-h) var(--pct-hi-s) var(--pct-hi-l)) 100%);
+        }
+        .scale-legend.inverted .bar {
+            background: linear-gradient(to right,
+              hsl(var(--pct-hi-h) var(--pct-hi-s) var(--pct-hi-l)) 0%,
+              hsl(var(--pct-q3-h) var(--pct-q3-s) var(--pct-q3-l)) 25%,
+              hsl(var(--pct-mid-h) var(--pct-mid-s) var(--pct-mid-l)) 50%,
+              hsl(var(--pct-q1-h) var(--pct-q1-s) var(--pct-q1-l)) 75%,
+              hsl(var(--pct-lo-h) var(--pct-lo-s) var(--pct-lo-l)) 100%);
+        }
+
+        /* Bounded height + its own vertical scroll (not just overflow-x)
+           is what lets .thead-row's position:sticky actually stick -- a
+           sticky element only sticks against the nearest ancestor that's
+           genuinely a scrolling box. Before this, .table-scroll had
+           overflow-x:auto alone, which per spec forces overflow-y to
+           compute as auto too, but with no height cap that axis never
+           actually scrolls -- so the "sticky ancestor" browsers found
+           never moved, and the header just scrolled away with the page
+           instead of freezing. Bounding the height makes .table-scroll
+           the real scroller on both axes, so overflow-y:auto here is
+           belt-and-suspenders (already the computed value either way). */
+        .table-scroll {
+            overflow-x: auto; overflow-y: auto; max-height: 70vh;
+            border: 1px solid var(--border); border-radius: 10px;
+        }
+        .grid-table { min-width: 760px; }
+        .row { display: flex; align-items: center; width: max-content; min-width: 100%; }
+        .thead-row { background: var(--hover); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 20; }
+        .cell {
+            padding: 0.8rem 0.9rem; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--text-muted); font-weight: 600; flex: 0 0 auto; line-height: 1.25;
+        }
+        .thead-row .cell { white-space: normal; cursor: pointer; user-select: none; position: relative; }
+        .thead-row .cell.sortable:hover { color: var(--accent); }
+        .thead-row .cell.sortable::after { content: '⇅'; margin-left: 0.3rem; opacity: 0.35; font-size: 0.7rem; }
+        .thead-row .cell.sort-asc::after { content: '↑'; opacity: 1; }
+        .thead-row .cell.sort-desc::after { content: '↓'; opacity: 1; }
+        .c-chev  { width: 2.25rem; padding-right: 0; }
+        .c-lang  { width: 9rem; overflow: hidden; text-overflow: ellipsis; }
+        .c-dist  { width: 6.5rem; }
+        .c-base  { width: 6.75rem; text-align: right; }
+        .c-tree  { width: 6.25rem; text-align: right; }
+        .c-gain  { width: 5.5rem; text-align: right; }
+        .c-test  { width: 6rem; text-align: right; }
+        .c-raw   { width: 5.25rem; text-align: right; }
+        .c-keep  { width: 5.25rem; text-align: right; }
+        .c-pairs { width: 5.25rem; text-align: right; }
+
+        .lang-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+        .lang-row:hover { background: var(--hover); }
+        .lang-row.is-open { background: var(--accent-soft); }
+        .lang-row .cell {
+            padding: 0.75rem 0.9rem; font-size: 0.88rem; text-transform: none; letter-spacing: 0;
+            color: var(--text); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap;
+        }
+        .lang-row .c-base, .lang-row .c-tree, .lang-row .c-gain, .lang-row .c-test,
+        .lang-row .c-raw, .lang-row .c-keep, .lang-row .c-pairs { text-align: right; }
+        .lang-name {
+            font-weight: 600 !important; display: flex; flex-direction: column;
+            align-items: flex-start; gap: 0.15rem; overflow: hidden;
+        }
+        .lang-name .lang-name-text {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;
+        }
+        .lang-name a { color: var(--accent); text-decoration: none; }
+        .lang-name a:hover { text-decoration: underline; }
+        .retried-badge {
+            display: inline-block; font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.03em; color: var(--warn);
+            background: color-mix(in srgb, var(--warn) 18%, transparent);
+            border-radius: 999px; padding: 0.05rem 0.45rem; white-space: nowrap; cursor: default;
+        }
+        .dist-bar {
+            display: flex; width: 5.5rem; height: 8px; border-radius: 4px;
+            overflow: hidden; background: var(--border);
+        }
+        .dist-bar span { height: 100%; }
+        .dist-bar span:not(:last-child) { border-right: 1px solid rgba(0, 0, 0, 0.65); }
+
+        .chevron {
+            display: inline-flex; width: 1.4rem; height: 1.4rem; align-items: center; justify-content: center;
+            border-radius: 5px; color: var(--text-muted); transition: transform .18s ease, background .15s, color .15s;
+        }
+        /* Scoped to .c-chev specifically, not a bare ".chevron" descendant
+           match -- .bucket-chevron-btn's icon is ALSO just a ".chevron"
+           element nested inside the same .lang-row, so an unscoped rule here
+           would rotate/recolour it too whenever Results opens, even though
+           only .c-chev's own chevron should react to "is-open". */
+        .lang-row:hover .c-chev .chevron { color: var(--accent); background: var(--card); }
+        .lang-row.is-open .c-chev .chevron { transform: rotate(90deg); color: var(--accent); }
+
+        .c-bchev { width: 1.75rem; padding: 0.75rem 0 0.75rem 0.4rem; display: flex; justify-content: center; }
+        .bucket-chevron-btn { background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; }
+        .bucket-chevron-btn .chevron { color: var(--text-muted); }
+        .lang-row:hover .bucket-chevron-btn .chevron { color: var(--accent); background: var(--card); }
+        .lang-row.buckets-open .bucket-chevron-btn .chevron { transform: rotate(90deg); color: var(--accent); }
+
+        .bucket-zone {
+            display: flex; align-items: stretch; gap: 0; max-width: 0; overflow: hidden; opacity: 0;
+            transition: max-width .32s ease, opacity .22s ease, margin .32s ease; flex: 0 0 auto;
+            border-left: 1px dashed var(--border); border-right: 1px dashed var(--border);
+        }
+        .buckets-open .bucket-zone { max-width: 900px; opacity: 1; margin: 0 0.5rem; }
+        .bucket-item {
+            /* justify-content: flex-start (not center) so label/value/count
+               always start at the same offset in every item, regardless of
+               whether that item also has an "examples" button below --
+               .bucket-zone's align-items:stretch already equalizes item
+               heights, so centering each item's own (variable-length)
+               content is what was throwing the value/count lines out of
+               alignment with their neighbours. */
+            display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start;
+            gap: 0.15rem; padding: 0.75rem 0.75rem; width: 6rem;
+        }
+        .bucket-item.no-data { width: auto; color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; }
+        .bucket-item .b-label {
+            /* Fixed 2-line reservation (min-height + flex-end) so short labels
+               ("no match") and wrapping ones ("undefined feature") both push
+               b-value to the exact same offset -- otherwise a 1-line label
+               leaves b-value sitting a full line higher than a neighbour
+               whose label wrapped, misaligning the percentage row itself
+               even though the earlier flex-start fix already lined up each
+               item's own top edge. */
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.045em;
+            color: var(--text-muted); font-weight: 600; text-align: right;
+            line-height: 1.25; min-height: 2.5em;
+            display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;
+        }
+        .bucket-item .b-value { font-size: 0.88rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.3; }
+        .bucket-item .b-count { font-size: 0.78rem; font-weight: 400; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .b-examples-btn {
+            /* margin-top: auto (not a fixed 0.15rem) pushes it to the bottom
+               of the stretched .bucket-item regardless of how tall the
+               label/value/count block above it is -- .bucket-zone's
+               align-items:stretch already equalizes every item's height in a
+               row, so without this, an item's button lands wherever its own
+               content happens to end, not level with its neighbours'. */
+            background: none; border: none; padding: 0; margin-top: auto; cursor: pointer;
+            font-family: inherit; font-size: 0.68rem; font-weight: 500; color: var(--accent);
+        }
+        .b-examples-btn:hover { text-decoration: underline; }
+
+        /* N PAIRS / "valid from multi": the whole value becomes the examples
+           trigger (no separate label, unlike the bucket items above), so it
+           has to inherit this cell's own colour/size/alignment rather than
+           impose its own -- it's standing in for plain text, not a widget. */
+        .cell-examples-btn {
+            background: none; border: none; padding: 0; margin: 0; cursor: pointer;
+            font: inherit; color: inherit; font-variant-numeric: tabular-nums;
+        }
+        .cell-examples-btn:hover { text-decoration: underline; }
+
+        .detail-row { display: none; }
+        .detail-row.is-open { display: flex; }
+        .detail-row { border-bottom: 1px solid var(--border); background: var(--detail-bg); }
+        .detail-inner { padding: 1.1rem 1.4rem 1.4rem 3rem; display: flex; flex-direction: column; gap: 1.1rem; width: 100%; }
+        .stat-rows { display: grid; grid-template-columns: repeat(4, max-content); column-gap: 1.6rem; row-gap: 0.55rem; align-items: start; }
+        .stat { display: flex; flex-direction: column; gap: 0.15rem; }
+        .stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+        .stat .value { font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .stat .value .sub { font-size: 0.74rem; font-weight: 500; color: var(--text-muted); }
+        .section-label {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+            margin: 0 0 0.55rem; font-weight: 600;
+        }
+        .distribution-line {
+            font-size: 0.82rem; color: var(--text); background: var(--card); border: 1px solid var(--detail-border);
+            border-radius: 6px; padding: 0.6rem 0.8rem; font-variant-numeric: tabular-nums; line-height: 1.6;
+        }
+        .prob-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .prob-pill {
+            font-size: 0.78rem; font-variant-numeric: tabular-nums; background: var(--card);
+            border: 1px solid var(--detail-border); border-radius: 999px; padding: 0.3rem 0.75rem;
+        }
+        .prob-pill b { font-weight: 600; }
+        .no-diag-note { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-section">
+                <h1>MultiBLiMP 2.0 - NP HEAD–PRON (Case) Agreement Overview</h1>
+                <div class="subtitle">
+                    NP HEAD–PRON (Case) agreement prediction through decision trees. Click a language row (or the <strong>Results</strong> button) to open its create_pairs results below. The small chevron after N Keep (or the <strong>Diagnostics</strong> button) is separate: it opens just the bucket breakdown, inline, right where those items dropped out of the pipeline.
+                </div>
+            </div>
+            <div class="top-controls">
+                <a href="../../../index.html" class="back-btn" title="Back to the sva-dt dataset stats overview">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Main Page
+                </a>
+                <a href="../../" class="back-btn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Overview
+                </a>
+                <a href="#" id="conditionsBackBtn" class="back-btn" style="display:none">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span id="conditionsBackLabel"></span>
+                </a>
+                <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
+            </div>
+        </div>
+
+        <div id="scatterPlot"></div>
+
+        
+
+        <div class="legend-row">
+            <button class="btn" id="legendBtn" type="button">Legend</button>
+            <span class="threshold-badge" title="The leaf-accuracy floor N KEEP and the bucket breakdown were computed with -- a row is only “kept” if its leaf’s smoothed accuracy is above this.">Keep threshold: leaf accuracy &gt; 0.95</span>
+        </div>
+        <div class="controls">
+            <div class="legend-group">
+                <div class="scale-legend" title="Vermilion at 0%, violet in the middle, teal at 100%. Used wherever a high percentage is good (UM/UM+UD coverage, Root/Train Accuracy, N KEEP/N RAW, N PAIRS/N KEEP, share of error removed by the tree).">
+                    <span class="legend-title">Coverage</span>
+                    <span>0%</span><span class="bar"></span><span>100%</span>
+                </div>
+                <div class="scale-legend inverted" title="Teal at 0%, violet in the middle, vermilion at 100% — the same scale mirrored. Used in the bucket breakdown (a high % means more rows dropped out at that step).">
+                    <span class="legend-title">Item loss</span>
+                    <span>0%</span><span class="bar"></span><span>100%</span>
+                </div>
+            </div>
+            <button class="btn toggle-btn" id="resultsBtn" type="button" aria-pressed="false" title="Show the per-language coverage &amp; volume panel below each row (UD candidates, forms of interest, UM/UM+UD coverage, unk-drop counts).">Results</button>
+            <button class="btn toggle-btn" id="diagnosticsBtn" type="button" aria-pressed="false" title="Show the per-language bucket breakdown row (no match / no inflection / same inflection / same feature / undefined feature / ambiguous HEAD / conflicting features).">Diagnostics</button>
+        </div>
+
+        <div class="table-toolbar">
+            <label for="langSearch" class="sr-only">Filter languages by name</label>
+            <input class="lang-search" id="langSearch" type="text" placeholder="Filter languages&hellip;">
+            <span class="count-note" id="langCount" aria-live="polite"></span>
+        </div>
+
+        <div class="table-scroll" id="tableScroll">
+            <div class="grid-table" id="gridTable">
+                <div class="row thead-row" id="theadRow">
+                    <div class="cell c-chev"></div>
+                    <div class="cell c-lang sortable" data-column="name">Language</div>
+                    <div class="cell c-dist" title="The language's full Yes / No / unk label mix, before the decision tree drops unk rows. Always ordered Yes → No → unk.">Distribution</div>
+                    <div class="cell c-base sortable" data-column="base" title="Smoothed accuracy of always predicting the majority class, before any splitting — the uninformed baseline.">Root Acc</div>
+                    <div class="cell c-tree sortable" data-column="tree" title="The decision tree's accuracy on the data it was fit on: (sum of each leaf's majority count + 0.5) / (N + 1) -- smoothed once for the whole dataset, same as Root Acc, so leaves are not penalised one by one.">Train Acc</div>
+                    <div class="cell c-gain sortable" data-column="gain" title="Train Acc minus Root Acc, in percentage points — how much the tree improves on always guessing the majority class on its own training data. Never negative.">Δ Acc</div>
+                    <div class="cell c-test sortable" data-column="test" title="Raw accuracy of this tree on the held-out split it was not fit on. Faded when the test split has fewer than 10 rows. Compare with Train Acc to spot overfitting.">Test Acc</div>
+                    <div class="cell c-raw sortable" data-column="nRaw" title="Candidate rows before the leaf-confidence filter is applied.">N RAW</div>
+                    <div class="cell c-keep sortable" data-column="nKeep" title="Of N RAW, the rows kept after the leaf-confidence filter — the ones actually attempted.">N KEEP</div>
+                    
+                    <div class="cell c-bchev"></div>
+                    <div class="bucket-zone">
+                        <div class="bucket-item" title="no match: no candidate swap form was found for this row at all."></div><div class="bucket-item" title="no inflection: a swap form was targeted, but the inflector had nothing to offer for it."></div><div class="bucket-item" title="same inflection: the re-inflected form came back identical to the original surface form."></div>
+                        <div class="bucket-item" title="same feature: the re-inflected form's feature value still overlapped the original — the swap didn't actually change it."></div><div class="bucket-item" title="undefined feature: the target feature was undefined or missing for this form."></div><div class="bucket-item" title="ambiguous HEAD: the row's HEAD couldn't be uniquely resolved."></div><div class="bucket-item" title="conflicting features: The reinflected form directly opposes the original on another feature (or adds an argument slot or feature dimension), so it isn't a minimal pair."></div>
+                    </div>
+                    <div class="cell c-pairs sortable" data-column="nPairs" title="Rows that ended up as a correctly re-inflected minimal pair, as a fraction of N KEEP.">N PAIRS</div>
+                </div>
+                <div id="tableBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="legendOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="legendTitle">
+        <div class="modal-head">
+          <div>
+            <h2 id="legendTitle">Legend</h2>
+            <p>What every label on this page means.</p>
+          </div>
+          <button class="modal-close" id="legendClose" type="button" aria-label="Close legend">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="legend-section">
+          <h3>Table columns</h3>
+          <dl class="legend-list">
+            <div><dt>Distribution</dt><dd>The language's full Yes / No / unk label mix, before the decision tree drops unk rows. Always ordered Yes &rarr; No &rarr; unk, coloured to match the tree pages. Hover a bar for exact percentages.</dd></div>
+            <div><dt>Root Acc</dt><dd>Smoothed accuracy (+0.5 per class) of always predicting the majority class before any splitting &mdash; the root node&rsquo;s own accuracy. The uninformed baseline. Coloured on the coverage scale between 50% and 100% (teal = high).</dd></div>
+            <div><dt>Train Acc</dt><dd>The decision tree&rsquo;s accuracy on its own training data: (sum of each leaf&rsquo;s majority count + 0.5) / (N + 1). Smoothed once for the whole dataset, exactly like Root Acc, so the two are directly comparable and extra leaves are not penalised one by one (the per-leaf <code>acc</code> shown on the tree page is smoothed per leaf, for the keep test, and so does not average to this). Same colour scale as Root Acc.</dd></div>
+            <div><dt>Δ Acc</dt><dd>Train Acc minus Root Acc, in percentage points; never negative. Coloured on the coverage scale (teal = good) by the share of the root&rsquo;s remaining error the tree removed, i.e. gain &divide; (100% &minus; Root Acc), clamped to 0&ndash;100%. +1 point off a root accuracy of 98% is a much bigger win than +1 point off a root accuracy of 60%.</dd></div>
+            <div><dt>Test Acc</dt><dd>Raw accuracy of the same tree on the held-out split it was not fit on. Compare with Train Acc to spot overfitting: a large gap means the tree learned its training rows more than the pattern. Coloured on the same 50&ndash;100% scale, and faded (with a tooltip) when the test split has fewer than 10 rows, since that figure is then too noisy to mean much. Blank when the model has no recorded test split.</dd></div>
+            <div><dt>N RAW</dt><dd>Candidate rows before the leaf-confidence filter is applied. Not coloured. There's no cheap per-language reference point (like treebank size) to scale it against, and not informative enough to be worth adding one for. A language with more than zero but fewer than 10 is left out of this table entirely and listed instead, with its full label distribution, in the "too few or uninformative agreement labels" note above &mdash; still real data, just too little of it for this language &amp; condition to draw much of a conclusion from.</dd></div>
+            <div><dt>N KEEP</dt><dd>Of those, the rows kept after the leaf-confidence filter (leaf accuracy &gt; 0.95). The ones actually attempted. Coloured on the coverage scale, as a fraction of N RAW &mdash; faded (with a hover tooltip) when N RAW is below 10, since that fraction is too noisy to mean much at that size (2/2 reads as a perfect 100% off pure small-sample luck). The colour still shows, just dimmed, rather than disappearing outright. A language whose strict pass alone wasn't enough and got a laxer, depth-aware retry (sva_trees.second_chance) gets a "retried" tag under its name &mdash; N KEEP then reflects that retry's own per-leaf thresholds, whether or not it produced any pairs.</dd></div>
+            <div><dt>N PAIRS</dt><dd>Rows that ended up as a correctly re-inflected minimal pair. Coloured on the coverage scale, as a fraction of N KEEP, with the same under-10 fade as N KEEP above (checked against N KEEP this time, not N RAW). Clickable when example rows are available &mdash; opens the same examples modal as the bucket breakdown.</dd></div>
+          </dl>
+        </div>
+
+        <div class="legend-section">
+          <h3>Results (below-row panel)</h3>
+          <dl class="legend-list">
+            <div><dt># UD candidates (raw)</dt><dd>Same value as N RAW above. Candidate rows before the leaf-confidence filter.</dd></div>
+            <div><dt># UD candidates (kept)</dt><dd>Same value as N KEEP above. The rows kept after that filter.</dd></div>
+            <div><dt># forms of interest</dt><dd>Distinct PRON/HEAD forms eligible for this prediction target at all, whether or not they ended up labelled "Yes".</dd></div>
+            <div><dt>% covered by UM</dt><dd>Share of those forms found directly in UniMorph's inflection tables.</dd></div>
+            <div><dt>% covered by UM+UD</dt><dd>Share covered once the UD-derived fallback is added on top of UniMorph.</dd></div>
+            <div><dt># UM lemmas / forms</dt><dd>Size of the UniMorph inflection table available for this language.</dd></div>
+            <div><dt># valid from multi</dt><dd>Minimal pairs that came from a row with more than one candidate swap form, as a share of all pairs. Clickable when example rows are available.</dd></div>
+            <div><dt>Feature distribution</dt><dd>Tally of attempted feature-value swaps, as "FROM &rarr; TO: count", across every attempt that reached the comparison step.</dd></div>
+            <div><dt>P(value|value)</dt><dd>Of the attempts that started at that value, the fraction where re-inflecting still landed back on the same value. I.e. how often the inflector failed to actually change it.</dd></div>
+          </dl>
+        </div>
+
+        
+        <div class="legend-section">
+          <h3>Diagnostics (bucket breakdown)</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 0.8rem;line-height:1.5;">
+            Any bucket with at least one row (here, and N PAIRS / "valid from multi" in the
+            Results panel above) has an <b>examples</b> link showing real sample rows &mdash;
+            reconstructed sentences, feature values, and a treebank link &mdash; for that
+            language and outcome.
+          </p>
+          <dl class="legend-list">
+            <div><dt>no match</dt><dd>No candidate swap form was found for this row at all.</dd></div>
+            <div><dt>no inflection</dt><dd>A swap form was targeted, but the inflector had nothing to offer for it.</dd></div>
+            <div><dt>same inflection</dt><dd>The re-inflected form came back identical to the original surface form.</dd></div>
+            <div><dt>same feature</dt><dd>The re-inflected form's feature value still overlapped the original. The swap didn't actually change it.</dd></div>
+            <div><dt>undefined feature</dt><dd>The target feature was undefined or missing for this form.</dd></div>
+            <div><dt>ambiguous HEAD</dt><dd>The row's HEAD couldn't be uniquely resolved.</dd></div>
+            <div><dt>conflicting features</dt><dd>The reinflected form directly opposes the original on another feature (or adds an argument slot or feature dimension), so it isn't a minimal pair.</dd></div>
+          </dl>
+        </div>
+
+        <div class="legend-section">
+          <h3>Numerator / denominator reference</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 0.8rem;line-height:1.5;">
+            What each percentage above is actually a fraction of. "Row" scope means once per
+            candidate row; "item" scope means once per attempted swap_form. A single row can
+            produce more than one item, so row- and item-scoped percentages use different
+            denominators. <code>extra_pairs</code> isn't shown as a percentage in the table, but
+            shares the same item-scoped pool as the four buckets above.
+          </p>
+          <div class="ratio-scroll">
+            <table class="ratio-table">
+              <thead>
+                <tr><th>Column</th><th>Numerator</th><th>Denominator</th><th>Denominator comes from</th><th>Scope</th><th>Why</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>% covered by UM</td><td><code>num_covered_um</code></td><td># forms of interest</td><td><code>num_forms_of_interest</code></td><td>forms</td><td>Distinct PRON/HEAD forms found in UniMorph alone.</td></tr>
+                <tr><td>% covered by UM+UD</td><td><code>num_covered_um_ud</code></td><td># forms of interest</td><td><code>num_forms_of_interest</code></td><td>forms</td><td>Distinct PRON/HEAD forms found via UniMorph or the UD-derived fallback.</td></tr>
+                <tr><td>% no match</td><td># no match (<code>no_candidates</code>)</td><td># UD candidates (kept)</td><td><code>n_keep</code></td><td>row</td><td>Fires once per candidate row, in place of the swap_form loop. The two are mutually exclusive.</td></tr>
+                <tr><td>% no inflection</td><td># no inflection (<code>no_inflections</code>)</td><td># UD candidates (kept)</td><td><code>n_keep</code></td><td>row</td><td>Same as "no match": fires instead of entering the swap_form loop.</td></tr>
+                <tr><td>% same inflection</td><td># same inflection (<code>same_forms</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form; a row can yield more than one item.</td></tr>
+                <tr><td>% same feature</td><td># same feature (<code>same_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
+                <tr><td>% undefined feature</td><td># undefined feature (<code>undefined_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
+                <tr><td>% conflicting features</td><td># conflicting features (<code>conflicting_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form. Always 0 for NPA.</td></tr>
+                <tr><td>% ambiguous HEAD</td><td># ambiguous HEAD (<code>ambiguous_subjects</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
+                <tr><td>(not shown) extra_pairs</td><td><code>extra_pairs</code></td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Would collect otherwise-valid swaps (same eligibility as correct_swaps) that get capped once their FROM&rarr;TO combination hits the max_num_of_pairs limit. Always 0 today since create_pairs is never called with that limit set.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="legend-section">
+          <h3>Colour scales</h3>
+          <dl class="legend-list">
+            <div><dt>Coverage</dt><dd>Vermilion (red) at 0%, violet around the middle, teal at 100%. Used where a high percentage is good (UM/UM+UD coverage, Root/Train Accuracy between 50% and 100%, N KEEP as a fraction of N RAW, N PAIRS as a fraction of N KEEP, and Δ Accuracy as a share of the root&rsquo;s remaining error).</dd></div>
+            <div><dt>Item loss</dt><dd>Teal at 0%, violet around the middle, vermilion at 100%, same scale mirrored. Used in the bucket breakdown (a high percentage means more rows dropped out at that step).</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="examplesOverlay">
+      <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="examplesTitle">
+        <div class="modal-head">
+          <div>
+            <h2 id="examplesTitle">Examples</h2>
+            <p id="examplesSubtitle"></p>
+          </div>
+          <button class="modal-close" id="examplesClose" type="button" aria-label="Close examples">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div id="examplesBody"></div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      const btn = document.getElementById('themeToggleBtn');
+      function currentTheme() {
+        const attr = document.documentElement.getAttribute('data-theme');
+        if (attr === 'light' || attr === 'dark') return attr;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      btn.textContent = currentTheme() === 'dark' ? '☀' : '☾';
+      btn.addEventListener('click', () => {
+        const next = currentTheme() === 'dark' ? 'light' : 'dark';
+        try { localStorage.setItem('sva-dt-theme', next); } catch (e) {}
+        // Reload, not a live attribute flip -- the scatter chart bakes
+        // resolved colors into its Plotly trace at render time
+        // (getComputedStyle), not live var() references.
+        location.reload();
+      });
+    })();
+
+    (function() {
+      // A deprel page like npa/HEAD-ADJ_N/index.html is linked to from
+      // BOTH npa/by_pair/HEAD-ADJ.html and npa/by_feature/Number.html
+      // (see word_order.viz_overview._write_npa_subpages), so which one
+      // to send the user back to can't be baked in statically -- read it
+      // off document.referrer instead, and just leave the button hidden
+      // (falling back to the static "Overview" button above) when it
+      // doesn't match either pattern, e.g. a direct link or a reload.
+      const m = document.referrer.match(/[/]npa[/](by_pair|by_feature)[/]([^/]+)[.]html(?:[?#]|$)/);
+      if (!m) return;
+      const [, kind, rawName] = m;
+      const name = decodeURIComponent(rawName);
+      const btn = document.getElementById('conditionsBackBtn');
+      const label = document.getElementById('conditionsBackLabel');
+      btn.href = document.referrer;
+      label.textContent = (kind === 'by_pair' ? 'By role pair: ' : 'By feature: ') + name;
+      btn.style.display = '';
+    })();
+
+    const LANGUAGES = [{"name": "Ancient Greek", "langUrl": "Ancient_Greek.html", "color": null, "base": 0.7441037735849056, "tree": 0.9799528301886793, "gain": 0.23584905660377364, "test": NaN, "testN": 0, "acc": 0.9810874704491725, "nRaw": 108, "retried": false, "labelDistribution": {"no": 347, "yes": 124}, "nKeep": 93, "nPairs": 691, "diag": {"leafThreshold": 0.95, "nPairs": 691, "nPairsSecondChance": 0, "nForms": 262, "pctUM": 0.0, "pctUMUD": 5.0, "nRaw": 108, "nKeep": 93, "nKeepSecondChance": 0, "nLemma": 76, "nForm": 618, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "GEN -> ACC: 236; GEN -> DAT: 179; GEN -> NOM: 160; GEN -> ACC|NOM: 75; GEN -> ACC|DAT: 21; GEN -> VOC: 16; GEN -> NOM|VOC: 4", "probs": {"GEN": 0.0}, "headUnk": 0, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u1fc6\u03c2</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u03ae\u03bd</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>deprel=obl<br>lemma=\u03c0\u03b1\u03c4\u03ae\u03c1<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Masc<br>Number=Sing</details></td><td>\u03b1\u1f50\u03c4\u1fc6\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>lemma=\u03b1\u1f50\u03c4\u03cc\u03c2<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>\u03b1\u1f50\u03c4\u03ae\u03bd</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Fem<br>Number=Sing<br>Person=3</details></td><td>GEN -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Ancient_Greek-PTNK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Septuagint-Genesis-19%3A33-grc%22%20%3B%20A%20%5Bform%3D%22%CF%80%CE%B1%CF%84%CF%81%E1%BD%B8%CF%82%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B1%E1%BD%90%CF%84%E1%BF%86%CF%82%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ancient_Greek-PTNK</a></td></tr><tr><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u1fc6\u03c2</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u1f74</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>deprel=obl<br>lemma=\u03c0\u03b1\u03c4\u03ae\u03c1<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Masc<br>Number=Sing</details></td><td>\u03b1\u1f50\u03c4\u1fc6\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>lemma=\u03b1\u1f50\u03c4\u03cc\u03c2<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>\u03b1\u1f50\u03c4\u1f74</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing<br>Person=3</details></td><td>GEN -&gt; NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Ancient_Greek-PTNK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Septuagint-Genesis-19%3A33-grc%22%20%3B%20A%20%5Bform%3D%22%CF%80%CE%B1%CF%84%CF%81%E1%BD%B8%CF%82%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B1%E1%BD%90%CF%84%E1%BF%86%CF%82%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ancient_Greek-PTNK</a></td></tr><tr><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u1fc6\u03c2</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td class=\"sentence\">\u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b1\u03bd \u03b4\u1f72 \u03c4\u1f78\u03bd \u03c0\u03b1\u03c4\u03ad\u03c1\u03b1 \u03b1\u1f50\u03c4\u1ff6\u03bd \u03bf\u1f36\u03bd\u03bf\u03bd \u1f10\u03bd \u03c4\u1fc7 \u03bd\u03c5\u03ba\u03c4\u1f76 \u03c4\u03b1\u03cd\u03c4\u1fc3, \u03ba\u03b1\u1f76 \u03b5\u1f30\u03c3\u03b5\u03bb\u03b8\u03bf\u1fe6\u03c3\u03b1 \u1f21 \u03c0\u03c1\u03b5\u03c3\u03b2\u03c5\u03c4\u03ad\u03c1\u03b1 \u1f10\u03ba\u03bf\u03b9\u03bc\u03ae\u03b8\u03b7 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u1fc7</strong> \u03c4\u1f74\u03bd \u03bd\u03cd\u03ba\u03c4\u03b1 \u1f10\u03ba\u03b5\u03af\u03bd\u03b7\u03bd, \u03ba\u03b1\u1f76 \u03bf\u1f50\u03ba \u1f94\u03b4\u03b5\u03b9 \u1f10\u03bd \u03c4\u1ff7 \u03ba\u03bf\u03b9\u03bc\u03b7\u03b8\u1fc6\u03bd\u03b1\u03b9 \u03b1\u1f50\u03c4\u1f74\u03bd \u03ba\u03b1\u1f76 \u1f00\u03bd\u03b1\u03c3\u03c4\u1fc6\u03bd\u03b1\u03b9.</td><td>\u03c0\u03b1\u03c4\u03c1\u1f78\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>deprel=obl<br>lemma=\u03c0\u03b1\u03c4\u03ae\u03c1<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Masc<br>Number=Sing</details></td><td>\u03b1\u1f50\u03c4\u1fc6\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>lemma=\u03b1\u1f50\u03c4\u03cc\u03c2<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>\u03b1\u1f50\u03c4\u1fc7</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing<br>Person=3</details></td><td>GEN -&gt; DAT</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Ancient_Greek-PTNK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Septuagint-Genesis-19%3A33-grc%22%20%3B%20A%20%5Bform%3D%22%CF%80%CE%B1%CF%84%CF%81%E1%BD%B8%CF%82%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B1%E1%BD%90%CF%84%E1%BF%86%CF%82%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ancient_Greek-PTNK</a></td></tr><tr><td class=\"sentence\">\u03ba\u03b1\u1f76 \u03b5\u1f36\u03c0\u03b5\u03bd \u03c4\u1ff7 \u1f09\u03b2\u03c1\u03b1\u03ac\u03bc, \u1f14\u03ba\u03b2\u03b1\u03bb\u03b5 \u03c4\u1f74\u03bd \u03c0\u03b1\u03b9\u03b4\u03af\u03c3\u03ba\u03b7\u03bd \u03c4\u03b1\u03cd\u03c4\u03b7\u03bd \u03ba\u03b1\u1f76 \u03c4\u1f78\u03bd \u03c5\u1f31\u1f78\u03bd \u03b1\u1f50\u03c4\u1fc6\u03c2\u00b7 \u03bf\u1f50 \u03b3\u1f70\u03c1 \u03ba\u03bb\u03b7\u03c1\u03bf\u03bd\u03bf\u03bc\u03ae\u03c3\u03b5\u03b9 \u1f41 \u03c5\u1f31\u1f78\u03c2 \u03c4\u1fc6\u03c2 \u03c0\u03b1\u03b9\u03b4\u03af\u03c3\u03ba\u03b7\u03c2 \u03c4\u03b1\u03cd\u03c4\u03b7\u03c2 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c5\u1f31\u03bf\u1fe6</strong> <strong>\u03bc\u03bf\u03c5</strong> \u1f38\u03c3\u03b1\u03ac\u03ba.</td><td class=\"sentence\">\u03ba\u03b1\u1f76 \u03b5\u1f36\u03c0\u03b5\u03bd \u03c4\u1ff7 \u1f09\u03b2\u03c1\u03b1\u03ac\u03bc, \u1f14\u03ba\u03b2\u03b1\u03bb\u03b5 \u03c4\u1f74\u03bd \u03c0\u03b1\u03b9\u03b4\u03af\u03c3\u03ba\u03b7\u03bd \u03c4\u03b1\u03cd\u03c4\u03b7\u03bd \u03ba\u03b1\u1f76 \u03c4\u1f78\u03bd \u03c5\u1f31\u1f78\u03bd \u03b1\u1f50\u03c4\u1fc6\u03c2\u00b7 \u03bf\u1f50 \u03b3\u1f70\u03c1 \u03ba\u03bb\u03b7\u03c1\u03bf\u03bd\u03bf\u03bc\u03ae\u03c3\u03b5\u03b9 \u1f41 \u03c5\u1f31\u1f78\u03c2 \u03c4\u1fc6\u03c2 \u03c0\u03b1\u03b9\u03b4\u03af\u03c3\u03ba\u03b7\u03c2 \u03c4\u03b1\u03cd\u03c4\u03b7\u03c2 \u03bc\u03b5\u03c4\u1f70 \u03c4\u03bf\u1fe6 <strong>\u03c5\u1f31\u03bf\u1fe6</strong> <strong>\u03bc\u0313</strong> \u1f38\u03c3\u03b1\u03ac\u03ba.</td><td>\u03c5\u1f31\u03bf\u1fe6</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>deprel=obl<br>lemma=\u03c5\u1f31\u03cc\u03c2<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Masc<br>Number=Sing</details></td><td>\u03bc\u03bf\u03c5</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>lemma=\u1f10\u03b3\u03ce<br><strong class=\"swap-feat\">Case=Gen</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>\u03bc\u0313</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Fem/Masc<br>Number=Sing</details></td><td>GEN -&gt; ACC|DAT</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Ancient_Greek-PTNK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Septuagint-Genesis-21%3A10-grc%22%20%3B%20A%20%5Bform%3D%22%CF%85%E1%BC%B1%CE%BF%E1%BF%A6%22%5D%20%3B%20B%20%5Bform%3D%22%CE%BC%CE%BF%CF%85%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ancient_Greek-PTNK</a></td></tr><tr><td class=\"sentence\">\u1f10\u03b3\u03ad\u03bd\u03b5\u03c4\u03bf \u03b4\u1f72 \u1f61\u03c2 \u03b5\u1f36\u03b4\u03b5\u03bd \u1f38\u03b1\u03ba\u1f7c\u03b2 \u03c4\u1f74\u03bd \u1fec\u03b1\u03c7\u1f74\u03bb \u03b8\u03c5\u03b3\u03b1\u03c4\u03ad\u03c1\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 \u03bc\u03b7\u03c4\u03c1\u1f78\u03c2 \u03b1\u1f50\u03c4\u03bf\u1fe6 \u03ba\u03b1\u1f76 \u03c4\u1f70 \u03c0\u03c1\u03cc\u03b2\u03b1\u03c4\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 \u03bc\u03b7\u03c4\u03c1\u1f78\u03c2 \u03b1\u1f50\u03c4\u03bf\u1fe6, \u03ba\u03b1\u1f76 \u03c0\u03c1\u03bf\u03c3\u03b5\u03bb\u03b8\u1f7c\u03bd \u1f38\u03b1\u03ba\u1f7c\u03b2 \u1f00\u03c0\u03b5\u03ba\u03cd\u03bb\u03b9\u03c3\u03b5\u03bd \u03c4\u1f78\u03bd \u03bb\u03af\u03b8\u03bf\u03bd \u1f00\u03c0\u1f78 \u03c4\u03bf\u1fe6 \u03c3\u03c4\u03cc\u03bc\u03b1\u03c4\u03bf\u03c2 \u03c4\u03bf\u1fe6 \u03c6\u03c1\u03ad\u03b1\u03c4\u03bf\u03c2 \u03ba\u03b1\u1f76 \u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b5\u03bd \u03c4\u1f70 \u03c0\u03c1\u03cc\u03b2\u03b1\u03c4\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u03c4\u03bf\u1fe6 \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 <strong>\u03bc\u03b7\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u03bf\u1fe6</strong>.</td><td class=\"sentence\">\u1f10\u03b3\u03ad\u03bd\u03b5\u03c4\u03bf \u03b4\u1f72 \u1f61\u03c2 \u03b5\u1f36\u03b4\u03b5\u03bd \u1f38\u03b1\u03ba\u1f7c\u03b2 \u03c4\u1f74\u03bd \u1fec\u03b1\u03c7\u1f74\u03bb \u03b8\u03c5\u03b3\u03b1\u03c4\u03ad\u03c1\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 \u03bc\u03b7\u03c4\u03c1\u1f78\u03c2 \u03b1\u1f50\u03c4\u03bf\u1fe6 \u03ba\u03b1\u1f76 \u03c4\u1f70 \u03c0\u03c1\u03cc\u03b2\u03b1\u03c4\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 \u03bc\u03b7\u03c4\u03c1\u1f78\u03c2 \u03b1\u1f50\u03c4\u03bf\u1fe6, \u03ba\u03b1\u1f76 \u03c0\u03c1\u03bf\u03c3\u03b5\u03bb\u03b8\u1f7c\u03bd \u1f38\u03b1\u03ba\u1f7c\u03b2 \u1f00\u03c0\u03b5\u03ba\u03cd\u03bb\u03b9\u03c3\u03b5\u03bd \u03c4\u1f78\u03bd \u03bb\u03af\u03b8\u03bf\u03bd \u1f00\u03c0\u1f78 \u03c4\u03bf\u1fe6 \u03c3\u03c4\u03cc\u03bc\u03b1\u03c4\u03bf\u03c2 \u03c4\u03bf\u1fe6 \u03c6\u03c1\u03ad\u03b1\u03c4\u03bf\u03c2 \u03ba\u03b1\u1f76 \u1f10\u03c0\u03cc\u03c4\u03b9\u03c3\u03b5\u03bd \u03c4\u1f70 \u03c0\u03c1\u03cc\u03b2\u03b1\u03c4\u03b1 \u039b\u03b1\u03b2\u1f70\u03bd \u03c4\u03bf\u1fe6 \u1f00\u03b4\u03b5\u03bb\u03c6\u03bf\u1fe6 \u03c4\u1fc6\u03c2 <strong>\u03bc\u03b7\u03c4\u03c1\u1f78\u03c2</strong> <strong>\u03b1\u1f50\u03c4\u03cc</strong>.</td><td>\u03bc\u03b7\u03c4\u03c1\u1f78\u03c2</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>deprel=nmod:poss<br>lemma=\u03bc\u03ae\u03c4\u03b7\u03c1<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing</details></td><td>\u03b1\u1f50\u03c4\u03bf\u1fe6</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>lemma=\u03b1\u1f50\u03c4\u03cc\u03c2<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Masc,Neut<br>Number=Sing<br>PronType=Prs</details></td><td>\u03b1\u1f50\u03c4\u03cc</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Acc/Nom</span></summary><strong class=\"swap-feat\">Case=Acc/Nom</strong><br>Gender=Neut<br>Number=Sing<br>Person=3</details></td><td>GEN -&gt; ACC|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Ancient_Greek-PTNK%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Septuagint-Genesis-29%3A10-grc%22%20%3B%20A%20%5Bform%3D%22%CE%BC%CE%B7%CF%84%CF%81%E1%BD%B8%CF%82%22%5D%20%3B%20B%20%5Bform%3D%22%CE%B1%E1%BD%90%CF%84%CE%BF%E1%BF%A6%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Ancient_Greek-PTNK</a></td></tr></tbody></table></div>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"no": 347, "yes": 124}}}, {"name": "Chintang", "langUrl": "Chintang.html", "color": null, "base": 0.953125, "tree": 0.953125, "gain": 0.0, "test": NaN, "testN": 0, "acc": 0.967741935483871, "nRaw": 30, "retried": false, "labelDistribution": {"yes": 34, "unk": 1, "no": 1}, "nKeep": 30, "nPairs": 14, "diag": {"leafThreshold": 0.95, "nPairs": 14, "nPairsSecondChance": 0, "nForms": 49, "pctUM": 0.0, "pctUMUD": 30.6, "nRaw": 30, "nKeep": 30, "nKeepSecondChance": 0, "nLemma": 23, "nForm": 96, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [21, 70.0, 0], "same_feature": [3, 10.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "ABS -> ERG: 8; ABS -> COM|PROPR: 5; ABS|ERG -> ERG: 2; ABS|ERG -> ESS|LOC: 1; ABS -> ABS|ERG: 1", "probs": {"ABS": 0.059, "ERG": 0.667}, "headUnk": 1, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\"><strong>Basako</strong> <strong>ukok</strong> ta bai\u0294 etti lisade a\u014b.</td><td class=\"sentence\"><strong>Ban\u0268\u014b</strong> <strong>ukok</strong> ta bai\u0294 etti lisade a\u014b.</td><td>ukok</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=nsubj<br>lemma=kok<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>basako</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=OBL-GEN<br>lemma=ba<br><strong class=\"swap-feat\">Case=Abs</strong><br>Deixis=Prox<br>Number=Sing<br>PronType=Dem</details></td><td>Ban\u0268\u014b</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Com</span></summary><strong class=\"swap-feat\">Case=Com</strong><br>Deixis=Prox<br>Number=Sing</details></td><td>ABS -&gt; COM|PROPR</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_248d%22%20%3B%20A%20%5Bform%3D%22ukok%22%5D%20%3B%20B%20%5Bform%3D%22Basako%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\"><strong>Basako</strong> <strong>ukok</strong> ta bai\u0294 etti lisade a\u014b.</td><td class=\"sentence\"><strong>Basa\u014ba</strong> <strong>ukok</strong> ta bai\u0294 etti lisade a\u014b.</td><td>ukok</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=nsubj<br>lemma=kok<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>basako</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=OBL-GEN<br>lemma=ba<br><strong class=\"swap-feat\">Case=Abs</strong><br>Deixis=Prox<br>Number=Sing<br>PronType=Dem</details></td><td>Basa\u014ba</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary><strong class=\"swap-feat\">Case=Erg</strong><br>Deixis=Prox<br>Number=Sing</details></td><td>ABS -&gt; ERG</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_248d%22%20%3B%20A%20%5Bform%3D%22ukok%22%5D%20%3B%20B%20%5Bform%3D%22Basako%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\">Kanchi, <strong>hana</strong> appi <strong>go</strong> idoku yu\u014bno\u0294?</td><td class=\"sentence\">Kanchi, <strong>hanai\u0294</strong> appi <strong>go</strong> idoku yu\u014bno\u0294?</td><td>go</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=NMLZ1<br>upos=NOUN<br>deprel=nmod<br>lemma=go<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>hana</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>lemma=hana<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>hanai\u0294</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Loc</span></summary><strong class=\"swap-feat\">Case=Loc</strong><br>Number=Sing<br>Person=2</details></td><td>ABS|ERG -&gt; ESS|LOC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_270a%22%20%3B%20A%20%5Bform%3D%22go%22%5D%20%3B%20B%20%5Bform%3D%22hana%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\"><strong>Basako</strong> arko <strong>usurwala</strong> wai\u0294ametto\u014bso kha?</td><td class=\"sentence\"><strong>Ban\u0268\u014b</strong> arko <strong>usurwala</strong> wai\u0294ametto\u014bso kha?</td><td>usurwala</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=NTVZ<br>upos=NOUN<br>deprel=obj<br>lemma=surwal<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>basako</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=OBL-GEN<br>lemma=ba<br><strong class=\"swap-feat\">Case=Abs</strong><br>Deixis=Prox<br>Number=Sing<br>PronType=Dem</details></td><td>Ban\u0268\u014b</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Com</span></summary><strong class=\"swap-feat\">Case=Com</strong><br>Deixis=Prox<br>Number=Sing</details></td><td>ABS -&gt; COM|PROPR</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Morphology_69b%22%20%3B%20A%20%5Bform%3D%22usurwala%22%5D%20%3B%20B%20%5Bform%3D%22Basako%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\"><strong>Huisako</strong> <strong>uphultu\u014b</strong>.</td><td class=\"sentence\"><strong>Hu\u0129sa\u014ba</strong> <strong>uphultu\u014b</strong>.</td><td>uphultu\u014b</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=root<br>lemma=phultu\u014b<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>huisako</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=OBL-GEN<br>lemma=hun<br><strong class=\"swap-feat\">Case=Abs</strong><br>Deixis=Med<br>Number=Sing<br>PronType=Dem</details></td><td>Hu\u0129sa\u014ba</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary><strong class=\"swap-feat\">Case=Erg</strong><br>Deixis=Med<br>Number=Sing</details></td><td>ABS -&gt; ERG</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_195a%22%20%3B%20A%20%5Bform%3D%22uphultu%C5%8B%22%5D%20%3B%20B%20%5Bform%3D%22Huisako%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr></tbody></table></div>", "same_inflection": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">\u00c3, hanako ippa <strong>akko</strong> <strong>apakku</strong> lino.</td><td class=\"sentence\">\u00c3, hanako ippa <strong>akko</strong> <strong>apakku</strong> lino.</td><td>apakku</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=obj<br>lemma=pakku<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=1</details></td><td>akko</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>xpos=GEN<br>lemma=akka<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>akko</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Abs/Erg</span></summary><strong class=\"swap-feat\">Case=Abs/Erg</strong><br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_260a%22%20%3B%20A%20%5Bform%3D%22apakku%22%5D%20%3B%20B%20%5Bform%3D%22akko%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\">Pacche bakhi imsiyaktilok <strong>aniko</strong> lo ba <strong>ghuccuk\u014ba</strong> mo ambu gundri noboko ni.</td><td class=\"sentence\">Pacche bakhi imsiyaktilok <strong>aniko</strong> lo ba <strong>ghuccuk\u014ba</strong> mo ambu gundri noboko ni.</td><td>ghuccuk\u014ba</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary>upos=NOUN<br>deprel=nsubj<br>lemma=ghuccuk<br><strong class=\"swap-feat\">Case=Erg</strong><br>Number=Sing<br>Person=3</details></td><td>aniko</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>xpos=GEN<br>lemma=ani<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Clusivity=In<br>Number=Plur<br>Person=1<br>PronType=Prs</details></td><td>aniko</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs/Erg</span></summary><strong class=\"swap-feat\">Case=Abs/Erg</strong><br>Clusivity=In<br>Number=Plur<br>Person=1<br>Poss=Yes</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Information_4%22%20%3B%20A%20%5Bform%3D%22ghuccuk%C5%8Ba%22%5D%20%3B%20B%20%5Bform%3D%22aniko%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\"><strong>hanako</strong> hu\u0129 <strong>sisa</strong> ta</td><td class=\"sentence\"><strong>hanako</strong> hu\u0129 <strong>sisa</strong> ta</td><td>sisa</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=root<br>lemma=sisa<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>hanako</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>xpos=GEN<br>lemma=hana<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>hanako</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Abs/Erg</span></summary><strong class=\"swap-feat\">Case=Abs/Erg</strong><br>Number=Sing<br>Person=2<br>Poss=Yes</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_54d%22%20%3B%20A%20%5Bform%3D%22sisa%22%5D%20%3B%20B%20%5Bform%3D%22hanako%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\">Jamma <strong>akka</strong> <strong>kamchace</strong> them sallaha piduku\u014bcu\u014b bhane...</td><td class=\"sentence\">Jamma <strong>akka</strong> <strong>kamchace</strong> them sallaha piduku\u014bcu\u014b bhane...</td><td>kamchace</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=iobj<br>lemma=kamcha<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Plur<br>Person=3</details></td><td>akka</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>lemma=akka<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>akka</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Abs/Erg</span></summary><strong class=\"swap-feat\">Case=Abs/Erg</strong><br>Number=Sing<br>Person=1</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_149%22%20%3B%20A%20%5Bform%3D%22kamchace%22%5D%20%3B%20B%20%5Bform%3D%22akka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\"><strong>Akko</strong> <strong>akhim</strong> Dhankuta jilla, Chintang gabisa, wada nambar duibe lino kha .</td><td class=\"sentence\"><strong>Akko</strong> <strong>akhim</strong> Dhankuta jilla, Chintang gabisa, wada nambar duibe lino kha .</td><td>akhim</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=nsubj<br>lemma=khim<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=1</details></td><td>akko</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>xpos=GEN<br>lemma=akka<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>Akko</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Abs/Erg</span></summary><strong class=\"swap-feat\">Case=Abs/Erg</strong><br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_260b%22%20%3B%20A%20%5Bform%3D%22akhim%22%5D%20%3B%20B%20%5Bform%3D%22Akko%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr></tbody></table></div>", "same_feature": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">Jamma <strong>akka</strong> <strong>kamchace</strong> them sallaha piduku\u014bcu\u014b bhane...</td><td class=\"sentence\">Jamma <strong>akka\u014ba</strong> <strong>kamchace</strong> them sallaha piduku\u014bcu\u014b bhane...</td><td>kamchace</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=iobj<br>lemma=kamcha<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Plur<br>Person=3</details></td><td>akka</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>lemma=akka<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=1<br>PronType=Prs</details></td><td>akka\u014ba</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary><strong class=\"swap-feat\">Case=Erg</strong><br>Number=Sing<br>Person=1</details></td><td>ABS|ERG -&gt; ERG</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Syntactic_149%22%20%3B%20A%20%5Bform%3D%22kamchace%22%5D%20%3B%20B%20%5Bform%3D%22akka%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\">Haniko samae salbe\u0294 ko , baisathi salbe\u0294 ko ; baisakhi dhulesewa yupu\u014bsewa; \u201c<strong>Jasko</strong> <strong>sakti</strong>, usko bhakti\u201d garikana...</td><td class=\"sentence\">Haniko samae salbe\u0294 ko , baisathi salbe\u0294 ko ; baisakhi dhulesewa yupu\u014bsewa; \u201c<strong>Jo</strong> <strong>sakti</strong>, usko bhakti\u201d garikana...</td><td>sakti</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>upos=NOUN<br>deprel=ccomp<br>lemma=sakti<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing</details></td><td>jasko</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=GEN<br>lemma=j<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>PronType=Ind</details></td><td>Jo</td><td class=\"feats\"><details class=\"feat-details\"><summary>2 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary><strong class=\"swap-feat\">Case=Erg</strong><br>Number=Sing</details></td><td>ABS -&gt; ABS|ERG</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Introduction_4%22%20%3B%20A%20%5Bform%3D%22sakti%22%5D%20%3B%20B%20%5Bform%3D%22Jasko%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr><tr><td class=\"sentence\">Kanchi, <strong>hana</strong> appi <strong>go</strong> idoku yu\u014bno\u0294?</td><td class=\"sentence\">Kanchi, <strong>hana\u014ba</strong> appi <strong>go</strong> idoku yu\u014bno\u0294?</td><td>go</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Abs</span></summary>xpos=NMLZ1<br>upos=NOUN<br>deprel=nmod<br>lemma=go<br><strong class=\"swap-feat\">Case=Abs</strong><br>Number=Sing<br>Person=3</details></td><td>hana</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Abs,Erg</span></summary>lemma=hana<br><strong class=\"swap-feat\">Case=Abs,Erg</strong><br>Number=Sing<br>Person=2<br>PronType=Prs</details></td><td>hana\u014ba</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Erg</span></summary><strong class=\"swap-feat\">Case=Erg</strong><br>Number=Sing<br>Person=2</details></td><td>ABS|ERG -&gt; ERG</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Chintang-CTNTB%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22grammar_Reference_270a%22%20%3B%20A%20%5Bform%3D%22go%22%5D%20%3B%20B%20%5Bform%3D%22hana%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Chintang-CTNTB</a></td></tr></tbody></table></div>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"yes": 34, "unk": 1, "no": 1}}}, {"name": "Erzya", "langUrl": "Erzya.html", "color": null, "base": 0.6847826086956522, "tree": 0.7065217391304348, "gain": 0.021739130434782594, "test": NaN, "testN": 0, "acc": 0.7111111111111111, "nRaw": 14, "retried": false, "labelDistribution": {"no": 36, "yes": 15}, "nKeep": 0, "nPairs": 0, "diag": {"leafThreshold": 0.95, "nPairs": 0, "nPairsSecondChance": 0, "nForms": 66, "pctUM": 0.0, "pctUMUD": 25.8, "nRaw": 14, "nKeep": 0, "nKeepSecondChance": 0, "nLemma": 61, "nForm": 182, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "", "probs": {}, "headUnk": 0, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<p class=\"empty\">no examples</p>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"no": 36, "yes": 15}}}, {"name": "Esperanto", "langUrl": "Esperanto.html", "color": null, "base": 0.9779411764705882, "tree": 0.9779411764705882, "gain": 0.0, "test": NaN, "testN": 0, "acc": 0.9850746268656716, "nRaw": 66, "retried": false, "labelDistribution": {"yes": 73, "no": 2, "unk": 2}, "nKeep": 66, "nPairs": 55, "diag": {"leafThreshold": 0.95, "nPairs": 55, "nPairsSecondChance": 0, "nForms": 73, "pctUM": 0.0, "pctUMUD": 20.5, "nRaw": 66, "nKeep": 66, "nKeepSecondChance": 0, "nLemma": 30, "nForm": 49, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [11, 16.7, 0], "same_inflection": [1, 1.8, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "NOM -> ACC: 37; ACC -> NOM: 18", "probs": {"ACC": 0.0, "NOM": 0.0}, "headUnk": 2, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">10. <strong>Mia</strong> <strong>religio</strong> estas:</td><td class=\"sentence\">10. <strong>Mian</strong> <strong>religio</strong> estas:</td><td>religio</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nsubj<br>lemma=religio<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing</details></td><td>mia</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>Mian</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Number[psor]=Sing<br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td>NOM -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-021-020%22%20%3B%20A%20%5Bform%3D%22religio%22%5D%20%3B%20B%20%5Bform%3D%22Mia%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">Tio estas la ka\u016dzo, pro kiu mi dum tre longa tempo havis la intencon a\u016d tute ne publikigi <strong>mian</strong> <strong>kredon</strong>, a\u016d publikigi \u011din anonime.</td><td class=\"sentence\">Tio estas la ka\u016dzo, pro kiu mi dum tre longa tempo havis la intencon a\u016d tute ne publikigi <strong>mia</strong> <strong>kredon</strong>, a\u016d publikigi \u011din anonime.</td><td>kredon</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>deprel=obj<br>lemma=kredo<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Sing</details></td><td>mian</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>lemma=mi<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>mia</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Number[psor]=Sing<br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td>ACC -&gt; NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-007-002%22%20%3B%20A%20%5Bform%3D%22kredon%22%5D%20%3B%20B%20%5Bform%3D%22mian%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">5. <strong>Mia</strong> <strong>patrujo</strong> estas:</td><td class=\"sentence\">5. <strong>Mian</strong> <strong>patrujo</strong> estas:</td><td>patrujo</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nsubj<br>lemma=patrujo<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing</details></td><td>mia</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>Mian</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Number[psor]=Sing<br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td>NOM -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-021-008%22%20%3B%20A%20%5Bform%3D%22patrujo%22%5D%20%3B%20B%20%5Bform%3D%22Mia%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">La \u0109i tie donata Deklaracio prezentas <strong>mian</strong> politika-religian <strong>kredon</strong>.</td><td class=\"sentence\">La \u0109i tie donata Deklaracio prezentas <strong>mia</strong> politika-religian <strong>kredon</strong>.</td><td>kredon</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>deprel=obj<br>lemma=kredo<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Sing</details></td><td>mian</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>lemma=mi<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>mia</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Number[psor]=Sing<br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td>ACC -&gt; NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-005-001%22%20%3B%20A%20%5Bform%3D%22kredon%22%5D%20%3B%20B%20%5Bform%3D%22mian%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">Kiam oni min demandas speciale pri mia lingvo gepatra, mi nomas sen\u015dovinisme tiun lingvon a\u016d dialekton, en kiu mi en <strong>mia</strong> <strong>infaneco</strong> parolis kun miaj gepatroj: kiam oni min demandas speciale pri mia lingvo persona, mi \u2014 gvidante min per neniaj \u015dovinismaj konsideroj \u2014 nomas tiun lingvon, kiun mi persone plej bone posedas a\u016d plej volonte uzas; sed kia ajn estas mia lingvo gepatra a\u016d persona, mi devas posedi anka\u016d tiun ne\u016dtrale-homan lingvon, kiun miaj samtempuloj uzas por rilatoj intergentaj, por ke mi ne bezonu miakulpe altrudi al aliuloj mian lingvon kaj por ke mi havu moralan rajton deziri, ke aliuloj ne altrudu al mi sian, kaj por ke mi povu sur sen\u015dovinisma bazo servi al la kulturo ne\u016dtrale-homa.</td><td class=\"sentence\">Kiam oni min demandas speciale pri mia lingvo gepatra, mi nomas sen\u015dovinisme tiun lingvon a\u016d dialekton, en kiu mi en <strong>mian</strong> <strong>infaneco</strong> parolis kun miaj gepatroj: kiam oni min demandas speciale pri mia lingvo persona, mi \u2014 gvidante min per neniaj \u015dovinismaj konsideroj \u2014 nomas tiun lingvon, kiun mi persone plej bone posedas a\u016d plej volonte uzas; sed kia ajn estas mia lingvo gepatra a\u016d persona, mi devas posedi anka\u016d tiun ne\u016dtrale-homan lingvon, kiun miaj samtempuloj uzas por rilatoj intergentaj, por ke mi ne bezonu miakulpe altrudi al aliuloj mian lingvon kaj por ke mi havu moralan rajton deziri, ke aliuloj ne altrudu al mi sian, kaj por ke mi povu sur sen\u015dovinisma bazo servi al la kulturo ne\u016dtrale-homa.</td><td>infaneco</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nmod<br>lemma=infaneco<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing</details></td><td>mia</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>mian</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Number[psor]=Sing<br>Number=Sing<br>Person=1<br>Poss=Yes</details></td><td>NOM -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-019-003%22%20%3B%20A%20%5Bform%3D%22infaneco%22%5D%20%3B%20B%20%5Bform%3D%22mia%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr></tbody></table></div>", "same_inflection": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">La esperanto-komunumo estas unu el malmultaj mondskalaj lingvokomunumoj, <strong>kies</strong> <strong>parolantoj</strong> estas senescepte du- a\u016d plurlingvaj.</td><td class=\"sentence\">La esperanto-komunumo estas unu el malmultaj mondskalaj lingvokomunumoj, <strong>kies</strong> <strong>parolantoj</strong> estas senescepte du- a\u016d plurlingvaj.</td><td>parolantoj</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nsubj<br>lemma=parolanto<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur</details></td><td>kies</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=kies<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Sing<br>PronType=Rel</details></td><td>kies</td><td class=\"feats\"><details class=\"feat-details\"><summary>1 feats</summary>Poss=Yes</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22prago-025%22%20%3B%20A%20%5Bform%3D%22parolantoj%22%5D%20%3B%20B%20%5Bform%3D%22kies%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr></tbody></table></div>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">c) Se mi kredas je neniu el la ekzistantaj revelaciaj religioj, mi ne devas resti en iu en ili sole pro motivoj gentaj kaj per mia restado erarigi la homojn pri <strong>miaj</strong> <strong>konvinkoj</strong> kaj herede nutri por senfinaj generacioj intergentan disecon, sed mi devas\u2014se la le\u011doj de mia lando tion permesas\u2014malka\u015de kaj oficiale nomi min \u00abliberkreda\u00bb, ne identigante tamen la liberkredon speciale kun ateismo, sed rezervante al mia kredado plenan liberecon.</td><td class=\"sentence\">&mdash;</td><td>konvinkoj</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nmod<br>lemma=konvinko<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur</details></td><td>miaj</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-020-007%22%20%3B%20A%20%5Bform%3D%22konvinkoj%22%5D%20%3B%20B%20%5Bform%3D%22miaj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">\u011cis la tempo, kiam tiuj landoj ricevos nomojn ne\u016dtralajn, mi devas almena\u016d en interparolado kun <strong>miaj</strong> <strong>samprincipanoj</strong> nomi tiujn landojn la\u016d iliaj \u0109efurboj kun aldono de la vortoj \u00abregno\u00bb, \u00abprovinco\u00bb, k. t. p.</td><td class=\"sentence\">&mdash;</td><td>samprincipanoj</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nmod<br>lemma=samprincipano<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur</details></td><td>miaj</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-014-003%22%20%3B%20A%20%5Bform%3D%22samprincipanoj%22%5D%20%3B%20B%20%5Bform%3D%22miaj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">Patriotismo mi nomas la servadon al la bono de \u0109iuj <strong>miaj</strong> <strong>samhejmanoj</strong>, kian ajn devenon, lingvon, religion a\u016d socian rolon ili havas.</td><td class=\"sentence\">&mdash;</td><td>samhejmanoj</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nmod<br>lemma=samhejmano<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur</details></td><td>miaj</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-018-002%22%20%3B%20A%20%5Bform%3D%22samhejmanoj%22%5D%20%3B%20B%20%5Bform%3D%22miaj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">Tial se en mia hejmo \u0109iuj laboroj estas ekspluatataj por la oportuneco a\u016d gloro de unu speciala gento kaj tio paralizas mian entuziasmon por socia laborado a\u016d e\u0109 devigas min revi pri alia hejmolando, mi ne devas malesperi, sed mi devas min konsoli per la kredo, ke la nenormala stato en mia hejmo pli a\u016d malpli frue pasos kaj miaj filoj a\u016d nepoj plene \u011duos tiun fortigan entuziasmon, kiun en mi paralizis la maljusteco de <strong>miaj</strong> <strong>samhejmanoj</strong>.</td><td class=\"sentence\">&mdash;</td><td>samhejmanoj</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>deprel=nmod<br>lemma=samhejmano<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur</details></td><td>miaj</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>lemma=mia<br><strong class=\"swap-feat\">Case=Nom</strong><br>Number=Plur<br>Number[psor]=Sing<br>Person=1<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-018-004%22%20%3B%20A%20%5Bform%3D%22samhejmanoj%22%5D%20%3B%20B%20%5Bform%3D%22miaj%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr><tr><td class=\"sentence\">Kiam en mia lo\u011dloko ekzistos komuninterkonsente aran\u011dita, plenforme organizita sengenta kaj sendoktrina komunumo de liberkredanoj, al kiu mi povos ali\u011di kun plena kontenteco por mia konscienco kaj por la bezonoj de mia koro, tiam\u2014por fiksi fortike kaj precize mian religian ne\u016dtralecon kaj savi mian posteularon kontra\u016d senprogrameco kaj konsekvence kontra\u016d refalo en gente-religian \u015dovinismon\u2014mi devas ali\u011di al tiu liberkreda komunumo tute oficiale kaj heredigeble kaj akcepti por mi \u011dian ne\u016dtralan nomon, <strong>\u011diajn</strong> komunumajn <strong>aran\u011dojn</strong>, \u011diajn nedevigajn ne\u016dtrale-homajn festojn kaj morojn, \u011dian ne\u016dtrale-homan kalendaron k.t.p.; \u011dis tiu tempo mi povas resti oficiale alskribita al tiu religio, en kiu mi naski\u011dis, sed mi devas \u0109iam aldoni al \u011dia nomo la vorton \u00abliberkreda\u00bb, por montri, ke mi alkalkulas min al \u011di nur provizore, la\u016dmore kaj administre.</td><td class=\"sentence\">&mdash;</td><td>aran\u011dojn</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>deprel=conj<br>lemma=aran\u011do<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Plur</details></td><td>\u011diajn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>lemma=\u011dia<br><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Plur<br>Number[psor]=Sing<br>Person=3<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Esperanto-Prago%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DpH-020-008%22%20%3B%20A%20%5Bform%3D%22aran%C4%9Dojn%22%5D%20%3B%20B%20%5Bform%3D%22%C4%9Diajn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Esperanto-Prago</a></td></tr></tbody></table></div>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"yes": 73, "no": 2, "unk": 2}}}, {"name": "Hindi", "langUrl": "Hindi.html", "color": null, "base": 0.745398773006135, "tree": 0.8496932515337423, "gain": 0.10429447852760731, "test": NaN, "testN": 0, "acc": 0.8518518518518519, "nRaw": 121, "retried": false, "labelDistribution": {"yes": 135, "no": 46, "unk": 19}, "nKeep": 0, "nPairs": 0, "diag": {"leafThreshold": 0.95, "nPairs": 0, "nPairsSecondChance": 0, "nForms": 198, "pctUM": 0.0, "pctUMUD": 15.7, "nRaw": 121, "nKeep": 0, "nKeepSecondChance": 0, "nLemma": 73, "nForm": 161, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "", "probs": {}, "headUnk": 15, "nsubjUnk": 4, "bothUnk": 0, "examples": {"correct_swaps": "<p class=\"empty\">no examples</p>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"yes": 135, "no": 46, "unk": 19}}}, {"name": "Icelandic", "langUrl": "Icelandic.html", "color": null, "base": 0.5959770114942529, "tree": 0.9316091954022988, "gain": 0.33563218390804594, "test": NaN, "testN": 0, "acc": 0.9321058688147296, "nRaw": 351, "retried": false, "labelDistribution": {"no": 578, "yes": 388, "unk": 1}, "nKeep": 301, "nPairs": 742, "diag": {"leafThreshold": 0.95, "nPairs": 742, "nPairsSecondChance": 0, "nForms": 709, "pctUM": 0.0, "pctUMUD": 7.1, "nRaw": 351, "nKeep": 301, "nKeepSecondChance": 0, "nLemma": 111, "nForm": 256, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [1, 0.3, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [82, 27.3, 0], "same_feature": [20, 6.7, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [309, 103.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "DAT -> GEN: 274; ACC -> GEN: 159; DAT -> ACC: 126; ACC -> DAT: 109; DAT -> ACC|NOM: 65; DAT -> GEN|NOM: 51; DAT -> NOM: 50; NOM -> ACC: 39; NOM -> DAT: 37; ACC -> GEN|NOM: 30; GEN -> DAT: 26; NOM -> GEN: 24; GEN -> ACC: 22; ACC -> NOM: 18; GEN -> NOM: 6; GEN -> ACC|NOM: 5; GEN -> GEN|NOM: 5; ACC -> ACC|DAT: 5; DAT -> ACC|GEN: 4; DAT -> ACC|GEN|NOM: 4; GEN -> ACC|GEN: 3; ACC -> ACC|NOM: 2; NOM -> ACC|NOM: 2; GEN -> ACC|DAT: 1; ACC -> ACC|GEN|NOM: 1; NOM -> ACC|GEN|NOM: 1; GEN -> ACC|GEN|NOM: 1; NOM -> ACC|DAT: 1", "probs": {"ACC": 0.025, "DAT": 0.0, "GEN": 0.13, "NOM": 0.029}, "headUnk": 0, "nsubjUnk": 1, "bothUnk": 0, "examples": {"correct_swaps": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">\u00dear vann h\u00fan <strong>s\u00edn</strong> \u00f6nnur <strong>\u00d3lymp\u00eduver\u00f0laun</strong> \u00feegar h\u00fan hlaut silfur fyrir st\u00f6kk.</td><td class=\"sentence\">\u00dear vann h\u00fan <strong>sinna</strong> \u00f6nnur <strong>\u00d3lymp\u00eduver\u00f0laun</strong> \u00feegar h\u00fan hlaut silfur fyrir st\u00f6kk.</td><td>\u00f3lymp\u00eduver\u00f0laun</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=NS-A<br>upos=NOUN<br>deprel=obl<br>lemma=\u00f3lymp\u00eduver\u00f0laun<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Masc<br>Number=Sing</details></td><td>s\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Neut<br>Number=Plur<br>PronType=Prs</details></td><td>sinna</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Neut<br>Number=Plur</details></td><td>ACC -&gt; GEN</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RUV_TGS_2016_G-2-1031601.SANITY%2C18.303%22%20%3B%20A%20%5Bform%3D%22%C3%93lymp%C3%ADuver%C3%B0laun%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">\u00dear vann h\u00fan <strong>s\u00edn</strong> \u00f6nnur <strong>\u00d3lymp\u00eduver\u00f0laun</strong> \u00feegar h\u00fan hlaut silfur fyrir st\u00f6kk.</td><td class=\"sentence\">\u00dear vann h\u00fan <strong>s\u00ednum</strong> \u00f6nnur <strong>\u00d3lymp\u00eduver\u00f0laun</strong> \u00feegar h\u00fan hlaut silfur fyrir st\u00f6kk.</td><td>\u00f3lymp\u00eduver\u00f0laun</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=NS-A<br>upos=NOUN<br>deprel=obl<br>lemma=\u00f3lymp\u00eduver\u00f0laun<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Masc<br>Number=Sing</details></td><td>s\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Neut<br>Number=Plur<br>PronType=Prs</details></td><td>s\u00ednum</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Neut<br>Number=Plur</details></td><td>ACC -&gt; DAT</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RUV_TGS_2016_G-2-1031601.SANITY%2C18.303%22%20%3B%20A%20%5Bform%3D%22%C3%93lymp%C3%ADuver%C3%B0laun%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">M\u00e9r s\u00fdnist \u00feingma\u00f0urinn og \u00feeir sem a\u00f0 m\u00e1linu standa hafa unni\u00f0 <strong>s\u00edna</strong> <strong>heimavinnu</strong> vel.</td><td class=\"sentence\">M\u00e9r s\u00fdnist \u00feingma\u00f0urinn og \u00feeir sem a\u00f0 m\u00e1linu standa hafa unni\u00f0 <strong>s\u00edn</strong> <strong>heimavinnu</strong> vel.</td><td>heimavinnu</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=N-A<br>upos=NOUN<br>deprel=obj<br>lemma=heimavinna<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>s\u00edna</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>s\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing</details></td><td>ACC -&gt; GEN|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_BO_2015_G-33-4673392%2C4.257%22%20%3B%20A%20%5Bform%3D%22heimavinnu%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADna%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\"><strong>M\u00edn</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td class=\"sentence\"><strong>Mig</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td>tilfinning</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=N-N<br>upos=NOUN<br>deprel=nsubj<br>lemma=tilfinning<br><strong class=\"swap-feat\">Case=Nom</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>m\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=PRO-N<br>lemma=minn<br><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>Mig</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Number=Sing<br>Person=1</details></td><td>NOM -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_TKG_2011_G-33-4645702%2C7.2153%22%20%3B%20A%20%5Bform%3D%22tilfinning%22%5D%20%3B%20B%20%5Bform%3D%22M%C3%ADn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\"><strong>M\u00edn</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td class=\"sentence\"><strong>Minnar</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td>tilfinning</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=N-N<br>upos=NOUN<br>deprel=nsubj<br>lemma=tilfinning<br><strong class=\"swap-feat\">Case=Nom</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>m\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=PRO-N<br>lemma=minn<br><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>Minnar</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing</details></td><td>NOM -&gt; GEN</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_TKG_2011_G-33-4645702%2C7.2153%22%20%3B%20A%20%5Bform%3D%22tilfinning%22%5D%20%3B%20B%20%5Bform%3D%22M%C3%ADn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr></tbody></table></div>", "same_inflection": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\"><strong>M\u00edn</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td class=\"sentence\"><strong>M\u00edn</strong> <strong>tilfinning</strong> er s\u00fa a\u00f0 \u00ed \u00feessu m\u00e1li s\u00e9 bara veri\u00f0 a\u00f0 \u00fdta tveimur atri\u00f0um \u00e1fram, \u00fea\u00f0 er annars vegar pottunum til a\u00f0 fulln\u00e6gja kr\u00f6fum fr\u00e1 sj\u00e1var\u00fatvegsr\u00e1\u00f0herra svo hann geti fari\u00f0 \u00ed einhverja pottagaldra \u00ed haust og hins vegar vei\u00f0ileyfagjaldinu \u00fev\u00ed a\u00f0 Samfylkingin ver\u00f0i a\u00f0 f\u00e1 eitthva\u00f0 t\u00e1knr\u00e6nt \u00fat \u00far \u00feinginu \u00e1 \u00feessu \u00feingi \u00ed sta\u00f0inn fyrir a\u00f0 b\u00ed\u00f0a me\u00f0 breytingarnar sem v\u00e6ri \u00fea\u00f0 eina skynsamlega.</td><td>tilfinning</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=N-N<br>upos=NOUN<br>deprel=nsubj<br>lemma=tilfinning<br><strong class=\"swap-feat\">Case=Nom</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>m\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=PRO-N<br>lemma=minn<br><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>M\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary><strong class=\"swap-feat\">Case=Gen</strong><br>Number=Sing<br>Person=1</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_TKG_2011_G-33-4645702%2C7.2153%22%20%3B%20A%20%5Bform%3D%22tilfinning%22%5D%20%3B%20B%20%5Bform%3D%22M%C3%ADn%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">Hva\u00f0 mundi hv. \u00feingma\u00f0ur, \u00fat fr\u00e1 <strong>sinni</strong> <strong>\u00feekkingu</strong> sem Forseti hringir. lei\u00f0s\u00f6guma\u00f0ur farandi miki\u00f0 um h\u00e1lendi\u00f0 hvernig mundi hann meta \u00e1standi\u00f0?</td><td class=\"sentence\">Hva\u00f0 mundi hv. \u00feingma\u00f0ur, \u00fat fr\u00e1 <strong>sinni</strong> <strong>\u00feekkingu</strong> sem Forseti hringir. lei\u00f0s\u00f6guma\u00f0ur farandi miki\u00f0 um h\u00e1lendi\u00f0 hvernig mundi hann meta \u00e1standi\u00f0?</td><td>\u00feekkingu</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=N-D<br>upos=NOUN<br>deprel=obl<br>lemma=\u00feekking<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=PRO-D<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>2 feats</summary>Number=Sing<br>Person=3</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_SJS_2013_G-33-4503791%2C12.191%22%20%3B%20A%20%5Bform%3D%22%C3%BEekkingu%22%5D%20%3B%20B%20%5Bform%3D%22sinni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">\u00c9g held a\u00f0 \u00feetta hlj\u00f3ti a\u00f0 vera eitthvert snautlegasta m\u00e1l sem nokkur umhverfisr\u00e1\u00f0herra hefur flutt, a\u00f0 fella bara \u00far gildi \u00e1 einu bretti n\u00e1tt\u00faruverndarl\u00f6g \u00ed <strong>heild</strong> <strong>sinni</strong>, n\u00fdlega endursko\u00f0u\u00f0 eftir mikla undirb\u00faningsvinnu.</td><td class=\"sentence\">\u00c9g held a\u00f0 \u00feetta hlj\u00f3ti a\u00f0 vera eitthvert snautlegasta m\u00e1l sem nokkur umhverfisr\u00e1\u00f0herra hefur flutt, a\u00f0 fella bara \u00far gildi \u00e1 einu bretti n\u00e1tt\u00faruverndarl\u00f6g \u00ed <strong>heild</strong> <strong>sinni</strong>, n\u00fdlega endursko\u00f0u\u00f0 eftir mikla undirb\u00faningsvinnu.</td><td>heild</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=N-D<br>upos=NOUN<br>deprel=obl<br>lemma=heild<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=PRO-D<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>2 feats</summary>Number=Sing<br>Person=3</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_SJS_2013_G-33-4542311%2C2.1140%22%20%3B%20A%20%5Bform%3D%22heild%22%5D%20%3B%20B%20%5Bform%3D%22sinni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">J\u00f3n Arnar Magn\u00fasson horf\u00f0i \u00e1 Ara Braga K\u00e1rason sl\u00e1 n\u00edtj\u00e1n \u00e1ra gamalt <strong>met</strong> <strong>sitt</strong> \u00ed 100 metra hlaupi \u00ed sj\u00f3nvarpinu \u00e1 laugardag.</td><td class=\"sentence\">J\u00f3n Arnar Magn\u00fasson horf\u00f0i \u00e1 Ara Braga K\u00e1rason sl\u00e1 n\u00edtj\u00e1n \u00e1ra gamalt <strong>met</strong> <strong>sitt</strong> \u00ed 100 metra hlaupi \u00ed sj\u00f3nvarpinu \u00e1 laugardag.</td><td>met</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=N-A<br>upos=NOUN<br>deprel=obj<br>lemma=met<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Neut<br>Number=Sing</details></td><td>sitt</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Neut<br>Number=Sing<br>PronType=Prs</details></td><td>sitt</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Neut<br>Number=Sing</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RUV_ESP_2016_G-2-1033175%2C1.310%22%20%3B%20A%20%5Bform%3D%22met%22%5D%20%3B%20B%20%5Bform%3D%22sitt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">T\u00edber\u00edus var sag\u00f0ur hafa s\u00e9\u00f0 eftir <strong>brottf\u00f6r</strong> <strong>sinni</strong> og be\u00f0i\u00f0 nokkrum sinnum um a\u00f0 sn\u00faa aftur til R\u00f3mar, en \u00c1g\u00fastus hafna\u00f0i \u00f6llum bei\u00f0num hans.</td><td class=\"sentence\">T\u00edber\u00edus var sag\u00f0ur hafa s\u00e9\u00f0 eftir <strong>brottf\u00f6r</strong> <strong>sinni</strong> og be\u00f0i\u00f0 nokkrum sinnum um a\u00f0 sn\u00faa aftur til R\u00f3mar, en \u00c1g\u00fastus hafna\u00f0i \u00f6llum bei\u00f0num hans.</td><td>brottf\u00f6r</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=nve\u00fe<br>upos=NOUN<br>deprel=obl:arg<br>lemma=brottf\u00f6r<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=feve\u00fe<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>2 feats</summary>Number=Sing<br>Person=3</details></td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01062037%22%20%3B%20A%20%5Bform%3D%22brottf%C3%B6r%22%5D%20%3B%20B%20%5Bform%3D%22sinni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-PUD</a></td></tr></tbody></table></div>", "same_feature": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">Au\u00f0vita\u00f0 breg\u00f0ur manni vi\u00f0 a\u00f0 sj\u00e1 a\u00f0 90&lt;percent/&gt; eigi a\u00f0 fara til st\u00f3ru \u00fatger\u00f0anna sem hafa \u00ed krafti <strong>st\u00e6r\u00f0ar</strong> <strong>sinnar</strong> afla\u00f0 s\u00e9r mestu vei\u00f0ireynslunnar.</td><td class=\"sentence\">Au\u00f0vita\u00f0 breg\u00f0ur manni vi\u00f0 a\u00f0 sj\u00e1 a\u00f0 90&lt;percent/&gt; eigi a\u00f0 fara til st\u00f3ru \u00fatger\u00f0anna sem hafa \u00ed krafti <strong>st\u00e6r\u00f0ar</strong> <strong>s\u00edn</strong> afla\u00f0 s\u00e9r mestu vei\u00f0ireynslunnar.</td><td>st\u00e6r\u00f0ar</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>xpos=N-G<br>upos=NOUN<br>deprel=nmod:poss<br>lemma=st\u00e6r\u00f0<br><strong class=\"swap-feat\">Case=Gen</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>sinnar</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary>xpos=PRO-G<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Gen</strong><br>Gender=Fem<br>Number=Sing<br>PronType=Prs</details></td><td>s\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing</details></td><td>GEN -&gt; GEN|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_BO_2015_G-33-4637296%2C12.221%22%20%3B%20A%20%5Bform%3D%22st%C3%A6r%C3%B0ar%22%5D%20%3B%20B%20%5Bform%3D%22sinnar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>mitt</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>minn</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td>\u00feakkl\u00e6ti</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=N-A<br>upos=NOUN<br>deprel=obj<br>lemma=\u00feakkl\u00e6ti<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Number=Sing</details></td><td>mitt</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=minn<br><strong class=\"swap-feat\">Case=Acc</strong></details></td><td>minn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Masc<br>Number=Sing</details></td><td>ACC -&gt; ACC|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_BO_2015_G-33-4521247%2C1.61%22%20%3B%20A%20%5Bform%3D%22%C3%BEakkl%C3%A6ti%22%5D%20%3B%20B%20%5Bform%3D%22mitt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>mitt</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>m\u00edn</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td>\u00feakkl\u00e6ti</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=N-A<br>upos=NOUN<br>deprel=obj<br>lemma=\u00feakkl\u00e6ti<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Number=Sing</details></td><td>mitt</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=minn<br><strong class=\"swap-feat\">Case=Acc</strong></details></td><td>m\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>4 feats &middot; <span class=\"swap-feat-badge\">Case=Gen/Nom</span></summary><strong class=\"swap-feat\">Case=Gen/Nom</strong><br>Gender=Fem/Neut<br>Number=Plur/Sing<br>Person=1</details></td><td>ACC -&gt; ACC|GEN|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_BO_2015_G-33-4521247%2C1.61%22%20%3B%20A%20%5Bform%3D%22%C3%BEakkl%C3%A6ti%22%5D%20%3B%20B%20%5Bform%3D%22mitt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>mitt</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td class=\"sentence\">Herra forseti. \u00c9g \u00feakka \u00feingmanninum k\u00e6rlega fyrir \u00feessar \u00fatsk\u00fdringar, \u00fe\u00e6r voru g\u00f3\u00f0ar og vil enn og aftur undirstrika <strong>\u00feakkl\u00e6ti</strong> <strong>m\u00ednu</strong> til hans og annarra frams\u00f6gumanna a\u00f0 leggja m\u00e1li\u00f0 fram.</td><td>\u00feakkl\u00e6ti</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=N-A<br>upos=NOUN<br>deprel=obj<br>lemma=\u00feakkl\u00e6ti<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Number=Sing</details></td><td>mitt</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=PRO-A<br>lemma=minn<br><strong class=\"swap-feat\">Case=Acc</strong></details></td><td>m\u00ednu</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Neut<br>Number=Sing</details></td><td>ACC -&gt; ACC|DAT</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_BO_2015_G-33-4521247%2C1.61%22%20%3B%20A%20%5Bform%3D%22%C3%BEakkl%C3%A6ti%22%5D%20%3B%20B%20%5Bform%3D%22mitt%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\"><strong>M\u00ednar</strong> <strong>heimildir</strong> eru \u00fe\u00e6r a\u00f0 menn s\u00e9u ekki komnir n\u00e1ndar n\u00e6rri eins langt og h\u00e6gt hef\u00f0i veri\u00f0.</td><td class=\"sentence\"><strong>Minn</strong> <strong>heimildir</strong> eru \u00fe\u00e6r a\u00f0 menn s\u00e9u ekki komnir n\u00e1ndar n\u00e6rri eins langt og h\u00e6gt hef\u00f0i veri\u00f0.</td><td>heimildir</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=NS-N<br>upos=NOUN<br>deprel=nsubj<br>lemma=heimild<br><strong class=\"swap-feat\">Case=Nom</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Plur</details></td><td>m\u00ednar</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary>xpos=PRO-N<br>lemma=minn<br><strong class=\"swap-feat\">Case=Nom</strong></details></td><td>Minn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Masc<br>Number=Sing</details></td><td>NOM -&gt; ACC|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_TKG_2011_G-33-4557046%2C9.1836%22%20%3B%20A%20%5Bform%3D%22heimildir%22%5D%20%3B%20B%20%5Bform%3D%22M%C3%ADnar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr></tbody></table></div>", "ambiguous_subject": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>feature_vals</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">\u00deessar t\u00f6lur stungu l\u00edka svol\u00edti\u00f0 \u00ed augu \u00feegar \u00e9g renndi yfir \u00feetta \u00e1 <strong>s\u00ednum</strong> <strong>t\u00edma</strong> 20-50 millj\u00f3nir, m\u00e9r finnst \u00feetta ekki neitt \u00f3skapleg upph\u00e6\u00f0.</td><td class=\"sentence\">\u00deessar t\u00f6lur stungu l\u00edka svol\u00edti\u00f0 \u00ed augu \u00feegar \u00e9g renndi yfir \u00feetta \u00e1 <strong>sinn</strong> <strong>t\u00edma</strong> 20-50 millj\u00f3nir, m\u00e9r finnst \u00feetta ekki neitt \u00f3skapleg upph\u00e6\u00f0.</td><td>t\u00edma</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=N-D<br>upos=NOUN<br>deprel=obl<br>lemma=t\u00edmi<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Masc<br>Number=Sing</details></td><td>s\u00ednum</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=PRO-D<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Masc<br>Number=Sing<br>PronType=Prs</details></td><td>sinn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Masc<br>Number=Sing</details></td><td>DAT -&gt; ACC</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_HHG_2013_G-33-4818860%2C2.868%22%20%3B%20A%20%5Bform%3D%22t%C3%ADma%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADnum%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">\u00deessar t\u00f6lur stungu l\u00edka svol\u00edti\u00f0 \u00ed augu \u00feegar \u00e9g renndi yfir \u00feetta \u00e1 <strong>s\u00ednum</strong> <strong>t\u00edma</strong> 20-50 millj\u00f3nir, m\u00e9r finnst \u00feetta ekki neitt \u00f3skapleg upph\u00e6\u00f0.</td><td class=\"sentence\">\u00deessar t\u00f6lur stungu l\u00edka svol\u00edti\u00f0 \u00ed augu \u00feegar \u00e9g renndi yfir \u00feetta \u00e1 <strong>sinna</strong> <strong>t\u00edma</strong> 20-50 millj\u00f3nir, m\u00e9r finnst \u00feetta ekki neitt \u00f3skapleg upph\u00e6\u00f0.</td><td>t\u00edma</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=N-D<br>upos=NOUN<br>deprel=obl<br>lemma=t\u00edmi<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Masc<br>Number=Sing</details></td><td>s\u00ednum</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=PRO-D<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Masc<br>Number=Sing<br>PronType=Prs</details></td><td>sinna</td><td class=\"feats\"><details class=\"feat-details\"><summary>1 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary><strong class=\"swap-feat\">Case=Gen</strong></details></td><td>DAT -&gt; GEN</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-Modern%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ALTHINGI_HHG_2013_G-33-4818860%2C2.868%22%20%3B%20A%20%5Bform%3D%22t%C3%ADma%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADnum%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-Modern</a></td></tr><tr><td class=\"sentence\">T\u00edber\u00edus var sag\u00f0ur hafa s\u00e9\u00f0 eftir <strong>brottf\u00f6r</strong> <strong>sinni</strong> og be\u00f0i\u00f0 nokkrum sinnum um a\u00f0 sn\u00faa aftur til R\u00f3mar, en \u00c1g\u00fastus hafna\u00f0i \u00f6llum bei\u00f0num hans.</td><td class=\"sentence\">T\u00edber\u00edus var sag\u00f0ur hafa s\u00e9\u00f0 eftir <strong>brottf\u00f6r</strong> <strong>s\u00edn</strong> og be\u00f0i\u00f0 nokkrum sinnum um a\u00f0 sn\u00faa aftur til R\u00f3mar, en \u00c1g\u00fastus hafna\u00f0i \u00f6llum bei\u00f0num hans.</td><td>brottf\u00f6r</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=nve\u00fe<br>upos=NOUN<br>deprel=obl:arg<br>lemma=brottf\u00f6r<br><strong class=\"swap-feat\">Case=Dat</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=feve\u00fe<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing</details></td><td>s\u00edn</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Nom</span></summary><strong class=\"swap-feat\">Case=Nom</strong><br>Gender=Fem<br>Number=Sing</details></td><td>DAT -&gt; GEN|NOM</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01062037%22%20%3B%20A%20%5Bform%3D%22brottf%C3%B6r%22%5D%20%3B%20B%20%5Bform%3D%22sinni%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-PUD</a></td></tr><tr><td class=\"sentence\">\u00c1ri\u00f0 1976 t\u00f3k hann h\u00f6ndum saman vi\u00f0 <strong>vinkonu</strong> <strong>s\u00edna</strong>, Kiki Dee, sem vann hj\u00e1 pl\u00f6tufyrirt\u00e6kinu The Rocket Record Company, og hlj\u00f3\u00f0rita\u00f0i enn eitt lagi\u00f0 sem \u00e1tti eftir a\u00f0 sl\u00e1 r\u00e6kilega \u00ed gegn: \u201eDon&#x27;t Go Breaking My Heart\u201c.</td><td class=\"sentence\">\u00c1ri\u00f0 1976 t\u00f3k hann h\u00f6ndum saman vi\u00f0 <strong>vinkonu</strong> <strong>sinna</strong>, Kiki Dee, sem vann hj\u00e1 pl\u00f6tufyrirt\u00e6kinu The Rocket Record Company, og hlj\u00f3\u00f0rita\u00f0i enn eitt lagi\u00f0 sem \u00e1tti eftir a\u00f0 sl\u00e1 r\u00e6kilega \u00ed gegn: \u201eDon&#x27;t Go Breaking My Heart\u201c.</td><td>vinkonu</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=nveo<br>upos=NOUN<br>deprel=obl<br>lemma=vinkona<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>s\u00edna</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=feveo<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Fem<br>Number=Sing</details></td><td>sinna</td><td class=\"feats\"><details class=\"feat-details\"><summary>1 feats &middot; <span class=\"swap-feat-badge\">Case=Gen</span></summary><strong class=\"swap-feat\">Case=Gen</strong></details></td><td>ACC -&gt; GEN</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w05009044%22%20%3B%20A%20%5Bform%3D%22vinkonu%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADna%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-PUD</a></td></tr><tr><td class=\"sentence\">\u00c1ri\u00f0 1976 t\u00f3k hann h\u00f6ndum saman vi\u00f0 <strong>vinkonu</strong> <strong>s\u00edna</strong>, Kiki Dee, sem vann hj\u00e1 pl\u00f6tufyrirt\u00e6kinu The Rocket Record Company, og hlj\u00f3\u00f0rita\u00f0i enn eitt lagi\u00f0 sem \u00e1tti eftir a\u00f0 sl\u00e1 r\u00e6kilega \u00ed gegn: \u201eDon&#x27;t Go Breaking My Heart\u201c.</td><td class=\"sentence\">\u00c1ri\u00f0 1976 t\u00f3k hann h\u00f6ndum saman vi\u00f0 <strong>vinkonu</strong> <strong>sinni</strong>, Kiki Dee, sem vann hj\u00e1 pl\u00f6tufyrirt\u00e6kinu The Rocket Record Company, og hlj\u00f3\u00f0rita\u00f0i enn eitt lagi\u00f0 sem \u00e1tti eftir a\u00f0 sl\u00e1 r\u00e6kilega \u00ed gegn: \u201eDon&#x27;t Go Breaking My Heart\u201c.</td><td>vinkonu</td><td class=\"feats\"><details class=\"feat-details\"><summary>8 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=nveo<br>upos=NOUN<br>deprel=obl<br>lemma=vinkona<br><strong class=\"swap-feat\">Case=Acc</strong><br>Definite=Ind<br>Gender=Fem<br>Number=Sing</details></td><td>s\u00edna</td><td class=\"feats\"><details class=\"feat-details\"><summary>5 feats &middot; <span class=\"swap-feat-badge\">Case=Acc</span></summary>xpos=feveo<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Acc</strong><br>Gender=Fem<br>Number=Sing</details></td><td>sinni</td><td class=\"feats\"><details class=\"feat-details\"><summary>3 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Fem<br>Number=Sing</details></td><td>ACC -&gt; DAT</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w05009044%22%20%3B%20A%20%5Bform%3D%22vinkonu%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADna%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-PUD</a></td></tr></tbody></table></div>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<div class=\"examples-scroll\"><table class=\"examples\"><thead><tr><th>before</th><th>after</th><th>HEAD_form</th><th>HEAD_feats</th><th>PRON_form</th><th>PRON_feats</th><th>swapped_PRON_form</th><th>swapped_feats_after</th><th>treebank</th></tr></thead><tbody><tr><td class=\"sentence\">Gabriela og ma\u00f0ur hennar hafa fundi\u00f0 vinnu \u00ed n\u00fdja <strong>heimalandi</strong> <strong>s\u00ednu</strong>.</td><td class=\"sentence\">&mdash;</td><td>heimalandi</td><td class=\"feats\"><details class=\"feat-details\"><summary>7 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=no_et_\u00fegf_hk<br>upos=NOUN<br>deprel=obl<br>lemma=heimaland<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Neut<br>Number=Sing</details></td><td>s\u00ednu</td><td class=\"feats\"><details class=\"feat-details\"><summary>6 feats &middot; <span class=\"swap-feat-badge\">Case=Dat</span></summary>xpos=abfn_ft_\u00fegf_hk<br>lemma=sinn<br><strong class=\"swap-feat\">Case=Dat</strong><br>Gender=Neut<br>Number=Plur<br>PronType=Prs</details></td><td>&mdash;</td><td class=\"feats\">&mdash;</td><td class=\"treebank\"><a href='https://universal.grew.fr/?corpus=UD_Icelandic-GC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GREYNIR_CORPUS_00057%2C.1%22%20%3B%20A%20%5Bform%3D%22heimalandi%22%5D%20%3B%20B%20%5Bform%3D%22s%C3%ADnu%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Icelandic-GC</a></td></tr></tbody></table></div>"}, "labelDistribution": {"no": 578, "yes": 388, "unk": 1}}}, {"name": "Khoekhoe", "langUrl": "Khoekhoe.html", "color": null, "base": 0.5, "tree": 0.7982456140350878, "gain": 0.29824561403508776, "test": NaN, "testN": 0, "acc": 0.8035714285714286, "nRaw": 28, "retried": false, "labelDistribution": {"unk": 43, "yes": 32, "no": 31}, "nKeep": 0, "nPairs": 0, "diag": {"leafThreshold": 0.95, "nPairs": 0, "nPairsSecondChance": 0, "nForms": 104, "pctUM": 0.0, "pctUMUD": 15.4, "nRaw": 28, "nKeep": 0, "nKeepSecondChance": 0, "nLemma": 16, "nForm": 92, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "", "probs": {}, "headUnk": 37, "nsubjUnk": 6, "bothUnk": 0, "examples": {"correct_swaps": "<p class=\"empty\">no examples</p>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"unk": 43, "yes": 32, "no": 31}}}, {"name": "Polish", "langUrl": "Polish.html", "color": null, "base": 0.7870370370370371, "tree": 0.7870370370370371, "gain": 0.0, "test": NaN, "testN": 0, "acc": 0.7888198757763976, "nRaw": 34, "retried": false, "labelDistribution": {"no": 141, "yes": 38}, "nKeep": 0, "nPairs": 0, "diag": {"leafThreshold": 0.95, "nPairs": 0, "nPairsSecondChance": 0, "nForms": 174, "pctUM": 0.0, "pctUMUD": 2.9, "nRaw": 34, "nKeep": 0, "nKeepSecondChance": 0, "nLemma": 22, "nForm": 90, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "", "probs": {}, "headUnk": 0, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<p class=\"empty\">no examples</p>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"no": 141, "yes": 38}}}, {"name": "Western Armenian", "langUrl": "Western_Armenian.html", "color": null, "base": 0.7602739726027398, "tree": 0.7602739726027398, "gain": 0.0, "test": NaN, "testN": 0, "acc": 0.7638888888888888, "nRaw": 17, "retried": false, "labelDistribution": {"no": 62, "yes": 19}, "nKeep": 0, "nPairs": 0, "diag": {"leafThreshold": 0.95, "nPairs": 0, "nPairsSecondChance": 0, "nForms": 94, "pctUM": 0.0, "pctUMUD": 18.1, "nRaw": 17, "nKeep": 0, "nKeepSecondChance": 0, "nLemma": 71, "nForm": 197, "nValidFromMulti": 0, "ratioValidFromMulti": 0.0, "buckets": {"no_match": [0, 0.0, 0], "no_inflection": [0, 0.0, 0], "same_inflection": [0, 0.0, 0], "same_feature": [0, 0.0, 0], "undefined_feature": [0, 0.0, 0], "ambiguous_subject": [0, 0.0, 0], "conflicting_features": [0, 0.0, 0]}, "distribution": "", "probs": {}, "headUnk": 0, "nsubjUnk": 0, "bothUnk": 0, "examples": {"correct_swaps": "<p class=\"empty\">no examples</p>", "same_inflection": "<p class=\"empty\">no examples</p>", "same_feature": "<p class=\"empty\">no examples</p>", "ambiguous_subject": "<p class=\"empty\">no examples</p>", "undefined_feature": "<p class=\"empty\">no examples</p>", "no_inflection": "<p class=\"empty\">no examples</p>", "no_match": "<p class=\"empty\">no examples</p>"}, "labelDistribution": {"no": 62, "yes": 19}}}];
+    const plotData = [{"name": "Ancient Greek", "base": 0.7441037735849056, "tree": 0.9799528301886793, "n_items": 108, "url": "Ancient_Greek.html", "color": "#2563eb"}, {"name": "Chintang", "base": 0.953125, "tree": 0.953125, "n_items": 30, "url": "Chintang.html", "color": "#2563eb"}, {"name": "Erzya", "base": 0.6847826086956522, "tree": 0.7065217391304348, "n_items": 14, "url": "Erzya.html", "color": "#2563eb"}, {"name": "Esperanto", "base": 0.9779411764705882, "tree": 0.9779411764705882, "n_items": 66, "url": "Esperanto.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.745398773006135, "tree": 0.8496932515337423, "n_items": 121, "url": "Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.5959770114942529, "tree": 0.9316091954022988, "n_items": 351, "url": "Icelandic.html", "color": "#2563eb"}, {"name": "Khoekhoe", "base": 0.5, "tree": 0.7982456140350878, "n_items": 28, "url": "Khoekhoe.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.7870370370370371, "tree": 0.7870370370370371, "n_items": 34, "url": "Polish.html", "color": "#2563eb"}, {"name": "Western Armenian", "base": 0.7602739726027398, "tree": 0.7602739726027398, "n_items": 17, "url": "Western_Armenian.html", "color": "#2563eb"}];
+    const SHOW_DIAGNOSTICS = true;
+
+    const BUCKETS = [
+      { key: "no_match", label: "no match", desc: "No candidate swap form was found for this row at all." },
+      { key: "no_inflection", label: "no inflection", desc: "A swap form was targeted, but the inflector had nothing to offer for it." },
+      { key: "same_inflection", label: "same inflection", desc: "The re-inflected form came back identical to the original surface form." },
+      { key: "same_feature", label: "same feature", desc: "The re-inflected form's feature value still overlapped the original — the swap didn't actually change it." },
+      { key: "undefined_feature", label: "undefined feature", desc: "The target feature was undefined or missing for this form." },
+      { key: "ambiguous_subject", label: "ambiguous HEAD", desc: "The row's HEAD couldn't be uniquely resolved." },
+      { key: "conflicting_features", label: "conflicting features", desc: "The reinflected form directly opposes the original on another feature (or adds an argument slot or feature dimension), so it isn't a minimal pair." },
+    ];
+
+    // Fixed left-to-right order for the distribution bar -- matches
+    // sva_trees.pipeline's palette_map order, never sorted by size, so a bar
+    // reads the same way across every language and every render. A language
+    // whose predictor_var was never simplified (Pipeline.simplify=False)
+    // carries "+-"/"--" instead of "unk"; both are covered here so either
+    // convention renders, though a run only ever produces one or the other.
+    const LABEL_ORDER = [
+      ["yes", "#31cb9f"],
+      ["no", "#f16393"],
+      ["unk", "#b893de"],
+      ["+-", "#e5c64d"],
+      ["--", "#b893de"],
+    ];
+
+    // Reader-facing class names (the data keeps yes/no/unk).
+    function displayClass(label) {
+      const l = label.toLowerCase();
+      return l === "yes" ? "Agree" : l === "no" ? "Disagree" : l === "unk" ? "unknown" : label;
+    }
+
+    function renderDistBar(dist) {
+      if (!dist || Object.keys(dist).length === 0) {
+        return `<span class="dist-bar" style="background:none;"></span>`;
+      }
+      const total = Object.values(dist).reduce((a, b) => a + b, 0);
+      if (total === 0) return `<span class="dist-bar" style="background:none;"></span>`;
+      const present = LABEL_ORDER.filter(([label]) => dist[label] > 0);
+      const title = present
+        .map(([label]) => `${displayClass(label)} ${(dist[label] / total * 100).toFixed(1)}%`)
+        .join("  ·  ");
+      const segs = present
+        .map(([label, color]) => `<span style="width:${dist[label] / total * 100}%;background:${color};"></span>`)
+        .join("");
+      return `<div class="dist-bar" title="${escapeAttr(title)}">${segs}</div>`;
+    }
+
+    // Read the scale's two endpoints from CSS ONCE at load, not per cell --
+    // getComputedStyle() forces a style recalc, so doing this per coloured
+    // cell would be needless repeated work at real language counts.
+    const PCT_SCALE = (() => {
+      const root = getComputedStyle(document.documentElement);
+      const num = (name) => parseFloat(root.getPropertyValue(name));
+      return {
+        h0: num("--pct-lo-h"), s0: num("--pct-lo-s"), l0: num("--pct-lo-l"),
+        h1: num("--pct-hi-h"), s1: num("--pct-hi-s"), l1: num("--pct-hi-l"),
+      };
+    })();
+
+    // Same rationale as PCT_SCALE: Plotly's layout takes plain colour
+    // strings, not CSS vars, so the scatter plot needs its own theme read.
+    const CHART_THEME = (() => {
+      const root = getComputedStyle(document.documentElement);
+      const v = (name) => root.getPropertyValue(name).trim();
+      return { text: v("--text"), border: v("--border") };
+    })();
+
+    // Vermilion -> violet -> teal, and never green. Hue rotates steadily in
+    // one direction, numerically decreasing from 358 down to 176 (the
+    // "short way" through magenta/violet/blue) rather than increasing up
+    // through orange/yellow/green -- that arc is what keeps green off the
+    // scale entirely, and it means red only ever appears at the literal 0%
+    // endpoint, never as a colour the gradient sweeps through on its way
+    // elsewhere. invert=true mirrors the whole thing, for metrics where a
+    // high % is bad (item loss).
+    function pctColor(pct, invert = false) {
+      const { h0, s0, l0, h1, s1, l1 } = PCT_SCALE;
+      let t = Math.max(0, Math.min(100, pct)) / 100;
+      if (invert) t = 1 - t;
+      const h = h0 + (h1 - h0) * t;
+      const s = s0 + (s1 - s0) * t;
+      const l = l0 + (l1 - l0) * t;
+      return `hsl(${h.toFixed(0)}deg ${s.toFixed(0)}% ${l.toFixed(0)}%)`;
+    }
+
+    // For low-N cells: the colour still renders, blended mostly back toward
+    // the theme's default text colour (not left at full opacity -- plain
+    // opacity blends with whatever's behind it and reads as low-contrast
+    // rather than "dimmed").
+    function dimColorStyle(color, dim, reason, extraTitle) {
+      const titleParts = [dim ? reason : null, extraTitle || null].filter(Boolean);
+      const titleAttr = titleParts.length ? ` title="${titleParts.join(' — ')}"` : "";
+      const colorStyle = dim ? `color-mix(in srgb, ${color} 40%, var(--text) 60%)` : color;
+      return ` style="color:${colorStyle}"${titleAttr}`;
+    }
+
+    const MIN_N_FOR_COLOR = 10;
+    function investmentColor(numerator, denominator) {
+      const pct = denominator > 0 ? (numerator / denominator) * 100 : 0;
+      return pctColor(Math.max(0, Math.min(100, pct)));
+    }
+
+    // A binary tree's accuracy lives in [50%, 100%], so scale colour over that
+    // span rather than 0-100 (otherwise every language reads as teal).
+    function accuracyColor(acc) {
+      return pctColor(Math.max(0, Math.min(100, ((acc - 0.5) / 0.5) * 100)));
+    }
+
+    // Gain isn't meaningful in isolation -- +1 point off a root accuracy of 98% is a much
+    // bigger win than +1 point off a root accuracy of 60% -- so colour it by the share
+    // of the root's remaining error the tree removed. Null when there was no
+    // error left to remove (callers fall back to a muted colour).
+    function gainColor(base, gain) {
+      const headroom = 1 - base;
+      if (headroom <= 0) return null;
+      return pctColor(Math.max(0, Math.min(100, (gain / headroom) * 100)));
+    }
+
+    function chevronSvg() {
+      return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    }
+
+    // The "examples" button is only shown when there's actually at least one
+    // row in that bucket AND create_pairs wrote an "examples" entry into this
+    // language's meta.json (older runs, or ones that hit the save_to
+    // try/except in pipeline.py, won't have one -- diag.examples is then
+    // undefined/empty).
+    function renderBucketZone(diag, langName) {
+      if (!diag) {
+        return `<div class="bucket-item no-data">No diagnostics available</div>`;
+      }
+      return BUCKETS.map(b => {
+        const [n, pct, nSecond] = diag.buckets[b.key] || [0, 0, 0];
+        const color = pctColor(pct, true);
+        const hasExamples = n > 0 && diag.examples && diag.examples[b.key];
+        const splitText = nSecond > 0
+          ? `; ${(n - nSecond).toLocaleString()} from the strict first pass, ${nSecond.toLocaleString()} from a second_chance retry`
+          : "";
+        return `
+          <div class="bucket-item" title="${escapeAttr(b.desc)} (${n.toLocaleString()} rows, ${pct.toFixed(1)}% of swap attempts${splitText})">
+            <span class="b-label">${b.label}</span>
+            <span class="b-value" style="color:${color}">${pct.toFixed(1)}%</span>
+            <span class="b-count">${n.toLocaleString()}</span>
+            ${hasExamples ? `<button class="b-examples-btn" type="button" data-lang="${escapeAttr(langName)}" data-bucket="${b.key}">examples</button>` : ""}
+          </div>`;
+      }).join("");
+    }
+
+    function multiValueHtml(lang, diag) {
+      const n = diag.nValidFromMulti.toLocaleString();
+      const sub = `<span class="sub"> &nbsp;(${(diag.ratioValidFromMulti * 100).toFixed(1)}% of pairs)</span>`;
+      const hasExamples = diag.examples && diag.examples.multi_now_valid && diag.nValidFromMulti > 0;
+      const n_html = hasExamples
+        ? `<button class="cell-examples-btn" type="button" data-lang="${escapeAttr(lang.name)}" data-bucket="multi_now_valid">${n}</button>`
+        : n;
+      return n_html + sub;
+    }
+
+    function unkValueHtml(lang, diag, bucketKey, count) {
+      const n = count.toLocaleString();
+      const hasExamples = diag.examples && diag.examples[bucketKey] && count > 0;
+      return hasExamples
+        ? `<button class="cell-examples-btn" type="button" data-lang="${escapeAttr(lang.name)}" data-bucket="${bucketKey}">${n}</button>`
+        : n;
+    }
+
+    function renderDetail(lang) {
+      const diag = lang.diag;
+      const probEntries = diag ? Object.entries(diag.probs) : [];
+      return `
+        <div class="detail-inner">
+          <div>
+            <p class="section-label">Coverage &amp; volume</p>
+            <div class="stat-rows">
+              <div class="stat" style="grid-column:1;grid-row:1;"><span class="label" title="Candidate rows before the leaf-confidence filter is applied. Same value as N RAW in the table."># UD candidates (raw)</span><span class="value">${lang.nRaw.toLocaleString()}</span></div>
+              <div class="stat" style="grid-column:2;grid-row:1;"><span class="label" title="Distinct PRON/HEAD forms eligible for this prediction target at all, whether or not they ended up labelled &quot;Yes&quot;."># forms of interest</span><span class="value">${diag ? diag.nForms.toLocaleString() : "—"}</span></div>
+
+              <div class="stat" style="grid-column:1;grid-row:2;"><span class="label" title="Share of forms of interest covered once the UD-derived fallback is added on top of UniMorph.">% covered by UM+UD</span><span class="value"${diag ? ` style="color:${pctColor(diag.pctUMUD)}"` : ""}>${diag ? diag.pctUMUD.toFixed(1) + "%" : "—"}</span></div>
+              <div class="stat" style="grid-column:2;grid-row:2;"><span class="label" title="Share of forms of interest found directly in UniMorph's inflection tables.">% covered by UM</span><span class="value"${diag ? ` style="color:${pctColor(diag.pctUM)}"` : ""}>${diag ? diag.pctUM.toFixed(1) + "%" : "—"}</span></div>
+              <div class="stat" style="grid-column:3;grid-row:2;"><span class="label" title="Size of the UniMorph lemma inventory available for this language."># UM lemmas</span><span class="value">${diag ? diag.nLemma.toLocaleString() : "—"}</span></div>
+              <div class="stat" style="grid-column:4;grid-row:2;"><span class="label" title="Size of the UniMorph inflected-form inventory available for this language."># UM forms</span><span class="value">${diag ? diag.nForm.toLocaleString() : "—"}</span></div>
+
+              <div class="stat" style="grid-column:1;grid-row:3;"><span class="label" title="Of N RAW, the rows kept after the leaf-confidence filter. Same value as N KEEP in the table."># UD candidates (kept)</span><span class="value">${lang.nKeep.toLocaleString()}</span></div>
+              <div class="stat" style="grid-column:2;grid-row:3;"><span class="label" title="Rows that ended up as a correctly re-inflected minimal pair. Same value as N PAIRS in the table."># minimal pairs</span><span class="value">${lang.nPairs.toLocaleString()}</span></div>
+              <div class="stat" style="grid-column:3;grid-row:3;"><span class="label" title="Minimal pairs that came from a row with more than one candidate swap form, as a share of all pairs."># valid from multi</span><span class="value">${diag ? multiValueHtml(lang, diag) : "—"}</span></div>
+            </div>
+          </div>
+
+          <div>
+            <p class="section-label" title="Rows dropped from the decision tree fit because the target feature was missing on the PRON, the HEAD, or both -- fit_dt's UNK_LABELS drop (see the --keep_unk script flag).">Dropped before fitting (missing feature annotation)</p>
+            <div class="stat-rows">
+              <div class="stat" style="grid-column:1;grid-row:1;"><span class="label" title="Rows dropped because the PRON's target feature was missing, but the HEAD's was present."># PRON unk</span><span class="value">${diag ? unkValueHtml(lang, diag, "head_unk", diag.headUnk) : "—"}</span></div>
+              <div class="stat" style="grid-column:2;grid-row:1;"><span class="label" title="Rows dropped because the HEAD's target feature was missing, but the PRON's was present."># HEAD unk</span><span class="value">${diag ? unkValueHtml(lang, diag, "nsubj_unk", diag.nsubjUnk) : "—"}</span></div>
+              <div class="stat" style="grid-column:3;grid-row:1;"><span class="label" title="Rows dropped because both the PRON's and the HEAD's target feature were missing."># both unk</span><span class="value">${diag ? unkValueHtml(lang, diag, "both_unk", diag.bothUnk) : "—"}</span></div>
+            </div>
+          </div>
+
+          ${!diag ? (SHOW_DIAGNOSTICS
+            ? `<p class="no-diag-note">No further diagnostics available for this language (it may not have been processed by create_pairs, or the diagnostics step failed for it).</p>`
+            : `<p class="no-diag-note">No pairs/diagnostics in this data-debugging build -- create_pairs never runs here.</p>`) : ""}
+
+          ${diag && diag.distribution ? `
+          <div>
+            <p class="section-label">Feature distribution (from &rarr; to)</p>
+            <div class="distribution-line">${diag.distribution}</div>
+          </div>` : ""}
+
+          ${probEntries.length ? `
+          <div>
+            <p class="section-label">P(value | value) &mdash; re-inflection reliability</p>
+            <div class="prob-pills">
+              ${probEntries.map(([v, p]) => `<span class="prob-pill">P(${v}|${v}) = <b>${p.toFixed(3)}</b></span>`).join("")}
+            </div>
+          </div>` : ""}
+        </div>`;
+    }
+
+    // ---- state ----
+    let currentSort = { column: "name", ascending: true };
+    const openResults = new Set();   // language names with the Results panel open
+    const openBuckets = new Set();   // language names with the bucket breakdown open
+
+    const SORT_ACCESSORS = {
+      name: (l) => l.name.toLowerCase(),
+      base: (l) => l.base,
+      tree: (l) => l.tree,
+      gain: (l) => l.gain,
+      test: (l) => (Number.isNaN(l.test) ? -1 : l.test),
+      nRaw: (l) => l.nRaw,
+      nKeep: (l) => l.nKeep,
+      nPairs: (l) => l.nPairs,
+    };
+
+    let langFilter = "";
+    const langCount = document.getElementById("langCount");
+    document.getElementById("langSearch").addEventListener("input", (e) => {
+      langFilter = e.target.value;
+      renderAll();
+    });
+
+    const gridTable = document.getElementById("gridTable");
+    const tableBody = document.getElementById("tableBody");
+    const theadRow = document.getElementById("theadRow");
+
+    function syncHeaderBuckets() {
+      theadRow.classList.toggle("buckets-open", openBuckets.size > 0);
+    }
+
+    function renderAll() {
+      const list = LANGUAGES;
+      const acc = SORT_ACCESSORS[currentSort.column];
+      // Space-/comma-separated terms, case-insensitive, OR'd -- same matching
+      // as the stats overview's language filter.
+      const terms = langFilter.toLowerCase().split(/[\s,]+/).filter(Boolean);
+      const visible = terms.length
+        ? list.filter(l => terms.some(t => l.name.toLowerCase().includes(t)))
+        : list;
+      langCount.textContent = `${visible.length} of ${list.length} languages`;
+      const sorted = [...visible].sort((a, b) => {
+        const av = acc(a), bv = acc(b);
+        if (typeof av === "string") {
+          return currentSort.ascending ? av.localeCompare(bv) : bv.localeCompare(av);
+        }
+        return currentSort.ascending ? av - bv : bv - av;
+      });
+
+      tableBody.innerHTML = "";
+      sorted.forEach((lang) => {
+        const langRow = document.createElement("div");
+        langRow.className = "row lang-row";
+        if (openResults.has(lang.name)) langRow.classList.add("is-open");
+        if (openBuckets.has(lang.name)) langRow.classList.add("buckets-open");
+
+        const nameStyle = lang.color ? ` style="color:${lang.color};font-weight:600;"` : "";
+        const nameHtml = lang.langUrl
+          ? `<a class="lang-name-text" href="${lang.langUrl}"${nameStyle}>${lang.name}</a>`
+          : `<span class="lang-name-text"${nameStyle}>${lang.name}</span>`;
+        const retriedBadge = lang.retried
+          ? `<span class="retried-badge" title="sva_trees.second_chance retried this language at a laxer, depth-aware accuracy floor after the strict pass alone wasn't enough.">retried</span>`
+          : "";
+
+        const hasPairsExamples = lang.diag && lang.diag.examples && lang.diag.examples.correct_swaps && lang.nPairs > 0;
+        const nPairsText = lang.nPairs.toLocaleString();
+        const nPairsHtml = hasPairsExamples
+          ? `<button class="cell-examples-btn" type="button" data-lang="${escapeAttr(lang.name)}" data-bucket="correct_swaps">${nPairsText}</button>`
+          : nPairsText;
+
+        // First-pass vs. second_chance-retry split, shown as an extra tooltip
+        // line on N KEEP/N PAIRS -- 0/blank for a language never retried.
+        const nKeepSecond = lang.diag ? lang.diag.nKeepSecondChance : 0;
+        const nKeepSplitTitle = nKeepSecond > 0
+          ? `${(lang.nKeep - nKeepSecond).toLocaleString()} from the strict first pass, ${nKeepSecond.toLocaleString()} from a second_chance retry`
+          : "";
+        const nPairsSecond = lang.diag ? lang.diag.nPairsSecondChance : 0;
+        const nPairsSplitTitle = nPairsSecond > 0
+          ? `${(lang.nPairs - nPairsSecond).toLocaleString()} from the strict first pass, ${nPairsSecond.toLocaleString()} from a second_chance retry`
+          : "";
+
+        // Defensive: a language with no fitted tree would have base/tree/gain
+        // arrive as NaN rather than a real number, but every such language is
+        // omitted from the table entirely before this ever runs (see
+        // generate_html_deprel_index) -- render those as a blank dash and a
+        // plain muted tone, just in case.
+        const pctText = (v) => Number.isNaN(v) ? "—" : (v * 100).toFixed(1) + "%";
+        const baseText = pctText(lang.base);
+        const treeText = pctText(lang.tree);
+        const gainText = Number.isNaN(lang.gain) ? "—"
+          : (lang.gain >= 0 ? "+" : "−") + Math.abs(lang.gain * 100).toFixed(1) + " pp";
+        const baseColor = Number.isNaN(lang.base) ? "var(--text-muted)" : accuracyColor(lang.base);
+        const treeColor = Number.isNaN(lang.tree) ? "var(--text-muted)" : accuracyColor(lang.tree);
+        const testText = pctText(lang.test);
+        const testDim = lang.testN < MIN_N_FOR_COLOR;
+        const testColor = Number.isNaN(lang.test) ? "var(--text-muted)" : accuracyColor(lang.test);
+        const testStyle = Number.isNaN(lang.test) ? ` style="color:${testColor}"`
+          : dimColorStyle(testColor, testDim, `test split has only ${lang.testN} rows — too small for this figure to be meaningful`, `n=${lang.testN} held-out rows`);
+        const gainColorVal = Number.isNaN(lang.gain) ? "var(--text-muted)" : (gainColor(lang.base, lang.gain) || "var(--text-muted)");
+
+        langRow.innerHTML = `
+          <div class="cell c-chev"><span class="chevron">${chevronSvg()}</span></div>
+          <div class="cell c-lang lang-name">${nameHtml}${retriedBadge}</div>
+          <div class="cell c-dist">${renderDistBar((lang.diag && lang.diag.labelDistribution) || lang.labelDistribution)}</div>
+          <div class="cell c-base" style="color:${baseColor}">${baseText}</div>
+          <div class="cell c-tree" style="color:${treeColor}">${treeText}</div>
+          <div class="cell c-gain" style="color:${gainColorVal}">${gainText}</div>
+          <div class="cell c-test"${testStyle}>${testText}</div>
+          <div class="cell c-raw">${lang.nRaw.toLocaleString()}</div>
+          <div class="cell c-keep"${dimColorStyle(investmentColor(lang.nKeep, lang.nRaw), lang.nRaw < MIN_N_FOR_COLOR, `N RAW is only ${lang.nRaw} — too small a sample for this ratio to be meaningful`, nKeepSplitTitle)}>${lang.nKeep.toLocaleString()}</div>
+          
+          <div class="cell c-bchev"><button class="bucket-chevron-btn" type="button" aria-label="Toggle bucket breakdown"><span class="chevron">${chevronSvg()}</span></button></div>
+          <div class="bucket-zone">${renderBucketZone(lang.diag, lang.name)}</div>
+          <div class="cell c-pairs"${dimColorStyle(investmentColor(lang.nPairs, lang.nKeep), lang.nKeep < MIN_N_FOR_COLOR, `N KEEP is only ${lang.nKeep} — too small a sample for this ratio to be meaningful`, nPairsSplitTitle)}>${nPairsHtml}</div>
+        `;
+
+        const detailRow = document.createElement("div");
+        detailRow.className = "row detail-row";
+        if (openResults.has(lang.name)) detailRow.classList.add("is-open");
+        detailRow.innerHTML = renderDetail(lang);
+
+        langRow.addEventListener("click", () => {
+          const open = langRow.classList.toggle("is-open");
+          detailRow.classList.toggle("is-open", open);
+          if (open) openResults.add(lang.name); else openResults.delete(lang.name);
+        });
+
+        const bucketBtn = langRow.querySelector(".bucket-chevron-btn");
+        if (bucketBtn) bucketBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const open = langRow.classList.toggle("buckets-open");
+          if (open) openBuckets.add(lang.name); else openBuckets.delete(lang.name);
+          syncHeaderBuckets();
+        });
+
+        tableBody.appendChild(langRow);
+        tableBody.appendChild(detailRow);
+      });
+
+      syncHeaderBuckets();
+      theadRow.querySelectorAll(".cell.sortable").forEach(h => {
+        h.classList.remove("sort-asc", "sort-desc");
+        if (h.dataset.column === currentSort.column) {
+          h.classList.add(currentSort.ascending ? "sort-asc" : "sort-desc");
+        }
+      });
+    }
+
+    theadRow.querySelectorAll(".cell.sortable").forEach(header => {
+      header.addEventListener("click", () => {
+        const column = header.dataset.column;
+        currentSort.ascending = currentSort.column === column ? !currentSort.ascending : true;
+        currentSort.column = column;
+        renderAll();
+      });
+    });
+
+    const resultsBtn = document.getElementById("resultsBtn");
+    const diagnosticsBtn = document.getElementById("diagnosticsBtn");
+
+    resultsBtn.addEventListener("click", () => {
+      const rows = document.querySelectorAll(".lang-row");
+      const shouldOpen = Array.from(rows).some(r => !r.classList.contains("is-open"));
+      rows.forEach(r => r.classList.toggle("is-open", shouldOpen));
+      document.querySelectorAll(".detail-row").forEach(r => r.classList.toggle("is-open", shouldOpen));
+      LANGUAGES.forEach(l => {
+        if (shouldOpen) openResults.add(l.name); else openResults.delete(l.name);
+      });
+      resultsBtn.classList.toggle("active", shouldOpen);
+      resultsBtn.setAttribute("aria-pressed", String(shouldOpen));
+    });
+
+    if (diagnosticsBtn) diagnosticsBtn.addEventListener("click", () => {
+      const rows = document.querySelectorAll(".lang-row");
+      const shouldOpen = Array.from(rows).some(r => !r.classList.contains("buckets-open"));
+      rows.forEach(r => r.classList.toggle("buckets-open", shouldOpen));
+      LANGUAGES.forEach(l => {
+        if (shouldOpen) openBuckets.add(l.name); else openBuckets.delete(l.name);
+      });
+      syncHeaderBuckets();
+      diagnosticsBtn.classList.toggle("active", shouldOpen);
+      diagnosticsBtn.setAttribute("aria-pressed", String(shouldOpen));
+    });
+
+    const legendBtn = document.getElementById("legendBtn");
+    const legendOverlay = document.getElementById("legendOverlay");
+    const legendClose = document.getElementById("legendClose");
+    legendBtn.addEventListener("click", () => legendOverlay.classList.add("open"));
+    legendClose.addEventListener("click", () => legendOverlay.classList.remove("open"));
+    legendOverlay.addEventListener("click", (e) => { if (e.target === legendOverlay) legendOverlay.classList.remove("open"); });
+
+    // ---- examples modal: per-bucket sample rows, pre-rendered server-side
+    // by sva_trees.create_pairs.bucket_examples_html and dropped in as-is. One
+    // shared overlay, content swapped in per click via a delegated listener
+    // on tableBody (rows are re-created on every renderAll(), so per-button
+    // listeners would need re-attaching). Covers all 11 buckets, not just
+    // the 6 in the bucket zone -- correct_swaps (N PAIRS), multi_now_valid
+    // ("valid from multi"), and head_unk/nsubj_unk/both_unk (linked from
+    // the "Dropped before fitting" stats) link in from the Results panel
+    // instead. ----
+    const examplesOverlay = document.getElementById("examplesOverlay");
+    const examplesClose = document.getElementById("examplesClose");
+    const examplesTitle = document.getElementById("examplesTitle");
+    const examplesSubtitle = document.getElementById("examplesSubtitle");
+    const examplesBody = document.getElementById("examplesBody");
+
+    // BUCKETS only covers the 7 "problem" buckets shown in the bucket zone.
+    // correct_swaps (linked from N PAIRS), multi_now_valid (linked from
+    // "valid from multi"), and head_unk/nsubj_unk/both_unk (linked from the
+    // "Dropped before fitting" stats) aren't in that list, so they need
+    // their own labels and their own way to look up a count (they're not
+    // in diag.buckets).
+    const EXTRA_BUCKET_LABELS = {
+      correct_swaps: "minimal pairs",
+      multi_now_valid: "valid from multi",
+      head_unk: "PRON unk",
+      nsubj_unk: "HEAD unk",
+      both_unk: "both unk",
+    };
+    function bucketLabel(key) {
+      const b = BUCKETS.find(b => b.key === key);
+      return b ? b.label : (EXTRA_BUCKET_LABELS[key] || key);
+    }
+    function bucketCount(lang, key) {
+      if (key === "correct_swaps") return lang.nPairs;
+      if (key === "multi_now_valid") return lang.diag.nValidFromMulti;
+      if (key === "head_unk") return lang.diag.headUnk;
+      if (key === "nsubj_unk") return lang.diag.nsubjUnk;
+      if (key === "both_unk") return lang.diag.bothUnk;
+      return (lang.diag.buckets[key] || [0, 0])[0];
+    }
+
+    function openExamplesModal(langName, bucketKey) {
+      const lang = LANGUAGES.find(l => l.name === langName);
+      if (!lang || !lang.diag || !lang.diag.examples || !lang.diag.examples[bucketKey]) return;
+      examplesTitle.textContent = `${lang.name} — ${bucketLabel(bucketKey)}`;
+      const n = bucketCount(lang, bucketKey);
+      examplesSubtitle.textContent = `Sample rows that landed in this bucket (n=${n.toLocaleString()}).`;
+      examplesBody.innerHTML = lang.diag.examples[bucketKey];
+      linkFeatureDetails(examplesBody);
+      examplesOverlay.classList.add("open");
+    }
+    function closeExamplesModal() { examplesOverlay.classList.remove("open"); }
+
+    // Feature lists for different roles in the same example row (e.g.
+    // HEAD vs. PRON) are separate <details> elements.
+    // Link them per-row so that opening/closing one toggles the others in
+    // that row to match, letting you compare both sides' features at a
+    // glance instead of expanding each one by hand.
+    function linkFeatureDetails(root) {
+      root.querySelectorAll("tr").forEach(tr => {
+        const detailsEls = tr.querySelectorAll("details.feat-details");
+        if (detailsEls.length < 2) return;
+        detailsEls.forEach(d => {
+          d.addEventListener("toggle", () => {
+            detailsEls.forEach(other => {
+              if (other !== d) other.open = d.open;
+            });
+          });
+        });
+      });
+    }
+
+    tableBody.addEventListener("click", (e) => {
+      const btn = e.target.closest(".b-examples-btn, .cell-examples-btn");
+      if (!btn) return;
+      e.stopPropagation();
+      openExamplesModal(btn.dataset.lang, btn.dataset.bucket);
+    });
+    examplesClose.addEventListener("click", closeExamplesModal);
+    examplesOverlay.addEventListener("click", (e) => { if (e.target === examplesOverlay) closeExamplesModal(); });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      legendOverlay.classList.remove("open");
+      closeExamplesModal();
+    });
+
+    // ---- scatter plot: unchanged from the classic page ----
+    function renderPlot() {
+      const data = plotData;
+      const trace = {
+        x: data.map(d => d.base), y: data.map(d => d.tree),
+        mode: 'markers', type: 'scatter', text: data.map(d => d.name),
+        customdata: data.map(d => [d.url, d.n_items]),
+        hovertemplate: '<b>%{text}</b><br>Root Acc: %{x:.3f}<br>Train Acc: %{y:.3f}<br>N Items: %{customdata[1]:,}<br><extra></extra>',
+        marker: {
+          size: data.map(d => d.n_items), sizemode: 'area',
+          sizeref: 2 * Math.max(...data.map(d => d.n_items)) / (40 ** 2), sizemin: 4,
+          color: data.map(d => d.color), opacity: 0.6, line: { color: '#1e40af', width: 1 },
+        },
+      };
+      // y = x reference: points above it are languages where the tree beat the baseline.
+      const diagonal = {
+        x: [0.5, 1], y: [0.5, 1], mode: 'lines', type: 'scatter', hoverinfo: 'skip',
+        line: { color: CHART_THEME.border, width: 1, dash: 'dash' }, showlegend: false,
+      };
+      const layout = {
+        title: { text: 'Root Accuracy vs. Train Accuracy', font: { family: 'DM Sans, system-ui, sans-serif', size: 16, color: CHART_THEME.text } },
+        xaxis: { title: { text: 'Root Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [0.45, 1.02], autorange: false, tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0], automargin: true },
+        yaxis: { title: { text: 'Train Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [0.45, 1.02], autorange: false, tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0], automargin: true },
+        plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'DM Sans, system-ui, sans-serif', color: CHART_THEME.text },
+        hovermode: 'closest', showlegend: false, margin: { t: 50, r: 30, b: 50, l: 60 },
+      };
+      const config = { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false };
+      Plotly.newPlot('scatterPlot', [diagonal, trace], layout, config);
+      document.getElementById('scatterPlot').on('plotly_click', function(data) {
+        const url = data.points[0].customdata && data.points[0].customdata[0];
+        if (url) window.location.href = url;
+      });
+    }
+
+    renderPlot();
+    renderAll();
+    </script>
+</body>
+</html>

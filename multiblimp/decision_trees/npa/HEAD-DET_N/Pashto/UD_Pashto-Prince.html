@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 10, "yes": 3, "no": 2}</script>
+  <div class="layout">
+    <div class="tb-nav"><span class="tb-nav-label">Trees</span><a class="tb-pill" href="../Pashto.html">Pooled <small>63 rows &middot; 100.0%</small></a><span class="tb-pill current muted">Prince <small>5 rows &middot; too few samples</small></span><a class="tb-pill" href="UD_Pashto-Sikaram.html">Sikaram <small>58 rows &middot; 100.0%</small></a></div>
+    <div class="sidebar">
+      <div>
+        <a href="../index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Too few samples to fit a tree</h2>
+        <p>Training samples for <b>NP head-DET_Number</b> don&rsquo;t share one agreement label, but there weren&rsquo;t enough of them to fit a decision tree — showing the raw label distribution instead.</p>
+      </div>
+      <div class="labels"><div class="label">unknown: 10</div><div class="label">Agree: 3</div><div class="label">Disagree: 2</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Pashto</span></div><div class="meta-row"><span class="meta-key">Treebank</span><span class="meta-val">Prince</span></div><div class="meta-row"><span class="meta-key">Status</span><span class="meta-val">too few samples</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">15</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">NP head-DET_Number</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 15)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>DET_form</th><th>DET_features</th><th>NP head_form</th><th>NP head_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>دا به هم څوک نه هېرولای شي چې زما مشرتابه د مزاحمتي سیاست بنیاد ایښی او په <strong>هېڅ</strong> <strong>مصلحت</strong> یې مزاحمت نه دی مات کړی .</td><td>هېڅ</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=هېڅ<br>PronType=Neg</details></td><td>مصلحت</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=مصلحت<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_4%22%20%3B%20A%20%5Bform%3D%22%D9%87%DB%90%DA%85%22%5D%20%3B%20B%20%5Bform%3D%22%D9%85%D8%B5%D9%84%D8%AD%D8%AA%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>ھار کله چې <strong>یو</strong> <strong>قوم</strong> د داگھہ تحریکونو او لفظونو نه بېګانه شي ، د هغه قوم سیاسي ماضي ختمېږي .</td><td>یو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=یو<br>PronType=Ind</details></td><td>قوم</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br>lemma=قوم<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_8%22%20%3B%20A%20%5Bform%3D%22%DB%8C%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%D9%82%D9%88%D9%85%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>یو ځل ، چې زه لا د شپږو کالو وم ، ما په یو کتاب کښې یو زبردست تصویر ولیدو ، کوم چې په نوم وو ، دا د پخوانی ځنګلونو په بارہ کښي <strong>يو</strong> <strong>کتاب</strong> وو</td><td>يو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>PronType=Ind</details></td><td>کتاب</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nsubj<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_1%22%20%3B%20A%20%5Bform%3D%22%D9%8A%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%DA%A9%D8%AA%D8%A7%D8%A8%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>مو <strong>دا</strong> <strong>وخت</strong> په یو مشکوک او پراسراره حال کې ژوند کوو او مستقبل مو تورتم سُرنګ دی .</td><td>دا</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=دا<br>Deixis=Prox<br><strong>Number=Sing</strong><br>PronType=Dem</details></td><td>وخت</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=وخت<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_10%22%20%3B%20A%20%5Bform%3D%22%D8%AF%D8%A7%22%5D%20%3B%20B%20%5Bform%3D%22%D9%88%D8%AE%D8%AA%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>. دا یو مار وو بوا کنسټريکټر چې <strong>یوه</strong> <strong>هاتي</strong> یې لواړ د مرئ نه تيرولو .</td><td>یوه</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=یو<br>PronType=Ind</details></td><td>هاتي</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=هاتي<br>Case=Acc<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_13%22%20%3B%20A%20%5Bform%3D%22%DB%8C%D9%88%D9%87%22%5D%20%3B%20B%20%5Bform%3D%22%D9%87%D8%A7%D8%AA%D9%8A%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>دا هم <strong>یو</strong> <strong>حقیقت</strong> دی چې د پښتنو مشرتابه نه لوی و زوره ورو حکمرانانو نه ړق دی وهلی او نه یې ترې په ارامه خوب کړی دی .</td><td>یو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=یو<br>PronType=Ind</details></td><td>حقیقت</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=root<br>lemma=حقیقت<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_3%22%20%3B%20A%20%5Bform%3D%22%DB%8C%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%D8%AD%D9%82%DB%8C%D9%82%D8%AA%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>ما <strong>هغه</strong> <strong>وخ</strong> ډير ژور سوچ وکړو ، په ځنګل کښي د گرځيدو په باره کښي .</td><td>هغه</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=هغه<br>Deixis=Remt<br><strong>Number=Sing</strong><br>PronType=Dem</details></td><td>وخ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=وخت<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_6%22%20%3B%20A%20%5Bform%3D%22%D9%87%D8%BA%D9%87%22%5D%20%3B%20B%20%5Bform%3D%22%D9%88%D8%AE%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>. په <strong>هغه</strong> <strong>تصویر</strong> کښې یو لوی مار بوا کنسټرېکټر ښودلې شوې وو ، چې یو ځناور یې په خولې کښې نيولې وو</td><td>هغه</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>Deixis=Remt<br><strong>Number=Sing</strong><br>PronType=Dem</details></td><td>تصویر</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_2%22%20%3B%20A%20%5Bform%3D%22%D9%87%D8%BA%D9%87%22%5D%20%3B%20B%20%5Bform%3D%22%D8%AA%D8%B5%D9%88%DB%8C%D8%B1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>مو دا وخت په <strong>یو</strong> مشکوک او پراسراره <strong>حال</strong> کې ژوند کوو او مستقبل مو تورتم سُرنګ دی .</td><td>یو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=یو<br>PronType=Ind</details></td><td>حال</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=حال<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_10%22%20%3B%20A%20%5Bform%3D%22%DB%8C%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%D8%AD%D8%A7%D9%84%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>. دا <strong>یو</strong> <strong>مار</strong> وو بوا کنسټريکټر چې یوه هاتي یې لواړ د مرئ نه تيرولو .</td><td>یو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=یو<br>PronType=Ind</details></td><td>مار</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=root<br>lemma=مار<br>Case=Nom<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_13%22%20%3B%20A%20%5Bform%3D%22%DB%8C%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%D9%85%D8%A7%D8%B1%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>نو ما به خپله ژونده یواځې تېرولو ، <strong>داسې</strong> <strong>څوک</strong> نه وو چې زه ورسره خبرې کولای شم تر څو چې شپږ کاله وړاندې زما الوتکه د صحرا په منځ کښې خراب شو .</td><td>داسې</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=داسې<br>PronType=Dem</details></td><td>څوک</td><td><details class='feat-details'><summary>features...</summary>upos=PRON<br>deprel=nsubj<br>lemma=څوک<br><strong>Number=Sing</strong><br>PronType=Int</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_35%22%20%3B%20A%20%5Bform%3D%22%D8%AF%D8%A7%D8%B3%DB%90%22%5D%20%3B%20B%20%5Bform%3D%22%DA%85%D9%88%DA%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>یا داسې ښکاري چې مو د <strong>داگھہ</strong> <strong>لفظونو</strong> مانا او اصطلاحات هېڅ نه یو پاتې .</td><td>داگھہ</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=داگھہ<br>Deixis=Prox<br><strong>Number=Sing</strong><br>PronType=Dem</details></td><td>لفظونو</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nmod<br>lemma=لفظ<br><strong>Number=Plur</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_7%22%20%3B%20A%20%5Bform%3D%22%D8%AF%D8%A7%DA%AF%DA%BE%DB%81%22%5D%20%3B%20B%20%5Bform%3D%22%D9%84%D9%81%D8%B8%D9%88%D9%86%D9%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>ھار کله چې یو قوم د <strong>داگھہ</strong> <strong>تحریکونو</strong> او لفظونو نه بېګانه شي ، د هغه قوم سیاسي ماضي ختمېږي .</td><td>داگھہ</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=داگھہ<br>Deixis=Prox<br><strong>Number=Sing</strong><br>PronType=Dem</details></td><td>تحریکونو</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obl<br>lemma=تحریک<br><strong>Number=Plur</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22coercive_discourse_8%22%20%3B%20A%20%5Bform%3D%22%D8%AF%D8%A7%DA%AF%DA%BE%DB%81%22%5D%20%3B%20B%20%5Bform%3D%22%D8%AA%D8%AD%D8%B1%DB%8C%DA%A9%D9%88%D9%86%D9%88%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>خو هغوې حيرانتيا سره اوویل : "ویره د څه نه ؟ دا خو د <strong>يو</strong> <strong>ټوپئ</strong> تصوير دې.</td><td>يو</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>PronType=Ind</details></td><td>ټوپئ</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=nmod<br><strong>Number=Sing</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_11%22%20%3B%20A%20%5Bform%3D%22%D9%8A%D9%88%22%5D%20%3B%20B%20%5Bform%3D%22%D9%BC%D9%88%D9%BE%D8%A6%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr><tr><td>اوس مشرانو نورې خبرې شروع کړې ، هغوی ویل چې زه <strong>دا</strong> قسم <strong>تصويرونه</strong> جوړول پرېږدم او جغرافیه ، تاریخ ، ریاضي او يا ګرامر باندې زياته توجه ورکم نو ډیره ښه به وي .</td><td>دا</td><td><details class='feat-details'><summary>features...</summary>upos=DET<br>deprel=det<br>lemma=دا<br>PronType=Dem</details></td><td>تصويرونه</td><td><details class='feat-details'><summary>features...</summary>upos=NOUN<br>deprel=obj<br>lemma=تصویر<br><strong>Number=Plur</strong></details></td><td><a href='https://universal.grew.fr/?corpus=UD_Pashto-Prince%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22petitprince_17%22%20%3B%20A%20%5Bform%3D%22%D8%AF%D8%A7%22%5D%20%3B%20B%20%5Bform%3D%22%D8%AA%D8%B5%D9%88%D9%8A%D8%B1%D9%88%D9%86%D9%87%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Pashto-Prince</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

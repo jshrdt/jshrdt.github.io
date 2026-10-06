@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"yes": 15}</script>
+  <div class="layout">
+    <div class="tb-nav"><span class="tb-nav-label">Trees</span><a class="tb-pill" href="../Czech.html">Pooled <small>68 rows &middot; 100.0%</small></a><a class="tb-pill" href="UD_Czech-CAC.html">CAC <small>18 rows &middot; 100.0%</small></a><a class="tb-pill muted" href="UD_Czech-CLTT.html">CLTT <small>0 rows &middot; single label</small></a><span class="tb-pill current muted">FicTree <small>15 rows &middot; single label</small></span><a class="tb-pill" href="UD_Czech-PDTC.html">PDTC <small>34 rows &middot; 100.0%</small></a><a class="tb-pill muted" href="UD_Czech-PUD.html">PUD <small>1 rows &middot; too few samples</small></a></div>
+    <div class="sidebar">
+      <div>
+        <a href="../index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>NUM-ADJ_Gender</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">Agree</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Czech</span></div><div class="meta-row"><span class="meta-key">Treebank</span><span class="meta-val">FicTree</span></div><div class="meta-row"><span class="meta-key">Status</span><span class="meta-val">single label</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">15</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">NUM-ADJ_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 15)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>ADJ_form</th><th>ADJ_features</th><th>NUM_form</th><th>NUM_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Na displeji jsem měla <strong>tři</strong> <strong>zmeškané</strong> hovory od Filipa .</td><td>zmeškané</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=zmeškaný<br>xpos=AAIP4----1A----<br>Animacy=Inan<br>Case=Acc<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>tři</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=tři<br>xpos=ClIP4----------<br>Animacy=Inan<br>Case=Acc<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-laskaneX029-s5%22%20%3B%20A%20%5Bform%3D%22zme%C5%A1kan%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22t%C5%99i%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Když sestra Alžběta ( okázale uražena ) odešla z inspekčního pokoje , odsouzena propíchnout <strong>dva</strong> <strong>stařičké</strong> zadky , řekl primář :</td><td>stařičké</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=stařičký<br>xpos=AAIP4----1A----<br>Animacy=Inan<br>Case=Acc<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>dva</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=dva<br>xpos=ClIP4----------<br>Animacy=Inan<br>Case=Acc<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas154-s1%22%20%3B%20A%20%5Bform%3D%22sta%C5%99i%C4%8Dk%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Nějaká jména znal z doslechu , dokonce i <strong>jednoho</strong> kdysi <strong>slavného</strong> fotbalistu operoval .</td><td>slavného</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=slavný<br>xpos=AAMS4----1A----<br>Animacy=Anim<br>Case=Acc<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td>jednoho</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClMS4----------<br>Animacy=Anim<br>Case=Acc<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-p_navrat119-s8%22%20%3B%20A%20%5Bform%3D%22slavn%C3%A9ho%22%5D%20%3B%20B%20%5Bform%3D%22jednoho%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Víte , to co se stalo na té magické hoře a u jejího úpatí , je vlastně <strong>jeden</strong> <strong>veliký</strong> příměr .</td><td>veliký</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=veliký<br>xpos=AAIS1----1A----<br>Animacy=Inan<br>Case=Nom<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td>jeden</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClIS1----------<br>Animacy=Inan<br>Case=Nom<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-andelvte038-s5%22%20%3B%20A%20%5Bform%3D%22velik%C3%BD%22%5D%20%3B%20B%20%5Bform%3D%22jeden%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Když se s ní na chvíli zastavil pod lucernou , zjistil , že se na něho dívají <strong>dvě</strong> <strong>zamilované</strong> oči .</td><td>zamilované</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=zamilovaný<br>xpos=AAFP1----1A----<br>Case=Nom<br>Degree=Pos<br><strong>Gender=Fem</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>dvě</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=dva<br>xpos=ClFP1----------<br>Case=Nom<br><strong>Gender=Fem</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas010-s5%22%20%3B%20A%20%5Bform%3D%22zamilovan%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22dv%C4%9B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Bylo to na sklonku léta , když <strong>jedné</strong> <strong>teplé</strong> noci přišel kolem desáté hodiny ke svému domu .</td><td>teplé</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=teplý<br>xpos=AAFS2----1A----<br>Case=Gen<br>Degree=Pos<br><strong>Gender=Fem</strong><br>Number=Sing<br>Polarity=Pos</details></td><td>jedné</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClFS2----------<br>Case=Gen<br><strong>Gender=Fem</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-vitamnlX130-s2%22%20%3B%20A%20%5Bform%3D%22tepl%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22jedn%C3%A9%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Když oslava skončila a s nadcházejícím víkendem se budova vyprázdnila , vyndal otec ze svého svazku <strong>jeden</strong> <strong>nenápadný</strong> klíček a řekl :</td><td>nenápadný</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=nápadný<br>xpos=AAIS4----1N----<br>Animacy=Inan<br>Case=Acc<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Sing<br>Polarity=Neg</details></td><td>jeden</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClIS4----------<br>Animacy=Inan<br>Case=Acc<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-vitamnlX206-s2%22%20%3B%20A%20%5Bform%3D%22nen%C3%A1padn%C3%BD%22%5D%20%3B%20B%20%5Bform%3D%22jeden%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>A zase vyrazil na svoji nekonečnou cestu <strong>jedním</strong> ponurým <strong>vinohradským</strong> činžákem .</td><td>vinohradským</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=vinohradský<br>xpos=AAIS7----1A----<br>Animacy=Inan<br>Case=Ins<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Sing<br>Polarity=Pos</details></td><td>jedním</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClIS7----------<br>Animacy=Inan<br>Case=Ins<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-andelvte043-s1%22%20%3B%20A%20%5Bform%3D%22vinohradsk%C3%BDm%22%5D%20%3B%20B%20%5Bform%3D%22jedn%C3%ADm%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Děti si hrály na pískovišti , děti z domů na <strong>jednom</strong> <strong>velikém</strong> sídlišti , a hrával si s nimi také malý černý chlapeček , syn z manželství Češky a Nigerijce , hrával si s nimi i malý cikánek , drobounký chlapeček s krásnýma a stále trochu vystrašenýma očima .</td><td>velikém</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=veliký<br>xpos=AANS6----1A----<br>Case=Loc<br>Degree=Pos<br><strong>Gender=Neut</strong><br>Number=Sing<br>Polarity=Pos</details></td><td>jednom</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=jeden<br>xpos=ClNS6----------<br>Case=Loc<br><strong>Gender=Neut</strong><br>NumForm=Word<br>NumType=Card<br>Number=Sing</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-andelvte236-s5%22%20%3B%20A%20%5Bform%3D%22velik%C3%A9m%22%5D%20%3B%20B%20%5Bform%3D%22jednom%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Tohle , co budu vyprávět , se stalo , když mému synovi byly <strong>necelé</strong> <strong>tři</strong> roky .</td><td>necelé</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=celý<br>xpos=AAIP1----1N----<br>Animacy=Inan<br>Case=Nom<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Neg</details></td><td>tři</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=tři<br>xpos=ClIP1----------<br>Animacy=Inan<br>Case=Nom<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-andelvte270-s1%22%20%3B%20A%20%5Bform%3D%22necel%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22t%C5%99i%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Byli mladší o <strong>celé</strong> <strong>čtyři</strong> roky a já měl fungovat jako jejich starší bratr a vychovatel .</td><td>celé</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=celý<br>xpos=AAIP4----1A----<br>Animacy=Inan<br>Case=Acc<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>čtyři</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=čtyři<br>xpos=ClIP4----------<br>Animacy=Inan<br>Case=Acc<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-form1XXX183-s2%22%20%3B%20A%20%5Bform%3D%22cel%C3%A9%22%5D%20%3B%20B%20%5Bform%3D%22%C4%8Dty%C5%99i%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Na loži byla proti sobě brzy <strong>dvě</strong> těla dokonale <strong>spojená</strong> , smyslná a sobě cizí .</td><td>spojená</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=spojený<br>xpos=AANP1----1A----<br>Case=Nom<br>Degree=Pos<br><strong>Gender=Neut</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>dvě</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=dva<br>xpos=ClNP1----------<br>Case=Nom<br><strong>Gender=Neut</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-ku_smlas105-s5%22%20%3B%20A%20%5Bform%3D%22spojen%C3%A1%22%5D%20%3B%20B%20%5Bform%3D%22dv%C4%9B%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Tři z nich už byli dospělí a v domě zůstali jen <strong>dva</strong> <strong>nejmladší</strong> kluci , Jiří a Jaroslav , takže na mě dokonce vybyla samostatná postel .</td><td>nejmladší</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=mladý<br>xpos=AAMP1----3A----<br>Animacy=Anim<br>Case=Nom<br>Degree=Sup<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>dva</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=dva<br>xpos=ClMP1----------<br>Animacy=Anim<br>Case=Nom<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-form1XXX060-s4%22%20%3B%20A%20%5Bform%3D%22nejmlad%C5%A1%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Zrovna jednu z nich přehrával <strong>třem</strong> nebo čtyřem <strong>dalším</strong> klukům a dvojici holek , z nichž jsem nikoho neznal .</td><td>dalším</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=další<br>xpos=AAMP3----1A----<br>Animacy=Anim<br>Case=Dat<br>Degree=Pos<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos</details></td><td>třem</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=tři<br>xpos=ClMP3----------<br>Animacy=Anim<br>Case=Dat<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-form1XXX208-s3%22%20%3B%20A%20%5Bform%3D%22dal%C5%A1%C3%ADm%22%5D%20%3B%20B%20%5Bform%3D%22t%C5%99em%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr><tr><td>Musel to být pohled , když reflektory vykrojily ze tmy záběr na kluka , který celý zkroucený visí nad <strong>dvěma</strong> vážně si <strong>povídajícími</strong> gentlemany .</td><td>povídajícími</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=povídající<br>xpos=AGMP7-----A----<br>Animacy=Anim<br>Aspect=Imp<br>Case=Ins<br><strong>Gender=Masc</strong><br>Number=Plur<br>Polarity=Pos<br>Tense=Pres<br>VerbForm=Part<br>Voice=Act</details></td><td>dvěma</td><td><details class='feat-details'><summary>features...</summary>upos=NUM<br>deprel=nummod<br>lemma=dva<br>xpos=ClMP7----------<br>Animacy=Anim<br>Case=Ins<br><strong>Gender=Masc</strong><br>NumForm=Word<br>NumType=Card<br>Number=Plur</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Czech-FicTree%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-form1XXX261-s7%22%20%3B%20A%20%5Bform%3D%22pov%C3%ADdaj%C3%ADc%C3%ADmi%22%5D%20%3B%20B%20%5Bform%3D%22dv%C4%9Bma%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Czech-FicTree</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

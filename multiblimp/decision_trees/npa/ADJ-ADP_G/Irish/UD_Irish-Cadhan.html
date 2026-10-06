@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>No decision tree to display</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f4; --surface: #ffffff; --surface-raised: #fafaf9;
+      --border: #e7e5e4; --border-subtle: #f0efee;
+      --text-primary: #1c1917; --text-secondary: #78716c; --text-tertiary: #a8a29e;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+      --border: #38332a; --border-subtle: #2a261e;
+      --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+      --accent: #6ea8ff; --accent-light: #1c2a42;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #16140f; --surface: #221f19; --surface-raised: #1c1a15;
+        --border: #38332a; --border-subtle: #2a261e;
+        --text-primary: #f0ede6; --text-secondary: #a39a8a; --text-tertiary: #766d5e;
+        --accent: #6ea8ff; --accent-light: #1c2a42;
+      }
+    }
+    body { font-family: "DM Sans", sans-serif; margin: 0; background: var(--bg); color: var(--text-primary); }
+    /* Stacked (top: title/caption/label/distribution card, bottom: example
+       items), mirroring the real tree pages' layout -- there, a compact
+       floating info-panel card sits above the (much larger) tree diagram
+       area, with the examples section below that. This placeholder has no
+       diagram to show, so the card just sits in normal flow at the top
+       instead of floating, but keeps the same "compact bordered/shadowed
+       card, not a full-width band" treatment -- that's what makes the
+       meta-rows' space-between layout read as compact key-value pairs
+       rather than stretching key and value apart across the full page. */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .sidebar {
+        max-width: 420px; margin: 1.5rem 1.5rem 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+    .overview-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 9px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--surface); color: var(--text-secondary);
+        font-family: "DM Sans", sans-serif; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; margin-bottom: 0.7rem;
+    }
+    .overview-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    h2 { font-size: 1.1rem; margin: 0; }
+    p  { color: var(--text-secondary); font-size: 0.875rem; margin: 0; line-height: 1.5; }
+    .label { display: inline-block; padding: 0.3rem 0.9rem;
+              background: var(--bg); border-radius: 999px; font-weight: 600;
+              font-size: 1rem; border: 1px solid var(--border);
+              margin: 0 0.4rem 0.4rem 0; }
+    .labels { display: flex; flex-wrap: wrap; }
+    .meta { font-size: 0.8rem; }
+    .meta-row { display: flex; justify-content: space-between; padding: 0.2rem 0;
+                 border-bottom: 1px solid var(--border); }
+    .meta-key { color: var(--text-tertiary); }
+    .meta-val { font-family: "JetBrains Mono", monospace; color: var(--text-secondary); }
+    .tb-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 1.5rem 1.5rem 0; }
+    .tb-nav-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+    .tb-pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 5px 12px; border-radius: 999px;
+                border: 1.5px solid var(--border); background: var(--surface-raised); color: var(--text-secondary);
+                font-size: 0.78rem; font-weight: 600; text-decoration: none; }
+    .tb-pill small { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 500; opacity: 0.75; }
+    a.tb-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .tb-pill.current { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .tb-pill.muted { border-style: dashed; opacity: 0.8; }
+    .tb-nav-extra { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .main { padding: 1.5rem; }
+    .main h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.05em; color: var(--text-secondary); margin: 0 0 0.75rem; }
+    .ex-table { border-collapse: collapse; width: 100%; font-size: 0.8rem;
+                 border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .ex-table th { background: var(--surface-raised); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 10px;
+                    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ex-table td { padding: 5px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .ex-table td:first-child { white-space: normal; word-break: break-word; max-width: none; }
+    .ex-table tbody tr:hover td { background: var(--accent-light); }
+    .ex-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .ex-table a:hover { text-decoration: underline; }
+    .ex-table tbody tr:last-child td { border-bottom: none; }
+    .ex-table td strong { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script type="application/json" id="label-distribution">{"unk": 18}</script>
+  <div class="layout">
+    <div class="tb-nav"><span class="tb-nav-label">Trees</span><a class="tb-pill" href="../Irish.html">Pooled <small>28 rows &middot; 66.7%</small></a><span class="tb-pill current muted">Cadhan <small>0 rows &middot; single label</small></span><a class="tb-pill" href="UD_Irish-IDT.html">IDT <small>28 rows &middot; 66.7%</small></a></div>
+    <div class="sidebar">
+      <div>
+        <a href="../index.html" class="overview-link" title="Back to the overview for this dependency relation">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Overview
+        </a>
+        <h2>Single label</h2>
+        <p>All training samples for <b>ADJ-ADP_Gender</b> share one agreement label — no decision tree was needed.</p>
+      </div>
+      <div class="labels"><div class="label">unknown</div></div>
+      <div class="meta"><div class="meta-row"><span class="meta-key">Language</span><span class="meta-val">Irish</span></div><div class="meta-row"><span class="meta-key">Treebank</span><span class="meta-val">Cadhan</span></div><div class="meta-row"><span class="meta-key">Status</span><span class="meta-val">single label</span></div><div class="meta-row"><span class="meta-key">Training samples</span><span class="meta-val">18</span></div><div class="meta-row"><span class="meta-key">Predictor</span><span class="meta-val">ADJ-ADP_Gender</span></div></div>
+    </div>
+    <div class="main">
+      <h3>Example items (sample of 18)</h3>
+      <table class='ex-table'><thead><tr><th>sen_str</th><th>ADJ_form</th><th>ADJ_features</th><th>ADP_form</th><th>ADP_features</th><th>treebank_link</th></tr></thead><tbody><tr><td>Ar tteacht abhaile dhom um cronughadh lae , bhí cuma feargach ar an speir , <strong>le</strong> neulta dubha dearga <strong>ruadha</strong> agus forruadha , le h-anfa aniar .</td><td>ruadha</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=rua<br>Case=Nom<br><strong>Gender=Masc</strong><br>NounType=NotSlender<br>Number=Plur</details></td><td>le</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=le</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cinlae-302%22%20%3B%20A%20%5Bform%3D%22ruadha%22%5D%20%3B%20B%20%5Bform%3D%22le%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Fuaras an dréimire Muire <strong>faoi</strong> blaith <strong>liathdhearg</strong> ann , agus an feoran curraigh 's na moinfhearthuighibh .</td><td>liathdhearg</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=liathdhearg<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>faoi</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=faoi</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cinlae-177%22%20%3B%20A%20%5Bform%3D%22liathdhearg%22%5D%20%3B%20B%20%5Bform%3D%22faoi%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>An treas mír , eadhon Meadhon Múmhan , is é a fad ó Chnámhchoill go Luachair Dheaghaidh , agus a tarsna ó Shliabh Eibhlinne <strong>go</strong> Sliabh <strong>Caoin</strong> .</td><td>caoin</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=caoin<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>go</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=go</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22forasfeasa-357%22%20%3B%20A%20%5Bform%3D%22Caoin%22%5D%20%3B%20B%20%5Bform%3D%22go%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Agus do lean buidhean mhór hé , tré gu bhfacadar a chomharthadha a rinne sé <strong>ar</strong> na dáoinibh <strong>éugcruaidhe</strong> .</td><td>éugcruaidhe</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=éagrua<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Plur</details></td><td>ar</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=ar</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22eoin-224%22%20%3B%20A%20%5Bform%3D%22%C3%A9ugcruaidhe%22%5D%20%3B%20B%20%5Bform%3D%22ar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Is iomadh bliaghain fada mín direach caitheas fein agus m' athair ag munadh sgoile san bothán so , agus ag bothan bala fidín eile rod beag níos mó ag crann Chill Dá Lua , agus <strong>ag</strong> tig <strong>maith</strong> sgoile a mBaile Ui Caoimh , laimh le Croc na Caruige ; acht foraoir !</td><td>maith</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=maith<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>ag</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=ag</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cinlae-120%22%20%3B%20A%20%5Bform%3D%22maith%22%5D%20%3B%20B%20%5Bform%3D%22ag%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Cóir a bhuidhe <strong>re</strong> Dia <strong>dil</strong> ar mbreith i n-aimsir creidimh is Crist dar leighes or ccoir 's gan adhradh dhuit-si a shaoghail .</td><td>dil</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=dil<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>re</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=le</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-10%22%20%3B%20A%20%5Bform%3D%22dil%22%5D%20%3B%20B%20%5Bform%3D%22re%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Guidhim Día riot a rún dil na léig fuil Chriost i n-aisgidh tuill <strong>re</strong> haithrighe ghéir <strong>ghloin</strong> do dhol isin síth shuthoin .</td><td>ghloin</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=glan<br>Case=Nom<br>Form=Len<br><strong>Gender=Fem</strong><br>Number=Sing</details></td><td>re</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=le</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-38%22%20%3B%20A%20%5Bform%3D%22ghloin%22%5D%20%3B%20B%20%5Bform%3D%22re%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Caithréim 's fearr <strong>fo</strong> ghréin <strong>ghloin</strong> do neoch dar ghein ar talmhoin 's as buaine dhó thall iar ndol buaidh ar dheamhan 's ar dhomhon .</td><td>ghloin</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=glan<br>Case=Nom<br>Form=Len<br><strong>Gender=Fem</strong><br>Number=Sing</details></td><td>fo</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=faoi</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-36%22%20%3B%20A%20%5Bform%3D%22ghloin%22%5D%20%3B%20B%20%5Bform%3D%22fo%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Cad chuige a rabh siad ghá choinneáil cuachta istigh <strong>'sa'</strong> bhocsa <strong>chumhang</strong> seo ?</td><td>chumhang</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=cúng<br>Case=Nom<br>Form=Len<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>'sa'</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=i<br>Number=Sing<br>PronType=Art</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22scairt-77%22%20%3B%20A%20%5Bform%3D%22chumhang%22%5D%20%3B%20B%20%5Bform%3D%22%27sa%27%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Nior seasadh an sonnadh gaoithe se acht cuig moimeint , agus is maith do muintir Callain nachar sheasadh , oir nior chualasa a leitheid eile ariamh , <strong>ach</strong> aon anfa <strong>amhain</strong> eile .</td><td>amhain</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=amháin<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>ach</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=ach</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22cinlae-408%22%20%3B%20A%20%5Bform%3D%22amhain%22%5D%20%3B%20B%20%5Bform%3D%22ach%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Do dhéanfá iarracht mé sgaradh <strong>ó'n</strong> bhfear beag <strong>buidhe</strong> , nach ndéanfá ?</td><td>buidhe</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=buí<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>ó'n</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=ó<br>Number=Sing<br>PronType=Art</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22deoraidheacht-944%22%20%3B%20A%20%5Bform%3D%22buidhe%22%5D%20%3B%20B%20%5Bform%3D%22%C3%B3%27n%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Guidhim Día riot a rún dil na léig fuil Chriost i n-aisgidh tuill re haithrighe ghéir ghloin do dhol <strong>isin</strong> síth <strong>shuthoin</strong> .</td><td>shuthoin</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=suthain<br>Case=Nom<br>Form=Len<br><strong>Gender=Fem</strong><br>Number=Sing</details></td><td>isin</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=i<br>Number=Sing<br>PronType=Art</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-38%22%20%3B%20A%20%5Bform%3D%22shuthoin%22%5D%20%3B%20B%20%5Bform%3D%22isin%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Agus as sí so an bheatha mharrthanach , gu mbeath a fhios aca tusa amháin do bheith : <strong>i</strong> do Dhía <strong>fhírinneach</strong> agus an té dho chuir tú uáit Iósa Críosd .</td><td>fhírinneach</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=fírinneach<br>Case=Nom<br>Form=Len<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>i</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=i</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22eoin-768%22%20%3B%20A%20%5Bform%3D%22fh%C3%ADrinneach%22%5D%20%3B%20B%20%5Bform%3D%22i%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Choimhéad sé an seans <strong>leis</strong> an rása <strong>deireannach</strong> a thabhairt .</td><td>deireannach</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=deireanach<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>leis</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=le</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22scairt-655%22%20%3B%20A%20%5Bform%3D%22deireannach%22%5D%20%3B%20B%20%5Bform%3D%22leis%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Mo fhreagradh air ann so gurab é am fa'r thionnsgnadar cliar Éireann an droch-nós soin , i ndiaidh an t-ochtmhadh Henrí do mhalairt a chreidimh , agus , an tan soin féin agus ó sin i leith , ní chleachtadh an droch-nós soin acht an chuid díobh do lean d'á n-ainmhianaibh féin , agus do dhiult <strong>do</strong> na huachtaránaibh <strong>dlightheacha</strong> do bhí ós a gcionn .</td><td>dlightheacha</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=dleathach<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Plur</details></td><td>do</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=do</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22forasfeasa-137%22%20%3B%20A%20%5Bform%3D%22dlightheacha%22%5D%20%3B%20B%20%5Bform%3D%22do%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Do chonnac na póilíní ag brúghadh isteach agus ag breith ar láimh <strong>ar</strong> an bhfear <strong>mór</strong> .</td><td>mór</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=mór<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Sing</details></td><td>ar</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=ar</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22peig-2197%22%20%3B%20A%20%5Bform%3D%22m%C3%B3r%22%5D%20%3B%20B%20%5Bform%3D%22ar%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>Re linn síothchána is socra fuairais beatha ionmholta iar bplanntughadh i t thír thall <strong>d'</strong> ainbhfine <strong>aintréin</strong> eachtrann .</td><td>aintréin</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=aintréan<br>Case=Dat<br><strong>Gender=Fem</strong><br>Number=Sing</details></td><td>d'</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=de</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-23%22%20%3B%20A%20%5Bform%3D%22aintr%C3%A9in%22%5D%20%3B%20B%20%5Bform%3D%22d%27%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr><tr><td>An treas easbaidh , do bhí sé uaillmhianach , agus d'á réir sin , do bhí súil aige le meudughadh d' fhaghbháil ó'n droing lér' gríosadh é le scríobhadh go holc ar Éirinn : agus fós , re linn bheith 'na shagart 'na dhiaidh sin dó , do gheall gairm tar ais do dhéanamh ar mhórán <strong>do</strong> na neithibh <strong>maslaightheacha</strong> do scríobh ar Éirinn , agus do chluinim go bhfuil sé i gclódh anois re n-a thaisbéanadh i n-Éirinn .</td><td>maslaightheacha</td><td><details class='feat-details'><summary>features...</summary>upos=ADJ<br>deprel=amod<br>lemma=maslach<br>Case=Nom<br><strong>Gender=Masc</strong><br>Number=Plur</details></td><td>do</td><td><details class='feat-details'><summary>features...</summary>upos=ADP<br>deprel=case<br>lemma=de</details></td><td><a href='https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22forasfeasa-97%22%20%3B%20A%20%5Bform%3D%22maslaightheacha%22%5D%20%3B%20B%20%5Bform%3D%22do%22%5D%20%20%7D' target='_blank' rel='noopener'>UD_Irish-Cadhan</a></td></tr></tbody></table>
+    </div>
+  </div>
+  <script>
+    // Feature lists for different roles in the same example row (e.g. subject
+    // vs. verb) are separate <details> elements. Link them per-row so that
+    // opening/closing one toggles the others in that row to match.
+    document.querySelectorAll(".ex-table tr").forEach(tr => {
+      const detailsEls = tr.querySelectorAll("details.feat-details");
+      if (detailsEls.length < 2) return;
+      detailsEls.forEach(d => {
+        d.addEventListener("toggle", () => {
+          detailsEls.forEach(other => {
+            if (other !== d) other.open = d.open;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
