@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Spanish \u00b7 GSD", "languageName": "Spanish", "accuracy": "99.2%", "testAccuracy": "98.7%", "testN": 300, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "2,694", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "99.2%", "trainAccuracy": "99.2%", "treebank": "GSD", "nav": {"pooledAcc": 0.9912170639899623, "pooledTestN": 797, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 7957, "pooledUnkRows": 5288, "pooledHref": "../Spanish.html", "pooledCurrent": false, "items": [{"name": "AnCora", "rows": 4605, "unkRows": 2905, "status": "ok", "excluded": false, "reason": null, "acc": 0.9934924078091106, "pooledAcc": 0.9934924078091106, "delta": 0.0, "diverges": false, "href": "UD_Spanish-AnCora.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GSD", "rows": 2994, "unkRows": 2339, "status": "ok", "excluded": false, "reason": null, "acc": 0.9866666666666667, "pooledAcc": 0.9866666666666667, "delta": 0.0, "diverges": false, "href": "UD_Spanish-GSD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "PUD", "rows": 358, "unkRows": 44, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Spanish-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 2673, "color": "var(--yes)"}, {"cls": "no", "cnt": 21, "color": "var(--no)"}, {"cls": "unk", "cnt": 2339, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 2694, "H": 0.0671, "acc": 0.992, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2673, "color": "var(--yes)"}, {"cls": "no", "cnt": 21, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Ya en la plataforma una <strong>serie</strong> de vallas y pantallas <strong>antiruido</strong> gu\u00edan a los pasajeros hasta su avi\u00f3n .", "verb": "serie", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=serie", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "antiruido", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=antiruido", "<b>Gender=Masc</b>", "Number=Sing", "VerbForm=Part"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s132%22%20%3B%20A%20%5Bform%3D%22antiruido%22%5D%20%3B%20B%20%5Bform%3D%22serie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El Royal Indian Open es un torneo organizado por <strong>mujeres</strong> profesionales <strong>jugadores</strong> de tenis , jugado en canchas duras a el aire libre .", "verb": "mujeres", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=mujer", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "jugadores", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=jugador", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s389%22%20%3B%20A%20%5Bform%3D%22jugadores%22%5D%20%3B%20B%20%5Bform%3D%22mujeres%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El escudo de <strong>Santa</strong> <strong>Fe</strong> de el Panad\u00e9s es un escudo acantonado , de arg\u00e9n , una rejilla de sable con el mango en la punta ;", "verb": "Fe", "verbFeats": ["upos=PROPN", "deprel=nmod", "lemma=Fe", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "santa", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=santo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s120%22%20%3B%20A%20%5Bform%3D%22Santa%22%5D%20%3B%20B%20%5Bform%3D%22Fe%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La agencia asegura que la UE ya est\u00e1 dando pasos para reforzar los sistemas de <strong>supervisi\u00f3n</strong> <strong>comunitarios</strong> y la estructura de las instituciones financieras , as\u00ed como para lograr una mayor coordinaci\u00f3n entre los socios europeos y destaca especialmente la creaci\u00f3n de el Mecanismo Europeo de Estabilidad a partir de 2013 .", "verb": "supervisi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=supervisi\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "comunitarios", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=comunitario", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s267%22%20%3B%20A%20%5Bform%3D%22comunitarios%22%5D%20%3B%20B%20%5Bform%3D%22supervisi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Comienza sobre el sector comprendido de el casco c\u00e9ntrico , que comprende la Avenida San Mart\u00edn , Calle 25 de Mayo , Almirante Brown , Avenida Costanera , donde se visita el accidente geogr\u00e1fico la \" caleta \" , por su significado hist\u00f3rico , haciendo referencia la llegada de el buque Guardia Nacional , la construcci\u00f3n de la l\u00ednea telegr\u00e1fica , el asentamiento de los primeros pobladores , en su <strong>mayor\u00eda</strong> <strong>europeos</strong> y una descripci\u00f3n de las viviendas que permanecen intactas en ese lugar .", "verb": "mayor\u00eda", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=mayor\u00eda", "<b>Gender=Fem</b>", "Number=Sing", "Person=3"], "nsubj": "europeos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=europeo", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s113%22%20%3B%20A%20%5Bform%3D%22europeos%22%5D%20%3B%20B%20%5Bform%3D%22mayor%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Los escultores encontraron en los restos art\u00edsticos y en los <strong>descubrimientos</strong> de yacimientos de esa \u00e9poca <strong>pasada</strong> la inspiraci\u00f3n perfecta para sus obras .", "verb": "descubrimientos", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=descubrimiento", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "pasada", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=pasado", "<b>Gender=Fem</b>", "Number=Sing", "VerbForm=Part"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s470%22%20%3B%20A%20%5Bform%3D%22pasada%22%5D%20%3B%20B%20%5Bform%3D%22descubrimientos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Por estos m\u00e9ritos , a los 23 a\u00f1os fue elegido acad\u00e9mico de n\u00famero de la Real Academia Hispano Americana de C\u00e1diz , en la que ley\u00f3 un discurso de ingreso sobre La <strong>poes\u00eda</strong> <strong>hispano</strong> - americana .", "verb": "poes\u00eda", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=poes\u00eda", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "hispano", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=hispano", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-001-s137%22%20%3B%20A%20%5Bform%3D%22hispano%22%5D%20%3B%20B%20%5Bform%3D%22poes%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "S\u00f3lo pod\u00eda mover m\u00ednimamente el <strong>brazo</strong> y la pierna <strong>izquierdos</strong> y no pod\u00eda hablar .", "verb": "brazo", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=brazo", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "izquierdos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=izquierdo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-025-s166%22%20%3B%20A%20%5Bform%3D%22izquierdos%22%5D%20%3B%20B%20%5Bform%3D%22brazo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En 1997 Toyota lanz\u00f3 a el mercado la <strong>primer</strong> <strong>generaci\u00f3n</strong> de su minivan Sienna reemplazando a la Toyota Previa .", "verb": "generaci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=generaci\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "primer", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=primero", "<b>Gender=Masc</b>", "NumType=Ord", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s420%22%20%3B%20A%20%5Bform%3D%22primer%22%5D%20%3B%20B%20%5Bform%3D%22generaci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En <strong>marchas</strong> por <strong>separado</strong> , el Consejo Nacional de Trabajadores Organizados ( CONATO ) y la Confederaci\u00f3n Nacional Unitaria Sindical Independiente ( CONUSI ) protestar\u00e1n en Panam\u00e1 contra las pol\u00edticas antipopulares de el Ejecutivo , a la vez que en Guatemala los gremios pedir\u00e1n a el Gobierno reversar un anunciado incremento a el precio de la energ\u00eda el\u00e9ctrica .", "verb": "marchas", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=marcha", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "separado", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=separado", "<b>Gender=Masc</b>", "Number=Sing", "VerbForm=Part"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-004-s337%22%20%3B%20A%20%5Bform%3D%22separado%22%5D%20%3B%20B%20%5Bform%3D%22marchas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Su muerte provoc\u00f3 la incorporaci\u00f3n de <strong>nuevos</strong> <strong>reclutas</strong> a las filas de el IRA y un resurgir de la actividad paramilitar de la organizaci\u00f3n .", "verb": "reclutas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=recluta", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "nuevos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nuevo", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-007-s152%22%20%3B%20A%20%5Bform%3D%22nuevos%22%5D%20%3B%20B%20%5Bform%3D%22reclutas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En <strong>definitiva</strong> , es su <strong>padre</strong> y sufri\u00f3 mucho cuando estuvo preso por lo de la muerte de la chica en Mar de el Plata .", "verb": "padre", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=padre", "<b>Gender=Masc</b>", "Number=Sing", "Person=3"], "nsubj": "definitiva", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=definitivo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-009-s192%22%20%3B%20A%20%5Bform%3D%22definitiva%22%5D%20%3B%20B%20%5Bform%3D%22padre%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "De igual manera , varios son los canales de <strong>televisi\u00f3n</strong> <strong>venezolanos</strong> cuya se\u00f1al alcanza suelo arubano .", "verb": "televisi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=televisi\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "venezolanos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=venezolano", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s327%22%20%3B%20A%20%5Bform%3D%22venezolanos%22%5D%20%3B%20B%20%5Bform%3D%22televisi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El esp\u00e9cimen que describi\u00f3 Latham fue un macho con la muda a la mitad , con una mezcla de <strong>plumas</strong> <strong>marrones</strong> y negras y la espalda naranja .", "verb": "plumas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pluma", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "marrones", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=marr\u00f3n", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-011-s248%22%20%3B%20A%20%5Bform%3D%22marrones%22%5D%20%3B%20B%20%5Bform%3D%22plumas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Con el elemento de el agua , tambi\u00e9n representativo de la Luna , evoca el mito de el nacimiento de Huitzilopochtli , quien naci\u00f3 armado de el vientre de su madre , y mata a su <strong>hermana</strong> Coyolxauhqui ( diosa de la Luna ) y a sus cuatrocientos <strong>hermanos</strong> .", "verb": "hermana", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=hermana", "<b>Gender=Fem</b>", "Number=Sing", "Person=3"], "nsubj": "hermanos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=hermano", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s367%22%20%3B%20A%20%5Bform%3D%22hermanos%22%5D%20%3B%20B%20%5Bform%3D%22hermana%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Enciclomedia : Una <strong>aplicaci\u00f3n</strong> <strong>espec\u00edfica</strong> , el creador de el sistema present\u00f3 su examen el 29 de mayo de 2001 y obtuvo la menci\u00f3n honor\u00edfica en su titulaci\u00f3n .", "verb": "aplicaci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=aplicaci\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "espec\u00edfica", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=espec\u00edfico", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-018-s410%22%20%3B%20A%20%5Bform%3D%22espec%C3%ADfica%22%5D%20%3B%20B%20%5Bform%3D%22aplicaci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La canci\u00f3n se gan\u00f3 la infamia de ser la <strong>canci\u00f3n</strong> <strong>h\u00fangara</strong> de el suicidio , ya que , seg\u00fan una leyenda urbana , esta canci\u00f3n inspir\u00f3 una serie de suicidios reales de personas que la escuchaban ( aunque hay que aclarar no hay ning\u00fan dato que avale la citada leyenda ni referencia alguna en prensa o cualquier otra publicaci\u00f3n de la \u00e9poca ) .", "verb": "canci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=canci\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "h\u00fangara", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=h\u00fangar", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-001-s240%22%20%3B%20A%20%5Bform%3D%22h%C3%BAngara%22%5D%20%3B%20B%20%5Bform%3D%22canci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Como la <strong>guerra</strong> <strong>a\u00e9rea</strong> fue adquiriendo cada vez en m\u00e1s importancia , tambi\u00e9n lo hizo el control de el espacio a\u00e9reo .", "verb": "guerra", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=guerra", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "a\u00e9rea", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=a\u00e9reo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-023-s396%22%20%3B%20A%20%5Bform%3D%22a%C3%A9rea%22%5D%20%3B%20B%20%5Bform%3D%22guerra%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El <strong>segundo</strong> <strong>cuerpo</strong> presenta columnas salom\u00f3nicas decoradas , en total seis , las dos centrales y separadas por la ventana de el coro , se ven interrumpidas las cuatro calles restantes en sus nichos contienen im\u00e1genes de santos .", "verb": "cuerpo", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cuerpo", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "segundo", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=segundo", "<b>Gender=Masc</b>", "NumType=Ord", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-010-s480%22%20%3B%20A%20%5Bform%3D%22segundo%22%5D%20%3B%20B%20%5Bform%3D%22cuerpo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La serie contaba la historia de \u00c1ngel , un <strong>hombre</strong> <strong>separado</strong> que vive con su segunda mujer y sus hijos .", "verb": "hombre", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=hombre", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "separado", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=separado", "<b>Gender=Masc</b>", "Number=Sing", "VerbForm=Part"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-017-s448%22%20%3B%20A%20%5Bform%3D%22separado%22%5D%20%3B%20B%20%5Bform%3D%22hombre%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El prometio es un elemento qu\u00edmico de la tabla peri\u00f3dica cuyo s\u00edmbolo es Pm y su <strong>n\u00famero</strong> <strong>at\u00f3mico</strong> es 61 .", "verb": "n\u00famero", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=n\u00famero", "<b>Gender=Masc</b>", "Number=Sing", "Person=3"], "nsubj": "at\u00f3mico", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=at\u00f3mico", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s343%22%20%3B%20A%20%5Bform%3D%22at%C3%B3mico%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%BAmero%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Winter solicita a una <strong>peque\u00f1a</strong> <strong>bi\u00f3grafa</strong> , Margaret Lea , que realice un trabajo sobre su vida y le desvelar\u00e1 el secreto de la familia Angelfield .", "verb": "bi\u00f3grafa", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=bi\u00f3grafa", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "peque\u00f1a", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=peque\u00f1o", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-005-s50%22%20%3B%20A%20%5Bform%3D%22peque%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22bi%C3%B3grafa%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Junto a Yuan T. Lee fue uno de los <strong>primeros</strong> <strong>cient\u00edficos</strong> en adoptar la t\u00e9cnica de los haces moleculares con fines de investigaci\u00f3n qu\u00edmica .", "verb": "cient\u00edficos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=cient\u00edfico", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "primeros", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=primero", "<b>Gender=Masc</b>", "NumType=Ord", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s136%22%20%3B%20A%20%5Bform%3D%22primeros%22%5D%20%3B%20B%20%5Bform%3D%22cient%C3%ADficos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Las razones son varias : la reputaci\u00f3n alcanzada por el artista en los a\u00f1os anteriores , el prestigio y amistad con un grupo de mecenas locales que le proporcionaron con regularidad encargos importantes y tambi\u00e9n , desde 1600 , la participaci\u00f3n en el taller de su hijo Jorge Manuel , que consigui\u00f3 encargos en los <strong>pueblos</strong> <strong>cercanos</strong> a Toledo .", "verb": "pueblos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pueblo", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "cercanos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cercano", "<b>Gender=Masc</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-013-s66%22%20%3B%20A%20%5Bform%3D%22cercanos%22%5D%20%3B%20B%20%5Bform%3D%22pueblos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El eje buco - oral es rectil\u00edneo , y la <strong>cavidad</strong> <strong>far\u00edngea</strong> y cloacal ocupa casi toda la parte axial de el cuerpo ;", "verb": "cavidad", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cavidad", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "far\u00edngea", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=far\u00edngeo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-001-s340%22%20%3B%20A%20%5Bform%3D%22far%C3%ADngea%22%5D%20%3B%20B%20%5Bform%3D%22cavidad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "<strong>Nuevas</strong> <strong>Ediciones</strong> de Bolsillo , Madrid , 1005 .", "verb": "Ediciones", "verbFeats": ["upos=PROPN", "deprel=root", "lemma=Edici\u00f3n", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "nuevas", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nuevo", "<b>Gender=Fem</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s232%22%20%3B%20A%20%5Bform%3D%22Nuevas%22%5D%20%3B%20B%20%5Bform%3D%22Ediciones%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Poco despu\u00e9s de haberse introducido el <strong>primer</strong> <strong>tema</strong> , el estudio progresa con rapidez hacia un segundo tema , de breve duraci\u00f3n .", "verb": "tema", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=tema", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "primer", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=primero", "<b>Gender=Masc</b>", "NumType=Ord", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-011-s271%22%20%3B%20A%20%5Bform%3D%22primer%22%5D%20%3B%20B%20%5Bform%3D%22tema%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En aquella reuni\u00f3n , los nobles catalanes le concedieron su apoyo a el rey , as\u00ed como ayuda econ\u00f3mica y militar mediante el aporte de un n\u00famero determinado de caballeros y <strong>uno</strong> <strong>indeterminado</strong> de peones .", "verb": "uno", "verbFeats": ["upos=PRON", "deprel=conj", "lemma=uno", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Ind"], "nsubj": "indeterminado", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=indeterminado", "<b>Gender=Masc</b>", "Number=Sing", "VerbForm=Part"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-003-s63%22%20%3B%20A%20%5Bform%3D%22indeterminado%22%5D%20%3B%20B%20%5Bform%3D%22uno%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El n\u00facleo de el pueblo est\u00e1 a el pie de unas pe\u00f1as sobre una de las cu\u00e1les , el cerro Castillo , se yerguen los vestigios de un castillo - atalaya \u00e1rabe de vigilancia para dar temprano aviso por medio de se\u00f1ales visuales a la guarnici\u00f3n de Medinaceli de cualquier avistamiento en los <strong>valles</strong> <strong>cercanos</strong> .", "verb": "valles", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=valle", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "cercanos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cercano", "<b>Gender=Masc</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s84%22%20%3B%20A%20%5Bform%3D%22cercanos%22%5D%20%3B%20B%20%5Bform%3D%22valles%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "A. Bank Clothiers , Seldom Blues , y un cine - el RenCen ha empezado a redefinir Detroit una vez m\u00e1s para una <strong>nueva</strong> <strong>generaci\u00f3n</strong> .", "verb": "generaci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=generaci\u00f3n", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "nueva", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nuevo", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-023-s169%22%20%3B%20A%20%5Bform%3D%22nueva%22%5D%20%3B%20B%20%5Bform%3D%22generaci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Spanish \u00b7 GSD", "languageName": "Spanish", "accuracy": "94.8%", "testAccuracy": "95.2%", "testN": 397, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "3,571", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "94.3%", "trainAccuracy": "94.8%", "treebank": "GSD", "nav": {"pooledAcc": 0.954228855721393, "pooledTestN": 1005, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 10037, "pooledUnkRows": 3542, "pooledHref": "../Spanish.html", "pooledCurrent": false, "items": [{"name": "AnCora", "rows": 5711, "unkRows": 1945, "status": "ok", "excluded": false, "reason": null, "acc": 0.9545454545454546, "pooledAcc": 0.9527972027972028, "delta": 0.0017482517482517723, "diverges": false, "href": "UD_Spanish-AnCora.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 358, "unkRows": 45, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Spanish-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GSD", "rows": 3968, "unkRows": 1552, "status": "ok", "excluded": false, "reason": null, "acc": 0.9521410579345088, "pooledAcc": 0.9521410579345088, "delta": 0.0, "diverges": false, "href": "UD_Spanish-GSD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 3369, "color": "var(--yes)"}, {"cls": "no", "cnt": 202, "color": "var(--no)"}, {"cls": "unk", "cnt": 1552, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 3539, "H": 0.287, "acc": 0.9499, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 3362, "color": "var(--yes)"}, {"cls": "no", "cnt": 177, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 32, "H": 0.7732, "acc": 0.7727, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 7, "color": "var(--yes)"}, {"cls": "no", "cnt": 25, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 3571, "H": 0.3142, "acc": 0.9433, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 3369, "color": "var(--yes)"}, {"cls": "no", "cnt": 202, "color": "var(--no)"}], "rule": "ADJ.lemma = total", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "La escritora catalana Aurora Bertrana escribi\u00f3 un <strong>cuento<\/strong> <strong>rom\u00e1ntico<\/strong> y de aventuras sobre Hikueru : \u00ab Tekao \u00bb , incluido en \u00ab Peikea , princesa can\u00edbal i altres contes oce\u00e0nics \u00bb ( 1934 ) , y ampliado posteriormente como novela corta en \u00ab Ariatea \u00bb ( 1960 ) .", "verb": "cuento", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=contar", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "rom\u00e1ntico", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rom\u00e1ntico", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "rom\u00e1ntico"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-010-s261%22%20%3B%20A%20%5Bform%3D%22rom%C3%A1ntico%22%5D%20%3B%20B%20%5Bform%3D%22cuento%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Se encuentra en una <strong>f\u00e9rtil<\/strong> <strong>regi\u00f3n<\/strong> a las orillas de los r\u00edos Labe y Oh\u0159e .", "verb": "regi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=regi\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "f\u00e9rtil", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00e9rtil", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "f\u00e9rtil"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-009-s71%22%20%3B%20A%20%5Bform%3D%22f%C3%A9rtil%22%5D%20%3B%20B%20%5Bform%3D%22regi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Everybody Hurts fue la <strong>canci\u00f3n<\/strong> <strong>elegida<\/strong> , si ya era bonita , Coldplay le ha dado su toque tan personal que la hace m\u00e1s bonita si cabe .", "verb": "canci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=canci\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "elegida", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=elegido", "<b>Gender=Fem<\/b>", "Number=Sing", "VerbForm=Part"], "label": "yes", "route": {"0": "elegido"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-027-s30%22%20%3B%20A%20%5Bform%3D%22elegida%22%5D%20%3B%20B%20%5Bform%3D%22canci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Kirsten empez\u00f3 a actuar cuando iba a la escuela y ha recorrido un <strong>largo<\/strong> <strong>camino<\/strong> desde entonces .", "verb": "camino", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=camino", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "largo", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=largo", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "largo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s351%22%20%3B%20A%20%5Bform%3D%22largo%22%5D%20%3B%20B%20%5Bform%3D%22camino%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Se la utiliza como ornamental en muchas partes de el mundo por sus elegantes flores de <strong>color<\/strong> <strong>blanco<\/strong> y sus t\u00e9palos recurvados con m\u00e1rgenes ondulados .", "verb": "color", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=color", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "blanco", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=blanco", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "blanco"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s276%22%20%3B%20A%20%5Bform%3D%22blanco%22%5D%20%3B%20B%20%5Bform%3D%22color%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Finalmente solamente conservaba algunas funciones , pero significativas , parte de el <strong>Poder<\/strong> <strong>legislativo<\/strong> y el mando de el Ej\u00e9rcito .", "verb": "poder", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=poder", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "legislativo", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=legislativo", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "legislativo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s268%22%20%3B%20A%20%5Bform%3D%22legislativo%22%5D%20%3B%20B%20%5Bform%3D%22Poder%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Est\u00e1 escrito en romance octosil\u00e1bico , con el prop\u00f3sito confeso de hacer los m\u00e1s agradables a el gusto popular y m\u00e1s f\u00e1ciles de ser recordados , en sus propias palabras \" cantables para los labradores , para los artesanos , para las mujeres , en los campos , en los talleres y hasta en las <strong>plazas<\/strong> <strong>p\u00fablicas<\/strong> \" .", "verb": "plazas", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=plaza", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "p\u00fablicas", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=p\u00fablico", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "p\u00fablico"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s318%22%20%3B%20A%20%5Bform%3D%22p%C3%BAblicas%22%5D%20%3B%20B%20%5Bform%3D%22plazas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La Argentina est\u00e1 sumida en la fase m\u00e1s ruin de aquello que denominamos la <strong>vieja<\/strong> <strong>pol\u00edtica<\/strong> .", "verb": "pol\u00edtica", "verbFeats": ["upos=NOUN", "deprel=acl", "lemma=pol\u00edtica", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "vieja", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=viejo", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "viejo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s93%22%20%3B%20A%20%5Bform%3D%22vieja%22%5D%20%3B%20B%20%5Bform%3D%22pol%C3%ADtica%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Sarmiento trajo adem\u00e1s a la zona , proveniente de uno de sus tantos viajes a Estados Unidos , las <strong>primeras<\/strong> <strong>semillas<\/strong> de pecanes , hoy la famosa nuez de el delta que crece en todas las islas .", "verb": "semillas", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=semilla", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "primeras", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=primero", "<b>Gender=Fem<\/b>", "NumType=Ord", "Number=Plur"], "label": "yes", "route": {"0": "primero"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s381%22%20%3B%20A%20%5Bform%3D%22primeras%22%5D%20%3B%20B%20%5Bform%3D%22semillas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Al final de este siglo se situar\u00edan tropas castellanas en <strong>distintos<\/strong> <strong>puntos<\/strong> , que controlaban en la pr\u00e1ctica el reino y que fueron expulsadas a el comienzo de el siglo XVI .", "verb": "puntos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=punto", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "distintos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=distinto", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "distinto"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s131%22%20%3B%20A%20%5Bform%3D%22distintos%22%5D%20%3B%20B%20%5Bform%3D%22puntos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En 1569 acompa\u00f1\u00f3 a Mart\u00edn de Goiti en la conquista de Manila , donde lucharon varias batalles contra los gobernantes musulmanes y destruyeron el <strong>reino<\/strong> <strong>musulm\u00e1n<\/strong> en 1570-1571 .", "verb": "reino", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=reino", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "musulm\u00e1n", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=musulm\u00e1n", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "musulm\u00e1n"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s101%22%20%3B%20A%20%5Bform%3D%22musulm%C3%A1n%22%5D%20%3B%20B%20%5Bform%3D%22reino%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Aparte de lo anterior , era muy frecuente la aparici\u00f3n de <strong>cobre<\/strong> <strong>nativo<\/strong> , es decir , que se encuentra en estado met\u00e1lico natural ;", "verb": "cobre", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=cobre", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "nativo", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nativo", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "nativo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-022-s434%22%20%3B%20A%20%5Bform%3D%22nativo%22%5D%20%3B%20B%20%5Bform%3D%22cobre%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Cuando alcanzan dos a cuatro meses de edad se dispersan a las <strong>colonias<\/strong> <strong>cercanas<\/strong> .", "verb": "colonias", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=colonia", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "cercanas", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cercano", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "cercano"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-012-s97%22%20%3B%20A%20%5Bform%3D%22cercanas%22%5D%20%3B%20B%20%5Bform%3D%22colonias%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La Diputaci\u00f3n de Valencia ha decidido dar el salto a las redes sociales y cuenta , a partir de hoy , con un blog y un perfil propio en las principales <strong>redes<\/strong> <strong>sociales<\/strong> , con los que pretende establecer una comunicaci\u00f3n directa con los ciudadanos .", "verb": "redes", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=red", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "sociales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=social", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "social"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-029-s119%22%20%3B%20A%20%5Bform%3D%22sociales%22%5D%20%3B%20B%20%5Bform%3D%22redes%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En los \u00faltimos a\u00f1os , pa\u00edses como Estados Unidos han experimentado una expansi\u00f3n notable , aunque en <strong>niveles<\/strong> muy <strong>bajos<\/strong> , de la educaci\u00f3n separada en las escuelas p\u00fablicas ( 392 escuelas en todo el pa\u00eds para el curso 2008-2009 ) .", "verb": "niveles", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=nivel", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "bajos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=bajo", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "bajo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s416%22%20%3B%20A%20%5Bform%3D%22bajos%22%5D%20%3B%20B%20%5Bform%3D%22niveles%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El Redwood Road ( RE 68 ) , una carretera de seis carriles , corre trav\u00e9s de el <strong>parte<\/strong> <strong>oriental<\/strong> de la ciudad .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=parte", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "oriental", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=oriental", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "oriental"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-013-s7%22%20%3B%20A%20%5Bform%3D%22oriental%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La agencia asegura que la UE ya est\u00e1 dando pasos para reforzar los sistemas de <strong>supervisi\u00f3n<\/strong> <strong>comunitarios<\/strong> y la estructura de las instituciones financieras , as\u00ed como para lograr una mayor coordinaci\u00f3n entre los socios europeos y destaca especialmente la creaci\u00f3n de el Mecanismo Europeo de Estabilidad a partir de 2013 .", "verb": "supervisi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=supervisi\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "comunitarios", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=comunitario", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "comunitario"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s267%22%20%3B%20A%20%5Bform%3D%22comunitarios%22%5D%20%3B%20B%20%5Bform%3D%22supervisi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Con una agenda que incluy\u00eda entre ellos algunos de los <strong>mayores<\/strong> <strong>festivales<\/strong> y giras de el a\u00f1o .", "verb": "festivales", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=festival", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "mayores", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mayor", "Degree=Cmp", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "mayor"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s289%22%20%3B%20A%20%5Bform%3D%22mayores%22%5D%20%3B%20B%20%5Bform%3D%22festivales%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En <strong>marchas<\/strong> por <strong>separado<\/strong> , el Consejo Nacional de Trabajadores Organizados ( CONATO ) y la Confederaci\u00f3n Nacional Unitaria Sindical Independiente ( CONUSI ) protestar\u00e1n en Panam\u00e1 contra las pol\u00edticas antipopulares de el Ejecutivo , a la vez que en Guatemala los gremios pedir\u00e1n a el Gobierno reversar un anunciado incremento a el precio de la energ\u00eda el\u00e9ctrica .", "verb": "marchas", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=marcha", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "separado", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=separado", "<b>Gender=Masc<\/b>", "Number=Sing", "VerbForm=Part"], "label": "no", "route": {"0": "separado"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-004-s337%22%20%3B%20A%20%5Bform%3D%22separado%22%5D%20%3B%20B%20%5Bform%3D%22marchas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En Teor\u00eda de grafos , la coloraci\u00f3n de grafos es un <strong>caso<\/strong> <strong>especial<\/strong> de etiquetado de grafos ;", "verb": "caso", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=caso", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "especial", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=especial", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "especial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-005-s206%22%20%3B%20A%20%5Bform%3D%22especial%22%5D%20%3B%20B%20%5Bform%3D%22caso%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "\" D2B \" fue una de las <strong>bandas<\/strong> m\u00e1s <strong>populares<\/strong> en Tailandia .", "verb": "bandas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=banda", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "populares", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=popular", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "popular"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-022-s236%22%20%3B%20A%20%5Bform%3D%22populares%22%5D%20%3B%20B%20%5Bform%3D%22bandas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "A pesar de que el is\u00f3topo de n\u00edquel 62Ni es m\u00e1s estable , el is\u00f3topo de hierro 56Fe es una orden de <strong>magnitud<\/strong> m\u00e1s <strong>com\u00fan<\/strong> .", "verb": "magnitud", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=magnitud", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "com\u00fan", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=com\u00fan", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "com\u00fan"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s21%22%20%3B%20A%20%5Bform%3D%22com%C3%BAn%22%5D%20%3B%20B%20%5Bform%3D%22magnitud%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "\" Ferrari est\u00e1 muy acostumbrada a ganar y no creo que se pongan demasiado nerviosos si se llega a las \u00faltimas carreras apretados , y tanto Hamilton , como Button y yo , que ya tenemos alg\u00fan Mundial conseguido , creo que vamos a afrontar este final de campeonato m\u00e1s tranquilos que los dos pilotos de Red Bull \" , asegur\u00f3 quien como <strong>mejor<\/strong> <strong>posici\u00f3n<\/strong> en su propio historial , fue un segundo lugar en 2005 y por supuesto aguarda que la victoria llegue en esta ocasi\u00f3n .", "verb": "posici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=posici\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mejor", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mejor", "Degree=Cmp", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mejor"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-026-s49%22%20%3B%20A%20%5Bform%3D%22mejor%22%5D%20%3B%20B%20%5Bform%3D%22posici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En cuanto a su <strong>vida<\/strong> <strong>personal<\/strong> es madre de cinco hijos y est\u00e1 casada con el empresario Javier Merino .", "verb": "vida", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vida", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "personal", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=personal", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "personal"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-005-s108%22%20%3B%20A%20%5Bform%3D%22personal%22%5D%20%3B%20B%20%5Bform%3D%22vida%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Dado el <strong>car\u00e1cter<\/strong> <strong>multinacional<\/strong> de Orbea esta compa\u00f1\u00eda en los \u00faltimos a\u00f1os tambi\u00e9n ha creado o patrocinado otros equipos ciclistas de menor nivel y no vinculados a la Fundaci\u00f3n Euskadi .", "verb": "car\u00e1cter", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=car\u00e1cter", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "multinacional", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=multinacional", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "multinacional"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-009-s386%22%20%3B%20A%20%5Bform%3D%22multinacional%22%5D%20%3B%20B%20%5Bform%3D%22car%C3%A1cter%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Incluso para una pel\u00edcula de su duraci\u00f3n , Battleship nunca aburre gracias a unos <strong>efectos<\/strong> <strong>especiales<\/strong> que har\u00edan llorar a Michael Bay \u00bb .", "verb": "efectos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=efecto", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "especiales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=especial", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "especial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s187%22%20%3B%20A%20%5Bform%3D%22especiales%22%5D%20%3B%20B%20%5Bform%3D%22efectos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Sin embargo , el <strong>reconocimiento<\/strong> <strong>internacional<\/strong> de el nuevo pa\u00eds fue retrasada por la objeci\u00f3n de Grecia de el uso de lo que se consideraba un nombre hel\u00e9nico y s\u00edmbolo de bandera , as\u00ed como una cita controvertida de la constituci\u00f3n de la rep\u00fablica .", "verb": "reconocimiento", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=reconocimiento", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "internacional", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=internacional", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "internacional"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s466%22%20%3B%20A%20%5Bform%3D%22internacional%22%5D%20%3B%20B%20%5Bform%3D%22reconocimiento%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Tras su paso por el club rosarino , Sciacqua fich\u00f3 por Col\u00f3n de <strong>Santa<\/strong> <strong>Fe<\/strong> para jugar la temporada 92 / 93 de el Nacional B.", "verb": "Fe", "verbFeats": ["upos=PROPN", "deprel=nmod", "lemma=Fe", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "santa", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=santo", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "santo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-007-s108%22%20%3B%20A%20%5Bform%3D%22Santa%22%5D%20%3B%20B%20%5Bform%3D%22Fe%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "\" Nos parece fatal porque lo que est\u00e1 fomentando es , de alguna manera , una discriminaci\u00f3n hacia la <strong>comunidad<\/strong> ( <strong>homosexual<\/strong> ) , hacia las aves y hacia los productores de aves : no consumas pollo porque te vuelves homosexual \" , se\u00f1al\u00f3 Efra\u00edn Soria , presidente de la fundaci\u00f3n Equidad , que agrupa a homosexuales , bisexuales y transexuales ( GLBT ) de Ecuador .", "verb": "comunidad", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=comunidad", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "homosexual", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=homosexual", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "homosexual"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-014-s116%22%20%3B%20A%20%5Bform%3D%22homosexual%22%5D%20%3B%20B%20%5Bform%3D%22comunidad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Plaxico Burress igual\u00f3 su <strong>marca<\/strong> <strong>personal<\/strong> a el capturar tres pases de anotaci\u00f3n en el duelo de ayer , incluyendo el de la victoria sobre los Cargadores ( Foto : BILL KOSTROUN AP )", "verb": "marca", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=marca", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "personal", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=personal", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "personal"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-005-s284%22%20%3B%20A%20%5Bform%3D%22personal%22%5D%20%3B%20B%20%5Bform%3D%22marca%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}], "2": [{"sentence": "La cabeza pesaba entre un 12 % y un 25 % de el <strong>peso<\/strong> <strong>total<\/strong> de el cuerpo .", "verb": "peso", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=peso", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s3%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22peso%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Del <strong>peso<\/strong> <strong>total<\/strong> de el sat\u00e9lite , que era de 13,97 kg , la instrumentaci\u00f3n sumaba 8,3 kg .", "verb": "peso", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=peso", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s40%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22peso%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En esta modalidad de caza alcanzan un <strong>protagonismo<\/strong> <strong>total<\/strong> los perros Sabuesos y sus conductores , los Monteros .", "verb": "protagonismo", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=protagonismo", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s212%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22protagonismo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El delegado tambi\u00e9n ha subrayado el <strong>total<\/strong> <strong>apoyo<\/strong> que prestar\u00e1 el Gobierno de Espa\u00f1a a el proyecto de instalaci\u00f3n de el parque tem\u00e1tico .", "verb": "apoyo", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=apoyo", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-020-s65%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22apoyo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En 2010 , en el Sal\u00f3n Aeron\u00e1utico de Farnborough , la aerol\u00ednea hizo un pedido de 30 Boeing 777 , con un valor $ 9100 millones , con lo que el <strong>gasto<\/strong> <strong>total<\/strong> de aeronaves en el a\u00f1o a m\u00e1s de $ 25 mil millones .", "verb": "gasto", "verbFeats": ["upos=NOUN", "deprel=orphan", "lemma=gasto", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-003-s338%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22gasto%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En <strong>total<\/strong> , 23.100 <strong>hombres<\/strong> .", "verb": "hombres", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=hombre", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s269%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22hombres%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Amazonia : Live in the Jungle , es un DVD en vivo de la banda de hard rock Scorpions , fue grabado en la ciudad brasile\u00f1a de Recife el d\u00eda 7 de Diciembre de 2008 , ante un <strong>lleno<\/strong> <strong>total<\/strong> de 40.000 personas .", "verb": "lleno", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=lleno", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-013-s349%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22lleno%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , el municipio tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 203.14 km \u00b2 , de la cual 201.99 km \u00b2 corresponden a tierra firme y ( 0.57 % ) 1.15 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-020-s89%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo , el condado tiene un <strong>\u00e1rea<\/strong> <strong>total<\/strong> de , de la cual es tierra y es agua .", "verb": "\u00e1rea", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u00e1rea", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-001-s123%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A1rea%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Gracias a su labor , este monasterio pudo salvar se de la <strong>ruina<\/strong> <strong>total<\/strong> .", "verb": "ruina", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ruina", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s171%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22ruina%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , Bethany tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 11.6 km \u00b2 , de la cual 11.5 km \u00b2 corresponden a tierra firme y ( 0.83 % ) 0.1 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-023-s80%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , Hubbardston tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 108.78 km \u00b2 , de la cual 106.37 km \u00b2 corresponden a tierra firme y ( 2.21 % ) 2.41 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s9%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El PAL cuenta con una <strong>superficie<\/strong> <strong>total<\/strong> de 817.375 m\u00b2 , constando de 225 parcelas , que se distribuyen en 17 manzanas .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-012-s394%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , el municipio tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 93.52 km \u00b2 , de la cual 92.91 km \u00b2 corresponden a tierra firme y ( 0.66 % ) 0.61 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-001-s357%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , New Amsterdam tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 0.27 km \u00b2 , de la cual 0.21 km \u00b2 corresponden a tierra firme y ( 23.08 % ) 0.06 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s334%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La reacci\u00f3n de la comunidad de Morn\u00e9s en contra de la primera comunidad de hermanas fue de una casi <strong>total<\/strong> <strong>exclusi\u00f3n<\/strong> que les caus\u00f3 una mayor pobreza y carencias y que ser\u00edan la principal prueba en la fundaci\u00f3n de el Instituto .", "verb": "exclusi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=exclusi\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-003-s428%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22exclusi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , el municipio tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 0.99 km \u00b2 , de la cual 0.99 km \u00b2 corresponden a tierra firme y ( 0 % ) 0 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-028-s355%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , Richmond tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 81.75 km \u00b2 , de la cual 78.76 km \u00b2 corresponden a tierra firme y ( 3.66 % ) 2.99 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-001-s327%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , Cleveland tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 92.98 km \u00b2 , de la cual 92.97 km \u00b2 corresponden a tierra firme y ( 0 % ) 0 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-028-s109%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Seg\u00fan la Oficina de el Censo de los Estados Unidos , el municipio tiene una <strong>superficie<\/strong> <strong>total<\/strong> de 182.09 km \u00b2 , de la cual 171.07 km \u00b2 corresponden a tierra firme y ( 6.05 % ) 11.02 km \u00b2 es agua .", "verb": "superficie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=superficie", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-008-s5%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22superficie%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "De la <strong>poblaci\u00f3n<\/strong> <strong>total<\/strong> bajo el nivel de pobreza , el 5,1 % son menores de 18 y el 9,0 % son mayores de 65 a\u00f1os .", "verb": "poblaci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=poblaci\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-013-s253%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22poblaci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Los machos pueden llegar alcanzar los 37 cm de <strong>longitud<\/strong> <strong>total<\/strong> y 5.000 g de peso .", "verb": "longitud", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=longitud", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-028-s450%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22longitud%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}], "0": [{"sentence": "En sus palabras , el embajador de Viet Nam en este pa\u00eds , Tran Trong Toan resalt\u00f3 el significado de el seminario cuando ambos estados se preparan para celebrar el A\u00f1o de Amistad en 2012 y el 20 aniversario de el establecimiento de sus <strong>v\u00ednculos<\/strong> <strong>diplom\u00e1ticos<\/strong> .", "verb": "v\u00ednculos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=v\u00ednculo", "<b>Gender=Masc<\/b>", "Number=Plur", "Person=3"], "nsubj": "diplom\u00e1ticos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=diplom\u00e1tico", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "diplom\u00e1tico"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-026-s288%22%20%3B%20A%20%5Bform%3D%22diplom%C3%A1ticos%22%5D%20%3B%20B%20%5Bform%3D%22v%C3%ADnculos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El rotativo se\u00f1ala en su <strong>edici\u00f3n<\/strong> <strong>digital<\/strong> que un laboratorio comercial inform\u00f3 el viernes a las autoridades sanitarias que tres neoyorquinos sufr\u00edan los s\u00edntomas t\u00edpicos de la enfermedad , que provoca deshidrataci\u00f3n y diarrea .", "verb": "edici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=edici\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "digital", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=digital", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "digital"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-017-s329%22%20%3B%20A%20%5Bform%3D%22digital%22%5D%20%3B%20B%20%5Bform%3D%22edici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Sirvi\u00f3 como asistente de el secretario privado de el rey hasta la muerte de Jorge V en 1936 y fue ascendido a <strong>secretario<\/strong> <strong>privado<\/strong> cuando Eduardo VIII subi\u00f3 a el trono en 1936 .", "verb": "secretario", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=secretario", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "privado", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=privado", "<b>Gender=Masc<\/b>", "Number=Sing", "VerbForm=Part"], "label": "yes", "route": {"0": "privado"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-018-s160%22%20%3B%20A%20%5Bform%3D%22privado%22%5D%20%3B%20B%20%5Bform%3D%22secretario%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Una <strong>intensa<\/strong> <strong>historia<\/strong> de amor se desarrolla entre acci\u00f3n e intriga en esta telenovela contempor\u00e1nea grabada en los escenarios m\u00e1s espectaculares de la ciudad de Miami .", "verb": "historia", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=historia", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "intensa", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=intenso", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "intenso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-005-s6%22%20%3B%20A%20%5Bform%3D%22intensa%22%5D%20%3B%20B%20%5Bform%3D%22historia%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En 1904 la Societa Italiana construye un palacete de estilo neocl\u00e1sico en donde funcionar\u00eda el primer cine de Merlo cuando llega la electricidad a el pueblo en 1915 ( en 1913 se hab\u00eda inaugurado la primera <strong>usina<\/strong> <strong>el\u00e9ctrica<\/strong> en donde hoy se ubica el edificio de EDENOR ) .", "verb": "usina", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=usina", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "el\u00e9ctrica", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=el\u00e9ctrico", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "el\u00e9ctrico"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-023-s211%22%20%3B%20A%20%5Bform%3D%22el%C3%A9ctrica%22%5D%20%3B%20B%20%5Bform%3D%22usina%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "No hay ninguna ley que regule su uso y ondea en varios ayuntamientos de el territorio como en Bayona , San Juan de Luz , Espelette , Jaxu , Sare entre otros junto a la <strong>bandera<\/strong> <strong>francesa<\/strong> y la europea , y ondea tambi\u00e9n en otros edificios como el castillo de Maule\u00f3n .", "verb": "bandera", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=bandera", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "francesa", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=franc\u00e9s", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "franc\u00e9s"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s81%22%20%3B%20A%20%5Bform%3D%22francesa%22%5D%20%3B%20B%20%5Bform%3D%22bandera%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Lo mismo ocurri\u00f3 cuando Estados Unidos lanz\u00f3 las bombas at\u00f3micas sobre dos <strong>ciudades<\/strong> <strong>japonesas<\/strong> .", "verb": "ciudades", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ciudad", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "japonesas", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=japon\u00e9s", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "japon\u00e9s"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-012-s360%22%20%3B%20A%20%5Bform%3D%22japonesas%22%5D%20%3B%20B%20%5Bform%3D%22ciudades%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Fern\u00e1ndez Ibar ha insistido en que esta iniciativa contribuir\u00e1 a el <strong>desarrollo<\/strong> <strong>econ\u00f3mico<\/strong> de la Axarqu\u00eda , \" en un aspecto clave como es el cultivo ecol\u00f3gico que beneficia tanto a los agricultores de la comarca como a los consumidores , que disfrutar\u00e1n de gran calidad ya un precio asequible \" .", "verb": "desarrollo", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=desarrollo", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "econ\u00f3mico", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=econ\u00f3mico", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "econ\u00f3mico"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-015-s203%22%20%3B%20A%20%5Bform%3D%22econ%C3%B3mico%22%5D%20%3B%20B%20%5Bform%3D%22desarrollo%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El avi\u00f3n E1 Gavil\u00e1n es una aeroplano el\u00e9ctrico para vigilancia a\u00e9rea y monitoreo de multitudes durante <strong>eventos<\/strong> <strong>deportivos<\/strong> en estadios o de manifestaciones y marchas .", "verb": "eventos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=evento", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "deportivos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=deportivo", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "deportivo"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-010-s427%22%20%3B%20A%20%5Bform%3D%22deportivos%22%5D%20%3B%20B%20%5Bform%3D%22eventos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El primer sencillo de el \u00e1lbum , \" Yerbatero \" , fue lanzado el jueves 10 de junio de 2010 como <strong>descarga<\/strong> <strong>digital<\/strong> .", "verb": "descarga", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=descarga", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "digital", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=digital", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "digital"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-018-s125%22%20%3B%20A%20%5Bform%3D%22digital%22%5D%20%3B%20B%20%5Bform%3D%22descarga%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La oferta , v\u00e1lida hasta el hasta el 31 de octubre , incluye vuelos en l\u00ednea regular alojamiento en habitaci\u00f3n doble , desayuno diario , comidas seg\u00fan lo especificado en folleto , traslados y visitas en servicio regular , asistencia por <strong>gu\u00edas<\/strong> <strong>locales<\/strong> de habla espa\u00f1ola , seguro de viaje , set de maletas Transcontinental y tasas .", "verb": "gu\u00edas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=gu\u00eda", "<b>Gender=Fem,Masc<\/b>", "Number=Plur"], "nsubj": "locales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=local", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "local"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-dev-003-s142%22%20%3B%20A%20%5Bform%3D%22locales%22%5D%20%3B%20B%20%5Bform%3D%22gu%C3%ADas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En julio de 2006 , los israel\u00edes , entre ellos el ex <strong>Primer<\/strong> <strong>Ministro<\/strong> Benjam\u00edn Netanyahu y ex miembros de el Irg\u00fan , asistieron a una celebraci\u00f3n 60 aniversario de el acontecimiento , que fue organizado por el Centro Menajem Beguin .", "verb": "ministro", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=ministro", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "primer", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=primero", "<b>Gender=Masc<\/b>", "NumType=Ord", "Number=Sing"], "label": "yes", "route": {"0": "primero"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s31%22%20%3B%20A%20%5Bform%3D%22Primer%22%5D%20%3B%20B%20%5Bform%3D%22Ministro%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En este grupo no s\u00f3lo se consideran los ecosistemas de agua corriente ( medios l\u00f3ticos ) y los de agua quieta ( medios l\u00e9nticos ) , sino tambi\u00e9n los <strong>h\u00e1bitats<\/strong> <strong>acuosos<\/strong> de manantiales , huecos de \u00e1rboles e incluso las cavidades de plantas donde se acumula agua y los ambientes de aguas subterr\u00e1neas .", "verb": "h\u00e1bitats", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=h\u00e1bitat", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "acuosos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=acuoso", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "acuoso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-014-s104%22%20%3B%20A%20%5Bform%3D%22acuosos%22%5D%20%3B%20B%20%5Bform%3D%22h%C3%A1bitats%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Tras sesenta y nueve a\u00f1os de inactividad , la erupci\u00f3n tom\u00f3 por sorpresa a los <strong>poblados<\/strong> <strong>cercanos<\/strong> , a pesar de que el Gobierno hab\u00eda recibido advertencias por parte de m\u00faltiples organismos vulcanol\u00f3gicos desde la aparici\u00f3n de los primeros indicios de actividad volc\u00e1nica en septiembre de 1985 .", "verb": "poblados", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=poblado", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "cercanos", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cercano", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "cercano"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-028-s353%22%20%3B%20A%20%5Bform%3D%22cercanos%22%5D%20%3B%20B%20%5Bform%3D%22poblados%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La motosegadora atadora , tambi\u00e9n conocida como motosegadora agavilladora , permite adem\u00e1s de cortar las mies atar las y formar gavillas autom\u00e1ticamente , ahorrando el trabajo manual y consiguiendo un <strong>alto<\/strong> <strong>rendimiento<\/strong> en cultivos como el trigo , el centeno , el s\u00e9samo , el algod\u00f3n o el arroz , entre otros .", "verb": "rendimiento", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=rendimiento", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "alto", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=alto", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "alto"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s435%22%20%3B%20A%20%5Bform%3D%22alto%22%5D%20%3B%20B%20%5Bform%3D%22rendimiento%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "La agencia asegura que la UE ya est\u00e1 dando pasos para reforzar los sistemas de <strong>supervisi\u00f3n<\/strong> <strong>comunitarios<\/strong> y la estructura de las instituciones financieras , as\u00ed como para lograr una mayor coordinaci\u00f3n entre los socios europeos y destaca especialmente la creaci\u00f3n de el Mecanismo Europeo de Estabilidad a partir de 2013 .", "verb": "supervisi\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=supervisi\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "comunitarios", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=comunitario", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "comunitario"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s267%22%20%3B%20A%20%5Bform%3D%22comunitarios%22%5D%20%3B%20B%20%5Bform%3D%22supervisi%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Cristina , su mujer , es una excelente cocinera , prepara unos almuerzos que hacen que contin\u00faes tu jornada laboral con <strong>total<\/strong> <strong>vitalidad<\/strong> .", "verb": "vitalidad", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=vitalidad", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "total", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "total"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-009-s10%22%20%3B%20A%20%5Bform%3D%22total%22%5D%20%3B%20B%20%5Bform%3D%22vitalidad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Como consecuencia , Priaulx aument\u00f3 su participaci\u00f3n en resistencia , ya que corri\u00f3 ese a\u00f1o en la Copa Intercontinental Le Mans en un <strong>BMW<\/strong> M3 <strong>oficial<\/strong> de la clase GTE Pro .", "verb": "BMW", "verbFeats": ["upos=PROPN", "deprel=obl", "lemma=Bmw", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "oficial", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=oficial", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "oficial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-006-s159%22%20%3B%20A%20%5Bform%3D%22oficial%22%5D%20%3B%20B%20%5Bform%3D%22BMW%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El ingl\u00e9s se emplea en las se\u00f1ales de tr\u00e1fico y es el idioma habitual en los hoteles , el comercio , las finanzas , el gobierno y los <strong>documentos<\/strong> <strong>oficiales<\/strong> .", "verb": "documentos", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=documento", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "oficiales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=oficial", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "oficial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-002-s430%22%20%3B%20A%20%5Bform%3D%22oficiales%22%5D%20%3B%20B%20%5Bform%3D%22documentos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Derecho y <strong>movimientos<\/strong> <strong>sociales<\/strong> en Colombia , sostiene una concepci\u00f3n diferente sobre el activismo , que se refiere a el hecho de que grupos sociales excluidos adopten la v\u00eda judicial que propone la Corte Constitucional buscando redefinir la realidad de un esfuerzo pol\u00edtico que realizan los grupos activistas , por medio de una lucha por producir otra realidad social que les favorezca , tal es el caso de los homosexuales , los medio - ambientalistas , pacifistas , trabajadores , minor\u00edas raciales .", "verb": "movimientos", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=movimiento", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "sociales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=social", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "social"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-010-s391%22%20%3B%20A%20%5Bform%3D%22sociales%22%5D%20%3B%20B%20%5Bform%3D%22movimientos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Sus <strong>actuales<\/strong> 8,5 <strong>hect\u00e1reas<\/strong> de superficie , la mitad de el espacio que consagran a sus torneos el Abierto de Australia o Wimbledon , lo han convertido en el m\u00e1s reducido de los ' Cuatro Grandes ' .", "verb": "hect\u00e1reas", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=hect\u00e1rea", "<b>Gender=Fem<\/b>", "Number=Plur", "Person=3"], "nsubj": "actuales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=actual", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "actual"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-024-s262%22%20%3B%20A%20%5Bform%3D%22actuales%22%5D%20%3B%20B%20%5Bform%3D%22hect%C3%A1reas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En una ocasi\u00f3n fueron invitados por la Biblioteca Nacional de Dinamarca para apreciar la obra original de Huam\u00e1n Poma de Ayala , hecho que los hizo emocionar se y asumir con orgullo ser los herederos de una <strong>ancestral<\/strong> <strong>tradici\u00f3n<\/strong> .", "verb": "tradici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=tradici\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ancestral", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ancestral", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "ancestral"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-021-s169%22%20%3B%20A%20%5Bform%3D%22ancestral%22%5D%20%3B%20B%20%5Bform%3D%22tradici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Uno de sus <strong>t\u00edtulos<\/strong> <strong>oficiales<\/strong> en esta \u00e9poca fue el de Guardabosque Mayor de los bosques de la residencia de verano de el pr\u00edncipe - obispo , el castillo de Johannesberg .", "verb": "t\u00edtulos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=t\u00edtulo", "<b>Gender=Masc<\/b>", "Number=Plur", "Person=3"], "nsubj": "oficiales", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=oficial", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "oficial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-025-s136%22%20%3B%20A%20%5Bform%3D%22oficiales%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%ADtulos%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Durante su alocuci\u00f3n , record\u00f3 el grave estado de el pa\u00eds \" estagnado en la pobreza , en la <strong>desigualdad<\/strong> <strong>social<\/strong> , la cesant\u00eda y par\u00e1lisis en las empresas \" , para finalmente dirigir sus esperanzas en el electorado presente : \" \u00bf qu\u00e9 importa el grito de un hombre solo cuando se escucha el ronco clamor que surge de miles de voces y gargantas ?", "verb": "desigualdad", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=desigualdad", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "social", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=social", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "social"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-007-s399%22%20%3B%20A%20%5Bform%3D%22social%22%5D%20%3B%20B%20%5Bform%3D%22desigualdad%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Tales estructuras reciben el nombre de gl\u00e1ndulas , pelos glandulares o <strong>tricomas<\/strong> <strong>glandulares<\/strong> .", "verb": "tricomas", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=tricoma", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "glandulares", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=glandular", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "glandular"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-018-s323%22%20%3B%20A%20%5Bform%3D%22glandulares%22%5D%20%3B%20B%20%5Bform%3D%22tricomas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El banco muestra cuatro casetones con escenas de vidas de santos aragoneses separadas por <strong>decoraci\u00f3n<\/strong> <strong>vegetal<\/strong> donde se colocan , en celebraciones importantes , los bustos - relicario de san Valero , san Vicente m\u00e1rtir y San Lorenzo donados por Benedicto XIII .", "verb": "decoraci\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=decoraci\u00f3n", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "vegetal", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=vegetal", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "vegetal"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-019-s401%22%20%3B%20A%20%5Bform%3D%22vegetal%22%5D%20%3B%20B%20%5Bform%3D%22decoraci%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El Royal Indian Open es un torneo organizado por <strong>mujeres<\/strong> profesionales <strong>jugadores<\/strong> de tenis , jugado en canchas duras a el aire libre .", "verb": "mujeres", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=mujer", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "jugadores", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=jugador", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "jugador"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-016-s389%22%20%3B%20A%20%5Bform%3D%22jugadores%22%5D%20%3B%20B%20%5Bform%3D%22mujeres%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "Francisco Zelada ( Colonia de el Sacramento , Virreinato de la Plata , 1790 -- Buenos Aires , Argentina , 9 de julio de 1863 ) , militar argentino que comand\u00f3 la <strong>columna<\/strong> m\u00e1s <strong>septentrional<\/strong> de el Ej\u00e9rcito de los Andes durante el Cruce de la Cordillera de los Andes , liberando la ciudad de Copiap\u00f3 y su jurisdicci\u00f3n .", "verb": "columna", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=columna", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "septentrional", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=septentrional", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "septentrional"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-018-s420%22%20%3B%20A%20%5Bform%3D%22septentrional%22%5D%20%3B%20B%20%5Bform%3D%22columna%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "En su <strong>forma<\/strong> m\u00e1s <strong>com\u00fan<\/strong> , la sal de potasio clavulanato de potasio es combinada con amoxicilina o ticarcilina .", "verb": "forma", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=forma", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "com\u00fan", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=com\u00fan", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "com\u00fan"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-017-s196%22%20%3B%20A%20%5Bform%3D%22com%C3%BAn%22%5D%20%3B%20B%20%5Bform%3D%22forma%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}, {"sentence": "El cinco <strong>estrellas<\/strong> <strong>madrile\u00f1o<\/strong> rendir\u00e1 , el \u00faltimo fin de semana de marzo , un exclusivo homenaje a la variada y sabrosa gastronom\u00eda espa\u00f1ola , celebrando dos veladas muy especiales con cenas - maridaje \" Los Sabores de Espa\u00f1a \" .", "verb": "estrellas", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=estrella", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "madrile\u00f1o", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=madrile\u00f1o", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "madrile\u00f1o"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Spanish-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22es-train-023-s73%22%20%3B%20A%20%5Bform%3D%22madrile%C3%B1o%22%5D%20%3B%20B%20%5Bform%3D%22estrellas%22%5D%20%20%7D", "treebankName": "UD_Spanish-GSD"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Spanish \u00b7 GSD \u00b7 NP head-ADJ_Gender", "rol
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

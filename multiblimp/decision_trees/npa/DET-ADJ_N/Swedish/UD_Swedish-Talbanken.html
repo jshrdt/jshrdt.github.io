@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "roleA": "det", "roleB": "adj", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Swedish \u00b7 Talbanken", "languageName": "Swedish", "accuracy": "99.8%", "testAccuracy": "98.6%", "testN": 72, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "641", "predictor": "DET-ADJ_Number", "rootAccuracy": "99.8%", "trainAccuracy": "99.8%", "treebank": "Talbanken", "nav": {"pooledAcc": 0.9770114942528736, "pooledTestN": 174, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 1731, "pooledUnkRows": 2089, "pooledHref": "../Swedish.html", "pooledCurrent": false, "items": [{"name": "LinES", "rows": 879, "unkRows": 831, "status": "ok", "excluded": false, "reason": null, "acc": 0.9659090909090909, "pooledAcc": 0.9659090909090909, "delta": 0.0, "diverges": false, "href": "UD_Swedish-LinES.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 139, "unkRows": 256, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Swedish-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "Talbanken", "rows": 713, "unkRows": 1002, "status": "ok", "excluded": false, "reason": null, "acc": 0.9861111111111112, "pooledAcc": 0.9861111111111112, "delta": 0.0, "diverges": false, "href": "UD_Swedish-Talbanken.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 640, "color": "var(--yes)"}, {"cls": "no", "cnt": 1, "color": "var(--no)"}, {"cls": "unk", "cnt": 1002, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 641, "H": 0.0238, "acc": 0.9977, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 640, "color": "var(--yes)"}, {"cls": "no", "cnt": 1, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "<strong>Detta</strong> <strong>andra</strong> argument f\u00f6r monogami \u00e4r naturligtvis inte kristna m\u00e4nniskor ensamma om .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=RO|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Plur</b>"], "nsubj": "detta", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Dem"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3029%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22Detta%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Som <strong>ett</strong> <strong>litet</strong> exempel p\u00e5 hur KPI anv\u00e4nds har vi r\u00e4knat ut prisstegringen fr\u00e5n januari 1969 till januari 1970 .", "verb": "litet", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-729%22%20%3B%20A%20%5Bform%3D%22litet%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Familjen \u00e4r <strong>en</strong> <strong>f\u00f6r\u00e5ldrad</strong> institution , en kvarleva fr\u00e5n 1800-talets borgerliga samh\u00e4lle .", "verb": "f\u00f6r\u00e5ldrad", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00f6r\u00e5ldrad", "xpos=PC|PRF|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing</b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2894%22%20%3B%20A%20%5Bform%3D%22f%C3%B6r%C3%A5ldrad%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Familjen blir l\u00e4tt det prim\u00e4ra , samh\u00e4llet kommer i andra rummet ; f\u00f6rh\u00e5llanden som <strong>ett</strong> <strong>socialistiskt</strong> parti sj\u00e4lvfallet bek\u00e4mpar .", "verb": "socialistiskt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=socialistisk", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1145%22%20%3B%20A%20%5Bform%3D%22socialistiskt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Alla</strong> <strong>sm\u00e5</strong> barn tycker om att suga och de beh\u00f6ver ocks\u00e5 g\u00f6ra det f\u00f6r att k\u00e4nna sig n\u00f6jda och tillfredsst\u00e4llda .", "verb": "sm\u00e5", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Plur</b>"], "nsubj": "alla", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=all", "xpos=DT|UTR/NEU|PLU|IND/DEF", "<b>Number=Plur</b>", "PronType=Tot"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-305%22%20%3B%20A%20%5Bform%3D%22sm%C3%A5%22%5D%20%3B%20B%20%5Bform%3D%22Alla%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om samh\u00e4llet accepterar som h\u00f6gst moralisk norm att kvinnan ska ha r\u00e4tt att \u00e4ven som ensamst\u00e5ende v\u00e4lja moderskap som ett huvudyrke eller en kombination mellan detta yrke och <strong>ett</strong> <strong>annat</strong> , blir sj\u00e4lvfallet b\u00e5de personliga relationer och samh\u00e4llsrelationer i \u00f6vrigt annorlunda \u00e4n vad de \u00e4r idag .", "verb": "annat", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-165%22%20%3B%20A%20%5Bform%3D%22annat%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Men det finns aktuella unders\u00f6kningar som tyder p\u00e5 att m\u00e5nga f\u00f6r\u00e4ldrar fortfarande mer eller mindre ansluter sig till <strong>ett</strong> <strong>auktorit\u00e4rt</strong> uppfostringssystem .", "verb": "auktorit\u00e4rt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=auktorit\u00e4r", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-472%22%20%3B%20A%20%5Bform%3D%22auktorit%C3%A4rt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Ett</strong> <strong>statligt</strong> lekr\u00e5d kommer att inr\u00e4ttas under 1971 .", "verb": "statligt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=statlig", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2621%22%20%3B%20A%20%5Bform%3D%22statligt%22%5D%20%3B%20B%20%5Bform%3D%22Ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "\u00c4ktenskapet omges ocks\u00e5 med romantiska f\u00f6rest\u00e4llningar kanske utan motsvarighet p\u00e5 <strong>n\u00e5got</strong> <strong>annat</strong> omr\u00e5de .", "verb": "annat", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "n\u00e5got", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=n\u00e5gon", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Ind"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-142%22%20%3B%20A%20%5Bform%3D%22annat%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A5got%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Ni kan ocks\u00e5 f\u00e5 det \u00f6vers\u00e4nt per post i <strong>ett</strong> f\u00f6rslutet <strong>neutralt</strong> kuvert .", "verb": "neutralt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=neutral", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-403%22%20%3B%20A%20%5Bform%3D%22neutralt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Kommunerna svarar ocks\u00e5 , genom allm\u00e4nnyttiga bostadsf\u00f6retag , f\u00f6r <strong>en</strong> <strong>stor</strong> del av de flerfamiljshus som byggts .", "verb": "stor", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stor", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing</b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-826%22%20%3B%20A%20%5Bform%3D%22stor%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I s\u00e5dana fall kan neurokirurgerna borra <strong>ett</strong> <strong>litet</strong> h\u00e5l i skallen och f\u00f6ra in ett tunt r\u00f6r i hj\u00e4rnans h\u00e5lrum .", "verb": "litet", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing</b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-572%22%20%3B%20A%20%5Bform%3D%22litet%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det verkar som om kibbutzerna idag har <strong>en</strong> ganska <strong>strikt</strong> uppdelning med m\u00e4nnen i de mer produktiva och kvinnorna i de mer servicebetonade yrkena , vilket endast delvis kan motiveras av praktiska sk\u00e4l .", "verb": "strikt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=strikt", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Sing</b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-28%22%20%3B%20A%20%5Bform%3D%22strikt%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om allts\u00e5 en barnpsykolog \u00e4r gift med en lokomotivf\u00f6rare s\u00e5 b\u00f6r inte det faktum att han-barnpsykologen kanske kan leverera en b\u00e4ttre ' v\u00e5rd ' i <strong>n\u00e5gon</strong> <strong>objektiv</strong> bem\u00e4rkelse \u00e4n hon-lokomotivf\u00f6raren vara utg\u00e5ngspunkten f\u00f6r f\u00f6rdelningen sinsemellan av tiden med barnen .", "verb": "objektiv", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=objektiv", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing</b>"], "nsubj": "n\u00e5gon", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=n\u00e5gon", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Ind"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4069%22%20%3B%20A%20%5Bform%3D%22objektiv%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A5gon%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>En</strong> <strong>ny</strong> bostadspolitik tar form", "verb": "ny", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing</b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-807%22%20%3B%20A%20%5Bform%3D%22ny%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>En</strong> realistisk <strong>sexuell</strong> r\u00e5dgivning", "verb": "sexuell", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sexuell", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing</b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4233%22%20%3B%20A%20%5Bform%3D%22sexuell%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "roleA": "det", "roleB": "adj", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 860, "CANVAS_H": 460, "META": {"language": "Swedish \u00b7 Talbanken", "languageName": "Swedish", "accuracy": "98.9%", "testAccuracy": "98.4%", "testN": 123, "measure": "accuracy", "nodes": "5 (3 leaves)", "depth": "2", "trainingSamples": "1,101", "predictor": "DET-ADJ_Number", "rootAccuracy": "75.5%", "trainAccuracy": "98.9%", "treebank": "Talbanken", "nav": {"pooledAcc": 0.992619926199262, "pooledTestN": 271, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 2689, "pooledUnkRows": 1131, "pooledHref": "../Swedish.html", "pooledCurrent": false, "items": [{"name": "Talbanken", "rows": 1224, "unkRows": 491, "status": "ok", "excluded": false, "reason": null, "acc": 0.983739837398374, "pooledAcc": 0.991869918699187, "delta": -0.008130081300812941, "diverges": false, "href": "UD_Swedish-Talbanken.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "LinES", "rows": 1212, "unkRows": 498, "status": "ok", "excluded": false, "reason": null, "acc": 0.9918032786885246, "pooledAcc": 0.9918032786885246, "delta": 0.0, "diverges": false, "href": "UD_Swedish-LinES.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 253, "unkRows": 142, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Swedish-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 831, "color": "var(--yes)"}, {"cls": "no", "cnt": 270, "color": "var(--no)"}, {"cls": "unk", "cnt": 491, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 781, "H": 0.0947, "acc": 0.9879, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 772, "color": "var(--yes)"}, {"cls": "no", "cnt": 9, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "3": {"x": 570.0, "y": 400.0, "branch": "false", "n": 62, "H": 0.3095, "acc": 0.9444, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 59, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "4": {"x": 760.0, "y": 400.0, "branch": "true", "n": 258, "H": 0.0202, "acc": 0.9981, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 0, "color": "var(--yes)"}, {"cls": "no", "cnt": 258, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 665.0, "y": 230.0, "branch": "true", "n": 320, "H": 0.6917, "acc": 0.8146, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 59, "color": "var(--yes)"}, {"cls": "no", "cnt": 261, "color": "var(--no)"}], "rule": "ADJ.Gender = Fem,Neut", "ruleFeat": null, "ruleRole": null, "ruleValue": null}, "0": {"x": 522.5, "y": 60.0, "branch": "root", "n": 1101, "H": 0.804, "acc": 0.7545, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 831, "color": "var(--yes)"}, {"cls": "no", "cnt": 270, "color": "var(--no)"}], "rule": "ADJ's det sibling: lemma = den", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [2, 3, "false"], [2, 4, "true"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "3": [0, 2, 3], "4": [0, 2, 4], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "Datatekniken kommer att f\u00f6r\u00e4ndra storf\u00f6retagen - <strong>de<\/strong> <strong>tekniska<\/strong> framstegen underl\u00e4ttar och driver fram en utveckling mot stora f\u00f6retag i b\u00e5de produktion och distribution .", "verb": "tekniska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=teknisk", "xpos=JJ|POS|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1992%22%20%3B%20A%20%5Bform%3D%22tekniska%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Mycket mer skall in i utvecklingsbilden , men <strong>en<\/strong> <strong>dj\u00e4rv<\/strong> satsning p\u00e5 utbildning kan ge resultat .", "verb": "dj\u00e4rv", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=dj\u00e4rv", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-432%22%20%3B%20A%20%5Bform%3D%22dj%C3%A4rv%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I st\u00e4llet f\u00f6r den nuvarande situationen d\u00e4r f\u00f6r\u00e4ldrar och barn \u00e4r varandras livegna - med \u00f6verbindningar , aggressioner , otrygghet som f\u00f6ljd - ( en ny uteslutningsgemenskap som inte k\u00e4nnetecknade den gamla m\u00e5ngfacetterade familjen ) har f\u00f6r\u00e4ldrar och barn <strong>ett<\/strong> <strong>\u00f6msesidigt<\/strong> oberoende - med obeskurna m\u00f6jligheter till fritidsumg\u00e4nge .", "verb": "\u00f6msesidigt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00f6msesidig", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing<\/b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1101%22%20%3B%20A%20%5Bform%3D%22%C3%B6msesidigt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Ja , f\u00f6rst och fr\u00e4mst \u00e4r ju detta - sett i <strong>ett<\/strong> <strong>globalt<\/strong> och historiskt perspektiv - ingalunda n\u00e5got s\u00e4rskilt karakteristiskt f\u00f6r kristendomen .", "verb": "globalt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=global", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing<\/b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4175%22%20%3B%20A%20%5Bform%3D%22globalt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Manliga sjuksk\u00f6terskor blir i v\u00e5ra dagar <strong>ett<\/strong> <strong>nytt<\/strong> yrke \u00e4ven om manliga sjuksk\u00f6tare f\u00f6r mentalpatienter med samma uppgifter som sjuksk\u00f6terskor funnits l\u00e4nge .", "verb": "nytt", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing<\/b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-124%22%20%3B%20A%20%5Bform%3D%22nytt%22%5D%20%3B%20B%20%5Bform%3D%22ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "S\u00e5dana motiv ges i <strong>en<\/strong> <strong>kristen<\/strong> livssyn , men den som s\u00e4ger nej till denna har naturligtvis ingen gl\u00e4dje av dessa motiv .", "verb": "kristen", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kristen", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4228%22%20%3B%20A%20%5Bform%3D%22kristen%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Ett<\/strong> <strong>s\u00e5dant<\/strong> \u00e4ktenskap har s\u00e5 att s\u00e4ga ogiltigf\u00f6rklarat sig sj\u00e4lvt genom att sakna det som vi v\u00e4ntar av ett verkligt \u00e4ktenskap : gemenskap p\u00e5 olika plan .", "verb": "s\u00e5dant", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e5dan", "xpos=JJ|POS|NEU|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Neut", "<b>Number=Sing<\/b>"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3064%22%20%3B%20A%20%5Bform%3D%22s%C3%A5dant%22%5D%20%3B%20B%20%5Bform%3D%22Ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Lekr\u00e5det lanserar nu <strong>en<\/strong> helt <strong>ny<\/strong> form av information , som v\u00e4nder sig till konsumenten i det psykologiska \u00f6gonblicket .", "verb": "ny", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2578%22%20%3B%20A%20%5Bform%3D%22ny%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Hur f\u00e5 ett b\u00e4cken , bli v\u00e4nd i <strong>en<\/strong> <strong>annan<\/strong> st\u00e4llning ?", "verb": "annan", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1790%22%20%3B%20A%20%5Bform%3D%22annan%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Icke desto mindre var det <strong>en<\/strong> <strong>kraftig<\/strong> skillnad mellan grupperna ifr\u00e5ga om vad de trodde om f\u00f6r\u00e4ldrarnas f\u00f6rv\u00e4ntningar p\u00e5 dem n\u00e4r det g\u00e4llde deras framtid .", "verb": "kraftig", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kraftig", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3248%22%20%3B%20A%20%5Bform%3D%22kraftig%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r tj\u00e4nstem\u00e4n anser man inte att det beh\u00f6vs <strong>n\u00e5gon<\/strong> <strong>s\u00e4rskild<\/strong> n\u00e4rvarostimulans .", "verb": "s\u00e4rskild", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e4rskild", "xpos=PC|PRF|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "n\u00e5gon", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=n\u00e5gon", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Ind"], "label": "yes", "route": {"0": "n\u00e5gon"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2098%22%20%3B%20A%20%5Bform%3D%22s%C3%A4rskild%22%5D%20%3B%20B%20%5Bform%3D%22n%C3%A5gon%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Unders\u00f6kningar har givit klara bel\u00e4gg f\u00f6r att <strong>en<\/strong> <strong>s\u00e5dan<\/strong> arbetsrytm har en stressande effekt och det \u00e4r ingen livsf\u00f6ring som kan rekommenderas .", "verb": "s\u00e5dan", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e5dan", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2032%22%20%3B%20A%20%5Bform%3D%22s%C3%A5dan%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Patienter som inte kan tala utg\u00f6r <strong>en<\/strong> ganska <strong>stor<\/strong> grupp , t.ex. d\u00f6vstumma , respiratorbundna patienter eller de som inte kan tala till f\u00f6ljd av olika kirurgiska ingrepp .", "verb": "stor", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stor", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1838%22%20%3B%20A%20%5Bform%3D%22stor%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Amningen ger ocks\u00e5 mor och barn <strong>en<\/strong> alldeles <strong>s\u00e4rskild<\/strong> k\u00e4nsla av n\u00e4rhet och samh\u00f6righet .", "verb": "s\u00e4rskild", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e4rskild", "xpos=PC|PRF|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-291%22%20%3B%20A%20%5Bform%3D%22s%C3%A4rskild%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>En<\/strong> mycket <strong>anv\u00e4ndbar<\/strong> energiform \u00e4r elkraften , som \u00e4r billig i transport och distribution och l\u00e4mpar sig f\u00f6r alstring av b\u00e5de ljus , v\u00e4rme och r\u00f6relsekraft .", "verb": "anv\u00e4ndbar", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=anv\u00e4ndbar", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3180%22%20%3B%20A%20%5Bform%3D%22anv%C3%A4ndbar%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Denna<\/strong> <strong>s\u00e4rskilda<\/strong> utbildning kan du ha god nytta av n\u00e4r du sedan s\u00f6ker civilt arbete .", "verb": "s\u00e4rskilda", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e4rskild", "xpos=PC|PRF|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "denna", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-151%22%20%3B%20A%20%5Bform%3D%22s%C3%A4rskilda%22%5D%20%3B%20B%20%5Bform%3D%22Denna%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det kan vara fr\u00e5ga om futiliteter som att bli uppropad som ' fru ' p\u00e5 barnav\u00e5rdscentralen , att bli matroniserad av expediter i babykl\u00e4dsaff\u00e4ren som v\u00e4lvilligt hj\u00e4lper en tillr\u00e4tta och f\u00f6rs\u00f6ker hindra en fr\u00e5n att k\u00f6pa <strong>en<\/strong> <strong>bl\u00e5<\/strong> tr\u00f6ja till sin flicka ; alla f\u00f6rfr\u00e5gningar om var ens fru h\u00e5ller hus , alla registreringstillf\u00e4llen d\u00e4r det inte duger med ens eget namn som m\u00e5lsman utan d\u00e4r det m\u00e5ste vara mammans .", "verb": "bl\u00e5", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=bl\u00e5", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4048%22%20%3B%20A%20%5Bform%3D%22bl%C3%A5%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r v\u00e5r tids n\u00e4ringsliv har <strong>de<\/strong> <strong>gamla<\/strong> energik\u00e4llorna n\u00e4stan helt spelat ut sin roll .", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3100%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Detta<\/strong> <strong>andra<\/strong> argument f\u00f6r monogami \u00e4r naturligtvis inte kristna m\u00e4nniskor ensamma om .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=RO|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "detta", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3029%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22Detta%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det \u00e4r <strong>hela<\/strong> <strong>detta<\/strong> n\u00e4tverk som l\u00f6per faran .", "verb": "hela", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=hel", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "detta", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-341%22%20%3B%20A%20%5Bform%3D%22hela%22%5D%20%3B%20B%20%5Bform%3D%22detta%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Anledningen till <strong>denna<\/strong> mycket <strong>f\u00f6rsiktiga<\/strong> optimism \u00e4r att man under senare \u00e5r funnit att somliga av dessa fall har haft god nytta av ett operativt ingrepp .", "verb": "f\u00f6rsiktiga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00f6rsiktig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "denna", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-568%22%20%3B%20A%20%5Bform%3D%22f%C3%B6rsiktiga%22%5D%20%3B%20B%20%5Bform%3D%22denna%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "St\u00f6rningar i <strong>detta<\/strong> <strong>elektriska<\/strong> f\u00e4lt registreras av receptorer i sidolinjeorganet .", "verb": "elektriska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=elektrisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "detta", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3609%22%20%3B%20A%20%5Bform%3D%22elektriska%22%5D%20%3B%20B%20%5Bform%3D%22detta%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Men allt fortfarande v\u00e4ljer pojkarna i betydligt st\u00f6rre antal \u00e4n flickorna gymnasielinjer som f\u00f6r fram till <strong>de<\/strong> mest <strong>avancerade<\/strong> och ekonomiskt l\u00f6nsamma yrkena .", "verb": "avancerade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=avancerad", "xpos=PC|PRF|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Masc", "<b>Number=Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-118%22%20%3B%20A%20%5Bform%3D%22avancerade%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Denna<\/strong> <strong>nya<\/strong> inst\u00e4llning har ocks\u00e5 gett \u00e4ktenskapet en ny struktur j\u00e4mf\u00f6rt med tidigare f\u00f6rh\u00e5llanden .", "verb": "nya", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "denna", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2948%22%20%3B%20A%20%5Bform%3D%22nya%22%5D%20%3B%20B%20%5Bform%3D%22Denna%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}], "3": [{"sentence": "<strong>Den<\/strong> <strong>\u00f6kade<\/strong> avkastningen stimulerar odlarna till att vidta \u00e4ven andra f\u00f6rb\u00e4ttringar inom jordbruket .", "verb": "\u00f6kade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00f6kad", "xpos=PC|PRF|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2846%22%20%3B%20A%20%5Bform%3D%22%C3%B6kade%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I det nya skattesystemet bibeh\u00e5lls <strong>den<\/strong> <strong>gamla<\/strong> regeln att skattskyldig som bara har folkpension , inte p\u00e5f\u00f6rs n\u00e5gon skatt .", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-44%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om du bes\u00f6ker privatpraktiserande l\u00e4kare g\u00e4ller <strong>det<\/strong> <strong>gamla<\/strong> systemet", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-182%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "1 juli 1972 slopas alla ett- och tv\u00e5\u00f6ringar och <strong>den<\/strong> <strong>gamla<\/strong> fem\u00f6ringen .", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-742%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det \u00e4r detta som alltj\u00e4mt \u00e4r <strong>den<\/strong> <strong>verkliga<\/strong> inneb\u00f6rden i kvinnofr\u00e5gan , ty j\u00e4mlikhet skapas inte endast utifr\u00e5n genom yttre former , s\u00e5som r\u00f6str\u00e4tt , valbarhet , \u00f6ppna studiev\u00e4gar med mera , den kan endast uppn\u00e5s genom en inre j\u00e4mlikhet i vetande och kunnande , i fram\u00e5tanda och samh\u00e4llsansvar .", "verb": "verkliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=verklig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-499%22%20%3B%20A%20%5Bform%3D%22verkliga%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Utl\u00e4ndska medborgare skall behandlas likv\u00e4rdigt med svenska medborgare - detta \u00e4r <strong>den<\/strong> <strong>v\u00e4gledande<\/strong> regeln .", "verb": "v\u00e4gledande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=v\u00e4gledande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-242%22%20%3B%20A%20%5Bform%3D%22v%C3%A4gledande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Vi f\u00e5r r\u00e4kna med att boendet slungas \u00e4nnu l\u00e4ngre bort fr\u00e5n arbetsplatsen , att det \u00e4nnu mer differentierade yrkeslivet kr\u00e4ver alltmer totala insatser , att den lilla familjen med ett eller tv\u00e5 barn f\u00f6rblir <strong>den<\/strong> <strong>dominerande<\/strong> familjetypen .", "verb": "dominerande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=dominerande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1079%22%20%3B%20A%20%5Bform%3D%22dominerande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I den familjesociologiska litteraturen m\u00f6ter man kontroversiella uppfattningar om <strong>den<\/strong> <strong>lilla<\/strong> , relativt isolerade och i teknisk-ekonomisk mening irrationellt organiserade familjegruppens inflytande p\u00e5 sina medlemmar .", "verb": "lilla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4084%22%20%3B%20A%20%5Bform%3D%22lilla%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Pappan \u00e4r <strong>den<\/strong> st\u00e4ndige <strong>lille<\/strong> hemf\u00f6rb\u00e4ttraren med hammare och m\u00e5larpensel .", "verb": "lille", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|MAS|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Com"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3541%22%20%3B%20A%20%5Bform%3D%22lille%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Tyngdpunkten i samh\u00e4llets ansvar f\u00f6r <strong>den<\/strong> <strong>enskilde<\/strong> medborgarens ekonomiska trygghet ligger i socialf\u00f6rs\u00e4kringarna .", "verb": "enskilde", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=enskild", "xpos=JJ|POS|MAS|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Com"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3357%22%20%3B%20A%20%5Bform%3D%22enskilde%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Man kan tolka det h\u00e4r p\u00e5 n\u00e5got olika s\u00e4tt men tydligt \u00e4r att ungdomarnas biobes\u00f6k ocks\u00e5 har stor betydelse f\u00f6r kamratkontakter och f\u00f6r kontakter med <strong>det<\/strong> <strong>andra<\/strong> k\u00f6net .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Plur,Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2767%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Men <strong>den<\/strong> <strong>f\u00f6r\u00e4ndrade<\/strong> gruppstrukturen har ocks\u00e5 en annan effekt som kan \u00f6ka motivet f\u00f6r de gifta kvinnorna att ta f\u00f6rv\u00e4rvsarbete .", "verb": "f\u00f6r\u00e4ndrade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00f6r\u00e4ndrad", "xpos=PC|PRF|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4102%22%20%3B%20A%20%5Bform%3D%22f%C3%B6r%C3%A4ndrade%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Presentationen av <strong>den<\/strong> <strong>kommande<\/strong> inkomstskattereformen utl\u00f6ste en v\u00e5g av k\u00e4nslostormar , som i pressen bl\u00e5sts upp till full orkan .", "verb": "kommande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kommande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-363%22%20%3B%20A%20%5Bform%3D%22kommande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Brottsp\u00e5f\u00f6ljder b\u00f6r avpassas s\u00e5 att <strong>den<\/strong> <strong>enskilde<\/strong> lag\u00f6vertr\u00e4daren avh\u00e5ller sig fr\u00e5n att beg\u00e5 nya brott och \u00e5terinpassas i ett normalt samh\u00e4llsliv .", "verb": "enskilde", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=enskild", "xpos=JJ|POS|MAS|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Com"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3896%22%20%3B%20A%20%5Bform%3D%22enskilde%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Man ins\u00e5g att <strong>den<\/strong> <strong>d\u00e4mpade<\/strong> takten i nybyggnaden ganska snart skulle leda till bostadsbrist och , som en f\u00f6ljd av det minskade utbudet , h\u00f6jda hyror .", "verb": "d\u00e4mpade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=d\u00e4mpad", "xpos=PC|PRF|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-792%22%20%3B%20A%20%5Bform%3D%22d%C3%A4mpade%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I s\u00e5dant fall har dock <strong>den<\/strong> <strong>andra<\/strong> maken r\u00e4tt till skattereduktion ( se nedan ) .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-40%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Antalet sysselsatta i Stockholms innerstad , <strong>den<\/strong> stora <strong>bl\u00e5<\/strong> stapeln mitt i kartan , skall enligt f\u00f6rslaget h\u00e5llas of\u00f6r\u00e4ndrat vid omkring 290000 under 15-\u00e5rsperioden .", "verb": "bl\u00e5", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=bl\u00e5", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1099%22%20%3B%20A%20%5Bform%3D%22bl%C3%A5%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>bl\u00e5<\/strong> biten inrymmer vad som kan beh\u00f6vas f\u00f6r l\u00e5tsaslek .", "verb": "bl\u00e5", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=bl\u00e5", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2590%22%20%3B%20A%20%5Bform%3D%22bl%C3%A5%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}], "4": [{"sentence": "\u00c4ktenskapets former och villkor har skiftat i betydande grad i olika kulturer , men det har s\u00e5 l\u00e5ngt vi ser bak\u00e5t i historisk tid varit <strong>den<\/strong> <strong>traditionella<\/strong> formen f\u00f6r sexuell samlevnad .", "verb": "traditionella", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=traditionell", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4176%22%20%3B%20A%20%5Bform%3D%22traditionella%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Det<\/strong> <strong>kristna<\/strong> \u00e4ktenskapet", "verb": "kristna", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kristen", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4169%22%20%3B%20A%20%5Bform%3D%22kristna%22%5D%20%3B%20B%20%5Bform%3D%22Det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "B\u00e5de etiska och ekonomiska sk\u00e4l g\u00f6r , att monogami \u00e4r den vanligaste familjeformen \u00e4ven utanf\u00f6r <strong>den<\/strong> <strong>kristna<\/strong> traditionen .", "verb": "kristna", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kristen", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3818%22%20%3B%20A%20%5Bform%3D%22kristna%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>obligatoriska<\/strong> hj\u00e4lpen regleras i \u00a7 12 .", "verb": "obligatoriska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=obligatorisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3363%22%20%3B%20A%20%5Bform%3D%22obligatoriska%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I <strong>den<\/strong> <strong>traditionella<\/strong> familjen grundades fadersauktoriteten fr\u00e4mst p\u00e5 barnens ekonomiska beroende .", "verb": "traditionella", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=traditionell", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-5%22%20%3B%20A%20%5Bform%3D%22traditionella%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Sv\u00e5rast \u00e4r att best\u00e4mma vilka f\u00f6r\u00e4ndringar som har skett i fr\u00e5ga om <strong>den<\/strong> <strong>sexuella<\/strong> funktionen .", "verb": "sexuella", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sexuell", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2788%22%20%3B%20A%20%5Bform%3D%22sexuella%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>religi\u00f6sa<\/strong> funktionen .", "verb": "religi\u00f6sa", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=religi\u00f6s", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2779%22%20%3B%20A%20%5Bform%3D%22religi%C3%B6sa%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Soldaterna har f\u00e5tt h\u00e5lla till godo med <strong>det<\/strong> <strong>otillr\u00e4ckliga<\/strong> glasdunet .", "verb": "otillr\u00e4ckliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=otillr\u00e4cklig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1705%22%20%3B%20A%20%5Bform%3D%22otillr%C3%A4ckliga%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>kvinnliga<\/strong> medborgarr\u00e4tten \u00e4r d\u00e4rf\u00f6r i praktiken ett barn av demokratins genombrott i v\u00e5rt land liksom ocks\u00e5 den gifta kvinnans juridiska likst\u00e4llighet med mannen .", "verb": "kvinnliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kvinnlig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-91%22%20%3B%20A%20%5Bform%3D%22kvinnliga%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r att f\u00e5 <strong>det<\/strong> <strong>kommunala<\/strong> bostadstill\u00e4gget fordras ocks\u00e5 att bostaden uppfyller de best\u00e4mmelser som g\u00e4ller f\u00f6r det statliga bostadstill\u00e4gget .", "verb": "kommunala", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kommunal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-643%22%20%3B%20A%20%5Bform%3D%22kommunala%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Man f\u00e5r hoppas att <strong>det<\/strong> <strong>statliga<\/strong> lekr\u00e5det skall f\u00e5 tillr\u00e4ckliga resurser f\u00f6r forskning .", "verb": "statliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=statlig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2623%22%20%3B%20A%20%5Bform%3D%22statliga%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Brevet skickas till <strong>den<\/strong> <strong>egna<\/strong> f\u00f6rsamlingen .", "verb": "egna", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=egen", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1531%22%20%3B%20A%20%5Bform%3D%22egna%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Samtidigt som garantin f\u00f6r <strong>den<\/strong> <strong>ekonomiska<\/strong> tryggheten f\u00f6r de stora grupperna har byggts ut har den enskilda m\u00e4nniskans problem kommit allt starkare i f\u00f6rgrunden .", "verb": "ekonomiska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ekonomisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3430%22%20%3B%20A%20%5Bform%3D%22ekonomiska%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>kvinnliga<\/strong> arbetskraften utnyttjas maximalt .", "verb": "kvinnliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kvinnlig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-300%22%20%3B%20A%20%5Bform%3D%22kvinnliga%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Och i ett n\u00f6tskal har man d\u00e4rmed plockat fram <strong>den<\/strong> <strong>sociala<\/strong> trygghet eller r\u00e4ttare sagt den brist p\u00e5 social trygghet som tillkommer de kvinnor som v\u00e4ljer ( tvingas in i ) hemmafrutillvaron .", "verb": "sociala", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=social", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-393%22%20%3B%20A%20%5Bform%3D%22sociala%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}], "2": [{"sentence": "Vi f\u00e5r r\u00e4kna med att boendet slungas \u00e4nnu l\u00e4ngre bort fr\u00e5n arbetsplatsen , att <strong>det<\/strong> \u00e4nnu mer <strong>differentierade<\/strong> yrkeslivet kr\u00e4ver alltmer totala insatser , att den lilla familjen med ett eller tv\u00e5 barn f\u00f6rblir den dominerande familjetypen .", "verb": "differentierade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=differentierad", "xpos=PC|PRF|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1079%22%20%3B%20A%20%5Bform%3D%22differentierade%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Anslutning till <strong>den<\/strong> terapeutiskt <strong>dominerande<\/strong> familjesynen med dess latenta misstro mot det allm\u00e4nna och gemenskaper utanf\u00f6r hemmet , respektive anslutning till kritiken av \u00f6nskv\u00e4rdheten att \u00f6verbrygga familjens isolering fr\u00e5n \u00f6vriga samh\u00e4llsinstitutioner och att p\u00e5 flera omr\u00e5den aktivera och dra in familjemedlemmarna i politisk , social och produktiv verksamhet l\u00e4gger grunden f\u00f6r helt olika moraliska valsituationer och rollideal f\u00f6r familjerna .", "verb": "dominerande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=dominerande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4100%22%20%3B%20A%20%5Bform%3D%22dominerande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Fr\u00e5gar man sedan , vilket djupare syfte som \u00e4ktenskapet kan f\u00e5 f\u00f6r den , som lever i Kristi tro , blir svaret : att p\u00e5 \u00e4ktenskapets begr\u00e4nsade omr\u00e5de s\u00f6ka leva ut n\u00e5got av Kristi k\u00e4rlek gentemot <strong>den<\/strong> <strong>andra<\/strong> parten i \u00e4ktenskapet .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Plur,Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4148%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det \u00e4r viktigt att <strong>det<\/strong> <strong>lilla<\/strong> barnet i lugn och ro f\u00e5r v\u00e4xa samman med den som v\u00e5rdar det , s\u00e5 att det fr\u00e5n b\u00f6rjan k\u00e4nner sig tryggt och ompysslat .", "verb": "lilla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-246%22%20%3B%20A%20%5Bform%3D%22lilla%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Vi kan k\u00e4nna oss helt fria att teoretiskt konstruera en annorlunda moral f\u00f6r framtidens sl\u00e4kten , om vi finner att <strong>den<\/strong> <strong>r\u00e5dande<\/strong> moralen \u00f6verv\u00e4gande leder till olyckliga konsekvenser . '", "verb": "r\u00e5dande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=r\u00e5dande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3016%22%20%3B%20A%20%5Bform%3D%22r%C3%A5dande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I dessa fall d\u00e5 orsaken allts\u00e5 inte \u00e4r <strong>den<\/strong> vanliga <strong>h\u00f6ggradig<\/strong> \u00e5derf\u00f6rkalkning , finns chansen att \u00e5terf\u00f6ra patienten till ett normalt liv genom en operation av det slag som \u00e5terges p\u00e5 skissen h\u00e4r intill", "verb": "h\u00f6ggradig", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=h\u00f6ggradig", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Com"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-614%22%20%3B%20A%20%5Bform%3D%22h%C3%B6ggradig%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>gamla<\/strong> samh\u00e4llsordningen byggde p\u00e5 auktorit\u00e4ra principer - n\u00e5gra hade att befalla , andra hade att lyda .", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-461%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Tappa ur <strong>det<\/strong> <strong>gamla<\/strong> kylvattnet .", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1581%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r\u00e4ldrar och barn b\u00f6r med f\u00f6r\u00e4ldrarnas \u00f6kade fritid f\u00e5 \u00f6kade m\u00f6jligheter att ha roligt tillsammans , men ingendera \u00e4r utl\u00e4mnad \u00e5t <strong>den<\/strong> <strong>andra<\/strong> parten s\u00e5 som f\u00f6r\u00e4ldrar nu kan k\u00e4nna sej utl\u00e4mnade \u00e5t en alltf\u00f6r kr\u00e4vande fostraruppgift - liksom barn \u00e4r totalt utl\u00e4mnade \u00e5t inkapabla f\u00f6r\u00e4ldrar .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Plur,Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1103%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Pappan \u00e4r <strong>den<\/strong> st\u00e4ndige <strong>lille<\/strong> hemf\u00f6rb\u00e4ttraren med hammare och m\u00e5larpensel .", "verb": "lille", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liten", "xpos=JJ|POS|MAS|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Com"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3541%22%20%3B%20A%20%5Bform%3D%22lille%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r att det d\u00e4rf\u00f6r skulle vara l\u00e4ttare att i n\u00e5gon m\u00e5n ( sic ! ) undvika okyskhet , har ocks\u00e5 Gud befallt <strong>det<\/strong> <strong>\u00e4kta<\/strong> st\u00e5ndet , p\u00e5 det var och en m\u00e5 hava sin besk\u00e4rda del och l\u00e5ta n\u00f6ja sig d\u00e4rmed , ehuruv\u00e4l h\u00e4rvid \u00e4ven Guds n\u00e5d \u00e4r n\u00f6dv\u00e4ndig , f\u00f6r att ocks\u00e5 hj\u00e4rtat m\u00e5 bevaras kyskt . ' 2", "verb": "\u00e4kta", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e4kta", "xpos=JJ|POS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4146%22%20%3B%20A%20%5Bform%3D%22%C3%A4kta%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Vi f\u00e5r r\u00e4kna med att boendet slungas \u00e4nnu l\u00e4ngre bort fr\u00e5n arbetsplatsen , att det \u00e4nnu mer differentierade yrkeslivet kr\u00e4ver alltmer totala insatser , att den lilla familjen med ett eller tv\u00e5 barn f\u00f6rblir <strong>den<\/strong> <strong>dominerande<\/strong> familjetypen .", "verb": "dominerande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=dominerande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-1079%22%20%3B%20A%20%5Bform%3D%22dominerande%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om du bes\u00f6ker privatpraktiserande l\u00e4kare g\u00e4ller <strong>det<\/strong> <strong>gamla<\/strong> systemet", "verb": "gamla", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gammal", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "<b>Number=Sing<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-182%22%20%3B%20A%20%5Bform%3D%22gamla%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det \u00e4r <strong>den<\/strong> <strong>vanligaste<\/strong> kursformen med en kurstid som varierar fr\u00e5n ett par m\u00e5nader upp till tv\u00e5 \u00e5r .", "verb": "vanligaste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=vanlig", "xpos=JJ|SUV|UTR/NEU|SIN/PLU|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Sup", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1208%22%20%3B%20A%20%5Bform%3D%22vanligaste%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "B\u00e5de etiska och ekonomiska sk\u00e4l g\u00f6r , att monogami \u00e4r <strong>den<\/strong> <strong>vanligaste<\/strong> familjeformen \u00e4ven utanf\u00f6r den kristna traditionen .", "verb": "vanligaste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=vanlig", "xpos=JJ|SUV|UTR/NEU|SIN/PLU|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Sup", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "den", "2": "Fem,Masc,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3818%22%20%3B%20A%20%5Bform%3D%22vanligaste%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Med <strong>det<\/strong> <strong>svenska<\/strong> skolv\u00e4sendets omdaning har f\u00f6ljt en stark utbildningsexpansion som f\u00f6rmodligen kommer att ha vittg\u00e5ende konsekvenser f\u00f6r den framtida gestaltningen av relationerna mellan k\u00f6nen .", "verb": "svenska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=svensk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4080%22%20%3B%20A%20%5Bform%3D%22svenska%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>r\u00f6da<\/strong> biten handlar om att r\u00f6ra sig , det \u00e4r att hoppa , springa , bolla , kl\u00e4ttra och gunga etc .", "verb": "r\u00f6da", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=r\u00f6d", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2595%22%20%3B%20A%20%5Bform%3D%22r%C3%B6da%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Den inv\u00e4ndning som l\u00e4rjungarna gjorde p\u00e5 Jesu uttalande ( Mt. 19:10 ff. ) har aldrig upph\u00f6rt att syssels\u00e4tta <strong>det<\/strong> <strong>kristna<\/strong> t\u00e4nkandet .", "verb": "kristna", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kristen", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3978%22%20%3B%20A%20%5Bform%3D%22kristna%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I det agrara samh\u00e4llet var det i h\u00f6g grad arbetet som f\u00f6renade - inte bara makarna utan hela familjen ; och inte bara <strong>den<\/strong> <strong>enskilda<\/strong> familjen utan dessutom ofta storfamiljen .", "verb": "enskilda", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=enskild", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2935%22%20%3B%20A%20%5Bform%3D%22enskilda%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "J\u00e4rnv\u00e4gsstaden ; d\u00e5 Nils Ericsson planlade <strong>det<\/strong> <strong>svenska<\/strong> stambanen\u00e4tet p\u00e5 1850-talet l\u00e4t han dra j\u00e4rnv\u00e4garna genom till stor del obebyggda trakter .", "verb": "svenska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=svensk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3727l%22%20%3B%20A%20%5Bform%3D%22svenska%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om s\u00e5 bara en procent eller \u00e4nnu mindre kan erbjudas en behandling av det slag som ber\u00f6rts ovan , s\u00e5 vore det en enorm vinst , b\u00e5de p\u00e5 det m\u00e4nskliga och <strong>det<\/strong> <strong>praktiska<\/strong> planet .", "verb": "praktiska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=praktisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-587%22%20%3B%20A%20%5Bform%3D%22praktiska%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "' <strong>Det<\/strong> <strong>moderna<\/strong> \u00e4ktenskapet som i de flesta fall ing\u00e5s uteslutande av k\u00e4nslom\u00e4ssiga motiv \u00e4r rimligtvis underkastat k\u00e4nslornas sv\u00e4ngningar och \u00e4r d\u00e4rf\u00f6r inte en tillr\u00e4ckligt stabil institution f\u00f6r att utg\u00f6ra grunden f\u00f6r m\u00e4nniskors l\u00e5ngsiktiga trygghet .", "verb": "moderna", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=modern", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-429%22%20%3B%20A%20%5Bform%3D%22moderna%22%5D%20%3B%20B%20%5Bform%3D%22Det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "( Jfr <strong>den<\/strong> <strong>nya<\/strong> namnlagen i v\u00e5rt land , som ger hustrun m\u00f6jlighet att beh\u00e5lla sitt namn vid gifterm\u00e5l . )", "verb": "nya", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2744%22%20%3B%20A%20%5Bform%3D%22nya%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Det<\/strong> <strong>statliga<\/strong> l\u00e5net f\u00f6rmedlas av kommunen .", "verb": "statliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=statlig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-665%22%20%3B%20A%20%5Bform%3D%22statliga%22%5D%20%3B%20B%20%5Bform%3D%22Det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I s\u00e5dant fall har dock <strong>den<\/strong> <strong>andra<\/strong> maken r\u00e4tt till skattereduktion ( se nedan ) .", "verb": "andra", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=annan", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-40%22%20%3B%20A%20%5Bform%3D%22andra%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "H\u00e4rigenom fick <strong>den<\/strong> <strong>engelska<\/strong> textilindustrin avs\u00e4ttning f\u00f6r sina produkter ocks\u00e5 i Indien .", "verb": "engelska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=engelsk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-149%22%20%3B%20A%20%5Bform%3D%22engelska%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Det<\/strong> <strong>nya<\/strong> grundavdraget - som ers\u00e4tter tidigare ortsavdrag - uppg\u00e5r till 4500 kr f\u00f6r varje skattskyldig med en till statlig inkomstskatt taxerad inkomst av h\u00f6gst 30000 kr .", "verb": "nya", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-31%22%20%3B%20A%20%5Bform%3D%22nya%22%5D%20%3B%20B%20%5Bform%3D%22Det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Fri resa och traktamente f\u00f6r att s\u00f6ka arbete och se p\u00e5 <strong>den<\/strong> <strong>nya<\/strong> arbetsorten .", "verb": "nya", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1242%22%20%3B%20A%20%5Bform%3D%22nya%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>ortodoxa<\/strong> kyrkans praxis inneb\u00e4r en kompromiss .", "verb": "ortodoxa", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ortodox", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3052%22%20%3B%20A%20%5Bform%3D%22ortodoxa%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I <strong>den<\/strong> <strong>gula<\/strong> delen s\u00e4ger syster saker , att patienten skall f\u00e5 kateter , r\u00f6ntgen eller bad .", "verb": "gula", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=gul", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1820%22%20%3B%20A%20%5Bform%3D%22gula%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}], "0": [{"sentence": "Det \u00e4r patienter med dessa tillst\u00e5nd som utg\u00f6r <strong>en<\/strong> <strong>stor<\/strong> procent av det klientel som i dag v\u00e5rdas p\u00e5 \u00e5lderdomshem , l\u00e5ngv\u00e5rdskliniker och mentalsjukhus .", "verb": "stor", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stor", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-563%22%20%3B%20A%20%5Bform%3D%22stor%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Mycket mer skall in i utvecklingsbilden , men <strong>en<\/strong> <strong>dj\u00e4rv<\/strong> satsning p\u00e5 utbildning kan ge resultat .", "verb": "dj\u00e4rv", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=dj\u00e4rv", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-432%22%20%3B%20A%20%5Bform%3D%22dj%C3%A4rv%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det \u00e4r f\u00f6rbjudet att k\u00f6ra med n\u00e5got hjul till v\u00e4nster om sp\u00e4rrlinje utom n\u00e4r det finns <strong>en<\/strong> streckad <strong>vit<\/strong> linje till h\u00f6ger om den .", "verb": "vit", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=vit", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-954%22%20%3B%20A%20%5Bform%3D%22vit%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>En<\/strong> <strong>god<\/strong> regel \u00e4r att aldrig l\u00e5ta ett barn ligga och skrika av hunger n\u00e5gon l\u00e4ngre stund .", "verb": "god", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=god", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-299%22%20%3B%20A%20%5Bform%3D%22god%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>En<\/strong> <strong>vanlig<\/strong> karakteristik av ett u-land \u00e4r att bruttonationalprodukten ( BNP ) per person och \u00e5r understiger en viss summa .", "verb": "vanlig", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=vanlig", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-112%22%20%3B%20A%20%5Bform%3D%22vanlig%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "\u00c4ktenskapet \u00e4r - som redan framh\u00e5llits - <strong>ingen<\/strong> syndfri eller oproblematisk <strong>etisk<\/strong> ordning .", "verb": "etisk", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=etisk", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "ingen", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=ingen", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Neg"], "label": "yes", "route": {"0": "ingen"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3982%22%20%3B%20A%20%5Bform%3D%22etisk%22%5D%20%3B%20B%20%5Bform%3D%22ingen%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Familjen \u00e4r den grupp , vars v\u00e4rderingar och attityder under <strong>de<\/strong> <strong>tidiga<\/strong> barna\u00e5ren best\u00e4mmer vilka bel\u00f6ningar och straff som ska utdelas f\u00f6r olika beteenden .", "verb": "tidiga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=tidig", "xpos=JJ|POS|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3311%22%20%3B%20A%20%5Bform%3D%22tidiga%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "N\u00e4r ackorden s\u00e4tts , s\u00e4tts dom s\u00e5 att man inte kan h\u00f6ja l\u00f6nen ett dugg , fast enligt lagen ska det finnas <strong>en<\/strong> <strong>tioprocentig<\/strong> m\u00f6jlighet att h\u00f6ja ackordet .", "verb": "tioprocentig", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=tioprocentig", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-301%22%20%3B%20A%20%5Bform%3D%22tioprocentig%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Inom yrkesutbildningen g\u00f6rs f\u00f6rs\u00f6k att f\u00f6rm\u00e5 flickorna att s\u00f6ka sig till <strong>de<\/strong> mera manligt <strong>betonade<\/strong> yrkena .", "verb": "betonade", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=betonad", "xpos=PC|PRF|UTR/NEU|PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Past", "VerbForm=Part"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-158%22%20%3B%20A%20%5Bform%3D%22betonade%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Till <strong>en<\/strong> <strong>s\u00e5dan<\/strong> h\u00e4r anl\u00e4ggning kan man med ett enkelt r\u00f6rsystem ut p\u00e5 bryggorna koppla utsugningsslangar till b\u00e5tarnas uppsamlingstankar .", "verb": "s\u00e5dan", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e5dan", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2468%22%20%3B%20A%20%5Bform%3D%22s%C3%A5dan%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "F\u00f6r barnen \u00e4r det <strong>en<\/strong> mycket <strong>stor<\/strong> f\u00f6rdel om de f\u00e5r kontakt med b\u00e4gge sina f\u00f6r\u00e4ldrar .", "verb": "stor", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stor", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4256%22%20%3B%20A%20%5Bform%3D%22stor%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det inl\u00e4gget fr\u00e5n studierektor Gudrun Werkstr\u00f6m i Asarum fick <strong>de<\/strong> <strong>starkaste<\/strong> appl\u00e5derna vid skolkuratorernas studiedagar som inleddes i Stockholm p\u00e5 torsdagen .", "verb": "starkaste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stark", "xpos=JJ|SUV|UTR/NEU|SIN/PLU|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Sup", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "xpos=DT|UTR/NEU|PLU|DEF", "Definite=Def", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "de"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2224%22%20%3B%20A%20%5Bform%3D%22starkaste%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Denna predestination till <strong>en<\/strong> <strong>speciell<\/strong> uppgift \u00e4r kvinnans ' biologiska tragedi ' , som man ville bryta genom att \u00f6verf\u00f6ra barnav\u00e5rden p\u00e5 kollektivet .", "verb": "speciell", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=speciell", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-dev-23%22%20%3B%20A%20%5Bform%3D%22speciell%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Vid krigsslutet tog <strong>en<\/strong> helt <strong>ny<\/strong> bostadspolitik form .", "verb": "ny", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR|SIN|IND|NOM", "Case=Nom", "Definite=Ind", "Degree=Pos", "Gender=Com", "<b>Number=Sing<\/b>"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|UTR|SIN|IND", "Definite=Ind", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-808%22%20%3B%20A%20%5Bform%3D%22ny%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Ett<\/strong> <strong>liknande<\/strong> fynd , en ung sten\u00e5ldersflicka med hallonfr\u00f6n mellan t\u00e4nderna , har tidigare gjorts i V\u00e4sterg\u00f6tland .", "verb": "liknande", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=liknande", "xpos=PC|PRS|UTR/NEU|SIN/PLU|IND/DEF|NOM", "Case=Nom", "Definite=Def,Ind", "Degree=Pos", "Gender=Fem,Masc,Neut", "<b>Number=Plur,Sing<\/b>", "Tense=Pres", "VerbForm=Part"], "nsubj": "ett", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "xpos=DT|NEU|SIN|IND", "Definite=Ind", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "en"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2377%22%20%3B%20A%20%5Bform%3D%22liknande%22%5D%20%3B%20B%20%5Bform%3D%22Ett%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>k\u00e4nslom\u00e4ssiga<\/strong> funktionen .", "verb": "k\u00e4nslom\u00e4ssiga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=k\u00e4nslom\u00e4ssig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2780%22%20%3B%20A%20%5Bform%3D%22k%C3%A4nslom%C3%A4ssiga%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Enligt detta resonemang karakteriseras <strong>det<\/strong> kapitalistiskt <strong>industriella<\/strong> samh\u00e4llet varken av individuell eller klassegoism utan av familje-egoism .", "verb": "industriella", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=industriell", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4097%22%20%3B%20A%20%5Bform%3D%22industriella%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>nordiska<\/strong> samordningen har redan g\u00e5tt s\u00e5 l\u00e5ngt p\u00e5 dessa omr\u00e5den att det anses n\u00f6dv\u00e4ndigt .", "verb": "nordiska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=nordisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2306%22%20%3B%20A%20%5Bform%3D%22nordiska%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Den<\/strong> <strong>bl\u00e5<\/strong> biten inrymmer vad som kan beh\u00f6vas f\u00f6r l\u00e5tsaslek .", "verb": "bl\u00e5", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=bl\u00e5", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Degree=Pos", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2590%22%20%3B%20A%20%5Bform%3D%22bl%C3%A5%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Det var <strong>den<\/strong> <strong>verksamma<\/strong> substansen i de mycket omtalade ' lyckopillerna ' , som f\u00f6r en del \u00e5r sedan var de mest anv\u00e4nda lugnande medlen .", "verb": "verksamma", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=verksam", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-712%22%20%3B%20A%20%5Bform%3D%22verksamma%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Jag avb\u00f6jde v\u00e4nligt , la in ett extra kol och hade bytt och kl\u00e4tt p\u00e5 Malin innan <strong>den<\/strong> <strong>hj\u00e4lpsamma<\/strong> damen hade hunnit halvv\u00e4gs med sin unge .", "verb": "hj\u00e4lpsamma", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=hj\u00e4lpsam", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-4052%22%20%3B%20A%20%5Bform%3D%22hj%C3%A4lpsamma%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Ungef\u00e4r till denna etapp har den nordiska och stora delar av <strong>den<\/strong> <strong>europeiska<\/strong> socialpolitiken kommit i dag .", "verb": "europeiska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=europeisk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3428%22%20%3B%20A%20%5Bform%3D%22europeiska%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Om dessa uteblir , saknar man <strong>den<\/strong> <strong>egentliga<\/strong> motiveringen f\u00f6r en fortsatt sammanh\u00e5llning .", "verb": "egentliga", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=egentlig", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3002%22%20%3B%20A%20%5Bform%3D%22egentliga%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Attraktion , h\u00e4ngivenhet , den allm\u00e4nna kultursituationen , <strong>den<\/strong> <strong>aktuella<\/strong> milj\u00f6n \u00e4r exempel p\u00e5 yttre s\u00e5dana faktorer .", "verb": "aktuella", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=aktuell", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-3996%22%20%3B%20A%20%5Bform%3D%22aktuella%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "H\u00e4rigenom fick <strong>den<\/strong> <strong>engelska<\/strong> textilindustrin avs\u00e4ttning f\u00f6r sina produkter ocks\u00e5 i Indien .", "verb": "engelska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=engelsk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-test-149%22%20%3B%20A%20%5Bform%3D%22engelska%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "I det agrara samh\u00e4llet var det i h\u00f6g grad arbetet som f\u00f6renade - inte bara makarna utan hela familjen ; och inte bara <strong>den<\/strong> <strong>enskilda<\/strong> familjen utan dessutom ofta storfamiljen .", "verb": "enskilda", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=enskild", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2935%22%20%3B%20A%20%5Bform%3D%22enskilda%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Bruttonationalprodukten ( <strong>det<\/strong> <strong>totala<\/strong> v\u00e4rdet av vad ett land producerar i fr\u00e5ga om varor och tj\u00e4nster ) har \u00f6kat med 67 proc \u00e5ren 1958-1968 i EEC , med 58 proc. i USA .", "verb": "totala", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=total", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-1468%22%20%3B%20A%20%5Bform%3D%22totala%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "M\u00f6jligheterna f\u00f6r de utl\u00e4ndska storbolagen att s\u00e4tta k\u00e4ppar i <strong>det<\/strong> <strong>svenska<\/strong> f\u00f6rhandlingsmaskineriet skulle utebli .", "verb": "svenska", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=svensk", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "det", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|NEU|SIN|DEF", "Definite=Def", "Gender=Neut", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2359%22%20%3B%20A%20%5Bform%3D%22svenska%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "Konstbevattning kommer till anv\u00e4ndning inom vissa omr\u00e5den , men m\u00f6jligheterna till s\u00e5dan begr\u00e4nsas av den tillg\u00e4ngliga vattenm\u00e4ngden och av <strong>den<\/strong> <strong>starka<\/strong> avdunstningen .", "verb": "starka", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=stark", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=den", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "den", "2": "Fem,Neut"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2821%22%20%3B%20A%20%5Bform%3D%22starka%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}, {"sentence": "<strong>Denna<\/strong> <strong>nya<\/strong> inst\u00e4llning har ocks\u00e5 gett \u00e4ktenskapet en ny struktur j\u00e4mf\u00f6rt med tidigare f\u00f6rh\u00e5llanden .", "verb": "nya", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "xpos=JJ|POS|UTR/NEU|SIN|DEF|NOM", "Case=Nom", "Definite=Def", "Degree=Pos", "Gender=Fem,Neut", "<b>Number=Plur<\/b>"], "nsubj": "denna", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=denna", "xpos=DT|UTR|SIN|DEF", "Definite=Def", "Gender=Com", "<b>Number=Sing<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "denna"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Swedish-Talbanken%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sv-ud-train-2948%22%20%3B%20A%20%5Bform%3D%22nya%22%5D%20%3B%20B%20%5Bform%3D%22Denna%22%5D%20%20%7D", "treebankName": "UD_Swedish-Talbanken"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Swedish \u00b7 Talbanken \u00b7 DET-ADJ_Number", "r
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

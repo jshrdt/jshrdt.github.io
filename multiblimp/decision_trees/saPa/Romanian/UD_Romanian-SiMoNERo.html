@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Romanian \u00b7 SiMoNERo", "languageName": "Romanian", "accuracy": "100.0%", "testAccuracy": "100.0%", "testN": 222, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "1,997", "predictor": "Aux_nsubj_Person", "rootAccuracy": "99.4%", "trainAccuracy": "100.0%", "treebank": "SiMoNERo", "nav": {"pooledAcc": 0.9927272727272727, "pooledTestN": 550, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 5498, "pooledUnkRows": 135, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "ArT", "rows": 4, "unkRows": 0, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 3275, "unkRows": 63, "status": "ok", "excluded": false, "reason": null, "acc": 0.9878048780487805, "pooledAcc": 0.9878048780487805, "delta": 0.0, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "SiMoNERo", "rows": 2219, "unkRows": 72, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 1986, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}, {"cls": "unk", "cnt": 72, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 1986, "H": 0.0034, "acc": 0.9997, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 1986, "color": "var(--yes)"}, {"cls": "no", "cnt": 0, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 11, "H": 0.2499, "acc": 0.9583, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 0, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 1997, "H": 0.0511, "acc": 0.9942, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 1986, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}], "rule": "Aux.form = am", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "<strong>Anomaliile</strong> congenitale <strong>sunt</strong> foarte asem\u0103n\u0103toare celor determinate de inhibitorii enzimei de conversie , probabil din cauza sensibilit\u0103\u021bii crescute a f\u0103tului la ac\u021biunea hipotensoare a acestor dou\u0103 clase .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "anomaliile", "nsubjFeats": ["upos=NOUN", "lemma=anomalie", "xpos=Ncfpry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1333%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22Anomaliile%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen studiu ecocardiografic condus de Lindroos \u0219i colaboratorii s\u0103i pe un lot de 522 de pacien\u021bi v\u00e2rstnici , la 40 % dintre subiec\u021bi <strong>au</strong> fost prezente <strong>calcific\u0103ri</strong> aortice u\u0219oare , iar la 13 % severe .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "calcific\u0103ri", "nsubjFeats": ["upos=NOUN", "lemma=calcificare", "xpos=Ncfp-n", "Definite=Ind", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-44%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22calcific%C4%83ri%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Dac\u0103 dori\u021bi s\u0103 participa\u021bi , v\u0103 rug\u0103m s\u0103 completa\u021bi chestionarul ata\u0219at \u0219i s\u0103 semna\u021bi prezentul document , <strong>care</strong> <strong>va</strong> fi considerat consim\u021b\u0103m\u00e2ntul dumneavoastr\u0103 \u00een format , prin care accepta\u021bi s\u0103 participa\u021bi la studiu .", "verb": "va", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=2+"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {"0": "va"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3149%22%20%3B%20A%20%5Bform%3D%22va%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Transformarea</strong> glucozei \u00een acizi gra\u0219i ( \u0219i depozitarea lor \u00een \u021besutul adipos ) <strong>este</strong> \u0219i ea un proces biochimic consumator de energie , depinz\u00e2nd de importan\u021ba relativ\u0103 a c\u0103ii pentozo-fosfat sau a ciclului piruvat / malat , care reprezint\u0103 furnizorii de NADPH2 necesari sintezei de novo a lipidelor .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "transformarea", "nsubjFeats": ["upos=NOUN", "lemma=transformare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3583%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Transformarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Insulina folosit\u0103 ini\u021bial era \u00een stare amorf\u0103 , p\u00e2n\u0103 \u00een 1925 c\u00e2nd <strong>Abel</strong> <strong>a</strong> reu\u0219it pentru prima dat\u0103 cristalizarea insulinei , iar nou\u0103 ani mai t\u00e2rziu Scott a descoperit faptul c\u0103 cristalele romboedrice sunt complexe de Zn-insulin\u0103 .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "Abel", "nsubjFeats": ["upos=PROPN", "lemma=Abel", "xpos=Np", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2022%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Abel%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>M\u0103surarea</strong> capacitantei membranei celulare ( direct propor\u021bional\u0103 cu Legarea / hidroliza nucleotidelor suprafa\u021ba acesteia ) <strong>este</strong> metoda care a permis monitorizarea cu o foarte bun\u0103 rezolu\u021bie temporal\u0103 ( aprox 1 ms ) a dinamicii traficului granulelor secretorii ( 24 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "m\u0103surarea", "nsubjFeats": ["upos=NOUN", "lemma=m\u0103surare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2106%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22M%C4%83surarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Din analiza celor 422 de cazuri , reprezent\u00e2nd lotul B de bolnavi , opera\u021bi \u00een perioada 2000 - 2012 , la care am aplicat tehnica protez\u0103rii cu plas\u0103 , montat\u0103 extraperitoneal , rezult\u0103 urm\u0103toarele : 2 ( 0.0047 ) decese postoperator , datorate unor complica\u021bii cardiace , respiratorii \u0219i renale pe fondul afec\u021biunilor preexistente , decompensate ; 0 hematoame \u0219i seroame , datorit\u0103 utiliz\u0103rii drenajului aspirativ , vidat , cu cel pu\u021bin dou\u0103 tuburi de dren , plasate la cei doi poli ai pl\u0103gii plus utilizarea centurii elastice abdominale \u00eenc\u0103 din prima zi postoperator ; patru cazuri ( 0.0094 ) care au dezvoltat necroze tegumentare parcelare la nivelul suturii \u0219i <strong>care</strong> <strong>au</strong> fost rezolvate conservator prin \u00eendep\u0103rtarea \u021besutului necrozat \u0219i pansamente absorbante ; \u00een 12 cazuri ( 0.0284 ) au survenit supura\u021bii ale \u021besutului subcutanat , din cauza faptului c\u0103 la ace\u0219ti pacien\u021bi am \u00eendep\u0103rtat \u00een prima etap\u0103 resturi de plas\u0103 , granuloame de fir sau textiloame , iar dup\u0103 \u0219ase luni am reintervenit \u0219i am montat plasa de polipropilen\u0103 , \u00een scop de \u00eent\u0103rire ; 2 cazuri ( 0.0047 ) considerate recidive , care au constat \u00een dehiscen\u021be aponevrotice \u0219i de \u021besut cicatriceal la polul inferior , suprapubian .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3693%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Arteroscleroza este mai \u00eent\u00e2lnit\u0103 la fum\u0103tori sau la persoanele care au nivelul de lipide ridicat , de\u0219i <strong>riscul</strong> <strong>este</strong> mai pronun\u021bat la bolnavii cu diabet .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "riscul", "nsubjFeats": ["upos=NOUN", "lemma=risc", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2563%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22riscul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Studiul</strong> Air Force Coronary Atherosclerosis Prevention Study ( AFCAPS ) , care a evaluat rolul statinelor la 6.605 pacien\u021bi , dintre care 1.416 cu v\u00e2rsta peste 65 ani , <strong>a</strong> demonstrat sc\u0103derea cu 0.36 a inciden\u021bei evenimentelor cardiace majore , precum \u0219i a necesit\u0103\u021bii terapiei de revasculariza\u021bie coronarian\u0103 la pacien\u021bii care au fost trata\u021bi cu lovastatin versus placebo , beneficiile fiind similare la subiec\u021bii v\u00e2rstnici cu alte grupe de v\u00e2rst\u0103 ( 29 ) .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "studiul", "nsubjFeats": ["upos=NOUN", "lemma=studiu", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-878%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Studiul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Cunoa\u0219terea</strong> genelor \u0219i mecanismelor moleculare ale dezvolt\u0103rii renale <strong>este</strong> esen\u021bial\u0103 pentru \u00een\u021belegerea etiopatogeniei multor malforma\u021bii renale , produse prin muta\u021bii ale unor gene implicate \u00een nefrogenez\u0103 , sau a patogeniei unor boli renale care sunt considerate a fi rezultatul unei dediferen\u021bieri celulare sau reversiei la un fenotip embrionar , prin activarea unor gene embrionare care \u00een mod normal sunt represate ( 4 , 6 , 8 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "cunoa\u0219terea", "nsubjFeats": ["upos=NOUN", "lemma=cunoa\u0219tere", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1066%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Cunoa%C8%99terea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Reevaluarea</strong> periodic\u0103 <strong>este</strong> obligatorie , cel pu\u021bin o dat\u0103 / an la pacien\u021bii cu clearance > 50 ml / min \u0219i de 43134 ori pe an la cei cu clearance \u00eentre 30 \u0219i 50 ml / min ( 89 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "reevaluarea", "nsubjFeats": ["upos=NOUN", "lemma=reevaluare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-124%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Reevaluarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Dr. Zangeneh este de acord , ad\u0103ug\u00e2nd c\u0103 un nivel prea sc\u0103zut nu este bun ; de asemenea , un <strong>nivel</strong> prea ridicat <strong>este</strong> defavorabil .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "nivel", "nsubjFeats": ["upos=NOUN", "lemma=nivel", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2470%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22nivel%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen perioada <strong>care</strong> <strong>a</strong> urmat ( secolele VII - XV ) , \u00een Europa , limba latin\u0103 , oficial\u0103 \u00een biseric\u0103 , a devenit \u0219i limba oficial\u0103 din universit\u0103\u021bile care s- au \u00eenfiin\u021bat treptat , \u00eencep\u00e2nd cu secolul XI .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3442%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ocluziile</strong> tardive ale grefei arteriale <strong>sunt</strong> de obicei secundare progresiei bolii aterosclerotice preexistente .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "ocluziile", "nsubjFeats": ["upos=NOUN", "lemma=ocluzie", "xpos=Ncfpry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-636%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22Ocluziile%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Pentru majoritatea persoanelor , <strong>redob\u00e2ndirea</strong> greut\u0103\u021bii dup\u0103 pierderea ei voit\u0103 <strong>este</strong> o \u00eent\u00e2mplare estimat\u0103 , iar implica\u021biile redob\u00e2ndirii greut\u0103\u021bii la persoanele mai v\u00e2rstnice nu sunt bine \u00een\u021belese .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "redob\u00e2ndirea", "nsubjFeats": ["upos=NOUN", "lemma=redob\u00e2ndire", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2702%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22redob%C3%A2ndirea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}], "2": [{"sentence": "<strong>Ceea</strong> ce <strong>am</strong> descoperit este foarte promi\u021b\u0103tor \u0219i \u00een tratamentul targetat al cancerului sau al altor boli .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2430%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Suntem primii <strong>care</strong> <strong>am</strong> atras aten\u021bia asupra unui indicator precis al calit\u0103\u021bii SVs din pancreasul unei persoane : nivelul de proinsulin\u0103 r\u0103mas\u0103 nesplitat\u0103 , care \u00eentr- o vezicul\u0103 normal\u0103 reprezint\u0103 < 2 % din proinsulina deja prezent\u0103 \u00een reticul endoplasmic ( RE ) .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2780%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am</strong> luat \u00een studiu , de asemenea : num\u0103rul interven\u021biilor anterioare : marea <strong>majoritate</strong> a pacien\u021bilor prezentau dou\u0103 sau trei interven\u021bii tisulare \u00een antecedente ( peste 0.8 ) ; localizarea acestora \u2013 subombilical ( peste 0.5 ) ; dac\u0103 pl\u0103gile postoperatorii au fost infectate ( peste 0.5 ) ; comorbidit\u0103\u021bile asociate : pe primul plan \u2013 obezitatea , urmat\u0103 de asocierea : obezitate diabet zaharat , HTA , BPOC ; dimensiunea defectului parietal : peste 0.6 dintre pacien\u021bi au avut diametrul defectului p\u00e2n\u0103 \u00een 10 cm , pe care l- am clasificat \u00een categoria dimensiuni medii ; peste 0.9 dintre pacien\u021bi au fost opera\u021bi la rece .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "majoritate", "nsubjFeats": ["upos=NOUN", "lemma=majoritate", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3684%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22majoritate%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea</strong> ce <strong>am</strong> descoperit este c\u0103 to\u021bi factorii de risc CM se amelioreaz\u0103 odat\u0103 cu sc\u0103derea \u00een greutate , lucru deloc surprinz\u0103tor , \u00eens\u0103 majoritatea se re\u00eentorc la valorile ini\u021biale peste 12 luni , \u00een special la femeile clasificate ca \u2018 redob\u00e2nditoare \u2019 , afirm\u0103 Kristen Beavers .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2704%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am</strong> \u00eenv\u0103\u021bat <strong>multe</strong> \u00een timpul cercet\u0103rilor cu privire la buretele inteligent \u0219i \u00eel vom \u00eembun\u0103t\u0103\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "multe", "nsubjFeats": ["upos=PRON", "lemma=mult", "xpos=Pi3fpr", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "PronType=Ind", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2449%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22multe%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un fenomen demn de remarcat , mult mai evident dec\u00e2t \u00een cazul iloprostului , at\u00e2t la pacien\u021bii \u00een stadiul III , c\u00e2t \u0219i la cei in stadiul IV , este <strong>ceea</strong> ce <strong>am</strong> denumit delimitarea clar\u0103 a viabilit\u0103\u021bii sub perfuzia cu alprostadil .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1861%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Chiar dac\u0103 , teoretic , prin inhibarea func\u021biilor plachetare , <strong>administrarea</strong> concomitent\u0103 cu heparin\u0103 \u0219i / sau antiagregantele plachetare poate cre\u0219te riscul hemoragic , nu <strong>am</strong> remarcat acest efect la pacien\u021bii trata\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "administrarea", "nsubjFeats": ["upos=NOUN", "lemma=administrare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1858%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22administrarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Pentru a demonstra asocierea \u00eentre factorul de risc observat ( purtarea scutecelor de unic\u0103 folosin\u021b\u0103 peste 4 ore ) \u0219i <strong>apari\u021bia</strong> bolii <strong>am</strong> folosit metoda de calculare a asocierilor prin exprimarea riscurilor , respectiv : Riscul probabilitatea de a suferi un efect Cota ( odds ) probabilitatea de a suferi un efect raportat\u0103 la probabilitatea de a nu suferi acel efect \u2022 Riscul Relativ ( RR ) sau de c\u00e2te ori este mai mare riscul la expu\u0219i fa\u021b\u0103 de neexpu\u0219i \u2022 Odd Ratio ( OR ) sau riscul de a face boala la expu\u0219i este de OR mai mare dec\u00e2t la neexpu\u0219i .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "apari\u021bia", "nsubjFeats": ["upos=NOUN", "lemma=apari\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3109%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22apari%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen Laboratorul de Electrofiziologie al clinicii noastre <strong>am</strong> dezvoltat , \u00eempreun\u0103 cu S. Prun\u0103 , un <strong>sistem</strong> automat de \u00eenregistrare a r\u0103spunsului simpatic cutanat , determinat neinvaziv , cu ajutorul unor electrozi de suprafa\u021b\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "sistem", "nsubjFeats": ["upos=NOUN", "lemma=sistem", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3666%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22sistem%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un mare semn de alarm\u0103 este reprezentat de <strong>ceea</strong> ce ne- <strong>am</strong> permis s\u0103 denumim fenomenul b\u0103t\u0103turii / unghiei \u00eencarnate , av\u00e2nd \u00een vedere realitatea \u00eengrijor\u0103toare \u00een care 72 B \u0219i 13 F cu stadiul IV de AOMI au ob\u021binut aceast\u0103 clasificare \u00een urma abord\u0103rii inadecvate / inoportune a unei b\u0103t\u0103turi / unghii incarnate , \u00een condi\u021bii de suferin\u021b\u0103 arterial\u0103 distal\u0103 ne / subdiagnosticat\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1878%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "La ace\u0219ti bolnavi <strong>am</strong> \u00eenregistrat o <strong>cre\u0219tere</strong> a proinsulinei plasmatice indicatori extrem de importan\u021bi ai st\u0103rii func\u021bionale a celulei &b.beta;-pancreatice .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "cre\u0219tere", "nsubjFeats": ["upos=NOUN", "lemma=cre\u0219tere", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2806%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22cre%C8%99tere%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}], "0": [{"sentence": "<strong>Ceea</strong> ce <strong>am</strong> descoperit este foarte promi\u021b\u0103tor \u0219i \u00een tratamentul targetat al cancerului sau al altor boli .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2430%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Suntem primii <strong>care</strong> <strong>am</strong> atras aten\u021bia asupra unui indicator precis al calit\u0103\u021bii SVs din pancreasul unei persoane : nivelul de proinsulin\u0103 r\u0103mas\u0103 nesplitat\u0103 , care \u00eentr- o vezicul\u0103 normal\u0103 reprezint\u0103 < 2 % din proinsulina deja prezent\u0103 \u00een reticul endoplasmic ( RE ) .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2780%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am</strong> luat \u00een studiu , de asemenea : num\u0103rul interven\u021biilor anterioare : marea <strong>majoritate</strong> a pacien\u021bilor prezentau dou\u0103 sau trei interven\u021bii tisulare \u00een antecedente ( peste 0.8 ) ; localizarea acestora \u2013 subombilical ( peste 0.5 ) ; dac\u0103 pl\u0103gile postoperatorii au fost infectate ( peste 0.5 ) ; comorbidit\u0103\u021bile asociate : pe primul plan \u2013 obezitatea , urmat\u0103 de asocierea : obezitate diabet zaharat , HTA , BPOC ; dimensiunea defectului parietal : peste 0.6 dintre pacien\u021bi au avut diametrul defectului p\u00e2n\u0103 \u00een 10 cm , pe care l- am clasificat \u00een categoria dimensiuni medii ; peste 0.9 dintre pacien\u021bi au fost opera\u021bi la rece .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "majoritate", "nsubjFeats": ["upos=NOUN", "lemma=majoritate", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3684%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22majoritate%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea</strong> ce <strong>am</strong> descoperit este c\u0103 to\u021bi factorii de risc CM se amelioreaz\u0103 odat\u0103 cu sc\u0103derea \u00een greutate , lucru deloc surprinz\u0103tor , \u00eens\u0103 majoritatea se re\u00eentorc la valorile ini\u021biale peste 12 luni , \u00een special la femeile clasificate ca \u2018 redob\u00e2nditoare \u2019 , afirm\u0103 Kristen Beavers .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2704%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am</strong> \u00eenv\u0103\u021bat <strong>multe</strong> \u00een timpul cercet\u0103rilor cu privire la buretele inteligent \u0219i \u00eel vom \u00eembun\u0103t\u0103\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "multe", "nsubjFeats": ["upos=PRON", "lemma=mult", "xpos=Pi3fpr", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "PronType=Ind", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2449%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22multe%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un fenomen demn de remarcat , mult mai evident dec\u00e2t \u00een cazul iloprostului , at\u00e2t la pacien\u021bii \u00een stadiul III , c\u00e2t \u0219i la cei in stadiul IV , este <strong>ceea</strong> ce <strong>am</strong> denumit delimitarea clar\u0103 a viabilit\u0103\u021bii sub perfuzia cu alprostadil .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1861%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Chiar dac\u0103 , teoretic , prin inhibarea func\u021biilor plachetare , <strong>administrarea</strong> concomitent\u0103 cu heparin\u0103 \u0219i / sau antiagregantele plachetare poate cre\u0219te riscul hemoragic , nu <strong>am</strong> remarcat acest efect la pacien\u021bii trata\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "administrarea", "nsubjFeats": ["upos=NOUN", "lemma=administrare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1858%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22administrarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Pentru a demonstra asocierea \u00eentre factorul de risc observat ( purtarea scutecelor de unic\u0103 folosin\u021b\u0103 peste 4 ore ) \u0219i <strong>apari\u021bia</strong> bolii <strong>am</strong> folosit metoda de calculare a asocierilor prin exprimarea riscurilor , respectiv : Riscul probabilitatea de a suferi un efect Cota ( odds ) probabilitatea de a suferi un efect raportat\u0103 la probabilitatea de a nu suferi acel efect \u2022 Riscul Relativ ( RR ) sau de c\u00e2te ori este mai mare riscul la expu\u0219i fa\u021b\u0103 de neexpu\u0219i \u2022 Odd Ratio ( OR ) sau riscul de a face boala la expu\u0219i este de OR mai mare dec\u00e2t la neexpu\u0219i .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "apari\u021bia", "nsubjFeats": ["upos=NOUN", "lemma=apari\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3109%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22apari%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen Laboratorul de Electrofiziologie al clinicii noastre <strong>am</strong> dezvoltat , \u00eempreun\u0103 cu S. Prun\u0103 , un <strong>sistem</strong> automat de \u00eenregistrare a r\u0103spunsului simpatic cutanat , determinat neinvaziv , cu ajutorul unor electrozi de suprafa\u021b\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "sistem", "nsubjFeats": ["upos=NOUN", "lemma=sistem", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3666%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22sistem%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un mare semn de alarm\u0103 este reprezentat de <strong>ceea</strong> ce ne- <strong>am</strong> permis s\u0103 denumim fenomenul b\u0103t\u0103turii / unghiei \u00eencarnate , av\u00e2nd \u00een vedere realitatea \u00eengrijor\u0103toare \u00een care 72 B \u0219i 13 F cu stadiul IV de AOMI au ob\u021binut aceast\u0103 clasificare \u00een urma abord\u0103rii inadecvate / inoportune a unei b\u0103t\u0103turi / unghii incarnate , \u00een condi\u021bii de suferin\u021b\u0103 arterial\u0103 distal\u0103 ne / subdiagnosticat\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1878%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "La ace\u0219ti bolnavi <strong>am</strong> \u00eenregistrat o <strong>cre\u0219tere</strong> a proinsulinei plasmatice indicatori extrem de importan\u021bi ai st\u0103rii func\u021bionale a celulei &b.beta;-pancreatice .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "cre\u0219tere", "nsubjFeats": ["upos=NOUN", "lemma=cre\u0219tere", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2806%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22cre%C8%99tere%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen ultimii ani , noi <strong>biomarkeri</strong> <strong>au</strong> legat adipozitatea de insulinorezisten\u021b\u0103 \u0219i de sindromul metabolic .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "biomarkeri", "nsubjFeats": ["upos=NOUN", "lemma=biomarker", "xpos=Ncmp-n", "Definite=Ind", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1029%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22biomarkeri%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Rezultatele ob\u021binute prin m\u0103surarea fluxului arterial la picior ( LBF-leg blood flow ) dup\u0103 infuzia intraarterial\u0103 de metacholin\u0103 , care stimuleaz\u0103 eliberarea de NO din endoteliu , \u0219i de nitroprusiat de Na ( donor de NO ) au ar\u0103tat c\u0103 obezitatea este asociat\u0103 cu sc\u0103derea vasodilata\u021biei endotelio-dependent\u0103 , dar <strong>reactivitatea</strong> vascular\u0103 la efectul direct al NO ( endotelio-independent , testul cu nitroprusiat ) <strong>este</strong> p\u0103strat\u0103 .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "reactivitatea", "nsubjFeats": ["upos=NOUN", "lemma=reactivitate", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-132%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22reactivitatea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen ceea ce prive\u0219te categoria aparte a pacien\u021bilor cu trombangeit\u0103 obliterant\u0103 , din totalul celor 36 de b\u0103rba\u021bi diagnostica\u021bi , 28 au beneficiat de prostaglandine ( 6 cu iloprost , 22 cu alprostadil ) , iar 8 pacien\u021bi au beneficiat doar de terapie medicamentoas\u0103 clasic\u0103 \u0219i simpatectomie ( din cauza leziunilor tipice , nici un pacient nu a putut beneficia de revascularizare chirurgical\u0103 ) ; din cei 28 de pacien\u021bi care au beneficiat de terapie cu prostaglandine ( cure repetate ) , 2 au suferit amputa\u021bii de coaps\u0103 , 2 amputa\u021bii de gamb\u0103 , 12 amputa\u021bii reduse ( deget , antepicior ) , iar 12 nu au suferit amputa\u021bii pe o perioad\u0103 de urm\u0103rire de 13485 de luni ; <strong>to\u021bi</strong> <strong>au</strong> efectuat \u0219i simpatectomie ; din cei 8 pacien\u021bi ce nu au primit terapie cu prostaglandine , to\u021bi au evoluat cu necesar de amputare ( 5 coaps\u0103 , 3 gamb\u0103 ) pe o perioad\u0103 de urm\u0103rire de 14 - 32 luni ( p = 0.003 ) .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "to\u021bi", "nsubjFeats": ["upos=PRON", "lemma=tot", "xpos=Pi3mpr", "Case=Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "PronType=Ind", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1875%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22to%C8%9Bi%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Chiar dac\u0103 are o unitate \u00een Statele Unite , <strong>compania</strong> nu <strong>a</strong> declarat c\u00e2nd va cere aprobarea autorit\u0103\u021bilor pentru a vinde dispozitivul PaQ pe pia\u021ba american\u0103 .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "compania", "nsubjFeats": ["upos=NOUN", "lemma=companie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2258%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22compania%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Cele dou\u0103 <strong>entit\u0103\u021bi</strong> <strong>sunt</strong> manifest\u0103ri ale aceleia\u0219i boli , cu factori predispozan\u021bi comuni , dar cu tr\u0103s\u0103turi clinice \u0219i prognostice distincte .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "entit\u0103\u021bi", "nsubjFeats": ["upos=NOUN", "lemma=entitate", "xpos=Ncfp-n", "Definite=Ind", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-478%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22entit%C4%83%C8%9Bi%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Crea\u021bia</strong> \u0219tiin\u021bific\u0103 sau artistic\u0103 a pacien\u021bilor diabetici <strong>ar</strong> merita s\u0103 fie mediatizat\u0103 \u00eentr- o monografie care s\u0103 fie initulat\u0103 chiar Diabetici celebri .", "verb": "ar", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "crea\u021bia", "nsubjFeats": ["upos=NOUN", "lemma=crea\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "ar"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1812%22%20%3B%20A%20%5Bform%3D%22ar%22%5D%20%3B%20B%20%5Bform%3D%22Crea%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Corelate cu func\u021bia cunoscut\u0103 a ICAM-1 \u00een r\u0103spunsul imun la om \u0219i cu implicarea sa \u00een patogeneza T1DM la \u0219oarecii NOD , rezultatele noastre sugereaz\u0103 puternic c\u0103 ICAM-1 ar putea fi implicat \u00een patogeneza T1DM la om \u0219i c\u0103 <strong>unele</strong> din muta\u021biile din gena ICAM-1 de pe cromozomul 19p13 <strong>ar</strong> putea contribui la susceptibilitatea genetic\u0103 pentru T1DM .", "verb": "ar", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "unele", "nsubjFeats": ["upos=PRON", "lemma=unul", "xpos=Pi3fpr", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "PronType=Ind", "deprel=nsubj"], "label": "yes", "route": {"0": "ar"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-2%22%20%3B%20A%20%5Bform%3D%22ar%22%5D%20%3B%20B%20%5Bform%3D%22unele%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Conform unui studiu din 2010 , 0.25 dintre rom\u00e2ni sunt obezi , endocrinologii afirm\u00e2nd c\u0103 <strong>rata</strong> obezit\u0103\u021bii \u00een Romania <strong>este</strong> de circa 0.3 , situ\u00e2ndu- se din acest punct de vedere printre primele zece \u021b\u0103ri din Europa .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "rata", "nsubjFeats": ["upos=NOUN", "lemma=rat\u0103", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2531%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22rata%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un pesimist ar putea s\u0103 spun\u0103 c\u0103 \u00een cele peste opt decenii <strong>care</strong> <strong>au</strong> trecut de la descoperirea insulinei nu s- au produs schimb\u0103ri majore \u00een administrarea ei .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1976%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Anestezia</strong> local\u0103 \u00een combina\u021bie cu cea tumescent\u0103 pe traseul venei safene interne <strong>este</strong> preferat\u0103 la pacien\u021bii cu multiple comorbidit\u0103\u021bi , interven\u021bii limitate deschise \u0219i la cei ce beneficiaz\u0103 de tehnici endovasculare .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "anestezia", "nsubjFeats": ["upos=NOUN", "lemma=anestezie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-541%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Anestezia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen ceea ce prive\u0219te categoria aparte a pacien\u021bilor cu trombangeit\u0103 obliterant\u0103 , din totalul celor 36 de b\u0103rba\u021bi diagnostica\u021bi , 28 au beneficiat de prostaglandine ( 6 cu iloprost , 22 cu alprostadil ) , iar 8 pacien\u021bi au beneficiat doar de terapie medicamentoas\u0103 clasic\u0103 \u0219i simpatectomie ( din cauza leziunilor tipice , nici un pacient nu a putut beneficia de revascularizare chirurgical\u0103 ) ; din cei 28 de pacien\u021bi care au beneficiat de terapie cu prostaglandine ( cure repetate ) , 2 au suferit amputa\u021bii de coaps\u0103 , 2 amputa\u021bii de gamb\u0103 , 12 amputa\u021bii reduse ( deget , antepicior ) , iar 12 nu au suferit amputa\u021bii pe o perioad\u0103 de urm\u0103rire de 13485 de luni ; to\u021bi au efectuat \u0219i simpatectomie ; din cei 8 pacien\u021bi <strong>ce</strong> nu <strong>au</strong> primit terapie cu prostaglandine , to\u021bi au evoluat cu necesar de amputare ( 5 coaps\u0103 , 3 gamb\u0103 ) pe o perioad\u0103 de urm\u0103rire de 14 - 32 luni ( p = 0.003 ) .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ce", "nsubjFeats": ["upos=PRON", "lemma=ce", "xpos=Pw3--r", "Case=Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {"0": "au"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1875%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22ce%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Tratamentul</strong> tradi\u021bional pentru reducerea riscurilor afec\u021biunilor cardio-vasculare \u00een r\u00e2ndul pacien\u021bilor cu diabet zaharat s- <strong>a</strong> concentrat pe diminuarea colesterolului din s\u00e2nge la to\u021bi bolnavii , la un nivel specific , standard .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "tratamentul", "nsubjFeats": ["upos=NOUN", "lemma=tratament", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2664%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Tratamentul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00centruc\u00e2t <strong>perioada</strong> preclinic\u0103 a T1DM <strong>este</strong> scurt\u0103 ( de ordinul s\u0103pt\u0103m\u00e2nilor ) , screeningul acestei forme de diabet este considerat ca lipsit de eficien\u021b\u0103 ( descoperirea unui caz de diabet la c\u00e2teva mii de persoane investigate ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "perioada", "nsubjFeats": ["upos=NOUN", "lemma=perioad\u0103", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1687%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22perioada%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen acela\u0219i timp <strong>a</strong> devenit destul de repede evident <strong>faptul</strong> c\u0103 descoperirea \u0219i administrarea insulinei nu a asigurat dec\u00e2t supravie\u021buirea imediat\u0103 a pacien\u021bilor \u0219i c\u0103 de fapt reu\u0219ita tratamentului depindea de o ajustare continu\u0103 a dozelor - sarcin\u0103 care pentru mult timp a revenit practic numai medicului curant - precum \u0219i de capacitatea pacien\u021bilor de a respecta , pe termen lung , indica\u021biile stricte care se interferau serios cu calitatea vie\u021bii lor .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "faptul", "nsubjFeats": ["upos=NOUN", "lemma=fapt", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1974%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22faptul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Utilizarea</strong> stenturilor de nitinol cu lungime de peste 20 de cm , care evit\u0103 utilizarea unui num\u0103r mare de stenturi scurte , ce se suprapun , <strong>este</strong> promi\u021b\u0103toare .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "utilizarea", "nsubjFeats": ["upos=NOUN", "lemma=utilizare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-404%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Utilizarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Romanian \u00b7 SiMoNERo", "languageName": "Romanian", "accuracy": "100.0%", "testAccuracy": "100.0%", "testN": 306, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "2,751", "predictor": "Aux_nsubj_Person", "rootAccuracy": "99.6%", "trainAccuracy": "100.0%", "treebank": "SiMoNERo", "nav": {"pooledAcc": 0.9960159362549801, "pooledTestN": 753, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 7531, "pooledUnkRows": 258, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "ArT", "rows": 4, "unkRows": 0, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 4470, "unkRows": 124, "status": "ok", "excluded": false, "reason": null, "acc": 0.9932885906040269, "pooledAcc": 0.9932885906040269, "delta": 0.0, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "SiMoNERo", "rows": 3057, "unkRows": 134, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 2740, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}, {"cls": "unk", "cnt": 134, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 2740, "H": 0.0025, "acc": 0.9998, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2740, "color": "var(--yes)"}, {"cls": "no", "cnt": 0, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 11, "H": 0.2499, "acc": 0.9583, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 0, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 2751, "H": 0.039, "acc": 0.9958, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 2740, "color": "var(--yes)"}, {"cls": "no", "cnt": 11, "color": "var(--no)"}], "rule": "Aux.form = am", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "Participarea dvs. la acest studiu const\u0103 \u00een completarea unui chestionar , r\u0103spunz\u00e2nd la \u00eentreb\u0103rile prezentate ( <strong>completarea<\/strong> chestionarului <strong>va<\/strong> dura aproximativ 10 minute ) \u0219i , selectiv , \u00een a permite realizarea unor fotografii intra-orale .", "verb": "va", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "completarea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=completare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "va"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3147%22%20%3B%20A%20%5Bform%3D%22va%22%5D%20%3B%20B%20%5Bform%3D%22completarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Hipertrofia<\/strong> <strong>este<\/strong> rezultatul cre\u0219terii rezisten\u021bei la ejec\u021bia din VS , din cauza sc\u0103derii elasticit\u0103\u021bii \u0219i a complian\u021bei aortice ( 8 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "hipertrofia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=hipertrofie", "xpos=Ncfpry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-943%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Hipertrofia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Nu exist\u0103 un consens \u00een legatur\u0103 cu diagnosticul SOP la adolescente , deoarece unele <strong>caracteristici<\/strong> ale sindromului <strong>sunt<\/strong> prezente \u00een mod fiziologic \u0219i tranzitor \u00een adolescen\u021b\u0103 .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "caracteristici", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=caracteristic\u0103", "xpos=Ncfp-n", "Definite=Ind", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2969%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22caracteristici%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un <strong>rol<\/strong> important \u00een acest sens <strong>este<\/strong> jucat de clasa de receptori PPAR , cu toate izoformele lor ( \ud835\udefc , \ud835\udf37 \u0219i \ud835\udefe ) , implicate profund \u00een interrela\u021biile metabolice dintre lipide \u0219i glucide ( 7 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "rol", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=rol", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3590%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22rol%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Al\u021bi <strong>factori<\/strong> care contribuie la reducerea func\u021biei ventriculare <strong>sunt<\/strong> anomaliile de kinetic\u0103 parietal\u0103 , fibroza \u0219i ischemia subendocardic\u0103 .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "factori", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=factor", "xpos=Ncmp-n", "Definite=Ind", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-646%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22factori%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Acest aspect ar putea explica sc\u0103derea aderen\u021bei la tratamentul cu statine , <strong>care<\/strong> <strong>a<\/strong> fost eviden\u021biat\u0103 \u00een studiul IDEAL ( 58 ) .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj:pass", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-884%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Metoda se bazeaz\u0103 pe existen\u021ba microsateli\u021bilor ( markerilor ) <strong>care<\/strong> <strong>sunt<\/strong> secven\u021be DNA repetitive ale unui bloc de baze azotate ( di , tri sau tetranucleotid ) .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-433%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Printre acestea , <strong>celulele<\/strong> stem mezenchimale ( CSM ) <strong>sunt<\/strong> celule multipotente izolate din m\u0103duva osoas\u0103 \u0219i alte \u021besuturi adulte , care pot genera linii adipocitare , osteogenice \u0219i condrogenice \u0219i , cu o eficien\u021b\u0103 sc\u0103zut\u0103 , neuroni , CMC , celule beta pancreatice sau hepatice .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "celulele", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=celul\u0103", "xpos=Ncfpry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-719%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22celulele%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "De\u0219i introducerea unui capitol de fiziologie a secre\u021biei \u0219i ac\u021biunii insulinei ar putea atenua caracterul practic al c\u0103r\u021bii , cred c\u0103 cei <strong>care<\/strong> <strong>sunt<\/strong> interesa\u021bi \u0219i de aceste aspecte vor g\u0103si ceea ce doresc , iar cei \u00een criz\u0103 de timp pot s\u0103 l sar\u0103 .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1998%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "De\u0219i nu avem date despre medica\u021bia acestor pacien\u021bi , b\u0103nuim c\u0103 procentele mai mari de supravie\u021buire sau mai mici de recidiv\u0103 observate la pacien\u021bii cu un nivel mai mare de lipide care fac parte din grupul nostru de studiu , s- au datorat \u00een mare parte efectelor protective ale statinelor , <strong>a<\/strong> afirmat <strong>dr.<\/strong> Esnaola .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "dr.", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=dr.", "xpos=Yn", "Abbr=Yes", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2746%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22dr.%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen caz de reac\u021bii adverse ( <strong>ginecomastia<\/strong> <strong>e<\/strong> cea mai frecvent\u0103 ) se \u00eenlocuie\u0219te cu Eplerenon\u0103 : antagonist selectiv al receptorului mineralocorticoid ; tratamentul se \u00eencepe cu 25 mg / zi , doza maxim\u0103 200 mg / zi .", "verb": "e", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "ginecomastia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=ginecomastie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "e"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3261%22%20%3B%20A%20%5Bform%3D%22e%22%5D%20%3B%20B%20%5Bform%3D%22ginecomastia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Aceast\u0103 <strong>dinamic\u0103<\/strong> a simptomelor <strong>a<\/strong> fost \u00eenregistrat\u0103 deja dup\u0103 4 zile de tratament \u0219i a persistat stabil p\u00e2n\u0103 la finele perioadei de tratament .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "dinamic\u0103", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=dinamic\u0103", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1956%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22dinamic%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen func\u021bie de intensitatea leziunilor histologice , dac\u0103 se impune terapia cu interferon sau / \u0219i lamivudin\u0103 , <strong>aceasta<\/strong> <strong>va<\/strong> fi efectuat\u0103 pretransplant , deoarece administrarea posttransplant a interferonului a fost incriminat\u0103 \u00een patogeneza unor episoade de rejet acut .", "verb": "va", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "aceasta", "nsubjFeats": ["upos=PRON", "deprel=nsubj:pass", "lemma=acesta", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "yes", "route": {"0": "va"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3369%22%20%3B%20A%20%5Bform%3D%22va%22%5D%20%3B%20B%20%5Bform%3D%22aceasta%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Explica\u021bia<\/strong> cea mai facil\u0103 <strong>este<\/strong> inducerea hiperuricemiei de c\u0103tre diureticele tiazidice , frecvent utilizate , de\u0219i \u00eens\u0103\u0219i HTA are rol independent ( 1 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "explica\u021bia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=explica\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-167%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Explica%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Ace\u0219ti stimuli duc la activarea unor c\u0103i efectorii comune \u00een care <strong>sunt<\/strong> implicate <strong>caspazele<\/strong> .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "caspazele", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=caspaz\u0103", "xpos=Ncfpry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-332%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22caspazele%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}], "2": [{"sentence": "\u00cen Laboratorul de Electrofiziologie al clinicii noastre <strong>am<\/strong> dezvoltat , \u00eempreun\u0103 cu S. Prun\u0103 , un <strong>sistem<\/strong> automat de \u00eenregistrare a r\u0103spunsului simpatic cutanat , determinat neinvaziv , cu ajutorul unor electrozi de suprafa\u021b\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "sistem", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=sistem", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3666%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22sistem%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Pentru a demonstra asocierea \u00eentre factorul de risc observat ( purtarea scutecelor de unic\u0103 folosin\u021b\u0103 peste 4 ore ) \u0219i <strong>apari\u021bia<\/strong> bolii <strong>am<\/strong> folosit metoda de calculare a asocierilor prin exprimarea riscurilor , respectiv : Riscul probabilitatea de a suferi un efect Cota ( odds ) probabilitatea de a suferi un efect raportat\u0103 la probabilitatea de a nu suferi acel efect \u2022 Riscul Relativ ( RR ) sau de c\u00e2te ori este mai mare riscul la expu\u0219i fa\u021b\u0103 de neexpu\u0219i \u2022 Odd Ratio ( OR ) sau riscul de a face boala la expu\u0219i este de OR mai mare dec\u00e2t la neexpu\u0219i .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "apari\u021bia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=apari\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3109%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22apari%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un fenomen demn de remarcat , mult mai evident dec\u00e2t \u00een cazul iloprostului , at\u00e2t la pacien\u021bii \u00een stadiul III , c\u00e2t \u0219i la cei in stadiul IV , este <strong>ceea<\/strong> ce <strong>am<\/strong> denumit delimitarea clar\u0103 a viabilit\u0103\u021bii sub perfuzia cu alprostadil .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1861%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am<\/strong> \u00eenv\u0103\u021bat <strong>multe<\/strong> \u00een timpul cercet\u0103rilor cu privire la buretele inteligent \u0219i \u00eel vom \u00eembun\u0103t\u0103\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "multe", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=mult", "xpos=Pi3fpr", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>", "PronType=Ind"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2449%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22multe%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Chiar dac\u0103 , teoretic , prin inhibarea func\u021biilor plachetare , <strong>administrarea<\/strong> concomitent\u0103 cu heparin\u0103 \u0219i / sau antiagregantele plachetare poate cre\u0219te riscul hemoragic , nu <strong>am<\/strong> remarcat acest efect la pacien\u021bii trata\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "administrarea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=administrare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1858%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22administrarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea<\/strong> ce <strong>am<\/strong> descoperit este foarte promi\u021b\u0103tor \u0219i \u00een tratamentul targetat al cancerului sau al altor boli .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2430%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Suntem primii <strong>care<\/strong> <strong>am<\/strong> atras aten\u021bia asupra unui indicator precis al calit\u0103\u021bii SVs din pancreasul unei persoane : nivelul de proinsulin\u0103 r\u0103mas\u0103 nesplitat\u0103 , care \u00eentr- o vezicul\u0103 normal\u0103 reprezint\u0103 < 2 % din proinsulina deja prezent\u0103 \u00een reticul endoplasmic ( RE ) .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2780%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea<\/strong> ce <strong>am<\/strong> descoperit este c\u0103 to\u021bi factorii de risc CM se amelioreaz\u0103 odat\u0103 cu sc\u0103derea \u00een greutate , lucru deloc surprinz\u0103tor , \u00eens\u0103 majoritatea se re\u00eentorc la valorile ini\u021biale peste 12 luni , \u00een special la femeile clasificate ca \u2018 redob\u00e2nditoare \u2019 , afirm\u0103 Kristen Beavers .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2704%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "La ace\u0219ti bolnavi <strong>am<\/strong> \u00eenregistrat o <strong>cre\u0219tere<\/strong> a proinsulinei plasmatice indicatori extrem de importan\u021bi ai st\u0103rii func\u021bionale a celulei &b.beta;-pancreatice .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "cre\u0219tere", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cre\u0219tere", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2806%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22cre%C8%99tere%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un mare semn de alarm\u0103 este reprezentat de <strong>ceea<\/strong> ce ne- <strong>am<\/strong> permis s\u0103 denumim fenomenul b\u0103t\u0103turii / unghiei \u00eencarnate , av\u00e2nd \u00een vedere realitatea \u00eengrijor\u0103toare \u00een care 72 B \u0219i 13 F cu stadiul IV de AOMI au ob\u021binut aceast\u0103 clasificare \u00een urma abord\u0103rii inadecvate / inoportune a unei b\u0103t\u0103turi / unghii incarnate , \u00een condi\u021bii de suferin\u021b\u0103 arterial\u0103 distal\u0103 ne / subdiagnosticat\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1878%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am<\/strong> luat \u00een studiu , de asemenea : num\u0103rul interven\u021biilor anterioare : marea <strong>majoritate<\/strong> a pacien\u021bilor prezentau dou\u0103 sau trei interven\u021bii tisulare \u00een antecedente ( peste 0.8 ) ; localizarea acestora \u2013 subombilical ( peste 0.5 ) ; dac\u0103 pl\u0103gile postoperatorii au fost infectate ( peste 0.5 ) ; comorbidit\u0103\u021bile asociate : pe primul plan \u2013 obezitatea , urmat\u0103 de asocierea : obezitate diabet zaharat , HTA , BPOC ; dimensiunea defectului parietal : peste 0.6 dintre pacien\u021bi au avut diametrul defectului p\u00e2n\u0103 \u00een 10 cm , pe care l- am clasificat \u00een categoria dimensiuni medii ; peste 0.9 dintre pacien\u021bi au fost opera\u021bi la rece .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "majoritate", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=majoritate", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3684%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22majoritate%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}], "0": [{"sentence": "\u00cen Laboratorul de Electrofiziologie al clinicii noastre <strong>am<\/strong> dezvoltat , \u00eempreun\u0103 cu S. Prun\u0103 , un <strong>sistem<\/strong> automat de \u00eenregistrare a r\u0103spunsului simpatic cutanat , determinat neinvaziv , cu ajutorul unor electrozi de suprafa\u021b\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "sistem", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=sistem", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3666%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22sistem%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Pentru a demonstra asocierea \u00eentre factorul de risc observat ( purtarea scutecelor de unic\u0103 folosin\u021b\u0103 peste 4 ore ) \u0219i <strong>apari\u021bia<\/strong> bolii <strong>am<\/strong> folosit metoda de calculare a asocierilor prin exprimarea riscurilor , respectiv : Riscul probabilitatea de a suferi un efect Cota ( odds ) probabilitatea de a suferi un efect raportat\u0103 la probabilitatea de a nu suferi acel efect \u2022 Riscul Relativ ( RR ) sau de c\u00e2te ori este mai mare riscul la expu\u0219i fa\u021b\u0103 de neexpu\u0219i \u2022 Odd Ratio ( OR ) sau riscul de a face boala la expu\u0219i este de OR mai mare dec\u00e2t la neexpu\u0219i .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "apari\u021bia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=apari\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3109%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22apari%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un fenomen demn de remarcat , mult mai evident dec\u00e2t \u00een cazul iloprostului , at\u00e2t la pacien\u021bii \u00een stadiul III , c\u00e2t \u0219i la cei in stadiul IV , este <strong>ceea<\/strong> ce <strong>am<\/strong> denumit delimitarea clar\u0103 a viabilit\u0103\u021bii sub perfuzia cu alprostadil .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1861%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am<\/strong> \u00eenv\u0103\u021bat <strong>multe<\/strong> \u00een timpul cercet\u0103rilor cu privire la buretele inteligent \u0219i \u00eel vom \u00eembun\u0103t\u0103\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "multe", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=mult", "xpos=Pi3fpr", "Case=Nom", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>", "PronType=Ind"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2449%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22multe%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Chiar dac\u0103 , teoretic , prin inhibarea func\u021biilor plachetare , <strong>administrarea<\/strong> concomitent\u0103 cu heparin\u0103 \u0219i / sau antiagregantele plachetare poate cre\u0219te riscul hemoragic , nu <strong>am<\/strong> remarcat acest efect la pacien\u021bii trata\u021bi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "administrarea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=administrare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1858%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22administrarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea<\/strong> ce <strong>am<\/strong> descoperit este foarte promi\u021b\u0103tor \u0219i \u00een tratamentul targetat al cancerului sau al altor boli .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2430%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Suntem primii <strong>care<\/strong> <strong>am<\/strong> atras aten\u021bia asupra unui indicator precis al calit\u0103\u021bii SVs din pancreasul unei persoane : nivelul de proinsulin\u0103 r\u0103mas\u0103 nesplitat\u0103 , care \u00eentr- o vezicul\u0103 normal\u0103 reprezint\u0103 < 2 % din proinsulina deja prezent\u0103 \u00een reticul endoplasmic ( RE ) .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2780%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Ceea<\/strong> ce <strong>am<\/strong> descoperit este c\u0103 to\u021bi factorii de risc CM se amelioreaz\u0103 odat\u0103 cu sc\u0103derea \u00een greutate , lucru deloc surprinz\u0103tor , \u00eens\u0103 majoritatea se re\u00eentorc la valorile ini\u021biale peste 12 luni , \u00een special la femeile clasificate ca \u2018 redob\u00e2nditoare \u2019 , afirm\u0103 Kristen Beavers .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2704%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "La ace\u0219ti bolnavi <strong>am<\/strong> \u00eenregistrat o <strong>cre\u0219tere<\/strong> a proinsulinei plasmatice indicatori extrem de importan\u021bi ai st\u0103rii func\u021bionale a celulei &b.beta;-pancreatice .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "cre\u0219tere", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cre\u0219tere", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2806%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22cre%C8%99tere%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Un mare semn de alarm\u0103 este reprezentat de <strong>ceea<\/strong> ce ne- <strong>am<\/strong> permis s\u0103 denumim fenomenul b\u0103t\u0103turii / unghiei \u00eencarnate , av\u00e2nd \u00een vedere realitatea \u00eengrijor\u0103toare \u00een care 72 B \u0219i 13 F cu stadiul IV de AOMI au ob\u021binut aceast\u0103 clasificare \u00een urma abord\u0103rii inadecvate / inoportune a unei b\u0103t\u0103turi / unghii incarnate , \u00een condi\u021bii de suferin\u021b\u0103 arterial\u0103 distal\u0103 ne / subdiagnosticat\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ceea", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=acela", "xpos=Pd3fsr", "Case=Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1878%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ceea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Am<\/strong> luat \u00een studiu , de asemenea : num\u0103rul interven\u021biilor anterioare : marea <strong>majoritate<\/strong> a pacien\u021bilor prezentau dou\u0103 sau trei interven\u021bii tisulare \u00een antecedente ( peste 0.8 ) ; localizarea acestora \u2013 subombilical ( peste 0.5 ) ; dac\u0103 pl\u0103gile postoperatorii au fost infectate ( peste 0.5 ) ; comorbidit\u0103\u021bile asociate : pe primul plan \u2013 obezitatea , urmat\u0103 de asocierea : obezitate diabet zaharat , HTA , BPOC ; dimensiunea defectului parietal : peste 0.6 dintre pacien\u021bi au avut diametrul defectului p\u00e2n\u0103 \u00een 10 cm , pe care l- am clasificat \u00een categoria dimensiuni medii ; peste 0.9 dintre pacien\u021bi au fost opera\u021bi la rece .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "majoritate", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=majoritate", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {"0": "am"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3684%22%20%3B%20A%20%5Bform%3D%22Am%22%5D%20%3B%20B%20%5Bform%3D%22majoritate%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "De\u0219i descoperirea \u0219i introducerea insulinei \u00een arsenalul terapeutic a reprezentat unul dintre momentele cruciale , de adev\u0103rat\u0103 glorie , \u00een istoria medicinii , <strong>care<\/strong> <strong>a<\/strong> \u0219i adus ulterior nu mai pu\u021bin dec\u00e2t trei premii Nobel unor mari cercet\u0103tori ( din p\u0103cate , primul dintre ele , cel atribuit \u00een 1923 pentru descoperirea insulinei , reprezint\u0103 o ran\u0103 \u00eenc\u0103 deschis\u0103 pentru medicina rom\u00e2neasc\u0103 prin injusti\u021bia f\u0103cut\u0103 profesorului N.C. Paulescu , asupra c\u0103reia voi reveni ) , acest moment a ridicat v\u0103lul de pe un domeniu practic necunoscut medicinii p\u00e2n\u0103 atunci \u0219i anume \u00eengrijirea de durat\u0103 a unor pacieni care \u00ee\u0219i auto-administreaz\u0103 ( marea majoritate ) un medicament prin injec\u021bii \u00een condi\u021bii de ambulator .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1973%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00centr- un studiu <strong>care<\/strong> <strong>a<\/strong> inclus 557 de bolnavi cu EI , la 34% boala a fost asociat\u0103 \u00eengrijirilor medicale , 46% av\u00e2nd forme non-nozocomiale ( 33 ) .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-292%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Postpartum \u00eens\u0103 , <strong>este<\/strong> mare <strong>riscul<\/strong> de rec\u0103dere prin rebound al imunit\u0103\u021bii .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "riscul", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=risc", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2859%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22riscul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Tratamentul<\/strong> necesar pentru dezvoltarea caracterelor sexuale secundare \u0219i apari\u021bia menstrelor <strong>este<\/strong> administrarea ciclic\u0103 de estrogeni ( de preferat estradiol natural sau estrogeni de semisintez\u0103 ) \u0219i progesteron .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "tratamentul", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=tratament", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1299%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Tratamentul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen 1900 ) , datorat\u0103 depunerii extracelulare , strict limitat\u0103 la nivelul insulelor care con\u021bin celule \u00df , a unui material amorf <strong>care<\/strong> s- <strong>a<\/strong> dovedit a fi format dintr- un polipeptid fibrilar denumit polipeptidul insular amiloid sau amilina .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1348%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "O <strong>situa\u021bie<\/strong> particular\u0103 <strong>este<\/strong> cea a unei paciente diabetice , cu manifest\u0103ri de AOMI stadiul IV ( gangrena tegumentar\u0103 fa\u021b\u0103 anteroextern\u0103 gamba dreapt\u0103 ) , expresie a microangiopatiei diabetice ( ax arterial iliofemuropopliteotibial permeabil p\u00e2n\u0103 \u00een periferie la angiografie ) , cu evolu\u021bie excelent\u0103 postsimpatectomie \u0219i perfuzie cu iloprost , cu cicatrizarea leziunii tegumentare \u0219i perimetru de mers de aproximativ 200 de metri .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "situa\u021bie", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=situa\u021bie", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1880%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22situa%C8%9Bie%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Interesant\u0103 <strong>este<\/strong> <strong>observa\u021bia<\/strong> c\u0103 durata poten\u021bialului de ac\u021biune se alunge\u0219te cu v\u00e2rsta la acela\u0219i nivel , ceea ce ar trebui sa aib\u0103 efect antiaritmogen .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "observa\u021bia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=observa\u021bie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-82%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22observa%C8%9Bia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Ulterior , au fost introduse tadalafilul \u0219i vardenafilul , <strong>care<\/strong> <strong>sunt<\/strong> selective pentru circula\u021bia pulmonar\u0103 .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-780%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Amiodarona este un medicament cu multiple efecte adverse , unul dintre ele fiind acela de a determina depozite \u00een special la nivelul ochiului \u0219i ficatului , iar <strong>hemocromatoza<\/strong> <strong>este<\/strong> o boal\u0103 care , la r\u00e2ndul ei , produce depozite \u00een aproape fiecare organ .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "hemocromatoza", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=hemocromatoz\u0103", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1917%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22hemocromatoza%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Proteoglicanii<\/strong> ( numi\u021bi \u00eenainte mucopolizaharide ) <strong>sunt<\/strong> molecule glicoproteice \u00een care componenta glucidic\u0103 ( numit\u0103 glicozaminoglican ) poate ocupa 0.95 din molecul\u0103 , fiind legat\u0103 covalent de protein\u0103 ( 18 , 38 ) .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "proteoglicanii", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=proteoglican", "xpos=Ncmpry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "sunt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3526%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22Proteoglicanii%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen al doilea an de observa\u021bie , la Retinofort <strong>a<\/strong> fost necesar\u0103 <strong>adaugarea<\/strong> de Metformin 500 mg x 2 cp / zi la un num\u0103r de 24 de pacien\u021bi .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "adaugarea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=adaugare", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "a"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2823%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22adaugarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "La pacientul cu sincop\u0103 de cauz\u0103 nedeterminat\u0103 <strong>mecanismul<\/strong> <strong>este<\/strong> disfunc\u021bia paroxistic\u0103 de nod sinusal care nu poate fi eviden\u021biat\u0103 de monitorizarea conven\u021bional\u0103 Holter de 24 sau 48 de ore .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "mecanismul", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=mecanism", "xpos=Ncmsry", "Case=Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-251%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22mecanismul%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "\u00cen Im cronic\u0103 , AS este compliant , presiunea scade ( unda V este mai pu\u021bin ampl\u0103 ) , iar <strong>energia<\/strong> ventricular\u0103 <strong>este<\/strong> convertit\u0103 \u00een cea mai mare parte \u00een energie kinetic\u0103 , tradus\u0103 prin VR crescut ( 14 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "energia", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=energie", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-248%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22energia%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "Taylor ( 36 ) comenteaz\u0103 c\u0103 , \u00eentruc\u00e2t PGC-1 este un coactivator al transcrierii unor enzime esen\u021biale pentru &b.beta;-oxidarea mitocondrial\u0103 a acizilor gra\u0219i , posibila <strong>tulburare<\/strong> primar\u0103 din T2DM <strong>ar<\/strong> putea fi la acest nivel ( mitocondrial ) .", "verb": "ar", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "tulburare", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=tulburare", "xpos=Ncfsrn", "Case=Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "ar"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3596%22%20%3B%20A%20%5Bform%3D%22ar%22%5D%20%3B%20B%20%5Bform%3D%22tulburare%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}, {"sentence": "<strong>Eficien\u021ba<\/strong> metodei nu <strong>este<\/strong> cert demonstrat\u0103 \u00een trialurile de specialitate , de\u0219i exist\u0103 un num\u0103r limitat de studii care demonstreaz\u0103 ameliorarea clinic\u0103 \u0219i a contractilit\u0103\u021bii miocardice postinterven\u021bionale ( 18 ) .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "eficien\u021ba", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=eficien\u021b\u0103", "xpos=Ncfsry", "Case=Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {"0": "este"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-SiMoNERo%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-158%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Eficien%C8%9Ba%22%5D%20%20%7D", "treebankName": "UD_Romanian-SiMoNERo"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 SiMoNERo \u00b7 Aux_nsubj_Person", 
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP 2.0 - Agreement Overview</title>
+    <title>MultiBLiMP – Morphological Agreement – Decision Trees</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -221,7 +221,7 @@
         /* NPA's own group section: a role-pair/feature card grid with a
            toggle switching which axis is the top-level grouping, instead
            of the flat per-panel grid other groups use -- see
-           word_order.viz_overview._npa_toggle_group_html. */
+           agreement_trees.report.viz_overview._npa_toggle_group_html. */
         .npa-view-toggle {
             display: inline-flex;
             border: 1px solid var(--border-hover);
@@ -279,7 +279,7 @@
         <div class="header">
             <div class="title-section">
                 <div class="back-links"><a href="../../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Main Page</a><a href="../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Overview</a></div>
-                <h1>MultiBLiMP 2.0 &mdash; Agreement Overview</h1>
+                <h1>MultiBLiMP &ndash; Morphological Agreement &ndash; Decision Trees</h1>
                 <p class="description">
                     This page gives an overview of agreement predictability across dependency relations and languages,
                     grouped by what the subject agrees with (verb, participle, auxiliary, ...). Each panel shows the
@@ -313,12 +313,12 @@
                 <div class="panel-label"><a href="../../npa/DET-ADP_C/index.html">Case</a></div>
             </div>
             <div class="panel">
-                <div id="plot-npa_DET-ADP_Abbr" class="mini-plot" data-url="../../npa/DET-ADP_Abbr/index.html" data-deprel="npa/DET-ADP_Abbr"></div>
-                <div class="panel-label"><a href="../../npa/DET-ADP_Abbr/index.html">Abbr</a></div>
-            </div>
-            <div class="panel">
                 <div id="plot-npa_DET-ADP_Def" class="mini-plot" data-url="../../npa/DET-ADP_Def/index.html" data-deprel="npa/DET-ADP_Def"></div>
                 <div class="panel-label"><a href="../../npa/DET-ADP_Def/index.html">Definite</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_DET-ADP_NounClass" class="mini-plot" data-url="../../npa/DET-ADP_NounClass/index.html" data-deprel="npa/DET-ADP_NounClass"></div>
+                <div class="panel-label"><a href="../../npa/DET-ADP_NounClass/index.html">NounClass</a></div>
             </div>
             <div class="panel">
                 <div id="plot-npa_DET-ADP_Polite" class="mini-plot" data-url="../../npa/DET-ADP_Polite/index.html" data-deprel="npa/DET-ADP_Polite"></div>
@@ -347,7 +347,7 @@
           });
         })();
 
-        const allData = {"npa/DET-ADP_Abbr": {"acc": []}, "npa/DET-ADP_C": {"acc": [{"name": "Arabic", "base": 0.78, "tree": 0.94, "n_items": 16, "url": "../../npa/DET-ADP_C/Arabic.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9491626794258373, "tree": 0.9491626794258373, "n_items": 793, "url": "../../npa/DET-ADP_C/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.9851543942992874, "tree": 0.9958432304038005, "n_items": 829, "url": "../../npa/DET-ADP_C/Czech.html", "color": "#2563eb"}, {"name": "German", "base": 0.9990051730998806, "tree": 0.9990051730998806, "n_items": 7531, "url": "../../npa/DET-ADP_C/German.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.6743951612903226, "tree": 0.9566532258064516, "n_items": 161, "url": "../../npa/DET-ADP_C/Hindi.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.9814814814814815, "tree": 0.9814814814814815, "n_items": 79, "url": "../../npa/DET-ADP_C/Lithuanian.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.6609375, "tree": 0.7466517857142857, "n_items": 1480, "url": "../../npa/DET-ADP_C/Romanian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9673629242819843, "tree": 0.9673629242819843, "n_items": 370, "url": "../../npa/DET-ADP_C/Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.5494791666666666, "tree": 0.7005208333333334, "n_items": 86, "url": "../../npa/DET-ADP_C/Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9844517184942717, "tree": 0.9844517184942717, "n_items": 601, "url": "../../npa/DET-ADP_C/Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.9922575387123065, "tree": 0.9922575387123065, "n_items": 1217, "url": "../../npa/DET-ADP_C/Slovenian.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9917391304347826, "tree": 0.9917391304347826, "n_items": 1140, "url": "../../npa/DET-ADP_C/Ukrainian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.6735537190082644, "tree": 0.8663911845730028, "n_items": 118, "url": "../../npa/DET-ADP_C/Urdu.html", "color": "#2563eb"}]}, "npa/DET-ADP_Def": {"acc": [{"name": "Classical Armenian", "base": 0.9821664464993395, "tree": 0.9993394980184941, "n_items": 743, "url": "../../npa/DET-ADP_Def/Classical_Armenian.html", "color": "#2563eb"}]}, "npa/DET-ADP_G": {"acc": [{"name": "Hindi", "base": 0.527027027027027, "tree": 0.6891891891891891, "n_items": 17, "url": "../../npa/DET-ADP_G/Hindi.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.7608695652173914, "tree": 0.7608695652173914, "n_items": 17, "url": "../../npa/DET-ADP_G/Sindhi.html", "color": "#2563eb"}]}, "npa/DET-ADP_N": {"acc": [{"name": "Bororo", "base": 0.8145161290322581, "tree": 0.8145161290322581, "n_items": 50, "url": "../../npa/DET-ADP_N/Bororo.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.7147177419354839, "tree": 0.8417338709677419, "n_items": 354, "url": "../../npa/DET-ADP_N/Hindi.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.8386243386243386, "tree": 0.9021164021164021, "n_items": 158, "url": "../../npa/DET-ADP_N/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8635057471264368, "tree": 0.9525862068965517, "n_items": 300, "url": "../../npa/DET-ADP_N/Urdu.html", "color": "#2563eb"}]}, "npa/DET-ADP_P": {"acc": []}, "npa/DET-ADP_Polite": {"acc": [{"name": "Javanese", "base": 0.9042553191489362, "tree": 0.9042553191489362, "n_items": 42, "url": "../../npa/DET-ADP_Polite/Javanese.html", "color": "#2563eb"}]}};
+        const allData = {"npa/DET-ADP_C": {"acc": [{"name": "Arabic", "base": 0.76875, "tree": 0.93125, "n_items": 18, "url": "../../npa/DET-ADP_C/Arabic.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9491626794258373, "tree": 0.9491626794258373, "n_items": 793, "url": "../../npa/DET-ADP_C/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.9851543942992874, "tree": 0.9958432304038005, "n_items": 829, "url": "../../npa/DET-ADP_C/Czech.html", "color": "#2563eb"}, {"name": "German", "base": 0.9975828322131824, "tree": 0.9975828322131824, "n_items": 8460, "url": "../../npa/DET-ADP_C/German.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.9810606060606061, "tree": 0.9810606060606061, "n_items": 129, "url": "../../npa/DET-ADP_C/Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.7557679630850362, "tree": 0.9765985497692815, "n_items": 1146, "url": "../../npa/DET-ADP_C/Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.9877819548872181, "tree": 0.9877819548872181, "n_items": 525, "url": "../../npa/DET-ADP_C/Icelandic.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.9829545454545454, "tree": 0.9829545454545454, "n_items": 86, "url": "../../npa/DET-ADP_C/Lithuanian.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.6609375, "tree": 0.7466517857142857, "n_items": 1480, "url": "../../npa/DET-ADP_C/Romanian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9673629242819843, "tree": 0.9673629242819843, "n_items": 370, "url": "../../npa/DET-ADP_C/Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.6607717041800643, "tree": 0.7958199356913184, "n_items": 205, "url": "../../npa/DET-ADP_C/Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9844517184942717, "tree": 0.9844517184942717, "n_items": 601, "url": "../../npa/DET-ADP_C/Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.9922575387123065, "tree": 0.9922575387123065, "n_items": 1217, "url": "../../npa/DET-ADP_C/Slovenian.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9900605012964564, "tree": 0.9900605012964564, "n_items": 1145, "url": "../../npa/DET-ADP_C/Ukrainian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.5601635514018691, "tree": 0.8685747663551402, "n_items": 376, "url": "../../npa/DET-ADP_C/Urdu.html", "color": "#2563eb"}]}, "npa/DET-ADP_Def": {"acc": [{"name": "Classical Armenian", "base": 0.9821664464993395, "tree": 0.9993394980184941, "n_items": 743, "url": "../../npa/DET-ADP_Def/Classical_Armenian.html", "color": "#2563eb"}, {"name": "Old French", "base": 0.9847001223990208, "tree": 0.9847001223990208, "n_items": 804, "url": "../../npa/DET-ADP_Def/Old_French.html", "color": "#2563eb"}]}, "npa/DET-ADP_G": {"acc": [{"name": "Greek", "base": 0.7159090909090909, "tree": 0.8598484848484849, "n_items": 37, "url": "../../npa/DET-ADP_G/Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.8335616438356165, "tree": 0.9705479452054795, "n_items": 608, "url": "../../npa/DET-ADP_G/Hindi.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.5306549001393405, "tree": 0.9844403158383651, "n_items": 1142, "url": "../../npa/DET-ADP_G/Italian.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.5520485945688423, "tree": 0.9701048118151501, "n_items": 2317, "url": "../../npa/DET-ADP_G/Portuguese.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.8190184049079755, "tree": 0.8190184049079755, "n_items": 133, "url": "../../npa/DET-ADP_G/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.6794871794871795, "tree": 0.7564102564102564, "n_items": 26, "url": "../../npa/DET-ADP_G/Urdu.html", "color": "#2563eb"}]}, "npa/DET-ADP_N": {"acc": [{"name": "Bororo", "base": 0.8636363636363636, "tree": 0.8636363636363636, "n_items": 66, "url": "../../npa/DET-ADP_N/Bororo.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.7916666666666666, "tree": 0.8825757575757576, "n_items": 104, "url": "../../npa/DET-ADP_N/Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.7596544715447154, "tree": 0.9029471544715447, "n_items": 747, "url": "../../npa/DET-ADP_N/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.6423611111111112, "tree": 0.9988425925925926, "n_items": 277, "url": "../../npa/DET-ADP_N/Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.5577076677316294, "tree": 0.9878194888178914, "n_items": 1396, "url": "../../npa/DET-ADP_N/Italian.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.7990037071362373, "tree": 0.9792632066728453, "n_items": 3448, "url": "../../npa/DET-ADP_N/Portuguese.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.8139880952380952, "tree": 0.9002976190476191, "n_items": 273, "url": "../../npa/DET-ADP_N/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8765060240963856, "tree": 0.9644578313253012, "n_items": 727, "url": "../../npa/DET-ADP_N/Urdu.html", "color": "#2563eb"}, {"name": "Wolof", "base": 0.85, "tree": 0.85, "n_items": 25, "url": "../../npa/DET-ADP_N/Wolof.html", "color": "#2563eb"}]}, "npa/DET-ADP_NounClass": {"acc": [{"name": "Wolof", "base": 0.5340909090909091, "tree": 0.7840909090909091, "n_items": 20, "url": "../../npa/DET-ADP_NounClass/Wolof.html", "color": "#2563eb"}]}, "npa/DET-ADP_P": {"acc": [{"name": "Hindi", "base": 0.996301775147929, "tree": 0.996301775147929, "n_items": 673, "url": "../../npa/DET-ADP_P/Hindi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.7393320964749536, "tree": 0.9990723562152134, "n_items": 398, "url": "../../npa/DET-ADP_P/Urdu.html", "color": "#2563eb"}]}, "npa/DET-ADP_Polite": {"acc": [{"name": "Javanese", "base": 0.9042553191489362, "tree": 0.9042553191489362, "n_items": 42, "url": "../../npa/DET-ADP_Polite/Javanese.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so
@@ -363,6 +363,16 @@
             };
         })();
 
+        // Axes start at 0.44 unless some point, in any panel, lies below it (a multi-class view, e.g.
+        // the data-debugging pages' split unk classes, can have a root accuracy under 0.5); then
+        // every panel's axes extend to the lowest such point.
+        const AX_LO_FIXED = 0.44;
+        const AX_LO = AX_LO_FIXED !== null ? AX_LO_FIXED : (() => {
+            const vals = Object.values(allData).flatMap(g => (g.acc || []).flatMap(d => [d.base, d.tree]))
+                .filter(v => Number.isFinite(v));
+            return vals.length ? Math.min(0.44, Math.floor((Math.min(...vals) - 0.03) * 20) / 20) : 0.44;
+        })();
+
         function renderMiniPlot(el, points) {
             const url = el.dataset.url;
             // Some languages' accuracy is NaN (too few items to compute it);
@@ -372,7 +382,12 @@
 
             // y = x reference over the fixed axis range: points above it are
             // languages where the tree beat the majority-class baseline.
-            const baseLine = { x: [0.5, 1], y: [0.5, 1] };
+            // Every panel shares the lowest lower bound any panel needs (see AX_LO), so all the
+            // charts have the same x and y scale.
+            const axLo = AX_LO;
+            const axTicks = [];
+            for (let t = Math.ceil(axLo * 10) / 10; t <= 1.0001; t += 0.1) axTicks.push(Math.round(t * 10) / 10);
+            const baseLine = { x: [Math.min(0.5, axLo), 1], y: [Math.min(0.5, axLo), 1] };
 
             const traceLine = {
                 x: baseLine.x,
@@ -395,7 +410,7 @@
                 marker: {
                     size: points.map(d => d.n_items),
                     sizemode: 'area',
-                    sizeref: 2 * Math.max(...points.map(d => d.n_items)) / (20 ** 2),
+                    sizeref: 2 * Math.max(1, ...points.map(d => d.n_items)) / (20 ** 2),
                     sizemin: 3,
                     color: points.map(d => d.color ?? THEME.accent),
                     opacity: 0.75,
@@ -413,7 +428,7 @@
                 // below chance in a majority-vote leaf) rather than autoscaled, so
                 // the same fixed reference points hold across every panel instead
                 // of each tightly-clustered panel silently rescaling to its own
-                // tiny range. Upper bound 1.02, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
+                // tiny range. Upper bound 1.05, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
                 // exactly at an edge has real radius (area-scaled by n_items) and
                 // would otherwise clip against the plot border.
                 xaxis: {
@@ -422,8 +437,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 yaxis: {
@@ -432,8 +447,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 // Transparent, not a fixed white/panel color: .panel paints its

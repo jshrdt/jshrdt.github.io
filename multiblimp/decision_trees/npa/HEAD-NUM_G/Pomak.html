@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Pomak", "languageName": "Pomak", "accuracy": "93.9%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "99", "predictor": "NP head-NUM_Gender", "rootAccuracy": "93.5%", "trainAccuracy": "93.5%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 93, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 99, "H": 0.347, "acc": 0.935, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 93, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Nan\u00edknal s\u00f3 je p\u00f3 nah v\u00f3tre i kan\u00e1 da v\u00eddi \u2013 <strong>ann\u00f3</strong> m\u00ed\u010dko <strong>v\u00f3lnesto</strong> m\u00e9\u010dko faf t\u00f3ra\u0146eno da s\u00f3 nap\u00edna , da c\u00edka i da gard\u00ed , pak na m\u00f3\u017ea da s\u00ed izl\u00e9ze .", "verb": "v\u00f3lnesto", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=valnes\u01fd", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=1", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%97_%CE%91%CE%A1%CE%9A%CE%9F%CE%A5%CE%94%CE%91_%CE%9A%CE%91%CE%99_%CE%97_%CE%91%CE%A3%CE%A7%CE%97%CE%9C%CE%97_%CE%9A%CE%9F%CE%A5%CE%92%CE%95%CE%9D%CE%A4%CE%91_s-3%22%20%3B%20A%20%5Bform%3D%22v%C3%B3lnesto%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u00ab Da m\u00ed dad\u00e9te <strong>enn\u00f3k</strong> <strong>r\u00fakoto</strong> , da s\u00f3 s\u00e9tom vrit hajv\u00e1nenem kakn\u00e1no v\u00edkot , da d\u00fame sas te \u00bb .", "verb": "r\u00fakoto", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r\u00faka", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%95%CE%9D%CE%91_%CE%9C%CE%95%CE%93%CE%91%CE%9B%CE%9F_%CE%A6%CE%99%CE%94%CE%99_%CE%9C%CE%95%CE%A3%CE%91_%CE%A3%CE%A4%CE%97_%CE%A6%CE%A9%CE%A4%CE%99%CE%91_s-15%22%20%3B%20A%20%5Bform%3D%22r%C3%BAkoto%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- V\u00f3ri \u00edskaraj dvam\u00ednana k\u00f3pel\u00f8ta i zatv\u00e1rite <strong>dvam\u00ednana</strong> padi\u0161\u00e9hcky <strong>k\u00f3pel\u00f8ta</strong> .", "verb": "k\u00f3pel\u00f8ta", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=k\u00f3pele", "Case=Nom", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc</b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-75%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C3%B8ta%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Katr\u00f3mu sag\u00e1ne da dam mom\u00f3so ? <strong>To</strong> so i <strong>trim\u00ednasa</strong> h\u00fabbi .", "verb": "to", "verbFeats": ["upos=PRON", "deprel=nsubj", "lemma=ja", "Case=Nom", "<b>Gender=Neut</b>", "Number=Plur", "Person=3", "PronType=Prs"], "nsubj": "trim\u00ednasa", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Prox", "DeixisRef=1", "<b>Gender=Masc</b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%A0%CE%91%CE%9A%CE%95%CE%98%CE%A1%CE%91_%CE%A4%CE%A1%CE%99%CE%91_%CE%91%CE%94%CE%95%CE%A1%CE%A6%CE%99%CE%91_%CE%91%CE%93%CE%91%CE%A0%CE%97%CE%A3%CE%91%CE%9D_%CE%95%CE%9D%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%99_s-81%22%20%3B%20A%20%5Bform%3D%22To%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnasa%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "B\u00edvalu je n\u00f3 kug\u00e1 jenn\u00e1 m\u00e1jka sas tri d\u00f3\u0161tere , zam je us\u00e9tila \u010di hi je b\u00edlu ne h\u00fabavu i pu\u00edskuva ud jenn\u00f3na hi d\u00f3\u0161tere da hi unnes\u00e9 faf <strong>jed\u00edn</strong> tas <strong>v\u00f3da</strong> za da sa napij\u00e9 i v\u00edka hi :", "verb": "v\u00f3da", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vad\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "jed\u00edn", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9C%CE%97%CE%A4%CE%95%CE%A1%CE%91_%CE%9A%CE%91%CE%99_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%98%CE%A5%CE%93%CE%91%CE%A4%CE%95%CE%A1%CE%95%CE%A3_s-2%22%20%3B%20A%20%5Bform%3D%22v%C3%B3da%22%5D%20%3B%20B%20%5Bform%3D%22jed%C3%ADn%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00fdta gi f\u00e1tiho faf ann\u00f3ganek n\u00e1jdaho ann\u00f3kne mat\u00f3ra , <strong>ann\u00f3</strong> <strong>kompj\u00fater</strong> i ann\u00f3 val\u00edco i d\u00e1daho s\u00ed gi \u017e\u01fdmne so b\u00faly .", "verb": "kompj\u00fater", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=kompj\u00fat", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2015-10-29-2_s-5%22%20%3B%20A%20%5Bform%3D%22kompj%C3%BAter%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Astinom\u00edjena m\u00ed z\u00f8 dv\u00e1na tumaf\u00edle , 200 evr\u00f3 i <strong>dva</strong> <strong>telif\u00f3na</strong> .", "verb": "telif\u00f3na", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=telif\u00f3n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Count"], "nsubj": "dva", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dva", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-10-1_s-4%22%20%3B%20A%20%5Bform%3D%22telif%C3%B3na%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "P\u00f3tet s\u00ed im\u01fd\u0161o t\u00f3gavoto mesel\u01ff n\u00f3 kutr\u00ed je p\u00edsal na duv\u00e1rane s baj\u00f3 ann\u00ed\u010dka , <strong>ann\u00e1</strong> <strong>r\u00e9\u010dka</strong> b\u00e9\u0161o : lefterj\u00e1 s\u00e9tne vel\u00edho \u010de j\u00e9 so p\u00edsaly de\u010dj\u00e1", "verb": "r\u00e9\u010dka", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=r\u00e9\u010dka", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00e1", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%9F_%CE%94%CE%A1%CE%9F%CE%9C%CE%9F%CE%A3_%CE%95%CE%99%CE%A7%CE%95_%CE%A4%CE%97_%CE%94%CE%99%CE%9A%CE%97_%CE%A4%CE%9F%CE%A5_%CE%99%CE%A3%CE%A4%CE%9F%CE%A1%CE%99%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22r%C3%A9%C4%8Dka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ad\u00edn \u010dak\u00e1l je abigr\u00e1val ann\u00f3\u0161 <strong>ann\u00f3k</strong> c\u01fdla <strong>v\u00e9\u010dera</strong> , al\u00e1 je ne na\u0161l\u00f3l n\u00ed kan\u00e1 da s\u00f3 najed\u00e9 .", "verb": "v\u00e9\u010dera", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=v\u00e9\u010der", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%A4%CE%9F_%CE%A4%CE%A3%CE%91%CE%9A%CE%91%CE%9B%CE%99_%CE%9A%CE%91%CE%99_%CE%97_%CE%93%CE%A1%CE%99%CE%91_s-3%22%20%3B%20A%20%5Bform%3D%22v%C3%A9%C4%8Dera%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u2013 Sl\u00fa\u0161yjte , ak\u00fa m\u00ed dad\u00e9te k\u00fa\u010denceto , \u0161e v\u00fa dam <strong>ann\u00f3k</strong> <strong>fr\u00e1nka</strong> , da s\u00ed k\u00fapite halk\u00f3 .", "verb": "fr\u00e1nka", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=frank", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%91%CE%93%CE%9F%CE%A1%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%93%CE%91%CE%A4%CE%91%CE%9A%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%92%CE%91%CE%A4%CE%A1%CE%91%CE%A7%CE%91%CE%9A%CE%99_s-11%22%20%3B%20A%20%5Bform%3D%22fr%C3%A1nka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "I m\u00fa v\u00edkot : \u00ab Hi\u010d kaz\u00e1\u0146ot it\u00f3lkus vis\u00f3ce sas <strong>enn\u00f3k</strong> <strong>m\u00f3ma</strong> vazv\u00edro li ? \u00bb I to v\u00edka : \u00ab Hi\u010d ot n\u00e9lkus vis\u00f3ce m\u00f3ma \u013c\u00fabi li s\u00f3 ? \u00bb .", "verb": "m\u00f3ma", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=mum", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%A6%CE%99%CE%9B%CE%99_s-6%22%20%3B%20A%20%5Bform%3D%22m%C3%B3ma%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 27 god\u00edny f\u00e1ti faf T\u00f3rnik na 5 mesec\u00e1te ak\u0161\u00e1lmyjinto astinom\u00edjeta na Komotin\u00ed \u00f3ti je vl\u00e6l faf ann\u00f3k d\u00fck\u01fdna i ukr\u00e1l je <strong>ann\u00f3k</strong> <strong>\u01e7uzd\u00e1na</strong> .", "verb": "\u01e7uzd\u00e1na", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u01e7uzd\u00e1n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-07-1_s-2%22%20%3B%20A%20%5Bform%3D%22%C7%A7uzd%C3%A1na%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Astinom\u00edjena m\u00fa z\u00f8 tumaf\u00edlene i <strong>ann\u00f3k</strong> <strong>telif\u00f3na</strong> .", "verb": "telif\u00f3na", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=telif\u00f3n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-02-29_s-4%22%20%3B%20A%20%5Bform%3D%22telif%C3%B3na%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u2022 \u00cdmom <strong>ann\u00f3</strong> <strong>s\u00e9stro</strong> i dvam\u00edna br\u00e1tje .", "verb": "s\u00e9stro", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=sestr\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%9C%CE%91%CE%98%CE%97%CE%9C%CE%91_1_s-47%22%20%3B%20A%20%5Bform%3D%22s%C3%A9stro%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 32 god\u00edny f\u00e1ti astinom\u00edjeta na Aleksandr\u00fapoli faf T\u00f3rnik ad pl\u00e1den \u00f3ti je faf T\u00f3rnik kaz\u00e1 pl\u00e1den ati\u0161l\u00f3l na ann\u00f3j st\u00e1roj \u017e\u00f3noj k\u00f3\u0161tono , razvart\u01fdl je i nagad\u00edl j\u00e9 da m\u00fa dad\u00e9 ann\u00f3k alt\u00f3nena p\u00f3rsten\u00e6 i <strong>ann\u00f3</strong> alt\u00f3neno <strong>ver\u00fago</strong> .", "verb": "ver\u00fago", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=ver\u00faga", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-03-23-1_s-2%22%20%3B%20A%20%5Bform%3D%22ver%C3%BAgo%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "I <strong>dvam\u00ednana</strong> <strong>padi\u0161ehy</strong> sa nag\u00e1dat i r\u00fakot k\u00f3pel\u00f8tana i v\u00edkot m\u00ed :", "verb": "padi\u0161ehy", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=padi\u0161\u00e1h", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc</b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-32%22%20%3B%20A%20%5Bform%3D%22padi%C5%A1ehy%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Z\u01ffmij i is\u00f3zek s\u00faha \u010d\u00f3pa \" , rekl\u00f3l m\u00fa je i prev\u00f3dil m\u00fa je <strong>ann\u00f3</strong> <strong>v\u00e9jko</strong> , \" f\u00e1bij go i t\u00f3ga faf bah\u010d\u00f3no i kug\u00e1na go v\u00eddi\u0161 da s\u00f3 sl\u00edsne , \u0161e zno\u0161 \u00f3ti t\u00ed s\u00f3 je gr\u00e6h\u00f3n sild\u00edsal \" .", "verb": "v\u00e9jko", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=v\u00e9jka", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%97_%CE%A4%CE%95%CE%9B%CE%95%CE%A5%CE%A4%CE%91%CE%99%CE%91_%CE%91%CE%9C%CE%91%CE%A1%CE%A4%CE%99%CE%91_s-12%22%20%3B%20A%20%5Bform%3D%22v%C3%A9jko%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ad\u00edn kab\u00e1daji \u010d\u00faval <strong>ann\u00f3</strong> <strong>vaden\u00edco</strong> af ann\u00f3k mevlek\u00e9te .", "verb": "vaden\u00edco", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vaden\u00edca", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%9F_%CE%9C%CE%97%CE%9B%CE%9F_%CE%A4%CE%9F%CE%A5_%CE%9C%CE%A5%CE%9B%CE%A9%CE%9D%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22vaden%C3%ADco%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u0160e \u00eddete da m\u00ed danes\u00e9te pl\u00e1tno za j\u00e9\u0161te <strong>ann\u00f3</strong> <strong>pr\u00e9men\u00f8</strong> .", "verb": "pr\u00e9men\u00f8", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pr\u00e9men\u00e6", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-283%22%20%3B%20A%20%5Bform%3D%22pr%C3%A9men%C3%B8%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf k\u00f3\u0161tono mu so na\u0161l\u00edli 269 zemb\u00edleve sas 13 . 450 k\u00edlo t\u00fct\u01d8ne , 680 pak\u00e9ty \u01e7ug\u00e1ry ad \u017e\u00fdne dan\u00edsot ad dr\u00fagy h\u00fck\u00fcm\u00e9teve i pred\u00e1vot gi it\u00faj pres f\u00f3ro , <strong>ann\u00f3k</strong> <strong>t\u00fcf\u00e9ka</strong> , fi\u0161\u00e9kove i 75 evr\u00f3 .", "verb": "t\u00fcf\u00e9ka", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=t\u00fcf\u00e9k", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-05-10-1_s-3%22%20%3B%20A%20%5Bform%3D%22t%C3%BCf%C3%A9ka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00e1 so pavarv\u01fdly j\u00e9\u0161te m\u00e1lko , fpr\u01fdly so pri ann\u00f3 j\u00f3dro kopr\u00edvo i da <strong>ann\u00f3k</strong> s\u00faha <strong>bun\u00e1re</strong> - farn\u00edly j\u00e9 so i ati\u0161l\u00fdly s\u00ed so .", "verb": "bun\u00e1re", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=bun\u00e1r", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_RAD%C3%81NEN_s-7%22%20%3B%20A%20%5Bform%3D%22bun%C3%A1re%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 860, "CANVAS_H": 460, "META": {"language": "Pomak", "languageName": "Pomak", "accuracy": "92.2%", "testAccuracy": "91.7%", "testN": 12, "measure": "accuracy", "nodes": "5 (3 leaves)", "depth": "2", "trainingSamples": "102", "predictor": "NP head-NUM_Gender", "rootAccuracy": "91.7%", "trainAccuracy": "91.7%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "Gender"}, {"role": "b", "feat": "Gender"}, {"role": "a", "feat": "Gender"}]}, "CLASSES": [{"cls": "yes", "cnt": 94, "color": "var(--yes)"}, {"cls": "no", "cnt": 8, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"2": {"x": 380.0, "y": 400.0, "branch": "false", "n": 11, "H": 0.8709, "acc": 0.7083, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 8, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "3": {"x": 570.0, "y": 400.0, "branch": "true", "n": 81, "H": 0.0536, "acc": 0.9939, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 81, "color": "var(--yes)"}, {"cls": "no", "cnt": 0, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 81, "correctSwaps": 94, "pairRoleCounts": {"A": 94}}, "1": {"x": 475.0, "y": 230.0, "branch": "false", "n": 92, "H": 0.2313, "acc": 0.9624, "leaf": false, "corr": ["NP head's advcl sibling: Number is not set", "NP head's advcl sibling: Tense is not set", "NP head's advcl sibling: VerbForm is not set", "NP head has advcl sibling?"], "dist": [{"cls": "yes", "cnt": 89, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}], "rule": "NP head's advcl sibling: Aspect is not set", "ruleFeat": null, "ruleRole": null, "ruleValue": null}, "4": {"x": 760.0, "y": 230.0, "branch": "true", "n": 10, "H": 1.0, "acc": 0.5, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 5, "color": "var(--yes)"}, {"cls": "no", "cnt": 5, "color": "var(--no)"}], "rule": "predict: yes / no", "predicted": "yes / no", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 617.5, "y": 60.0, "branch": "root", "n": 102, "H": 0.411, "acc": 0.9175, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 94, "color": "var(--yes)"}, {"cls": "no", "cnt": 8, "color": "var(--no)"}], "rule": "NP head.Number = Plur", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[1, 2, "false"], [1, 3, "true"], [0, 1, "false"], [0, 4, "true"]], "PATHS": {"2": [0, 1, 2], "3": [0, 1, 3], "1": [0, 1], "4": [0, 4], "0": [0]}, "NODE_SAMPLES": {"2": [{"sentence": "<strong>Ann\u00f3k<\/strong> <strong>\u010dul\u01fdka<\/strong> na 65 god\u00edny i ann\u00f3 \u017e\u00f3no na 35 god\u00edny f\u00e1ti faf \u01e6um\u00e1g\u00fcn na 8 mesec\u00e1te na pl\u00e1den astinom\u00edjena faf Komotin\u00ed \u00f3ti so im\u01fdli ha\u0161\u00ed\u0161e i \u017e\u00fdne \u01e7ug\u00e1ry so pres f\u00f3ro .", "verb": "\u010dul\u01fdka", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u010dul\u01fdk", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-10-2_s-2%22%20%3B%20A%20%5Bform%3D%22%C4%8Dul%C7%BDka%22%5D%20%3B%20B%20%5Bform%3D%22Ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Pak to , ag\u00e1 je ati\u0161l\u00f3lo , f\u00e1tilo s\u00f3 je da pred\u00e9 na ann\u00f3k rad\u00e1ne , zab\u00faleno i nav\u00e9deno na ann\u00f3k kr\u00e1je , r\u00e1batilo je i sam\u00f3 s\u00ed je d\u00familo rad\u00e1n\u00fcne is\u00fdj : \" R\u00e9\u010dij , rad\u00e1nku \u00b7 im\u01fdlo je <strong>ann\u00f3<\/strong> <strong>vr\u00e9me<\/strong> ann\u00f3 m\u00f3mi\u010de \u00b7 kug\u00e1na je pl\u00e1kalo , s\u00f3lzyne mu s\u00f3 so sp\u00fa\u0161taly niz l\u00e1jnityne . \"", "verb": "vr\u00e9me", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vr\u00e9me", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_RAD%C3%81NEN_s-31%22%20%3B%20A%20%5Bform%3D%22vr%C3%A9me%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u2013 Sl\u00fa\u0161yjte , ak\u00fa m\u00ed dad\u00e9te k\u00fa\u010denceto , \u0161e v\u00fa dam <strong>ann\u00f3k<\/strong> <strong>fr\u00e1nka<\/strong> , da s\u00ed k\u00fapite halk\u00f3 .", "verb": "fr\u00e1nka", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=frank", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%91%CE%93%CE%9F%CE%A1%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%93%CE%91%CE%A4%CE%91%CE%9A%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%92%CE%91%CE%A4%CE%A1%CE%91%CE%A7%CE%91%CE%9A%CE%99_s-11%22%20%3B%20A%20%5Bform%3D%22fr%C3%A1nka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3\u0161 d\u01fddo Is\u00e9n , k\u00e1kna je varv\u01fdl pasl\u00e9t bel\u01d8kane mu , na <strong>ann\u00f3<\/strong> <strong>pal\u01fdno<\/strong> pri gor\u00f3no je \u010dul sv\u00edrko - katag\u00e1 je tenk\u00e1 sv\u00edrka sv\u00edrila b\u00e1lno p\u00e9sne .", "verb": "pal\u01fdno", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pal\u01fdna", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_SK%C3%93PYJEN_K%C3%81MEN_s-4%22%20%3B%20A%20%5Bform%3D%22pal%C7%BDno%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\" V\u00e1mi \u0161e v\u00fa jam le b\u00fak\u0161am ! \" , rekl\u00f3l je dok\u00fasno br\u00e1tjem i klal m\u00ed je pa <strong>ann\u00f3<\/strong> <strong>k\u00fdtko<\/strong> na u\u0161\u00fdne , za da m\u00f3\u017ea da gi addel\u00ed na\u0161t\u00e9se faf mrak\u00e1ne .", "verb": "k\u00fdtko", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=k\u00fdte", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%9F_%CE%9C%CE%99%CE%9A%CE%A1%CE%9F%CE%A3_%CE%91%CE%94%CE%95%CE%A1%CE%A6%CE%9F%CE%A3_%CE%9A%CE%91%CE%99_%CE%9F_%CE%94%CE%A1%CE%91%CE%9A%CE%9F%CE%A3_s-11%22%20%3B%20A%20%5Bform%3D%22k%C3%BDtko%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "K\u00e1kna so sl\u00fa\u0161ali is\u00f3zi mesel\u01ff , <strong>dvom\u00ednana<\/strong> <strong>br\u00e1tje<\/strong> so um\u00edrali at str\u00e1ha .", "verb": "br\u00e1tje", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=brat", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Coll"], "nsubj": "dvom\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Coll", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-303%22%20%3B%20A%20%5Bform%3D%22br%C3%A1tje%22%5D%20%3B%20B%20%5Bform%3D%22dvom%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00e1 je razb\u00edlo hurel\u00ednono , ad h\u00f3rehane so izl\u01fdly <strong>dva<\/strong> ml\u00e1da <strong>v\u00f3la<\/strong> sas gul\u01fdmy r\u00f3gove .", "verb": "v\u00f3la", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=vol", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "dva", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dva", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_BAK%C5%A0%C3%8D%C5%A0_AT_S%C3%93RCE_s-53%22%20%3B%20A%20%5Bform%3D%22v%C3%B3la%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Durg\u00e1 da izre\u010d\u00e9 in\u00e9zi d\u00famy , zajev\u00edli s\u00f3 so <strong>\u010d\u00e9trimina<\/strong> <strong>skop\u00f3ze<\/strong> , vd\u00edgnali so dv\u00f3rane i ann\u00e9li go so .", "verb": "skop\u00f3ze", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=skop\u00f3zin", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "\u010d\u00e9trimina", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u010d\u00e9trimina", "Animacy=Hum", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_SK%C3%93PYJEN_K%C3%81MEN_s-58%22%20%3B%20A%20%5Bform%3D%22skop%C3%B3ze%22%5D%20%3B%20B%20%5Bform%3D%22%C4%8D%C3%A9trimina%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Fk\u00fdsnavot s\u00f3 az\u00e1m deve\u01e7\u00edjene i h\u00f3det m\u00fa d\u00e1vot <strong>ann\u00f3<\/strong> <strong>s\u00f3po<\/strong> ta je ne zabar\u00e1vel n\u00ed kug\u00e1 .", "verb": "s\u00f3po", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=s\u00f3pa", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%A4%CE%9F_%CE%9E%CE%A5%CE%9B%CE%9F_%CE%A4%CE%A9%CE%9D_%CE%9A%CE%91%CE%9C%CE%97%CE%9B%CE%99%CE%95%CE%A1%CE%97%CE%94%CE%A9%CE%9D_s-15%22%20%3B%20A%20%5Bform%3D%22s%C3%B3po%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u00ab Da m\u00ed dad\u00e9te <strong>enn\u00f3k<\/strong> <strong>r\u00fakoto<\/strong> , da s\u00f3 s\u00e9tom vrit hajv\u00e1nenem kakn\u00e1no v\u00edkot , da d\u00fame sas te \u00bb .", "verb": "r\u00fakoto", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r\u00faka", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%95%CE%9D%CE%91_%CE%9C%CE%95%CE%93%CE%91%CE%9B%CE%9F_%CE%A6%CE%99%CE%94%CE%99_%CE%9C%CE%95%CE%A3%CE%91_%CE%A3%CE%A4%CE%97_%CE%A6%CE%A9%CE%A4%CE%99%CE%91_s-15%22%20%3B%20A%20%5Bform%3D%22r%C3%BAkoto%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "B\u00edvalu je n\u00f3 kug\u00e1 jenn\u00e1 m\u00e1jka sas tri d\u00f3\u0161tere , zam je us\u00e9tila \u010di hi je b\u00edlu ne h\u00fabavu i pu\u00edskuva ud jenn\u00f3na hi d\u00f3\u0161tere da hi unnes\u00e9 faf <strong>jed\u00edn<\/strong> tas <strong>v\u00f3da<\/strong> za da sa napij\u00e9 i v\u00edka hi :", "verb": "v\u00f3da", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vad\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "jed\u00edn", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9C%CE%97%CE%A4%CE%95%CE%A1%CE%91_%CE%9A%CE%91%CE%99_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%98%CE%A5%CE%93%CE%91%CE%A4%CE%95%CE%A1%CE%95%CE%A3_s-2%22%20%3B%20A%20%5Bform%3D%22v%C3%B3da%22%5D%20%3B%20B%20%5Bform%3D%22jed%C3%ADn%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}], "3": [{"sentence": "\" \u0160e t\u00ed dam \" , rekl\u00f3lo m\u00fa je k\u00f3pel\u00f8no , \" al\u00e1 za s\u01fdko ann\u00f3 , kan\u00e1na t\u00ed dam , \u0161e t\u00ed kl\u00e1vom i <strong>ann\u00f3<\/strong> <strong>sfrag\u00eddo<\/strong> na rak\u00f3to \" .", "verb": "sfrag\u00eddo", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=sfrag\u00edda", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%97_%CE%91%CE%A3%CE%A9%CE%9C%CE%91%CE%A4%CE%9F%CE%A3_%CE%9A%CE%95%CE%A6%CE%91%CE%9B%CE%97_s-43%22%20%3B%20A%20%5Bform%3D%22sfrag%C3%ADdo%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Dve k\u00f3pel\u00f8ta na 17 i na 15 god\u00edny ad Komotin\u00ed f\u00e1ti faf \u010cetf\u00f3rtak sab\u00e1lyjinto na 7 mesec\u00e1te astinom\u00edjena \u00f3ti so m\u00edfko sah\u00e1te p\u00f3 napr\u00e9\u0161 ukr\u00e1li uv\u00f3tre ad kasab\u00f3no <strong>dva<\/strong> <strong>mat\u00f3ra<\/strong> pak so na 2 mesec\u00e1te ukr\u00e1li i ann\u00f3k velesp\u00edte .", "verb": "mat\u00f3ra", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=mat\u00f3r", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "dva", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dva", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-07-07_s-20%22%20%3B%20A%20%5Bform%3D%22mat%C3%B3ra%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ge\u010d s\u00f3 ak\u0161\u00e1mlajinto <strong>trim\u00ednata<\/strong> <strong>erg\u00e1te<\/strong> v\u00f3rnaho p\u00e1k , k\u00e1pnati ad r\u00e1bato .", "verb": "erg\u00e1te", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=erg\u00e1tin", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "trim\u00ednata", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_%C5%BD%C3%9DJEN_NA_R%C3%81BATI_NA_TR%C7%BCBAVA_DA_JED%C3%89_s-60%22%20%3B%20A%20%5Bform%3D%22erg%C3%A1te%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnata%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u0160e \u00eddete da m\u00ed danes\u00e9te pl\u00e1tno za j\u00e9\u0161te <strong>ann\u00f3<\/strong> <strong>pr\u00e9men\u00f8<\/strong> .", "verb": "pr\u00e9men\u00f8", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pr\u00e9men\u00e6", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-283%22%20%3B%20A%20%5Bform%3D%22pr%C3%A9men%C3%B8%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Dev\u00f3jkyne so l\u00e1pnaly pa <strong>ann\u00f3<\/strong> <strong>z\u00f3rno<\/strong> at \u010d\u00f3rnono gr\u00f3zdje i le inag\u00e1ne so st\u00e1naly magar\u00edcy .", "verb": "z\u00f3rno", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=z\u00f3rno", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%A0%CE%91%CE%A1%CE%91%CE%9E%CE%95%CE%9D%CE%9F_%CE%A0%CE%9F%CE%A5%CE%9B%CE%99_s-66%22%20%3B%20A%20%5Bform%3D%22z%C3%B3rno%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00e1 v\u00edde m\u00e1jka mu i k\u00fa\u010deno r\u00e9\u010de K\u00e9l\u010detune : \" \u00d3ti pr\u00e1vi\u0161 es\u00e9 , m\u00e1jka , n\u00edje n\u00e9mame n\u00edto <strong>enn\u00f3k<\/strong> <strong>fr\u00e1nka<\/strong> \" .", "verb": "fr\u00e1nka", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=frank", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%9F_%CE%9A%CE%95%CE%9B%CE%A4%CE%A3%CE%9F%CE%A3%2C_%CE%97_%CE%93%CE%91%CE%A4%CE%91%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%A6%CE%99%CE%94%CE%99_s-13%22%20%3B%20A%20%5Bform%3D%22fr%C3%A1nka%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf <strong>ann\u00f3k<\/strong> <strong>vak\u00fdta<\/strong> je M\u00e1ra rekl\u00e1la m\u00e1jci ji :", "verb": "vak\u00fdta", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=vak\u00fdt", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%9C%CE%91%CE%A1%CE%91_%CE%97_%CE%A3%CE%A4%CE%91%CE%A7%CE%A4%CE%9F%CE%A0%CE%9F%CE%A5%CE%A4%CE%91_s-4%22%20%3B%20A%20%5Bform%3D%22vak%C3%BDta%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "n\u00f3 kug\u00e1 so <strong>dvom\u00edna<\/strong> <strong>arkad\u00e1\u0161e<\/strong> , Hal\u00edl i Is\u00e9n , t\u00f3rnali n\u00f3 za kakv\u00f3 r\u00e1bato at Pa\u0161av\u00edk za nah Isk\u00e9\u010de .", "verb": "arkad\u00e1\u0161e", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=arkad\u00e1\u0161in", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "dvom\u00edna", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%9F%CE%99_%CE%9F%CE%94%CE%9F%CE%99%CE%A0%CE%9F%CE%A1%CE%9F%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%A4%CE%A3%CE%95%CE%9A%CE%9F%CE%A5%CE%A1%CE%99_s-2%22%20%3B%20A%20%5Bform%3D%22arkad%C3%A1%C5%A1e%22%5D%20%3B%20B%20%5Bform%3D%22dvom%C3%ADna%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Im\u01fdl s\u00ed je kol\u00edbo sas \u00f8rt\u01d8je at t\u00edkly , pak faf kol\u00edbono - <strong>ann\u00f3<\/strong> <strong>k\u00f3te<\/strong> i ann\u00f3 kuk\u00f3\u0161ko .", "verb": "k\u00f3te", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=k\u00f3te", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_SK%C3%93PYJEN_K%C3%81MEN_s-3%22%20%3B%20A%20%5Bform%3D%22k%C3%B3te%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 27 god\u00edny f\u00e1ti faf T\u00f3rnik na 5 mesec\u00e1te ak\u0161\u00e1lmyjinto astinom\u00edjeta na Komotin\u00ed \u00f3ti je vl\u00e6l faf ann\u00f3k d\u00fck\u01fdna i ukr\u00e1l je <strong>ann\u00f3k<\/strong> <strong>\u01e7uzd\u00e1na<\/strong> .", "verb": "\u01e7uzd\u00e1na", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u01e7uzd\u00e1n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-07-1_s-2%22%20%3B%20A%20%5Bform%3D%22%C7%A7uzd%C3%A1na%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "At ' tam nac\u00fdj i le ad dr\u00fagokne d\u00e9ne so zaf\u00e1tili da go gl\u01ffdot n\u00e1ret <strong>trim\u00ednana<\/strong> <strong>br\u00e1tje<\/strong> .", "verb": "br\u00e1tje", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=brat", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Coll"], "nsubj": "trim\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Coll", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%93%CE%99%CE%9F%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%9A%CE%95%CE%A1%CE%91%CE%A4%CE%9F_s-11%22%20%3B%20A%20%5Bform%3D%22br%C3%A1tje%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf k\u00f3\u0161tono mu so na\u0161l\u00edli 269 zemb\u00edleve sas 13 . 450 k\u00edlo t\u00fct\u01d8ne , 680 pak\u00e9ty \u01e7ug\u00e1ry ad \u017e\u00fdne dan\u00edsot ad dr\u00fagy h\u00fck\u00fcm\u00e9teve i pred\u00e1vot gi it\u00faj pres f\u00f3ro , <strong>ann\u00f3k<\/strong> <strong>t\u00fcf\u00e9ka<\/strong> , fi\u0161\u00e9kove i 75 evr\u00f3 .", "verb": "t\u00fcf\u00e9ka", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=t\u00fcf\u00e9k", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-05-10-1_s-3%22%20%3B%20A%20%5Bform%3D%22t%C3%BCf%C3%A9ka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 32 god\u00edny f\u00e1ti astinom\u00edjeta na Aleksandr\u00fapoli faf T\u00f3rnik ad pl\u00e1den \u00f3ti je faf T\u00f3rnik kaz\u00e1 pl\u00e1den ati\u0161l\u00f3l na ann\u00f3j st\u00e1roj \u017e\u00f3noj k\u00f3\u0161tono , razvart\u01fdl je i nagad\u00edl j\u00e9 da m\u00fa dad\u00e9 ann\u00f3k alt\u00f3nena p\u00f3rsten\u00e6 i <strong>ann\u00f3<\/strong> alt\u00f3neno <strong>ver\u00fago<\/strong> .", "verb": "ver\u00fago", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=ver\u00faga", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-03-23-1_s-2%22%20%3B%20A%20%5Bform%3D%22ver%C3%BAgo%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u010c\u00e1kal je c\u01fdla v\u00e9\u010dera razbud\u00e9n i v\u00eddil je <strong>ann\u00f3k<\/strong> <strong>d\u00e9fe<\/strong> sas jed\u00ed gl\u00e1vy da m\u00f3\u010di da ukrad\u00e9 i \u00fc\u010d\u00fcn\u01e7\u01d8no j\u00e1balko .", "verb": "d\u00e9fe", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=def", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%A0%CE%91%CE%9A%CE%95%CE%98%CE%A1%CE%91_%CE%9F_%CE%94%CE%A1%CE%91%CE%9A%CE%9F%CE%A3_%CE%9A%CE%91%CE%99_%CE%A4%CE%91_%CE%A4%CE%A1%CE%99%CE%91_%CE%A7%CE%A1%CE%A5%CE%A3%CE%91_%CE%9C%CE%97%CE%9B%CE%91_s-11%22%20%3B%20A%20%5Bform%3D%22d%C3%A9fe%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Pr\u00e9dadijte m\u00ed go za <strong>ann\u00f3k<\/strong> <strong>fr\u00e1nka<\/strong> .", "verb": "fr\u00e1nka", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=frank", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%91%CE%93%CE%9F%CE%A1%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%93%CE%91%CE%A4%CE%91%CE%9A%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%92%CE%91%CE%A4%CE%A1%CE%91%CE%A7%CE%91%CE%9A%CE%99_s-23%22%20%3B%20A%20%5Bform%3D%22fr%C3%A1nka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}], "1": [{"sentence": "Ad\u00edn kab\u00e1daji \u010d\u00faval <strong>ann\u00f3<\/strong> <strong>vaden\u00edco<\/strong> af ann\u00f3k mevlek\u00e9te .", "verb": "vaden\u00edco", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vaden\u00edca", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%9F_%CE%9C%CE%97%CE%9B%CE%9F_%CE%A4%CE%9F%CE%A5_%CE%9C%CE%A5%CE%9B%CE%A9%CE%9D%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22vaden%C3%ADco%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>ann\u00f3<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "verb": "udr\u00edva\u0146e", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=udr\u00edva\u0146e", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_VALK%C3%93N_I_AFC%C3%81NA_s-19%22%20%3B%20A%20%5Bform%3D%22udr%C3%ADva%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Mom\u00f3jne ub\u00e1jko ji v\u00edka K\u00e9l\u010detune : \" Akv\u00f3 \u00ed\u0161e\u0161 da t\u00ed dam \u00f3ti mi kurtul\u00edsa mom\u00f3so ? \" \" \u00cd\u0161o le \u00f3lu <strong>enn\u00f3k<\/strong> <strong>p\u00f3rstene<\/strong> \" .", "verb": "p\u00f3rstene", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=porst", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%9F_%CE%9A%CE%95%CE%9B%CE%A4%CE%A3%CE%9F%CE%A3%2C_%CE%97_%CE%93%CE%91%CE%A4%CE%91%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%A6%CE%99%CE%94%CE%99_s-27%22%20%3B%20A%20%5Bform%3D%22p%C3%B3rstene%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 32 god\u00edny f\u00e1ti astinom\u00edjeta na Aleksandr\u00fapoli faf T\u00f3rnik ad pl\u00e1den \u00f3ti je faf T\u00f3rnik kaz\u00e1 pl\u00e1den ati\u0161l\u00f3l na ann\u00f3j st\u00e1roj \u017e\u00f3noj k\u00f3\u0161tono , razvart\u01fdl je i nagad\u00edl j\u00e9 da m\u00fa dad\u00e9 ann\u00f3k alt\u00f3nena p\u00f3rsten\u00e6 i <strong>ann\u00f3<\/strong> alt\u00f3neno <strong>ver\u00fago<\/strong> .", "verb": "ver\u00fago", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=ver\u00faga", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-03-23-1_s-2%22%20%3B%20A%20%5Bform%3D%22ver%C3%BAgo%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Bir vak\u00fdt bir zam\u00e1n im\u01fdlo je ann\u00f3k padi\u0161\u00e1ha , toj s\u00ed je im\u01fdl <strong>ann\u00f3k<\/strong> <strong>izmetk\u01fdrina<\/strong> .", "verb": "izmetk\u01fdrina", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=izmetk\u01fdrin", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9A%CE%9F%CE%A4%CE%91_%CE%9A%CE%91%CE%99_%CE%97_%CE%9C%CE%A5%CE%93%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22izmetk%C7%BDrina%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Im\u01fdl s\u00ed je kol\u00edbo sas \u00f8rt\u01d8je at t\u00edkly , pak faf kol\u00edbono - <strong>ann\u00f3<\/strong> <strong>k\u00f3te<\/strong> i ann\u00f3 kuk\u00f3\u0161ko .", "verb": "k\u00f3te", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=k\u00f3te", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_SK%C3%93PYJEN_K%C3%81MEN_s-3%22%20%3B%20A%20%5Bform%3D%22k%C3%B3te%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "H\u00f3di az\u00e1m na padi\u0161\u00e1hane i v\u00edka m\u00fa : \" Padi\u0161\u00e1h , att\u00eddah faf mutf\u00e1kane i kuk\u00f3\u0161kana je kr\u00edlnala , na m\u01fdsto n\u00e1jdah <strong>ann\u00f3<\/strong> <strong>m\u00faho<\/strong> \" .", "verb": "m\u00faho", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=muh\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9A%CE%9F%CE%A4%CE%91_%CE%9A%CE%91%CE%99_%CE%97_%CE%9C%CE%A5%CE%93%CE%91_s-10%22%20%3B%20A%20%5Bform%3D%22m%C3%BAho%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ne s\u00f3 je pamin\u00f3lo ml\u00f3go vr\u00e9me i goved\u00e1ren s\u00ed je umr\u01fdl i ast\u00e1vil je nadz\u00e1t \u017ean\u00f3no mu i <strong>ann\u00f3<\/strong> <strong>d\u00e9te<\/strong> .", "verb": "d\u00e9te", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=d\u00e9te", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%91%CE%A3%CE%A0%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_%CE%9A%CE%91%CE%99_%CE%9C%CE%91%CE%A5%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_s-3%22%20%3B%20A%20%5Bform%3D%22d%C3%A9te%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00e1 \u017ean\u00e1 s\u00ed je im\u01fdla <strong>ann\u00f3<\/strong> <strong>k\u00f3pel\u010de<\/strong> sas h\u00fabavo s\u00f3rce .", "verb": "k\u00f3pel\u010de", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=k\u00f3pel", "Case=Acc", "Definite=Ind", "Degree=Dim", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%91%CE%93%CE%9F%CE%A1%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%93%CE%91%CE%A4%CE%91%CE%9A%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%92%CE%91%CE%A4%CE%A1%CE%91%CE%A7%CE%91%CE%9A%CE%99_s-2%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C4%8De%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "I m\u00fa v\u00edkot : \u00ab Hi\u010d kaz\u00e1\u0146ot it\u00f3lkus vis\u00f3ce sas <strong>enn\u00f3k<\/strong> <strong>m\u00f3ma<\/strong> vazv\u00edro li ? \u00bb I to v\u00edka : \u00ab Hi\u010d ot n\u00e9lkus vis\u00f3ce m\u00f3ma \u013c\u00fabi li s\u00f3 ? \u00bb .", "verb": "m\u00f3ma", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=mum", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%A6%CE%99%CE%9B%CE%99_s-6%22%20%3B%20A%20%5Bform%3D%22m%C3%B3ma%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 65 god\u00edny i <strong>ann\u00f3<\/strong> <strong>\u017e\u00f3no<\/strong> na 35 god\u00edny f\u00e1ti faf \u01e6um\u00e1g\u00fcn na 8 mesec\u00e1te na pl\u00e1den astinom\u00edjena faf Komotin\u00ed \u00f3ti so im\u01fdli ha\u0161\u00ed\u0161e i \u017e\u00fdne \u01e7ug\u00e1ry so pres f\u00f3ro .", "verb": "\u017e\u00f3no", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=\u017ean\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-10-2_s-2%22%20%3B%20A%20%5Bform%3D%22%C5%BE%C3%B3no%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Balyk\u010d\u00edjon f\u00e1ta <strong>enn\u00f3<\/strong> <strong>r\u00fdbo<\/strong> , pr\u00e1vi go ( na ) par\u010d\u00e9 da go ized\u00e9 k\u00f3teno i k\u00fa\u010deno .", "verb": "r\u00fdbo", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ryb\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "enn\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%9F_%CE%9A%CE%95%CE%9B%CE%A4%CE%A3%CE%9F%CE%A3%2C_%CE%97_%CE%93%CE%91%CE%A4%CE%91%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%A6%CE%99%CE%94%CE%99_s-74%22%20%3B%20A%20%5Bform%3D%22r%C3%BDbo%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Dvam\u00ednana m\u00f3ski so b\u00fali sas <strong>dva<\/strong> <strong>tumaf\u00edle<\/strong> i im\u01fdli so uv\u00f3tre faf tumaf\u00edlene 11 ki\u0161\u01fdh ad dr\u00fagy h\u00fck\u00fcm\u00e9te , 7 ki\u0161\u01fdh ad Avganist\u00e1n i 4 ki\u0161\u01fdh ad Ir\u00e1n za da gi prek\u00e1rot na skr\u00fdto pres kin\u00edgy na Ell\u00e1da .", "verb": "tumaf\u00edle", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=tomof\u00edl", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Count"], "nsubj": "dva", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dva", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Count", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-04-10-1_s-3%22%20%3B%20A%20%5Bform%3D%22tumaf%C3%ADle%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Razvart\u01fdl je ann\u00f3 st\u00e1ro \u017e\u00f3no i z\u00f8l j\u00ed je ann\u00f3k alt\u00f3nena p\u00f3rsten\u00e6 i <strong>ann\u00f3<\/strong> alt\u00f3neno <strong>ver\u00fago<\/strong>", "verb": "ver\u00fago", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=ver\u00faga", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-03-23-1_s-1%22%20%3B%20A%20%5Bform%3D%22ver%C3%BAgo%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "M\u00edfko p\u00f3 napr\u00e9\u0161 so i dvam\u00ednana na ann\u00f3 spr\u01fdli <strong>ann\u00f3<\/strong> <strong>\u017e\u00f3no<\/strong> na 24 god\u00edny i \u00edskali so da ji z\u01ffmot \u010d\u00e1ntono al\u00e1 so ne ma\u017e\u00fdli da j\u00ed j\u00e9 z\u01ffmot .", "verb": "\u017e\u00f3no", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u017ean\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2015-11-01_s-5%22%20%3B%20A%20%5Bform%3D%22%C5%BE%C3%B3no%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Fk\u00fdsnavot s\u00f3 az\u00e1m deve\u01e7\u00edjene i h\u00f3det m\u00fa d\u00e1vot <strong>ann\u00f3<\/strong> <strong>s\u00f3po<\/strong> ta je ne zabar\u00e1vel n\u00ed kug\u00e1 .", "verb": "s\u00f3po", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=s\u00f3pa", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%A4%CE%9F_%CE%9E%CE%A5%CE%9B%CE%9F_%CE%A4%CE%A9%CE%9D_%CE%9A%CE%91%CE%9C%CE%97%CE%9B%CE%99%CE%95%CE%A1%CE%97%CE%94%CE%A9%CE%9D_s-15%22%20%3B%20A%20%5Bform%3D%22s%C3%B3po%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u00ab Da m\u00ed dad\u00e9te <strong>enn\u00f3k<\/strong> <strong>r\u00fakoto<\/strong> , da s\u00f3 s\u00e9tom vrit hajv\u00e1nenem kakn\u00e1no v\u00edkot , da d\u00fame sas te \u00bb .", "verb": "r\u00fakoto", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r\u00faka", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%95%CE%9D%CE%91_%CE%9C%CE%95%CE%93%CE%91%CE%9B%CE%9F_%CE%A6%CE%99%CE%94%CE%99_%CE%9C%CE%95%CE%A3%CE%91_%CE%A3%CE%A4%CE%97_%CE%A6%CE%A9%CE%A4%CE%99%CE%91_s-15%22%20%3B%20A%20%5Bform%3D%22r%C3%BAkoto%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "B\u00edvalu je n\u00f3 kug\u00e1 jenn\u00e1 m\u00e1jka sas tri d\u00f3\u0161tere , zam je us\u00e9tila \u010di hi je b\u00edlu ne h\u00fabavu i pu\u00edskuva ud jenn\u00f3na hi d\u00f3\u0161tere da hi unnes\u00e9 faf <strong>jed\u00edn<\/strong> tas <strong>v\u00f3da<\/strong> za da sa napij\u00e9 i v\u00edka hi :", "verb": "v\u00f3da", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vad\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "jed\u00edn", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9C%CE%97%CE%A4%CE%95%CE%A1%CE%91_%CE%9A%CE%91%CE%99_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%98%CE%A5%CE%93%CE%91%CE%A4%CE%95%CE%A1%CE%95%CE%A3_s-2%22%20%3B%20A%20%5Bform%3D%22v%C3%B3da%22%5D%20%3B%20B%20%5Bform%3D%22jed%C3%ADn%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}], "4": [{"sentence": "Umr\u01fdl je st\u00e1ryjen i <strong>trim\u00ednana<\/strong> <strong>s\u00fdnove<\/strong> so ati\u0161l\u00edli na \u017e\u00f3no m\u01fdsto m\u00ed je rek\u00f3l bub\u00e1jko mi i zaf\u00e1tili so da kop\u00f3t .", "verb": "s\u00fdnove", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=syn", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "trim\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%93%CE%99%CE%9F%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%9A%CE%95%CE%A1%CE%91%CE%A4%CE%9F_s-15%22%20%3B%20A%20%5Bform%3D%22s%C3%BDnove%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Pak <strong>dvom\u00ednana<\/strong> <strong>d\u00fc\u0161m\u00e1ne<\/strong> so ne ra\u010d\u00edli da sl\u00e9zot ad vap\u00f3rane .", "verb": "d\u00fc\u0161m\u00e1ne", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=d\u00fc\u0161m\u00e1n", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "dvom\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%9F%CE%99_%CE%94%CE%A5%CE%9F_%CE%95%CE%A7%CE%98%CE%A1%CE%9F%CE%99_s-15%22%20%3B%20A%20%5Bform%3D%22d%C3%BC%C5%A1m%C3%A1ne%22%5D%20%3B%20B%20%5Bform%3D%22dvom%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf \u00e1rabono so b\u00fdly fpr\u01ffgnaty alt\u00fd k\u00f3neta : tri b\u01fdly i tri \u010d\u00f3rny , k\u00e1rali j\u00e9 so <strong>dvom\u00edna<\/strong> \u010d\u00f3rni <strong>l\u01d8dje<\/strong> , izg\u00fdzdeni sas kend\u00edsany dr\u00edpy .", "verb": "l\u01d8dje", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=l\u01d8dje", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "dvom\u00edna", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_VAMP%C3%8DRE_s-12%22%20%3B%20A%20%5Bform%3D%22l%C7%98dje%22%5D%20%3B%20B%20%5Bform%3D%22dvom%C3%ADna%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "<strong>Dvom\u00ednana<\/strong> <strong>drug\u00e1re<\/strong> so sp\u00fasnali v\u00f3\u017eono , jun\u00e1kon je zav\u01ffzal p\u00f3 m\u00e1lkono s\u00e9stro i t\u00edje j\u00e9 so izk\u00e1rali vaz d\u00fapkono .", "verb": "drug\u00e1re", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=drug\u00e1r", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "dvom\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_J%C3%9ADY_s-101%22%20%3B%20A%20%5Bform%3D%22drug%C3%A1re%22%5D%20%3B%20B%20%5Bform%3D%22Dvom%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "I <strong>dvam\u00ednana<\/strong> <strong>padi\u0161ehy<\/strong> sa nag\u00e1dat i r\u00fakot k\u00f3pel\u00f8tana i v\u00edkot m\u00ed :", "verb": "padi\u0161ehy", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=padi\u0161\u00e1h", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-32%22%20%3B%20A%20%5Bform%3D%22padi%C5%A1ehy%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf Sr\u01fddo sab\u00e1lyjinto f\u00e1tiho \u017e\u00f3kne je na 30 god\u00edny \u00f3ti mu so na\u0161l\u00edli faf k\u00f3\u0161tono sas ann\u00f3 ad \u017e\u00fdne k\u00fa\u010deta so nau\u010d\u00e9ny da nah\u00f3det ha\u0161\u00ed\u0161e ann\u00f3k zemb\u00edle sas 127 . 3 gram ha\u0161\u00ed\u0161e , ann\u00f3k kant\u00e1re i ann\u00f3 nagad\u00e9no \u01e7ug\u00e1ro sas ha\u0161\u00ed\u0161e i <strong>t\u00fct\u01d8ne<\/strong> na <strong>ann\u00f3<\/strong> .", "verb": "t\u00fct\u01d8ne", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=t\u00fct\u01d8n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-07-07_s-13%22%20%3B%20A%20%5Bform%3D%22t%C3%BCt%C7%98ne%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Katr\u00f3mu sag\u00e1ne da dam mom\u00f3so ? <strong>To<\/strong> so i <strong>trim\u00ednasa<\/strong> h\u00fabbi .", "verb": "to", "verbFeats": ["upos=PRON", "deprel=nsubj", "lemma=ja", "Case=Nom", "<b>Gender=Neut<\/b>", "Number=Plur", "Person=3", "PronType=Prs"], "nsubj": "trim\u00ednasa", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Prox", "DeixisRef=1", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%A0%CE%91%CE%9A%CE%95%CE%98%CE%A1%CE%91_%CE%A4%CE%A1%CE%99%CE%91_%CE%91%CE%94%CE%95%CE%A1%CE%A6%CE%99%CE%91_%CE%91%CE%93%CE%91%CE%A0%CE%97%CE%A3%CE%91%CE%9D_%CE%95%CE%9D%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%99_s-81%22%20%3B%20A%20%5Bform%3D%22To%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnasa%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- V\u00f3ri \u00edskaraj dvam\u00ednana k\u00f3pel\u00f8ta i zatv\u00e1rite <strong>dvam\u00ednana<\/strong> padi\u0161\u00e9hcky <strong>k\u00f3pel\u00f8ta<\/strong> .", "verb": "k\u00f3pel\u00f8ta", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=k\u00f3pele", "Case=Nom", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-75%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C3%B8ta%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00fdta gi f\u00e1tiho faf ann\u00f3ganek n\u00e1jdaho ann\u00f3kne mat\u00f3ra , <strong>ann\u00f3<\/strong> <strong>kompj\u00fater<\/strong> i ann\u00f3 val\u00edco i d\u00e1daho s\u00ed gi \u017e\u01fdmne so b\u00faly .", "verb": "kompj\u00fater", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=kompj\u00fat", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2015-10-29-2_s-5%22%20%3B%20A%20%5Bform%3D%22kompj%C3%BAter%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- V\u00f3ri \u00edskaraj <strong>dvam\u00ednana<\/strong> <strong>k\u00f3pel\u00f8ta<\/strong> i zatv\u00e1rite dvam\u00ednana padi\u0161\u00e9hcky k\u00f3pel\u00f8ta .", "verb": "k\u00f3pel\u00f8ta", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=k\u00f3pele", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Acc", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-75%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C3%B8ta%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}], "0": [{"sentence": "\u0160e \u00eddete da m\u00ed danes\u00e9te pl\u00e1tno za j\u00e9\u0161te <strong>ann\u00f3<\/strong> <strong>pr\u00e9men\u00f8<\/strong> .", "verb": "pr\u00e9men\u00f8", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pr\u00e9men\u00e6", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-283%22%20%3B%20A%20%5Bform%3D%22pr%C3%A9men%C3%B8%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>ann\u00f3<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "verb": "udr\u00edva\u0146e", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=udr\u00edva\u0146e", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_VALK%C3%93N_I_AFC%C3%81NA_s-19%22%20%3B%20A%20%5Bform%3D%22udr%C3%ADva%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k \u010dul\u01fdka na 32 god\u00edny f\u00e1ti astinom\u00edjeta na Aleksandr\u00fapoli faf T\u00f3rnik ad pl\u00e1den \u00f3ti je faf T\u00f3rnik kaz\u00e1 pl\u00e1den ati\u0161l\u00f3l na ann\u00f3j st\u00e1roj \u017e\u00f3noj k\u00f3\u0161tono , razvart\u01fdl je i nagad\u00edl j\u00e9 da m\u00fa dad\u00e9 <strong>ann\u00f3k<\/strong> alt\u00f3nena <strong>p\u00f3rsten\u00e6<\/strong> i ann\u00f3 alt\u00f3neno ver\u00fago .", "verb": "p\u00f3rsten\u00e6", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=p\u00f3rsten", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-03-23-1_s-2%22%20%3B%20A%20%5Bform%3D%22p%C3%B3rsten%C3%A6%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf Sr\u01fddo sab\u00e1lyjinto f\u00e1tiho \u017e\u00f3kne je na 30 god\u00edny \u00f3ti mu so na\u0161l\u00edli faf k\u00f3\u0161tono sas ann\u00f3 ad \u017e\u00fdne k\u00fa\u010deta so nau\u010d\u00e9ny da nah\u00f3det ha\u0161\u00ed\u0161e ann\u00f3k zemb\u00edle sas 127 . 3 gram ha\u0161\u00ed\u0161e , <strong>ann\u00f3k<\/strong> <strong>kant\u00e1re<\/strong> i ann\u00f3 nagad\u00e9no \u01e7ug\u00e1ro sas ha\u0161\u00ed\u0161e i t\u00fct\u01d8ne na ann\u00f3 .", "verb": "kant\u00e1re", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=kant\u00e1r", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-07-07_s-13%22%20%3B%20A%20%5Bform%3D%22kant%C3%A1re%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u2022 \u00cdmom ann\u00f3 s\u00e9stro i <strong>dvam\u00edna<\/strong> <strong>br\u00e1tje<\/strong> .", "verb": "br\u00e1tje", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=brat", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "dvam\u00edna", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%9C%CE%91%CE%98%CE%97%CE%9C%CE%91_1_s-47%22%20%3B%20A%20%5Bform%3D%22br%C3%A1tje%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADna%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Az\u00e1m \u0161e pamin\u00e9\u0161 prez jetm\u00ed\u0161 i jed\u00ed p\u00f3 m\u00e1lky vrat\u00e1 , na vrit at to \u010d\u00favot pa <strong>ad\u00edn<\/strong> <strong>skop\u00f3zin<\/strong> , i to \u0161e pamin\u00e9\u0161 i \u0161e vl\u00e9ze\u0161 faf ann\u00f3 gul\u01fdmo grad\u00edno .", "verb": "skop\u00f3zin", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=skop\u00f3zin", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ad\u00edn", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-86%22%20%3B%20A%20%5Bform%3D%22skop%C3%B3zin%22%5D%20%3B%20B%20%5Bform%3D%22ad%C3%ADn%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Astinom\u00edjena m\u00fa z\u00f8 tumaf\u00edlene i <strong>ann\u00f3k<\/strong> <strong>telif\u00f3na<\/strong> .", "verb": "telif\u00f3na", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=telif\u00f3n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-02-29_s-4%22%20%3B%20A%20%5Bform%3D%22telif%C3%B3na%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u017d\u00edne \u00eddot da m\u01fdtot \u0161e tr\u01fdbava da \u00edmot sas t\u00e6h le <strong>ann\u00f3<\/strong> <strong>taft\u00f3tito<\/strong> i n\u00ed kan\u00e1 dr\u00fago .", "verb": "taft\u00f3tito", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=taft\u00f3tin", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-01-08_s-9%22%20%3B%20A%20%5Bform%3D%22taft%C3%B3tito%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "M\u00edfko p\u00f3 napr\u00e9\u0161 so i dvam\u00ednana na ann\u00f3 spr\u01fdli <strong>ann\u00f3<\/strong> <strong>\u017e\u00f3no<\/strong> na 24 god\u00edny i \u00edskali so da ji z\u01ffmot \u010d\u00e1ntono al\u00e1 so ne ma\u017e\u00fdli da j\u00ed j\u00e9 z\u01ffmot .", "verb": "\u017e\u00f3no", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u017ean\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2015-11-01_s-5%22%20%3B%20A%20%5Bform%3D%22%C5%BE%C3%B3no%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Im\u01fdl s\u00ed je kol\u00edbo sas \u00f8rt\u01d8je at t\u00edkly , pak faf kol\u00edbono - <strong>ann\u00f3<\/strong> <strong>k\u00f3te<\/strong> i ann\u00f3 kuk\u00f3\u0161ko .", "verb": "k\u00f3te", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=k\u00f3te", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_SK%C3%93PYJEN_K%C3%81MEN_s-3%22%20%3B%20A%20%5Bform%3D%22k%C3%B3te%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "St\u00edsnot li mi s\u00f3 a\u010d\u00edse , v\u00fdje \u0161e s\u00f3 zber\u00e9te u dum\u00e1 , \u0161e go izpe\u010d\u00e9te , \u0161e pak\u00f3snete i \u0161e k\u00e1\u017eate <strong>dva<\/strong> \u2013 tri h\u00fabava <strong>l\u00e1fa<\/strong> za m\u00f3ne .", "verb": "l\u00e1fa", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=laf", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "dva", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dva", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%A4%CE%95%CE%9B%CE%9F%CE%A3_%CE%A4%CE%9F%CE%A5_%CE%9A%CE%9F%CE%A3%CE%9C%CE%9F%CE%A5_s-5%22%20%3B%20A%20%5Bform%3D%22l%C3%A1fa%22%5D%20%3B%20B%20%5Bform%3D%22dva%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ad\u00edn kab\u00e1daji \u010d\u00faval <strong>ann\u00f3<\/strong> <strong>vaden\u00edco<\/strong> af ann\u00f3k mevlek\u00e9te .", "verb": "vaden\u00edco", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vaden\u00edca", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%9F_%CE%9C%CE%97%CE%9B%CE%9F_%CE%A4%CE%9F%CE%A5_%CE%9C%CE%A5%CE%9B%CE%A9%CE%9D%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22vaden%C3%ADco%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ann\u00f3k d\u00e9ne je k\u00f3pel\u010deno ukr\u00e1lo <strong>ann\u00f3<\/strong> <strong>j\u00e9jce<\/strong> .", "verb": "j\u00e9jce", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=j\u00e9jce", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%9F_%CE%9A%CE%9B%CE%95%CE%A6%CE%A4%CE%97%CE%A3_s-3%22%20%3B%20A%20%5Bform%3D%22j%C3%A9jce%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u2022 \u00cdmom <strong>ann\u00f3<\/strong> <strong>s\u00e9stro<\/strong> i dvam\u00edna br\u00e1tje .", "verb": "s\u00e9stro", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=sestr\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%9C%CE%91%CE%98%CE%97%CE%9C%CE%91_1_s-47%22%20%3B%20A%20%5Bform%3D%22s%C3%A9stro%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Astinom\u00edjena je na\u0161l\u00e1la faf tumaf\u00edlene dva t\u00fcf\u00e9ky , <strong>ann\u00f3k<\/strong> <strong>n\u00f3\u017ea<\/strong> , 56 fi\u0161\u00e9kove i dr\u00fagy inakv\u00fdne r\u00e1baty .", "verb": "n\u00f3\u017ea", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=no\u017e", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ann\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {"0": "Sing", "1": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-05-07-1_s-3%22%20%3B%20A%20%5Bform%3D%22n%C3%B3%C5%BEa%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Fk\u00fdsnavot s\u00f3 az\u00e1m deve\u01e7\u00edjene i h\u00f3det m\u00fa d\u00e1vot <strong>ann\u00f3<\/strong> <strong>s\u00f3po<\/strong> ta je ne zabar\u00e1vel n\u00ed kug\u00e1 .", "verb": "s\u00f3po", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=s\u00f3pa", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Imp"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%A4%CE%9F_%CE%9E%CE%A5%CE%9B%CE%9F_%CE%A4%CE%A9%CE%9D_%CE%9A%CE%91%CE%9C%CE%97%CE%9B%CE%99%CE%95%CE%A1%CE%97%CE%94%CE%A9%CE%9D_s-15%22%20%3B%20A%20%5Bform%3D%22s%C3%B3po%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Faf Sr\u01fddo sab\u00e1lyjinto f\u00e1tiho \u017e\u00f3kne je na 30 god\u00edny \u00f3ti mu so na\u0161l\u00edli faf k\u00f3\u0161tono sas ann\u00f3 ad \u017e\u00fdne k\u00fa\u010deta so nau\u010d\u00e9ny da nah\u00f3det ha\u0161\u00ed\u0161e ann\u00f3k zemb\u00edle sas 127 . 3 gram ha\u0161\u00ed\u0161e , ann\u00f3k kant\u00e1re i ann\u00f3 nagad\u00e9no \u01e7ug\u00e1ro sas ha\u0161\u00ed\u0161e i <strong>t\u00fct\u01d8ne<\/strong> na <strong>ann\u00f3<\/strong> .", "verb": "t\u00fct\u01d8ne", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=t\u00fct\u01d8n", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2016-07-07_s-13%22%20%3B%20A%20%5Bform%3D%22t%C3%BCt%C7%98ne%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "\u00ab Da m\u00ed dad\u00e9te <strong>enn\u00f3k<\/strong> <strong>r\u00fakoto<\/strong> , da s\u00f3 s\u00e9tom vrit hajv\u00e1nenem kakn\u00e1no v\u00edkot , da d\u00fame sas te \u00bb .", "verb": "r\u00fakoto", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r\u00faka", "Case=Acc", "Definite=Def", "Deixis=Prox", "DeixisRef=2", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "enn\u00f3k", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%98%CE%95%CE%9F%CE%A7%CE%91%CE%A1%CE%99%CE%94%CE%97%CE%A3_%CE%A0_%CE%95%CE%9D%CE%91_%CE%9C%CE%95%CE%93%CE%91%CE%9B%CE%9F_%CE%A6%CE%99%CE%94%CE%99_%CE%9C%CE%95%CE%A3%CE%91_%CE%A3%CE%A4%CE%97_%CE%A6%CE%A9%CE%A4%CE%99%CE%91_s-15%22%20%3B%20A%20%5Bform%3D%22r%C3%BAkoto%22%5D%20%3B%20B%20%5Bform%3D%22enn%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Katr\u00f3mu sag\u00e1ne da dam mom\u00f3so ? <strong>To<\/strong> so i <strong>trim\u00ednasa<\/strong> h\u00fabbi .", "verb": "to", "verbFeats": ["upos=PRON", "deprel=nsubj", "lemma=ja", "Case=Nom", "<b>Gender=Neut<\/b>", "Number=Plur", "Person=3", "PronType=Prs"], "nsubj": "trim\u00ednasa", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trim\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Prox", "DeixisRef=1", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%A0%CE%91%CE%9A%CE%95%CE%98%CE%A1%CE%91_%CE%A4%CE%A1%CE%99%CE%91_%CE%91%CE%94%CE%95%CE%A1%CE%A6%CE%99%CE%91_%CE%91%CE%93%CE%91%CE%A0%CE%97%CE%A3%CE%91%CE%9D_%CE%95%CE%9D%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%99_s-81%22%20%3B%20A%20%5Bform%3D%22To%22%5D%20%3B%20B%20%5Bform%3D%22trim%C3%ADnasa%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- V\u00f3ri \u00edskaraj dvam\u00ednana k\u00f3pel\u00f8ta i zatv\u00e1rite <strong>dvam\u00ednana<\/strong> padi\u0161\u00e9hcky <strong>k\u00f3pel\u00f8ta<\/strong> .", "verb": "k\u00f3pel\u00f8ta", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=k\u00f3pele", "Case=Nom", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Nom", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-75%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C3%B8ta%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "B\u00edvalu je n\u00f3 kug\u00e1 jenn\u00e1 m\u00e1jka sas tri d\u00f3\u0161tere , zam je us\u00e9tila \u010di hi je b\u00edlu ne h\u00fabavu i pu\u00edskuva ud jenn\u00f3na hi d\u00f3\u0161tere da hi unnes\u00e9 faf <strong>jed\u00edn<\/strong> tas <strong>v\u00f3da<\/strong> za da sa napij\u00e9 i v\u00edka hi :", "verb": "v\u00f3da", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vad\u00e1", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "jed\u00edn", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {"0": "Sing", "1": "Perf"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22UNOFFICIAL_%CE%97_%CE%9C%CE%97%CE%A4%CE%95%CE%A1%CE%91_%CE%9A%CE%91%CE%99_%CE%9F%CE%99_%CE%A4%CE%A1%CE%95%CE%99%CE%A3_%CE%98%CE%A5%CE%93%CE%91%CE%A4%CE%95%CE%A1%CE%95%CE%A3_s-2%22%20%3B%20A%20%5Bform%3D%22v%C3%B3da%22%5D%20%3B%20B%20%5Bform%3D%22jed%C3%ADn%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "Ag\u00fdta gi f\u00e1tiho faf ann\u00f3ganek n\u00e1jdaho ann\u00f3kne mat\u00f3ra , <strong>ann\u00f3<\/strong> <strong>kompj\u00fater<\/strong> i ann\u00f3 val\u00edco i d\u00e1daho s\u00ed gi \u017e\u01fdmne so b\u00faly .", "verb": "kompj\u00fater", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=kompj\u00fat", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "ann\u00f3", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22XANTHINET-NATPRESH_2015-10-29-2_s-5%22%20%3B%20A%20%5Bform%3D%22kompj%C3%BAter%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}, {"sentence": "- V\u00f3ri \u00edskaraj <strong>dvam\u00ednana<\/strong> <strong>k\u00f3pel\u00f8ta<\/strong> i zatv\u00e1rite dvam\u00ednana padi\u0161\u00e9hcky k\u00f3pel\u00f8ta .", "verb": "k\u00f3pel\u00f8ta", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=k\u00f3pele", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Plur"], "nsubj": "dvam\u00ednana", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dvom\u00edna", "Animacy=Hum", "Case=Acc", "Definite=Def", "Deixis=Remt", "<b>Gender=Masc<\/b>", "NumType=Card", "Number=Plur"], "label": "no", "route": {"0": "Plur"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%9F%CE%9A%CE%9A%CE%91%CE%A3_%CE%9D_%CE%A4%CE%91_%CE%94%CE%A5%CE%9F_%CE%91%CE%93%CE%99%CE%91_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%91%CE%9A%CE%99%CE%91_s-75%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C3%B8ta%22%5D%20%3B%20B%20%5Bform%3D%22dvam%C3%ADnana%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis"}]}, "PAIRS": [{"origSentence": "Sas <strong>ann\u00f3<\/strong> <strong>sv\u00edrnava\u0146e<\/strong> ad\u00edn ar\u00e1pin je izr\u00fdpnal atpr\u00e9\u0161 t\u00f3ga i pap\u00fdtal go je :", "swapSentence": "Sas <strong>ann\u00f3k<\/strong> <strong>sv\u00edrnava\u0146e<\/strong> ad\u00edn ar\u00e1pin je izr\u00fdpnal atpr\u00e9\u0161 t\u00f3ga i pap\u00fdtal go je :", "nsubj": "ann\u00f3", "verb": "sv\u00edrnava\u0146e", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "verbFeats": ["lemma=sv\u00edrnava\u0146e", "deprel=obl", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "ann\u00f3k", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%91%CE%A3%CE%A0%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_%CE%9A%CE%91%CE%99_%CE%9C%CE%91%CE%A5%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_s-14%22%20%3B%20A%20%5Bform%3D%22sv%C3%ADrnava%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "Sas <strong>ann\u00f3<\/strong> <strong>sv\u00edrnava\u0146e<\/strong> ad\u00edn ar\u00e1pin je izr\u00fdpnal atpr\u00e9\u0161 t\u00f3ga i pap\u00fdtal go je :", "swapSentence": "Sas <strong>enn\u00f3<\/strong> <strong>sv\u00edrnava\u0146e<\/strong> ad\u00edn ar\u00e1pin je izr\u00fdpnal atpr\u00e9\u0161 t\u00f3ga i pap\u00fdtal go je :", "nsubj": "ann\u00f3", "verb": "sv\u00edrnava\u0146e", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "verbFeats": ["lemma=sv\u00edrnava\u0146e", "deprel=obl", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "enn\u00f3", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22%CE%9A%CE%91%CE%A4%CE%91%CE%9A%CE%97_%CE%94_%CE%91%CE%A3%CE%A0%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_%CE%9A%CE%91%CE%99_%CE%9C%CE%91%CE%A5%CE%A1%CE%91_%CE%A3%CE%A5%CE%9A%CE%91_s-14%22%20%3B%20A%20%5Bform%3D%22sv%C3%ADrnava%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "M\u00f3mi\u010deno je pap\u00e1rilo kep\u00e9ka , ast\u00e1vilo go je da izst\u00fdne , ann\u00e9lo go je faf budr\u00famane , nahr\u00e1nilo je h\u00fabbe mehl\u00fck\u00e1tene i atk\u00e1k je ne im\u01fdlo kan\u00e1 dr\u00fago da pr\u00e1vi , navarv\u00edlo je gerd\u00e1nkove i zak\u00e1\u010dilo je pa <strong>ann\u00f3k<\/strong> na s\u01fdko <strong>mehl\u00fck\u00e1tina<\/strong> .", "swapSentence": "M\u00f3mi\u010deno je pap\u00e1rilo kep\u00e9ka , ast\u00e1vilo go je da izst\u00fdne , ann\u00e9lo go je faf budr\u00famane , nahr\u00e1nilo je h\u00fabbe mehl\u00fck\u00e1tene i atk\u00e1k je ne im\u01fdlo kan\u00e1 dr\u00fago da pr\u00e1vi , navarv\u00edlo je gerd\u00e1nkove i zak\u00e1\u010dilo je pa <strong>ann\u00f3<\/strong> na s\u01fdko <strong>mehl\u00fck\u00e1tina<\/strong> .", "nsubj": "ann\u00f3k", "verb": "mehl\u00fck\u00e1tina", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "verbFeats": ["lemma=mehl\u00fck\u00e1tin", "deprel=obl:lmod", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "ann\u00f3", "swapRole": "A", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%A7%CE%A1%CE%A5%CE%A3%CE%9F_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%99_s-47%22%20%3B%20A%20%5Bform%3D%22mehl%C3%BCk%C3%A1tina%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "M\u00f3mi\u010deno je pap\u00e1rilo kep\u00e9ka , ast\u00e1vilo go je da izst\u00fdne , ann\u00e9lo go je faf budr\u00famane , nahr\u00e1nilo je h\u00fabbe mehl\u00fck\u00e1tene i atk\u00e1k je ne im\u01fdlo kan\u00e1 dr\u00fago da pr\u00e1vi , navarv\u00edlo je gerd\u00e1nkove i zak\u00e1\u010dilo je pa <strong>ann\u00f3k<\/strong> na s\u01fdko <strong>mehl\u00fck\u00e1tina<\/strong> .", "swapSentence": "M\u00f3mi\u010deno je pap\u00e1rilo kep\u00e9ka , ast\u00e1vilo go je da izst\u00fdne , ann\u00e9lo go je faf budr\u00famane , nahr\u00e1nilo je h\u00fabbe mehl\u00fck\u00e1tene i atk\u00e1k je ne im\u01fdlo kan\u00e1 dr\u00fago da pr\u00e1vi , navarv\u00edlo je gerd\u00e1nkove i zak\u00e1\u010dilo je pa <strong>enn\u00f3<\/strong> na s\u01fdko <strong>mehl\u00fck\u00e1tina<\/strong> .", "nsubj": "ann\u00f3k", "verb": "mehl\u00fck\u00e1tina", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "verbFeats": ["lemma=mehl\u00fck\u00e1tin", "deprel=obl:lmod", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "enn\u00f3", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%A7%CE%A1%CE%A5%CE%A3%CE%9F_%CE%9A%CE%9F%CE%A1%CE%99%CE%A4%CE%A3%CE%99_s-47%22%20%3B%20A%20%5Bform%3D%22mehl%C3%BCk%C3%A1tina%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3k%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "Ann\u00e1 \u017ean\u00e1 s\u00ed je im\u01fdla <strong>ann\u00f3<\/strong> <strong>k\u00f3pel\u010de<\/strong> sas h\u00fabavo s\u00f3rce .", "swapSentence": "Ann\u00e1 \u017ean\u00e1 s\u00ed je im\u01fdla <strong>ann\u00f3k<\/strong> <strong>k\u00f3pel\u010de<\/strong> sas h\u00fabavo s\u00f3rce .", "nsubj": "ann\u00f3", "verb": "k\u00f3pel\u010de", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "verbFeats": ["lemma=k\u00f3pel", "deprel=obj", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "ann\u00f3k", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%A4%CE%9F_%CE%91%CE%93%CE%9F%CE%A1%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%A3%CE%9A%CE%A5%CE%9B%CE%91%CE%9A%CE%99%2C_%CE%A4%CE%9F_%CE%93%CE%91%CE%A4%CE%91%CE%9A%CE%99_%CE%9A%CE%91%CE%99_%CE%A4%CE%9F_%CE%92%CE%91%CE%A4%CE%A1%CE%91%CE%A7%CE%91%CE%9A%CE%99_s-2%22%20%3B%20A%20%5Bform%3D%22k%C3%B3pel%C4%8De%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "\u0160e \u00eddete da m\u00ed danes\u00e9te pl\u00e1tno za j\u00e9\u0161te <strong>ann\u00f3<\/strong> <strong>pr\u00e9men\u00f8<\/strong> .", "swapSentence": "\u0160e \u00eddete da m\u00ed danes\u00e9te pl\u00e1tno za j\u00e9\u0161te <strong>ann\u00f3k<\/strong> <strong>pr\u00e9men\u00f8<\/strong> .", "nsubj": "ann\u00f3", "verb": "pr\u00e9men\u00f8", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=pr\u00e9men\u00e6", "deprel=obl", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "ann\u00f3k", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_ALT%C3%93NENONO_P%C3%8DLE_s-283%22%20%3B%20A%20%5Bform%3D%22pr%C3%A9men%C3%B8%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>ann\u00f3<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "swapSentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>ann\u00f3k<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "nsubj": "ann\u00f3", "verb": "udr\u00edva\u0146e", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "verbFeats": ["lemma=udr\u00edva\u0146e", "deprel=obl", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "ann\u00f3k", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_VALK%C3%93N_I_AFC%C3%81NA_s-19%22%20%3B%20A%20%5Bform%3D%22udr%C3%ADva%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>ann\u00f3<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "swapSentence": "- Gl\u01ffdyj s\u00ed r\u00e1batoto \u2013 rekl\u00e1la je afc\u00e1na , - m\u00e1sa ifk\u01fd je in\u00e9lkus gul\u01fdma , ta sas <strong>enn\u00f3<\/strong> <strong>udr\u00edva\u0146e<\/strong> \u0161e go p\u00f3dvalem na zem\u01ffno !", "nsubj": "ann\u00f3", "verb": "udr\u00edva\u0146e", "nsubjFeats": ["lemma=ad\u00edn", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing"], "verbFeats": ["lemma=udr\u00edva\u0146e", "deprel=obl", "upos=NOUN", "Case=Acc", "Definite=Ind"], "ungrammatical": "enn\u00f3", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RITVAN_VALK%C3%93N_I_AFC%C3%81NA_s-19%22%20%3B%20A%20%5Bform%3D%22udr%C3%ADva%C5%86e%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%B3%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "P\u00f3tet s\u00ed im\u01fd\u0161o t\u00f3gavoto mesel\u01ff n\u00f3 kutr\u00ed je p\u00edsal na duv\u00e1rane s baj\u00f3 ann\u00ed\u010dka , <strong>ann\u00e1<\/strong> <strong>r\u00e9\u010dka<\/strong> b\u00e9\u0161o : lefterj\u00e1 s\u00e9tne vel\u00edho \u010de j\u00e9 so p\u00edsaly de\u010dj\u00e1", "swapSentence": "P\u00f3tet s\u00ed im\u01fd\u0161o t\u00f3gavoto mesel\u01ff n\u00f3 kutr\u00ed je p\u00edsal na duv\u00e1rane s baj\u00f3 ann\u00ed\u010dka , <strong>ad\u00edn<\/strong> <strong>r\u00e9\u010dka<\/strong> b\u00e9\u0161o : lefterj\u00e1 s\u00e9tne vel\u00edho \u010de j\u00e9 so p\u00edsaly de\u010dj\u00e1", "nsubj": "ann\u00e1", "verb": "r\u00e9\u010dka", "nsubjFeats": ["lemma=ad\u00edn", "Case=Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=r\u00e9\u010dka", "deprel=conj", "upos=NOUN", "Case=Nom", "Definite=Ind"], "ungrammatical": "ad\u00edn", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%9F_%CE%94%CE%A1%CE%9F%CE%9C%CE%9F%CE%A3_%CE%95%CE%99%CE%A7%CE%95_%CE%A4%CE%97_%CE%94%CE%99%CE%9A%CE%97_%CE%A4%CE%9F%CE%A5_%CE%99%CE%A3%CE%A4%CE%9F%CE%A1%CE%99%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22r%C3%A9%C4%8Dka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}, {"origSentence": "P\u00f3tet s\u00ed im\u01fd\u0161o t\u00f3gavoto mesel\u01ff n\u00f3 kutr\u00ed je p\u00edsal na duv\u00e1rane s baj\u00f3 ann\u00ed\u010dka , <strong>ann\u00e1<\/strong> <strong>r\u00e9\u010dka<\/strong> b\u00e9\u0161o : lefterj\u00e1 s\u00e9tne vel\u00edho \u010de j\u00e9 so p\u00edsaly de\u010dj\u00e1", "swapSentence": "P\u00f3tet s\u00ed im\u01fd\u0161o t\u00f3gavoto mesel\u01ff n\u00f3 kutr\u00ed je p\u00edsal na duv\u00e1rane s baj\u00f3 ann\u00ed\u010dka , <strong>ann\u00f3<\/strong> <strong>r\u00e9\u010dka<\/strong> b\u00e9\u0161o : lefterj\u00e1 s\u00e9tne vel\u00edho \u010de j\u00e9 so p\u00edsaly de\u010dj\u00e1", "nsubj": "ann\u00e1", "verb": "r\u00e9\u010dka", "nsubjFeats": ["lemma=ad\u00edn", "Case=Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=r\u00e9\u010dka", "deprel=conj", "upos=NOUN", "Case=Nom", "Definite=Ind"], "ungrammatical": "ann\u00f3", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[NUM]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Pomak-Philotis%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22RODOPSKY_%CE%9F_%CE%94%CE%A1%CE%9F%CE%9C%CE%9F%CE%A3_%CE%95%CE%99%CE%A7%CE%95_%CE%A4%CE%97_%CE%94%CE%99%CE%9A%CE%97_%CE%A4%CE%9F%CE%A5_%CE%99%CE%A3%CE%A4%CE%9F%CE%A1%CE%99%CE%91_s-2%22%20%3B%20A%20%5Bform%3D%22r%C3%A9%C4%8Dka%22%5D%20%3B%20B%20%5Bform%3D%22ann%C3%A1%22%5D%20%20%7D", "treebankName": "UD_Pomak-Philotis", "leaf": "3"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Pomak \u00b7 NP head-NUM_Gender", "roleA": "num", "
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

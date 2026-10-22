@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP 2.0 - Agreement Overview</title>
+    <title>MultiBLiMP – Morphological Agreement – Decision Trees</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -221,7 +221,7 @@
         /* NPA's own group section: a role-pair/feature card grid with a
            toggle switching which axis is the top-level grouping, instead
            of the flat per-panel grid other groups use -- see
-           word_order.viz_overview._npa_toggle_group_html. */
+           agreement_trees.report.viz_overview._npa_toggle_group_html. */
         .npa-view-toggle {
             display: inline-flex;
             border: 1px solid var(--border-hover);
@@ -279,7 +279,7 @@
         <div class="header">
             <div class="title-section">
                 <div class="back-links"><a href="../../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Main Page</a><a href="../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Overview</a></div>
-                <h1>MultiBLiMP 2.0 &mdash; Agreement Overview</h1>
+                <h1>MultiBLiMP &ndash; Morphological Agreement &ndash; Decision Trees</h1>
                 <p class="description">
                     This page gives an overview of agreement predictability across dependency relations and languages,
                     grouped by what the subject agrees with (verb, participle, auxiliary, ...). Each panel shows the
@@ -307,6 +307,10 @@
             <div class="panel">
                 <div id="plot-npa_HEAD-ADJ_Animacy" class="mini-plot" data-url="../../npa/HEAD-ADJ_Animacy/index.html" data-deprel="npa/HEAD-ADJ_Animacy"></div>
                 <div class="panel-label"><a href="../../npa/HEAD-ADJ_Animacy/index.html">Head–Adjective</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADP_Animacy" class="mini-plot" data-url="../../npa/HEAD-ADP_Animacy/index.html" data-deprel="npa/HEAD-ADP_Animacy"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADP_Animacy/index.html">Head–Adposition</a></div>
             </div>
             <div class="panel">
                 <div id="plot-npa_DET-NUM_Animacy" class="mini-plot" data-url="../../npa/DET-NUM_Animacy/index.html" data-deprel="npa/DET-NUM_Animacy"></div>
@@ -343,7 +347,7 @@
           });
         })();
 
-        const allData = {"npa/DET-ADJ_Animacy": {"acc": [{"name": "Polish", "base": 0.9852941176470589, "tree": 0.9852941176470589, "n_items": 100, "url": "../../npa/DET-ADJ_Animacy/Polish.html", "color": "#2563eb"}]}, "npa/DET-NUM_Animacy": {"acc": []}, "npa/HEAD-ADJ_Animacy": {"acc": [{"name": "Belarusian", "base": 0.9971526195899773, "tree": 0.9971526195899773, "n_items": 875, "url": "../../npa/HEAD-ADJ_Animacy/Belarusian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9918952618453866, "tree": 0.9918952618453866, "n_items": 795, "url": "../../npa/HEAD-ADJ_Animacy/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.9975081629145901, "tree": 0.9975081629145901, "n_items": 5804, "url": "../../npa/HEAD-ADJ_Animacy/Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.998447740600207, "tree": 0.998447740600207, "n_items": 2894, "url": "../../npa/HEAD-ADJ_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.9984309623430963, "tree": 0.9984309623430963, "n_items": 954, "url": "../../npa/HEAD-ADJ_Animacy/Russian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9957627118644068, "tree": 0.9957627118644068, "n_items": 352, "url": "../../npa/HEAD-ADJ_Animacy/Serbian.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9989643744821872, "tree": 0.9989643744821872, "n_items": 2411, "url": "../../npa/HEAD-ADJ_Animacy/Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9978466838931955, "tree": 0.9978466838931955, "n_items": 1158, "url": "../../npa/HEAD-ADJ_Animacy/Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.9846938775510204, "tree": 0.9846938775510204, "n_items": 96, "url": "../../npa/HEAD-ADJ_Animacy/Upper_Sorbian.html", "color": "#2563eb"}]}, "npa/HEAD-DET_Animacy": {"acc": [{"name": "Czech", "base": 0.9938423645320197, "tree": 0.9938423645320197, "n_items": 403, "url": "../../npa/HEAD-DET_Animacy/Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.9978753541076487, "tree": 0.9978753541076487, "n_items": 704, "url": "../../npa/HEAD-DET_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9982578397212544, "tree": 0.9982578397212544, "n_items": 859, "url": "../../npa/HEAD-DET_Animacy/Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9941763727121464, "tree": 0.9941763727121464, "n_items": 597, "url": "../../npa/HEAD-DET_Animacy/Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.9239130434782609, "tree": 0.9239130434782609, "n_items": 42, "url": "../../npa/HEAD-DET_Animacy/Upper_Sorbian.html", "color": "#2563eb"}]}, "npa/HEAD-NUM_Animacy": {"acc": [{"name": "Belarusian", "base": 0.9504504504504504, "tree": 0.9504504504504504, "n_items": 105, "url": "../../npa/HEAD-NUM_Animacy/Belarusian.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.9897540983606558, "tree": 0.9897540983606558, "n_items": 241, "url": "../../npa/HEAD-NUM_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9888059701492538, "tree": 0.9888059701492538, "n_items": 132, "url": "../../npa/HEAD-NUM_Animacy/Slovak.html", "color": "#2563eb"}]}, "npa/NUM-ADJ_Animacy": {"acc": []}};
+        const allData = {"npa/DET-ADJ_Animacy": {"acc": [{"name": "Polish", "base": 0.9852941176470589, "tree": 0.9852941176470589, "n_items": 100, "url": "../../npa/DET-ADJ_Animacy/Polish.html", "color": "#2563eb"}]}, "npa/DET-NUM_Animacy": {"acc": []}, "npa/HEAD-ADJ_Animacy": {"acc": [{"name": "Belarusian", "base": 0.997155858930603, "tree": 0.997155858930603, "n_items": 876, "url": "../../npa/HEAD-ADJ_Animacy/Belarusian.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9918952618453866, "tree": 0.9918952618453866, "n_items": 795, "url": "../../npa/HEAD-ADJ_Animacy/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.997166409067491, "tree": 0.997166409067491, "n_items": 5806, "url": "../../npa/HEAD-ADJ_Animacy/Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.9981047553411441, "tree": 0.9981047553411441, "n_items": 2896, "url": "../../npa/HEAD-ADJ_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Russian", "base": 0.9984309623430963, "tree": 0.9984309623430963, "n_items": 954, "url": "../../npa/HEAD-ADJ_Animacy/Russian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9957627118644068, "tree": 0.9957627118644068, "n_items": 352, "url": "../../npa/HEAD-ADJ_Animacy/Serbian.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9989643744821872, "tree": 0.9989643744821872, "n_items": 2411, "url": "../../npa/HEAD-ADJ_Animacy/Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9978485370051635, "tree": 0.9978485370051635, "n_items": 1159, "url": "../../npa/HEAD-ADJ_Animacy/Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.9846938775510204, "tree": 0.9846938775510204, "n_items": 96, "url": "../../npa/HEAD-ADJ_Animacy/Upper_Sorbian.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Animacy": {"acc": []}, "npa/HEAD-DET_Animacy": {"acc": [{"name": "Czech", "base": 0.9938423645320197, "tree": 0.9938423645320197, "n_items": 403, "url": "../../npa/HEAD-DET_Animacy/Czech.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.9978753541076487, "tree": 0.9978753541076487, "n_items": 704, "url": "../../npa/HEAD-DET_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9982578397212544, "tree": 0.9982578397212544, "n_items": 859, "url": "../../npa/HEAD-DET_Animacy/Slovak.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9941860465116279, "tree": 0.9941860465116279, "n_items": 598, "url": "../../npa/HEAD-DET_Animacy/Ukrainian.html", "color": "#2563eb"}, {"name": "Upper Sorbian", "base": 0.9239130434782609, "tree": 0.9239130434782609, "n_items": 42, "url": "../../npa/HEAD-DET_Animacy/Upper_Sorbian.html", "color": "#2563eb"}]}, "npa/HEAD-NUM_Animacy": {"acc": [{"name": "Belarusian", "base": 0.9504504504504504, "tree": 0.9504504504504504, "n_items": 105, "url": "../../npa/HEAD-NUM_Animacy/Belarusian.html", "color": "#2563eb"}, {"name": "Polish", "base": 0.958498023715415, "tree": 0.9901185770750988, "n_items": 242, "url": "../../npa/HEAD-NUM_Animacy/Polish.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9888059701492538, "tree": 0.9888059701492538, "n_items": 132, "url": "../../npa/HEAD-NUM_Animacy/Slovak.html", "color": "#2563eb"}]}, "npa/NUM-ADJ_Animacy": {"acc": []}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so
@@ -359,6 +363,16 @@
             };
         })();
 
+        // Axes start at 0.44 unless some point, in any panel, lies below it (a multi-class view, e.g.
+        // the data-debugging pages' split unk classes, can have a root accuracy under 0.5); then
+        // every panel's axes extend to the lowest such point.
+        const AX_LO_FIXED = 0.44;
+        const AX_LO = AX_LO_FIXED !== null ? AX_LO_FIXED : (() => {
+            const vals = Object.values(allData).flatMap(g => (g.acc || []).flatMap(d => [d.base, d.tree]))
+                .filter(v => Number.isFinite(v));
+            return vals.length ? Math.min(0.44, Math.floor((Math.min(...vals) - 0.03) * 20) / 20) : 0.44;
+        })();
+
         function renderMiniPlot(el, points) {
             const url = el.dataset.url;
             // Some languages' accuracy is NaN (too few items to compute it);
@@ -368,7 +382,12 @@
 
             // y = x reference over the fixed axis range: points above it are
             // languages where the tree beat the majority-class baseline.
-            const baseLine = { x: [0.5, 1], y: [0.5, 1] };
+            // Every panel shares the lowest lower bound any panel needs (see AX_LO), so all the
+            // charts have the same x and y scale.
+            const axLo = AX_LO;
+            const axTicks = [];
+            for (let t = Math.ceil(axLo * 10) / 10; t <= 1.0001; t += 0.1) axTicks.push(Math.round(t * 10) / 10);
+            const baseLine = { x: [Math.min(0.5, axLo), 1], y: [Math.min(0.5, axLo), 1] };
 
             const traceLine = {
                 x: baseLine.x,
@@ -391,7 +410,7 @@
                 marker: {
                     size: points.map(d => d.n_items),
                     sizemode: 'area',
-                    sizeref: 2 * Math.max(...points.map(d => d.n_items)) / (20 ** 2),
+                    sizeref: 2 * Math.max(1, ...points.map(d => d.n_items)) / (20 ** 2),
                     sizemin: 3,
                     color: points.map(d => d.color ?? THEME.accent),
                     opacity: 0.75,
@@ -409,7 +428,7 @@
                 // below chance in a majority-vote leaf) rather than autoscaled, so
                 // the same fixed reference points hold across every panel instead
                 // of each tightly-clustered panel silently rescaling to its own
-                // tiny range. Upper bound 1.02, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
+                // tiny range. Upper bound 1.05, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
                 // exactly at an edge has real radius (area-scaled by n_items) and
                 // would otherwise clip against the plot border.
                 xaxis: {
@@ -418,8 +437,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 yaxis: {
@@ -428,8 +447,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 // Transparent, not a fixed white/panel color: .panel paints its

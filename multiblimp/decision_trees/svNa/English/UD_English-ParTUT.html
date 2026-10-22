@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "English \u00b7 ParTUT", "languageName": "English", "accuracy": "97.2%", "testAccuracy": "98.4%", "testN": 63, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "564", "predictor": "Verb_nsubj_Number", "rootAccuracy": "95.3%", "trainAccuracy": "97.1%", "treebank": "ParTUT", "nav": {"pooledAcc": 0.9808383233532935, "pooledTestN": 835, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 8328, "pooledUnkRows": 6289, "pooledHref": "../English.html", "pooledCurrent": false, "items": [{"name": "EWT", "rows": 5819, "unkRows": 1181, "status": "ok", "excluded": false, "reason": null, "acc": 0.9862542955326461, "pooledAcc": 0.9862542955326461, "delta": 0.0, "diverges": false, "href": "UD_English-EWT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GENTLE", "rows": 314, "unkRows": 26, "status": "ok", "excluded": false, "reason": null, "acc": 0.96875, "pooledAcc": 0.96875, "delta": 0.0, "diverges": false, "href": "UD_English-GENTLE.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "LinES", "rows": 1214, "unkRows": 3692, "status": "ok", "excluded": false, "reason": null, "acc": 0.9836065573770492, "pooledAcc": 0.9836065573770492, "delta": 0.0, "diverges": false, "href": "UD_English-LinES.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "LittlePrince", "rows": 136, "unkRows": 190, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 0.9285714285714286, "delta": 0.0714285714285714, "diverges": false, "href": "UD_English-LittlePrince.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 218, "unkRows": 546, "status": "ok", "excluded": false, "reason": null, "acc": 0.9545454545454546, "pooledAcc": 0.9090909090909091, "delta": 0.045454545454545525, "diverges": false, "href": "UD_English-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "ParTUT", "rows": 627, "unkRows": 654, "status": "ok", "excluded": false, "reason": null, "acc": 0.9841269841269841, "pooledAcc": 0.9682539682539683, "delta": 0.015873015873015817, "diverges": false, "href": "UD_English-ParTUT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 538, "color": "var(--yes)"}, {"cls": "no", "cnt": 26, "color": "var(--no)"}, {"cls": "unk", "cnt": 654, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 16, "H": 0.7335, "acc": 0.7941, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 3, "color": "var(--yes)"}, {"cls": "no", "cnt": 13, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 548, "H": 0.1665, "acc": 0.9754, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 535, "color": "var(--yes)"}, {"cls": "no", "cnt": 13, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 564, "H": 0.2731, "acc": 0.9531, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 538, "color": "var(--yes)"}, {"cls": "no", "cnt": 26, "color": "var(--no)"}], "rule": "Verb.child-feat.aux.Person is not set", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "Mr President , <strong>I</strong> would very much <strong>like</strong> to thank Mrs Schroedter for the work she has done on this and to explain to colleagues that I am speaking for my colleague , Mrs Flautre , who followed this for the Committee on Employment and Social Affairs but who is unfortunately ill .", "verb": "like", "verbFeats": ["upos=VERB", "deprel=root", "lemma=like", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-323%22%20%3B%20A%20%5Bform%3D%22like%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>This</strong> , however , does not <strong>seem</strong> feasible .", "verb": "seem", "verbFeats": ["upos=VERB", "deprel=root", "lemma=seem", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "this", "nsubjFeats": ["upos=PRON", "lemma=this", "xpos=PD", "<b>Number=Sing</b>", "PronType=Dem", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-212%22%20%3B%20A%20%5Bform%3D%22seem%22%5D%20%3B%20B%20%5Bform%3D%22This%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The <strong>amendment</strong> to the Directive on today 's agenda does not therefore <strong>affect</strong> the existing harmonisation of the transport of dangerous goods in the community .", "verb": "affect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=affect", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "amendment", "nsubjFeats": ["upos=NOUN", "lemma=amendment", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-254%22%20%3B%20A%20%5Bform%3D%22affect%22%5D%20%3B%20B%20%5Bform%3D%22amendment%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Why do n't all <strong>profiles</strong> <strong>have</strong> a \" Subscribe \" button ?", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "profiles", "nsubjFeats": ["upos=NOUN", "lemma=profile", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-555%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22profiles%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Distribution</strong> of this license does not <strong>create</strong> an attorney - client relationship .", "verb": "create", "verbFeats": ["upos=VERB", "deprel=root", "lemma=create", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "distribution", "nsubjFeats": ["upos=NOUN", "lemma=distribution", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-3%22%20%3B%20A%20%5Bform%3D%22create%22%5D%20%3B%20B%20%5Bform%3D%22Distribution%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Likewise , our GDP <strong>metric</strong> does not <strong>reflect</strong> the cost of the increased insecurity individuals may feel with the increased risk of a loss of a job .", "verb": "reflect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=reflect", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "metric", "nsubjFeats": ["upos=NOUN", "lemma=metric", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1273%22%20%3B%20A%20%5Bform%3D%22reflect%22%5D%20%3B%20B%20%5Bform%3D%22metric%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> do <strong>realise</strong> that this is only a small step towards increased transport safety , but I would ask you to endorse this report .", "verb": "realise", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-264%22%20%3B%20A%20%5Bform%3D%22realise%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Will each future <strong>generation</strong> <strong>continue</strong> to enjoy a better quality of life than its immediate predecessor ?", "verb": "continue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=continue", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generation", "nsubjFeats": ["upos=NOUN", "lemma=generation", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1245%22%20%3B%20A%20%5Bform%3D%22continue%22%5D%20%3B%20B%20%5Bform%3D%22generation%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , <strong>I</strong> would once again <strong>like</strong> to congratulate Mr Koch on his magnificent work on this other report , which in a way supplements the debate which we held in October on rail transport .", "verb": "like", "verbFeats": ["upos=VERB", "deprel=root", "lemma=like", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-294%22%20%3B%20A%20%5Bform%3D%22like%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> do not <strong>know</strong> whether this information is correct , but the PPE - DE Group would , in any case , be grateful if this item were removed because Parliament has addressed this issue several times already .", "verb": "know", "verbFeats": ["upos=VERB", "deprel=root", "lemma=know", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-141%22%20%3B%20A%20%5Bform%3D%22know%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "But will future <strong>generations</strong> , particularly in advanced economies , <strong>realize</strong> such expectations ?", "verb": "realize", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generations", "nsubjFeats": ["upos=NOUN", "lemma=generation", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1211%22%20%3B%20A%20%5Bform%3D%22realize%22%5D%20%3B%20B%20%5Bform%3D%22generations%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "How do <strong>we</strong> accurately <strong>assess</strong> the fact that , owing to medical progress , heart surgery is more likely to be successful now than in the past , leading to a significant increase in life expectancy and quality of life ?", "verb": "assess", "verbFeats": ["upos=VERB", "deprel=root", "lemma=assess", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "lemma=we", "xpos=PE", "<b>Number=Plur</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1278%22%20%3B%20A%20%5Bform%3D%22assess%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> would therefore once more <strong>ask</strong> you to ensure that we get a Dutch channel as well .", "verb": "ask", "verbFeats": ["upos=VERB", "deprel=root", "lemma=ask", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-102%22%20%3B%20A%20%5Bform%3D%22ask%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Sections</strong> 1 , 2 , 5 , 6 , 7 , and 8 will <strong>survive</strong> any termination of this License .", "verb": "survive", "verbFeats": ["upos=VERB", "deprel=root", "lemma=survive", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "sections", "nsubjFeats": ["upos=NOUN", "lemma=section", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-52%22%20%3B%20A%20%5Bform%3D%22survive%22%5D%20%3B%20B%20%5Bform%3D%22Sections%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "How do <strong>people</strong> <strong>subscribe</strong> to my updates ?", "verb": "subscribe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=subscribe", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "people", "nsubjFeats": ["upos=NOUN", "lemma=people", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-558%22%20%3B%20A%20%5Bform%3D%22subscribe%22%5D%20%3B%20B%20%5Bform%3D%22people%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> do not <strong>think</strong> , however , that this report has come too late .", "verb": "think", "verbFeats": ["upos=VERB", "deprel=root", "lemma=think", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-401%22%20%3B%20A%20%5Bform%3D%22think%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}], "2": [{"sentence": "I remember it when <strong>I</strong> <strong>laugh</strong> .", "verb": "laugh", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=laugh", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1745%22%20%3B%20A%20%5Bform%3D%22laugh%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "With the new data in hand , we can see that , surprisingly , the productivity gap persists even when <strong>women</strong> <strong>have</strong> equal access to inputs .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "lemma=women", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1376%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "- In terms of costs , the <strong>evaluator</strong> <strong>found</strong> that some of the projects were particularly costly and highlighted specific cost items .", "verb": "found", "verbFeats": ["upos=VERB", "deprel=root", "lemma=found", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Past", "VerbForm=Fin"], "nsubj": "evaluator", "nsubjFeats": ["upos=NOUN", "lemma=evaluator", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-671%22%20%3B%20A%20%5Bform%3D%22found%22%5D%20%3B%20B%20%5Bform%3D%22evaluator%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In fact , South Korean <strong>women</strong> <strong>participate</strong> in the labor force at roughly the average rate for the OECD while they are in their late twenties .", "verb": "participate", "verbFeats": ["upos=VERB", "deprel=root", "lemma=participate", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "lemma=women", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1340%22%20%3B%20A%20%5Bform%3D%22participate%22%5D%20%3B%20B%20%5Bform%3D%22women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "As an Austrian , <strong>I</strong> still <strong>have</strong> a vivid memory , as , I believe , we all do , of the catastrophe which cost so many human lives last year in the Tauern Tunnel , where subsequent work to rebuild the parts of the tunnel which had been destroyed in this fire continued for many months at huge expense .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-172%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> <strong>hope</strong> my proposal will be taken into consideration in tomorrow 's vote .", "verb": "hope", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hope", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-275%22%20%3B%20A%20%5Bform%3D%22hope%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In this period , when resources flowed to this \" innovative \" sector , GDP <strong>growth</strong> was markedly <strong>lower</strong> than it was before .", "verb": "lower", "verbFeats": ["upos=VERB", "deprel=root", "lemma=lower", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "growth", "nsubjFeats": ["upos=NOUN", "lemma=growth", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1261%22%20%3B%20A%20%5Bform%3D%22lower%22%5D%20%3B%20B%20%5Bform%3D%22growth%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Women</strong> usually <strong>have</strong> more childcare and household responsibilities than men , which make it difficult for them to devote as much time to farm work , or even to supervise hired labor .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "lemma=woman", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1379%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22Women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Male mosquitoes do not bite , so their release presents no health risk , and , because their <strong>progeny</strong> <strong>die</strong> , no genetically engineered mosquitoes persist in the environment .", "verb": "die", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=die", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "progeny", "nsubjFeats": ["upos=NOUN", "lemma=progeny", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1508%22%20%3B%20A%20%5Bform%3D%22die%22%5D%20%3B%20B%20%5Bform%3D%22progeny%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Two</strong> of the amendments tabled and adopted unanimously by the committee <strong>relate</strong> precisely to this amended comitology procedure .", "verb": "relate", "verbFeats": ["upos=VERB", "deprel=root", "lemma=relate", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "two", "nsubjFeats": ["upos=NOUN", "lemma=two", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-260%22%20%3B%20A%20%5Bform%3D%22relate%22%5D%20%3B%20B%20%5Bform%3D%22Two%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Only a small <strong>minority</strong> of academics <strong>believe</strong> there is reason to question the traditional attribution , but interest in the subject , particularly the Oxfordian theory of Shakespeare authorship , continues into the 21st century .", "verb": "believe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=believe", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "minority", "nsubjFeats": ["upos=NOUN", "lemma=minority", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2070%22%20%3B%20A%20%5Bform%3D%22believe%22%5D%20%3B%20B%20%5Bform%3D%22minority%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "We have seen the <strong>gap</strong> between rich and poor <strong>widen</strong> .", "verb": "widen", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=widen", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "gap", "nsubjFeats": ["upos=NOUN", "lemma=gap", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-307%22%20%3B%20A%20%5Bform%3D%22widen%22%5D%20%3B%20B%20%5Bform%3D%22gap%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "This is important , but so is enforcement and there <strong>are</strong> , of course , a <strong>number</strong> of reasons why we need to pay particular attention to this .", "verb": "are", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "number", "nsubjFeats": ["upos=NOUN", "lemma=number", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-194%22%20%3B%20A%20%5Bform%3D%22are%22%5D%20%3B%20B%20%5Bform%3D%22number%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Some <strong>scholars</strong> <strong>claim</strong> that members of Shakespeare 's family were Catholics , at a time when Catholic practice was against the law .", "verb": "claim", "verbFeats": ["upos=VERB", "deprel=root", "lemma=claim", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "scholars", "nsubjFeats": ["upos=NOUN", "lemma=scholar", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2071%22%20%3B%20A%20%5Bform%3D%22claim%22%5D%20%3B%20B%20%5Bform%3D%22scholars%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "\" <strong>He</strong> <strong>argues</strong> ( in a speech revealingly entitled \" The Contribution of the Financial Sector : Miracle or Mirage ? \" ) that the financial sector 's reported contribution to GDP has been significantly overrated .", "verb": "argues", "verbFeats": ["upos=VERB", "deprel=root", "lemma=argue", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "he", "nsubjFeats": ["upos=PRON", "lemma=he", "xpos=PE", "Gender=Masc", "<b>Number=Sing</b>", "Person=3", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1102%22%20%3B%20A%20%5Bform%3D%22argues%22%5D%20%3B%20B%20%5Bform%3D%22He%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "everywhere one looks , it seems , there <strong>are</strong> deep-seated <strong>problems</strong> .", "verb": "are", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "problems", "nsubjFeats": ["upos=NOUN", "lemma=problem", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1028%22%20%3B%20A%20%5Bform%3D%22are%22%5D%20%3B%20B%20%5Bform%3D%22problems%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Going way out , dark <strong>matter</strong> <strong>conforms</strong> to the same mycelial archetype .", "verb": "conforms", "verbFeats": ["upos=VERB", "deprel=root", "lemma=conform", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "matter", "nsubjFeats": ["upos=NOUN", "lemma=matter", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-915%22%20%3B%20A%20%5Bform%3D%22conforms%22%5D%20%3B%20B%20%5Bform%3D%22matter%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>They</strong> <strong>argue</strong> that rapid financial - sector growth reduces productivity growth in other sectors .", "verb": "argue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=argue", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "they", "nsubjFeats": ["upos=PRON", "lemma=they", "xpos=PE", "<b>Number=Plur</b>", "Person=3", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1110%22%20%3B%20A%20%5Bform%3D%22argue%22%5D%20%3B%20B%20%5Bform%3D%22They%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Critics</strong> <strong>praise</strong> the Sonnets as a profound meditation on the nature of love , sexual passion , procreation , death , and time .", "verb": "praise", "verbFeats": ["upos=VERB", "deprel=root", "lemma=praise", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "critics", "nsubjFeats": ["upos=NOUN", "lemma=critic", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1985%22%20%3B%20A%20%5Bform%3D%22praise%22%5D%20%3B%20B%20%5Bform%3D%22Critics%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "So , <strong>I</strong> <strong>believe</strong> the invention of the computer Internet is an inevitable consequence of a previously proven , biologically successful model .", "verb": "believe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=believe", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-914%22%20%3B%20A%20%5Bform%3D%22believe%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "These <strong>findings</strong> <strong>form</strong> the basis of the European programmes to protect the Barents Sea , and that is why I would ask you to examine a draft letter setting out the most important facts and to make Parliament 's position , as expressed in the resolutions which it has adopted , clear as far as Russia is concerned .", "verb": "form", "verbFeats": ["upos=VERB", "deprel=root", "lemma=form", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "findings", "nsubjFeats": ["upos=NOUN", "lemma=finding", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-98%22%20%3B%20A%20%5Bform%3D%22form%22%5D%20%3B%20B%20%5Bform%3D%22findings%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "And there <strong>are</strong> an estimated 200,000 <strong>cases</strong> of yellow fever annually , leading to 30,000 deaths worldwide .", "verb": "are", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "cases", "nsubjFeats": ["upos=NOUN", "lemma=case", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1499%22%20%3B%20A%20%5Bform%3D%22are%22%5D%20%3B%20B%20%5Bform%3D%22cases%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Madam President , can you tell me why this Parliament does not adhere to the health and safety legislation that <strong>it</strong> actually <strong>passes</strong> ?", "verb": "passes", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=pass", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "lemma=it", "xpos=PE", "<b>Number=Sing</b>", "Person=3", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-105%22%20%3B%20A%20%5Bform%3D%22passes%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Like The Two Gentlemen of Verona , in which two <strong>friends</strong> <strong>appear</strong> to approve of rape , the Shrew 's story of the taming of a woman 's independent spirit by a man sometimes troubles modern critics and directors .", "verb": "appear", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=appear", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "friends", "nsubjFeats": ["upos=NOUN", "lemma=friend", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1914%22%20%3B%20A%20%5Bform%3D%22appear%22%5D%20%3B%20B%20%5Bform%3D%22friends%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In 1606 the <strong>name</strong> of William 's daughter Susanna <strong>appears</strong> on a list of those who failed to attend Easter communion in Stratford .", "verb": "appears", "verbFeats": ["upos=VERB", "deprel=root", "lemma=appear", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "name", "nsubjFeats": ["upos=NOUN", "lemma=name", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2076%22%20%3B%20A%20%5Bform%3D%22appears%22%5D%20%3B%20B%20%5Bform%3D%22name%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Whether that <strong>unity</strong> <strong>endures</strong> will depend on how Europe responds .", "verb": "endures", "verbFeats": ["upos=VERB", "deprel=csubj", "lemma=endure", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "unity", "nsubjFeats": ["upos=NOUN", "lemma=unity", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1141%22%20%3B%20A%20%5Bform%3D%22endures%22%5D%20%3B%20B%20%5Bform%3D%22unity%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "And so <strong>we</strong> <strong>see</strong> a mushroom here sporulating .", "verb": "see", "verbFeats": ["upos=VERB", "deprel=root", "lemma=see", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "lemma=we", "xpos=PE", "<b>Number=Plur</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-896%22%20%3B%20A%20%5Bform%3D%22see%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Of course , <strong>federalism</strong> <strong>sounds</strong> like a good thing .", "verb": "sounds", "verbFeats": ["upos=VERB", "deprel=root", "lemma=sound", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "federalism", "nsubjFeats": ["upos=NOUN", "lemma=federalism", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1465%22%20%3B%20A%20%5Bform%3D%22sounds%22%5D%20%3B%20B%20%5Bform%3D%22federalism%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}], "0": [{"sentence": "With the new data in hand , we can see that , surprisingly , the productivity gap persists even when <strong>women</strong> <strong>have</strong> equal access to inputs .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "lemma=women", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1376%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Only a small <strong>minority</strong> of academics <strong>believe</strong> there is reason to question the traditional attribution , but interest in the subject , particularly the Oxfordian theory of Shakespeare authorship , continues into the 21st century .", "verb": "believe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=believe", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "minority", "nsubjFeats": ["upos=NOUN", "lemma=minority", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2070%22%20%3B%20A%20%5Bform%3D%22believe%22%5D%20%3B%20B%20%5Bform%3D%22minority%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "As an Austrian , <strong>I</strong> still <strong>have</strong> a vivid memory , as , I believe , we all do , of the catastrophe which cost so many human lives last year in the Tauern Tunnel , where subsequent work to rebuild the parts of the tunnel which had been destroyed in this fire continued for many months at huge expense .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-172%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> do not <strong>know</strong> whether this information is correct , but the PPE - DE Group would , in any case , be grateful if this item were removed because Parliament has addressed this issue several times already .", "verb": "know", "verbFeats": ["upos=VERB", "deprel=root", "lemma=know", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-141%22%20%3B%20A%20%5Bform%3D%22know%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The <strong>amendment</strong> to the Directive on today 's agenda does not therefore <strong>affect</strong> the existing harmonisation of the transport of dangerous goods in the community .", "verb": "affect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=affect", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "amendment", "nsubjFeats": ["upos=NOUN", "lemma=amendment", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-254%22%20%3B%20A%20%5Bform%3D%22affect%22%5D%20%3B%20B%20%5Bform%3D%22amendment%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Two</strong> of the amendments tabled and adopted unanimously by the committee <strong>relate</strong> precisely to this amended comitology procedure .", "verb": "relate", "verbFeats": ["upos=VERB", "deprel=root", "lemma=relate", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "two", "nsubjFeats": ["upos=NOUN", "lemma=two", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-260%22%20%3B%20A%20%5Bform%3D%22relate%22%5D%20%3B%20B%20%5Bform%3D%22Two%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , <strong>I</strong> would once again <strong>like</strong> to congratulate Mr Koch on his magnificent work on this other report , which in a way supplements the debate which we held in October on rail transport .", "verb": "like", "verbFeats": ["upos=VERB", "deprel=root", "lemma=like", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-294%22%20%3B%20A%20%5Bform%3D%22like%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "But will future <strong>generations</strong> , particularly in advanced economies , <strong>realize</strong> such expectations ?", "verb": "realize", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generations", "nsubjFeats": ["upos=NOUN", "lemma=generation", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1211%22%20%3B%20A%20%5Bform%3D%22realize%22%5D%20%3B%20B%20%5Bform%3D%22generations%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Why do n't all <strong>profiles</strong> <strong>have</strong> a \" Subscribe \" button ?", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "profiles", "nsubjFeats": ["upos=NOUN", "lemma=profile", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-555%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22profiles%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Women</strong> usually <strong>have</strong> more childcare and household responsibilities than men , which make it difficult for them to devote as much time to farm work , or even to supervise hired labor .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "lemma=woman", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1379%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22Women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Will each future <strong>generation</strong> <strong>continue</strong> to enjoy a better quality of life than its immediate predecessor ?", "verb": "continue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=continue", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generation", "nsubjFeats": ["upos=NOUN", "lemma=generation", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1245%22%20%3B%20A%20%5Bform%3D%22continue%22%5D%20%3B%20B%20%5Bform%3D%22generation%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> <strong>hope</strong> my proposal will be taken into consideration in tomorrow 's vote .", "verb": "hope", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hope", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-275%22%20%3B%20A%20%5Bform%3D%22hope%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Likewise , our GDP <strong>metric</strong> does not <strong>reflect</strong> the cost of the increased insecurity individuals may feel with the increased risk of a loss of a job .", "verb": "reflect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=reflect", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "metric", "nsubjFeats": ["upos=NOUN", "lemma=metric", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1273%22%20%3B%20A%20%5Bform%3D%22reflect%22%5D%20%3B%20B%20%5Bform%3D%22metric%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In this period , when resources flowed to this \" innovative \" sector , GDP <strong>growth</strong> was markedly <strong>lower</strong> than it was before .", "verb": "lower", "verbFeats": ["upos=VERB", "deprel=root", "lemma=lower", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "growth", "nsubjFeats": ["upos=NOUN", "lemma=growth", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1261%22%20%3B%20A%20%5Bform%3D%22lower%22%5D%20%3B%20B%20%5Bform%3D%22growth%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "This is important , but so is enforcement and there <strong>are</strong> , of course , a <strong>number</strong> of reasons why we need to pay particular attention to this .", "verb": "are", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "number", "nsubjFeats": ["upos=NOUN", "lemma=number", "xpos=S", "<b>Number=Sing</b>", "deprel=nsubj"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-194%22%20%3B%20A%20%5Bform%3D%22are%22%5D%20%3B%20B%20%5Bform%3D%22number%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "in the end there <strong>is</strong> only one <strong>amendment</strong> on the requirements for the aptitude examination for safety advisers in the transport of dangerous goods by road , rail or inland waterway .", "verb": "is", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "amendment", "nsubjFeats": ["upos=NOUN", "lemma=amendment", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-229%22%20%3B%20A%20%5Bform%3D%22is%22%5D%20%3B%20B%20%5Bform%3D%22amendment%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Some <strong>critics</strong> <strong>consider</strong> Balzac 's writing exemplary of naturalism - a more pessimistic and analytical form of realism , which seeks to explain human behavior as intrinsically linked with the environment .", "verb": "consider", "verbFeats": ["upos=VERB", "deprel=root", "lemma=consider", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "critics", "nsubjFeats": ["upos=NOUN", "lemma=critic", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1738%22%20%3B%20A%20%5Bform%3D%22consider%22%5D%20%3B%20B%20%5Bform%3D%22critics%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Some <strong>attributions</strong> , such as Titus Andronicus and the early history plays , <strong>remain</strong> controversial , while The Two Noble Kinsmen and the lost Cardenio have well - attested contemporary documentation .", "verb": "remain", "verbFeats": ["upos=VERB", "deprel=root", "lemma=remain", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "attributions", "nsubjFeats": ["upos=NOUN", "lemma=attribution", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1907%22%20%3B%20A%20%5Bform%3D%22remain%22%5D%20%3B%20B%20%5Bform%3D%22attributions%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Rolf Bolin , who was a professor at the Hopkin 's Marine Station where <strong>I</strong> <strong>work</strong> , wrote in the 1940s that \" The fumes from the scum floating on the inlets of the bay were so bad they turned lead - based paints black \" .", "verb": "work", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=work", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-820%22%20%3B%20A%20%5Bform%3D%22work%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In this scenario , <strong>pieces</strong> of option three <strong>remain</strong> stubbornly impervious to artificial intelligence and continue to be mind - numbingly boring , while option four \u2013 engaging in social reciprocity and negotiation \u2013 remains limited .", "verb": "remain", "verbFeats": ["upos=VERB", "deprel=root", "lemma=remain", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "pieces", "nsubjFeats": ["upos=NOUN", "lemma=piece", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1449%22%20%3B%20A%20%5Bform%3D%22remain%22%5D%20%3B%20B%20%5Bform%3D%22pieces%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Two recent <strong>papers</strong> <strong>raise</strong> further doubts .", "verb": "raise", "verbFeats": ["upos=VERB", "deprel=root", "lemma=raise", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "papers", "nsubjFeats": ["upos=NOUN", "lemma=paper", "xpos=S", "<b>Number=Plur</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1103%22%20%3B%20A%20%5Bform%3D%22raise%22%5D%20%3B%20B%20%5Bform%3D%22papers%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "I 'm in love with the old - growth forest , and I 'm a patriotic American because <strong>we</strong> <strong>have</strong> those .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "lemma=we", "xpos=PE", "<b>Number=Plur</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-882%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In the realm of international economics , being perceived as boring confers power to the extent that <strong>it</strong> <strong>allows</strong> major decisions to be made without a great deal of external scrutiny .", "verb": "allows", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=allow", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "lemma=it", "xpos=PE", "<b>Number=Sing</b>", "Person=3", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1392%22%20%3B%20A%20%5Bform%3D%22allows%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Indeed , <strong>it</strong> <strong>is</strong> quite in keeping with the positions this House has always adopted .", "verb": "is", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "lemma=it", "xpos=PE", "<b>Number=Sing</b>", "Person=3", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-93%22%20%3B%20A%20%5Bform%3D%22is%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "All of this must be done - <strong>I</strong> <strong>repeat</strong> - with the participation of private business , which , by uniting its efforts with those of public administrations , but complementing them , never obstructing or excluding them , will lead to the creation of wealth in society and of jobs .", "verb": "repeat", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=repeat", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-357%22%20%3B%20A%20%5Bform%3D%22repeat%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "But there <strong>is</strong> a <strong>puzzle</strong> :", "verb": "is", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "puzzle", "nsubjFeats": ["upos=NOUN", "lemma=puzzle", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1250%22%20%3B%20A%20%5Bform%3D%22is%22%5D%20%3B%20B%20%5Bform%3D%22puzzle%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Only a small minority of academics believe there <strong>is</strong> <strong>reason</strong> to question the traditional attribution , but interest in the subject , particularly the Oxfordian theory of Shakespeare authorship , continues into the 21st century .", "verb": "is", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "reason", "nsubjFeats": ["upos=NOUN", "lemma=reason", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2070%22%20%3B%20A%20%5Bform%3D%22is%22%5D%20%3B%20B%20%5Bform%3D%22reason%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The relevant <strong>standards</strong> which have been laid down in another Directive , 95/35/EC , <strong>seem</strong> sufficiently adequate to advise people in a responsible manner on the organisation of the transport of dangerous goods .", "verb": "seem", "verbFeats": ["upos=VERB", "deprel=root", "lemma=seem", "xpos=V", "Mood=Ind", "<b>Number=Plur</b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "standards", "nsubjFeats": ["upos=NOUN", "lemma=standard", "xpos=S", "<b>Number=Plur</b>", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-210%22%20%3B%20A%20%5Bform%3D%22seem%22%5D%20%3B%20B%20%5Bform%3D%22standards%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I</strong> <strong>agree</strong> that the European Parliament did not have the opportunity - or that it was not given the opportunity , as we had reached the end of the parliamentary term - to discuss the Directives .", "verb": "agree", "verbFeats": ["upos=VERB", "deprel=root", "lemma=agree", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "lemma=I", "xpos=PE", "<b>Number=Sing</b>", "Person=1", "PronType=Prs", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-400%22%20%3B%20A%20%5Bform%3D%22agree%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Scientific <strong>research</strong> to develop products like irradiated sterile insects or the Oxitec mosquitoes <strong>proceeds</strong> progressively from more to less contained conditions \u2013 from the laboratory to confined trials to limited field trials .", "verb": "proceeds", "verbFeats": ["upos=VERB", "deprel=root", "lemma=proceed", "xpos=V", "Mood=Ind", "<b>Number=Sing</b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "research", "nsubjFeats": ["upos=NOUN", "lemma=research", "xpos=S", "<b>Number=Sing</b>", "Person=3", "deprel=nsubj"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1511%22%20%3B%20A%20%5Bform%3D%22proceeds%22%5D%20%3B%20B%20%5Bform%3D%22research%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "roleA": "nsubj", "roleB": "verb", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "English \u00b7 ParTUT", "languageName": "English", "accuracy": "94.3%", "testAccuracy": "96.7%", "testN": 92, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "823", "predictor": "Verb_nsubj_Number", "rootAccuracy": "93.0%", "trainAccuracy": "94.2%", "treebank": "ParTUT", "nav": {"pooledAcc": 0.9761526232114467, "pooledTestN": 1258, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 12551, "pooledUnkRows": 2084, "pooledHref": "../English.html", "pooledCurrent": false, "items": [{"name": "EWT", "rows": 6485, "unkRows": 515, "status": "ok", "excluded": false, "reason": null, "acc": 0.9938366718027735, "pooledAcc": 0.9938366718027735, "delta": 0.0, "diverges": false, "href": "UD_English-EWT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GENTLE", "rows": 314, "unkRows": 26, "status": "ok", "excluded": false, "reason": null, "acc": 0.96875, "pooledAcc": 0.96875, "delta": 0.0, "diverges": false, "href": "UD_English-GENTLE.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "LinES", "rows": 3953, "unkRows": 968, "status": "ok", "excluded": false, "reason": null, "acc": 0.9595959595959596, "pooledAcc": 0.9494949494949495, "delta": 0.010101010101010055, "diverges": false, "href": "UD_English-LinES.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "LittlePrince", "rows": 288, "unkRows": 38, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_English-LittlePrince.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 596, "unkRows": 168, "status": "ok", "excluded": false, "reason": null, "acc": 0.9666666666666667, "pooledAcc": 0.9666666666666667, "delta": 0.0, "diverges": false, "href": "UD_English-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "ParTUT", "rows": 915, "unkRows": 369, "status": "ok", "excluded": false, "reason": null, "acc": 0.967391304347826, "pooledAcc": 0.967391304347826, "delta": 0.0, "diverges": false, "href": "UD_English-ParTUT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 766, "color": "var(--yes)"}, {"cls": "no", "cnt": 57, "color": "var(--no)"}, {"cls": "unk", "cnt": 369, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 18, "H": 0.7897, "acc": 0.7632, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 4, "color": "var(--yes)"}, {"cls": "no", "cnt": 14, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 805, "H": 0.303, "acc": 0.946, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 762, "color": "var(--yes)"}, {"cls": "no", "cnt": 43, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 823, "H": 0.3651, "acc": 0.9302, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 766, "color": "var(--yes)"}, {"cls": "no", "cnt": 57, "color": "var(--no)"}], "rule": "Verb's aux child: Person is not set", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "The <strong>amendment<\/strong> to the Directive on today 's agenda does not therefore <strong>affect<\/strong> the existing harmonisation of the transport of dangerous goods in the community .", "verb": "affect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=affect", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "amendment", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=amendment", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-254%22%20%3B%20A%20%5Bform%3D%22affect%22%5D%20%3B%20B%20%5Bform%3D%22amendment%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>This<\/strong> , however , does not <strong>seem<\/strong> feasible .", "verb": "seem", "verbFeats": ["upos=VERB", "deprel=root", "lemma=seem", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "this", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=this", "xpos=PD", "<b>Number=Sing<\/b>", "Person=3", "PronType=Dem"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-212%22%20%3B%20A%20%5Bform%3D%22seem%22%5D%20%3B%20B%20%5Bform%3D%22This%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "How do <strong>we<\/strong> accurately <strong>assess<\/strong> the fact that , owing to medical progress , heart surgery is more likely to be successful now than in the past , leading to a significant increase in life expectancy and quality of life ?", "verb": "assess", "verbFeats": ["upos=VERB", "deprel=root", "lemma=assess", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=we", "xpos=PE", "<b>Number=Plur<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1278%22%20%3B%20A%20%5Bform%3D%22assess%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> do not <strong>know<\/strong> whether this information is correct , but the PPE - DE Group would , in any case , be grateful if this item were removed because Parliament has addressed this issue several times already .", "verb": "know", "verbFeats": ["upos=VERB", "deprel=root", "lemma=know", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-141%22%20%3B%20A%20%5Bform%3D%22know%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "But will future <strong>generations<\/strong> , particularly in advanced economies , <strong>realize<\/strong> such expectations ?", "verb": "realize", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generations", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=generation", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1211%22%20%3B%20A%20%5Bform%3D%22realize%22%5D%20%3B%20B%20%5Bform%3D%22generations%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> do <strong>realise<\/strong> that this is only a small step towards increased transport safety , but I would ask you to endorse this report .", "verb": "realise", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-264%22%20%3B%20A%20%5Bform%3D%22realise%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Distribution<\/strong> of this license does not <strong>create<\/strong> an attorney - client relationship .", "verb": "create", "verbFeats": ["upos=VERB", "deprel=root", "lemma=create", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "distribution", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=distribution", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-3%22%20%3B%20A%20%5Bform%3D%22create%22%5D%20%3B%20B%20%5Bform%3D%22Distribution%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Likewise , our GDP <strong>metric<\/strong> does not <strong>reflect<\/strong> the cost of the increased insecurity individuals may feel with the increased risk of a loss of a job .", "verb": "reflect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=reflect", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "metric", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=metric", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1273%22%20%3B%20A%20%5Bform%3D%22reflect%22%5D%20%3B%20B%20%5Bform%3D%22metric%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Over the coming years , faced with the challenges of globalisation and eastward enlargement , <strong>Europe<\/strong> will , more than ever before , <strong>require<\/strong> appropriate detailed guidance on how to plan and revitalise its economy .", "verb": "require", "verbFeats": ["upos=VERB", "deprel=root", "lemma=require", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "Europe", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Europe", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-453%22%20%3B%20A%20%5Bform%3D%22require%22%5D%20%3B%20B%20%5Bform%3D%22Europe%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , <strong>I<\/strong> would once again <strong>like<\/strong> to congratulate Mr Koch on his magnificent work on this other report , which in a way supplements the debate which we held in October on rail transport .", "verb": "like", "verbFeats": ["upos=VERB", "deprel=root", "lemma=like", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-294%22%20%3B%20A%20%5Bform%3D%22like%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , <strong>I<\/strong> would very much <strong>like<\/strong> to thank Mrs Schroedter for the work she has done on this and to explain to colleagues that I am speaking for my colleague , Mrs Flautre , who followed this for the Committee on Employment and Social Affairs but who is unfortunately ill .", "verb": "like", "verbFeats": ["upos=VERB", "deprel=root", "lemma=like", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-323%22%20%3B%20A%20%5Bform%3D%22like%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Will each future <strong>generation<\/strong> <strong>continue<\/strong> to enjoy a better quality of life than its immediate predecessor ?", "verb": "continue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=continue", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generation", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=generation", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1245%22%20%3B%20A%20%5Bform%3D%22continue%22%5D%20%3B%20B%20%5Bform%3D%22generation%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Why do n't all <strong>profiles<\/strong> <strong>have<\/strong> a \" Subscribe \" button ?", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "profiles", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=profile", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-555%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22profiles%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> would therefore once more <strong>ask<\/strong> you to ensure that we get a Dutch channel as well .", "verb": "ask", "verbFeats": ["upos=VERB", "deprel=root", "lemma=ask", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-102%22%20%3B%20A%20%5Bform%3D%22ask%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Sections<\/strong> 1 , 2 , 5 , 6 , 7 , and 8 will <strong>survive<\/strong> any termination of this License .", "verb": "survive", "verbFeats": ["upos=VERB", "deprel=root", "lemma=survive", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "sections", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=section", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-52%22%20%3B%20A%20%5Bform%3D%22survive%22%5D%20%3B%20B%20%5Bform%3D%22Sections%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> do not <strong>think<\/strong> , however , that this report has come too late .", "verb": "think", "verbFeats": ["upos=VERB", "deprel=root", "lemma=think", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-401%22%20%3B%20A%20%5Bform%3D%22think%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "\" Just as his <strong>father<\/strong> had <strong>worked<\/strong> his way up from poverty into respectable society , Balzac considered toil and effort his real mark of nobility .", "verb": "worked", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=work", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "father", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=father", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1651%22%20%3B%20A%20%5Bform%3D%22worked%22%5D%20%3B%20B%20%5Bform%3D%22father%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "How do <strong>people<\/strong> <strong>subscribe<\/strong> to my updates ?", "verb": "subscribe", "verbFeats": ["upos=VERB", "deprel=root", "lemma=subscribe", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "people", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=people", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "1"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-558%22%20%3B%20A%20%5Bform%3D%22subscribe%22%5D%20%3B%20B%20%5Bform%3D%22people%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}], "2": [{"sentence": "When <strong>I<\/strong> <strong>met<\/strong> her in 2012 , she had just harvested her first crop of maize grown from a seed specifically adapted for Tanzania 's climate .", "verb": "met", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=meet", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1362%22%20%3B%20A%20%5Bform%3D%22met%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "According to a new study by the economists Robert Shapiro and Aparna Mathur , if <strong>India<\/strong> <strong>achieved<\/strong> Chinese levels of IP protection , its annual FDI inflows would increase by 33 % annually .", "verb": "achieved", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=achieve", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "India", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=India", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1070%22%20%3B%20A%20%5Bform%3D%22achieved%22%5D%20%3B%20B%20%5Bform%3D%22India%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "I remember it when <strong>I<\/strong> <strong>laugh<\/strong> .", "verb": "laugh", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=laugh", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1745%22%20%3B%20A%20%5Bform%3D%22laugh%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "He gave the businesses to a friend ( who made them successful ) but <strong>carried<\/strong> the <strong>debts<\/strong> for many years .", "verb": "carried", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=carry", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "debts", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=debt", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1628%22%20%3B%20A%20%5Bform%3D%22carried%22%5D%20%3B%20B%20%5Bform%3D%22debts%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Two<\/strong> of the amendments tabled and adopted unanimously by the committee <strong>relate<\/strong> precisely to this amended comitology procedure .", "verb": "relate", "verbFeats": ["upos=VERB", "deprel=root", "lemma=relate", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "two", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=two", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-260%22%20%3B%20A%20%5Bform%3D%22relate%22%5D%20%3B%20B%20%5Bform%3D%22Two%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The Obama <strong>administration<\/strong> <strong>proposed<\/strong> to tie IMF reform to the presumably imminent approval by Congress of funding for Ukraine .", "verb": "proposed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=propose", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "administration", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=administration", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1415%22%20%3B%20A%20%5Bform%3D%22proposed%22%5D%20%3B%20B%20%5Bform%3D%22administration%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> <strong>hope<\/strong> my proposal will be taken into consideration in tomorrow 's vote .", "verb": "hope", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hope", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-275%22%20%3B%20A%20%5Bform%3D%22hope%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , it is incumbent upon me to remind my colleague , Mr Evans , of why <strong>Wales<\/strong> actually <strong>achieved<\/strong> Objective 1 status .", "verb": "achieved", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=achieve", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Wales", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Wales", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-358%22%20%3B%20A%20%5Bform%3D%22achieved%22%5D%20%3B%20B%20%5Bform%3D%22Wales%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "With the new data in hand , we can see that , surprisingly , the productivity gap persists even when <strong>women<\/strong> <strong>have<\/strong> equal access to inputs .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=women", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1376%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "( Although Genevan philosopher Jean - Jacques Rousseau 's influential <strong>book<\/strong> \u00c9mile <strong>convinced<\/strong> many mothers of the time to nurse their own children , sending babies to wet-nurses was still common among the middle and upper classes . )", "verb": "convinced", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=convince", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "book", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=book", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1569%22%20%3B%20A%20%5Bform%3D%22convinced%22%5D%20%3B%20B%20%5Bform%3D%22book%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In this period , when resources flowed to this \" innovative \" sector , GDP <strong>growth<\/strong> was markedly <strong>lower<\/strong> than it was before .", "verb": "lower", "verbFeats": ["upos=VERB", "deprel=root", "lemma=lower", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "growth", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=growth", "xpos=S", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1261%22%20%3B%20A%20%5Bform%3D%22lower%22%5D%20%3B%20B%20%5Bform%3D%22growth%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In this period , when <strong>resources<\/strong> <strong>flowed<\/strong> to this \" innovative \" sector , GDP growth was markedly lower than it was before .", "verb": "flowed", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=flow", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "resources", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=resource", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1261%22%20%3B%20A%20%5Bform%3D%22flowed%22%5D%20%3B%20B%20%5Bform%3D%22resources%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Women<\/strong> usually <strong>have<\/strong> more childcare and household responsibilities than men , which make it difficult for them to devote as much time to farm work , or even to supervise hired labor .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=woman", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1379%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22Women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "And - most influential of all - Victor Cousin 's <strong>courses<\/strong> on philosophy <strong>encouraged<\/strong> his students to think independently .", "verb": "encouraged", "verbFeats": ["upos=VERB", "deprel=root", "lemma=encourage", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "courses", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=course", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1592%22%20%3B%20A%20%5Bform%3D%22encouraged%22%5D%20%3B%20B%20%5Bform%3D%22courses%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>We<\/strong> have now <strong>entered<\/strong> in the 6 X :", "verb": "entered", "verbFeats": ["upos=VERB", "deprel=root", "lemma=enter", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=we", "xpos=PE", "<b>Number=Plur<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-873%22%20%3B%20A%20%5Bform%3D%22entered%22%5D%20%3B%20B%20%5Bform%3D%22We%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "With regard to the aspects of euro protection , where the <strong>responsibility<\/strong> <strong>belongs<\/strong> to the Member States , expertise was systematically sought in their specialised services .", "verb": "belongs", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=belong", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "responsibility", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=responsibility", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-709%22%20%3B%20A%20%5Bform%3D%22belongs%22%5D%20%3B%20B%20%5Bform%3D%22responsibility%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Efforts by primary and secondary schools could help to foster more diverse interests among female students , giving talented young women the tools <strong>they<\/strong> <strong>need<\/strong> to make important contributions to key economic sectors .", "verb": "need", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=need", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=1,3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "they", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=they", "xpos=PE", "<b>Number=Plur<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1353%22%20%3B%20A%20%5Bform%3D%22need%22%5D%20%3B%20B%20%5Bform%3D%22they%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The <strong>implementation<\/strong> of the Programme <strong>made<\/strong> a slow start , mainly due to its adoption in December 2001 .", "verb": "made", "verbFeats": ["upos=VERB", "deprel=root", "lemma=make", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "implementation", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=implementation", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-682%22%20%3B%20A%20%5Bform%3D%22made%22%5D%20%3B%20B%20%5Bform%3D%22implementation%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , I would once again like to congratulate Mr Koch on his magnificent work on this other report , which in a way supplements the debate which <strong>we<\/strong> <strong>held<\/strong> in October on rail transport .", "verb": "held", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=hold", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=we", "xpos=PE", "<b>Number=Plur<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-294%22%20%3B%20A%20%5Bform%3D%22held%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "No evidence suggests that <strong>Shakespeare<\/strong> <strong>approved<\/strong> these editions , which the First Folio describes as \" stol'n and surreptitious copies \" .", "verb": "approved", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=approve", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Shakespeare", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Shakespeare", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1960%22%20%3B%20A%20%5Bform%3D%22approved%22%5D%20%3B%20B%20%5Bform%3D%22Shakespeare%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>They<\/strong> <strong>give<\/strong> rise to the trees , they create the debris fields that feed the mycelium .", "verb": "give", "verbFeats": ["upos=VERB", "deprel=root", "lemma=give", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "they", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=they", "xpos=PE", "<b>Number=Plur<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-895%22%20%3B%20A%20%5Bform%3D%22give%22%5D%20%3B%20B%20%5Bform%3D%22They%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "These <strong>amendments<\/strong> also <strong>fit<\/strong> in with this Parliament 's view that social exclusion is a serious issue needing constructive action .", "verb": "fit", "verbFeats": ["upos=VERB", "deprel=root", "lemma=fit", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "amendments", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=amendment", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-327%22%20%3B%20A%20%5Bform%3D%22fit%22%5D%20%3B%20B%20%5Bform%3D%22amendments%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "As I will say in the debate on the Erika disaster , we do not wait until there is a disaster to deal with the question of safety , but we work on it even when there <strong>are<\/strong> no such <strong>circumstances<\/strong> , which simply serve to demonstrate the urgency for an effective response to this type of problem .", "verb": "are", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=1,2,3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "circumstances", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=circumstance", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-242%22%20%3B%20A%20%5Bform%3D%22are%22%5D%20%3B%20B%20%5Bform%3D%22circumstances%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>This<\/strong> <strong>seems<\/strong> to me to be a workable solution .", "verb": "seems", "verbFeats": ["upos=VERB", "deprel=root", "lemma=seem", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "this", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=this", "xpos=PD", "<b>Number=Sing<\/b>", "Person=3", "PronType=Dem"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-163%22%20%3B%20A%20%5Bform%3D%22seems%22%5D%20%3B%20B%20%5Bform%3D%22This%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>He<\/strong> <strong>wrote<\/strong> them in a stylised language that does not always spring naturally from the needs of the characters or the drama .", "verb": "wrote", "verbFeats": ["upos=VERB", "deprel=root", "lemma=write", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "he", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=he", "xpos=PE", "Gender=Masc", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1987%22%20%3B%20A%20%5Bform%3D%22wrote%22%5D%20%3B%20B%20%5Bform%3D%22He%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "When <strong>it<\/strong> <strong>comes<\/strong> to public goods \u2013 such as education , the environment , health care , and equal opportunity \u2013 the record is not quite as impressive , and the political obstacles to improvement have seemed to grow as capitalist economies have matured .", "verb": "comes", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=come", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=it", "xpos=PE", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1244%22%20%3B%20A%20%5Bform%3D%22comes%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "All of this must be done - <strong>I<\/strong> <strong>repeat<\/strong> - with the participation of private business , which , by uniting its efforts with those of public administrations , but complementing them , never obstructing or excluding them , will lead to the creation of wealth in society and of jobs .", "verb": "repeat", "verbFeats": ["upos=VERB", "deprel=parataxis", "lemma=repeat", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-357%22%20%3B%20A%20%5Bform%3D%22repeat%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Madam President , if the vote records correctly how my <strong>Group<\/strong> <strong>voted<\/strong> I shall not , and can not , object to that .", "verb": "voted", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=vote", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "group", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=group", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-167%22%20%3B%20A%20%5Bform%3D%22voted%22%5D%20%3B%20B%20%5Bform%3D%22Group%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Now suppose , instead of Styrofoam peanuts , <strong>we<\/strong> <strong>take<\/strong> these lovely little chocolates that we get and we had those instead .", "verb": "take", "verbFeats": ["upos=VERB", "deprel=ccomp", "lemma=take", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=we", "xpos=PE", "<b>Number=Plur<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-839%22%20%3B%20A%20%5Bform%3D%22take%22%5D%20%3B%20B%20%5Bform%3D%22we%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>We<\/strong> <strong>refuse<\/strong> to play the part of hapless victim in future history textbooks .", "verb": "refuse", "verbFeats": ["upos=VERB", "deprel=root", "lemma=refuse", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "we", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=we", "xpos=PE", "<b>Number=Plur<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1493%22%20%3B%20A%20%5Bform%3D%22refuse%22%5D%20%3B%20B%20%5Bform%3D%22We%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}], "0": [{"sentence": "- In terms of costs , the <strong>evaluator<\/strong> <strong>found<\/strong> that some of the projects were particularly costly and highlighted specific cost items .", "verb": "found", "verbFeats": ["upos=VERB", "deprel=root", "lemma=found", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Tense=Past", "VerbForm=Fin"], "nsubj": "evaluator", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=evaluator", "xpos=S", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-671%22%20%3B%20A%20%5Bform%3D%22found%22%5D%20%3B%20B%20%5Bform%3D%22evaluator%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Cecchetti and Kharroubi find evidence that it <strong>is<\/strong> indeed research - intensive <strong>firms<\/strong> that suffer most when finance is booming .", "verb": "is", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "firms", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=firm", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1116%22%20%3B%20A%20%5Bform%3D%22is%22%5D%20%3B%20B%20%5Bform%3D%22firms%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Nicholas Rowe , Shakespeare 's first biographer , recounted a Stratford legend that <strong>Shakespeare<\/strong> <strong>fled<\/strong> the town for London to escape prosecution for deer poaching in the estate of local squire Thomas Lucy .", "verb": "fled", "verbFeats": ["upos=VERB", "deprel=acl", "lemma=flee", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Shakespeare", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Shakespeare", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1842%22%20%3B%20A%20%5Bform%3D%22fled%22%5D%20%3B%20B%20%5Bform%3D%22Shakespeare%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Will each future <strong>generation<\/strong> <strong>continue<\/strong> to enjoy a better quality of life than its immediate predecessor ?", "verb": "continue", "verbFeats": ["upos=VERB", "deprel=root", "lemma=continue", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "generation", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=generation", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "2"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1245%22%20%3B%20A%20%5Bform%3D%22continue%22%5D%20%3B%20B%20%5Bform%3D%22generation%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> <strong>hope<\/strong> my proposal will be taken into consideration in tomorrow 's vote .", "verb": "hope", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hope", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-275%22%20%3B%20A%20%5Bform%3D%22hope%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "It is neither desirable nor feasible for China to return to the trajectory of 10 % annual growth that <strong>it<\/strong> <strong>achieved<\/strong> in the three decades after 1980 .", "verb": "achieved", "verbFeats": ["upos=VERB", "deprel=acl:relcl", "lemma=achieve", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=it", "xpos=PE", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1180%22%20%3B%20A%20%5Bform%3D%22achieved%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "According to a new study by the economists Robert Shapiro and Aparna Mathur , if <strong>India<\/strong> <strong>achieved<\/strong> Chinese levels of IP protection , its annual FDI inflows would increase by 33 % annually .", "verb": "achieved", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=achieve", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "India", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=India", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1070%22%20%3B%20A%20%5Bform%3D%22achieved%22%5D%20%3B%20B%20%5Bform%3D%22India%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "And - most influential of all - Victor Cousin 's <strong>courses<\/strong> on philosophy <strong>encouraged<\/strong> his students to think independently .", "verb": "encouraged", "verbFeats": ["upos=VERB", "deprel=root", "lemma=encourage", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "courses", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=course", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1592%22%20%3B%20A%20%5Bform%3D%22encouraged%22%5D%20%3B%20B%20%5Bform%3D%22courses%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> do <strong>realise<\/strong> that this is only a small step towards increased transport safety , but I would ask you to endorse this report .", "verb": "realise", "verbFeats": ["upos=VERB", "deprel=root", "lemma=realize", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Tense=Pres", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-264%22%20%3B%20A%20%5Bform%3D%22realise%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Women<\/strong> usually <strong>have<\/strong> more childcare and household responsibilities than men , which make it difficult for them to devote as much time to farm work , or even to supervise hired labor .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=woman", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1379%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22Women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "With the new data in hand , we can see that , surprisingly , the productivity gap persists even when <strong>women<\/strong> <strong>have<\/strong> equal access to inputs .", "verb": "have", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "women", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=women", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1376%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22women%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Likewise , our GDP <strong>metric<\/strong> does not <strong>reflect<\/strong> the cost of the increased insecurity individuals may feel with the increased risk of a loss of a job .", "verb": "reflect", "verbFeats": ["upos=VERB", "deprel=root", "lemma=reflect", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "metric", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=metric", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1273%22%20%3B%20A%20%5Bform%3D%22reflect%22%5D%20%3B%20B%20%5Bform%3D%22metric%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>He<\/strong> <strong>moved<\/strong> across the river to Southwark by 1599 , the year his company constructed the Globe Theatre there .", "verb": "moved", "verbFeats": ["upos=VERB", "deprel=root", "lemma=move", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "he", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=he", "xpos=PE", "Gender=Masc", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1873%22%20%3B%20A%20%5Bform%3D%22moved%22%5D%20%3B%20B%20%5Bform%3D%22He%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Why do n't all <strong>profiles<\/strong> <strong>have<\/strong> a \" Subscribe \" button ?", "verb": "have", "verbFeats": ["upos=VERB", "deprel=root", "lemma=have", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "profiles", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=profile", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "no", "route": {"0": "3"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-555%22%20%3B%20A%20%5Bform%3D%22have%22%5D%20%3B%20B%20%5Bform%3D%22profiles%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>I<\/strong> first <strong>proposed<\/strong> , in the early 1990s , that mycelium is Earth 's natural Internet .", "verb": "proposed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=propose", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-909%22%20%3B%20A%20%5Bform%3D%22proposed%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The <strong>reason<\/strong> Mr Koch produced his sound report <strong>was<\/strong> because the work in the CEN and within the United Nations Economic Commission was proceeding none too expeditiously .", "verb": "was", "verbFeats": ["upos=VERB", "deprel=root", "lemma=be", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "reason", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=reason", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-291%22%20%3B%20A%20%5Bform%3D%22was%22%5D%20%3B%20B%20%5Bform%3D%22reason%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "this <strong>right<\/strong> <strong>includes<\/strong> freedom to change his religion or belief , and freedom , either alone or in community with others and in public or private , to manifest his religion or belief in teaching , practice , worship and observance .", "verb": "includes", "verbFeats": ["upos=VERB", "deprel=root", "lemma=include", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "right", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=right", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-780%22%20%3B%20A%20%5Bform%3D%22includes%22%5D%20%3B%20B%20%5Bform%3D%22right%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "If they do not , if <strong>businesspeople<\/strong> <strong>feel<\/strong> marginalised , if entrepreneurs can not take part , not only in managing but also in receiving these funds , we will have missed an opportunity to attain our objectives more rapidly .", "verb": "feel", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=feel", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "businesspeople", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=businesspeople", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-355%22%20%3B%20A%20%5Bform%3D%22feel%22%5D%20%3B%20B%20%5Bform%3D%22businesspeople%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "As <strong>it<\/strong> <strong>stands<\/strong> , while the services sector accounts for more than 70 % of employment in South Korea , its productivity - growth rate remains much lower than that of the manufacturing sector .", "verb": "stands", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=stand", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "it", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=it", "xpos=PE", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1348%22%20%3B%20A%20%5Bform%3D%22stands%22%5D%20%3B%20B%20%5Bform%3D%22it%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The <strong>authors<\/strong> <strong>find<\/strong> another intriguing effect , too .", "verb": "find", "verbFeats": ["upos=VERB", "deprel=root", "lemma=find", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=1,3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "authors", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=author", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1121%22%20%3B%20A%20%5Bform%3D%22find%22%5D%20%3B%20B%20%5Bform%3D%22authors%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "The indoor <strong>setting<\/strong> , combined with the Jacobean fashion for lavishly staged masques , <strong>allowed<\/strong> Shakespeare to introduce more elaborate stage devices .", "verb": "allowed", "verbFeats": ["upos=VERB", "deprel=root", "lemma=allow", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "setting", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=setting", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1950%22%20%3B%20A%20%5Bform%3D%22allowed%22%5D%20%3B%20B%20%5Bform%3D%22setting%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "This date , which can be traced back to an 18th - century scholar 's mistake , has proved appealing to biographers , since <strong>Shakespeare<\/strong> <strong>died<\/strong> 23 April 1616 .", "verb": "died", "verbFeats": ["upos=VERB", "deprel=advcl", "lemma=die", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "Shakespeare", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Shakespeare", "xpos=SP", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1827%22%20%3B%20A%20%5Bform%3D%22died%22%5D%20%3B%20B%20%5Bform%3D%22Shakespeare%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "When many people think about the engines driving that growth , <strong>they<\/strong> <strong>imagine<\/strong> commodities like oil , gold , and cocoa , or maybe industries like banking and telecommunications .", "verb": "imagine", "verbFeats": ["upos=VERB", "deprel=root", "lemma=imagine", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "they", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=they", "xpos=PE", "<b>Number=Plur<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1359%22%20%3B%20A%20%5Bform%3D%22imagine%22%5D%20%3B%20B%20%5Bform%3D%22they%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Mr President , Commissioner , ladies and gentlemen , the <strong>Directive<\/strong> on the approximation of the laws of the member states with regard to the transport of dangerous goods by road , which entered into force on 1 January 1997 , <strong>contains<\/strong> a number of transitional provisions which are only valid for a limited period of time , the term of validity being linked to the completion of specific standardisation work by the CEN , that is the European committee for standardisation .", "verb": "contains", "verbFeats": ["upos=VERB", "deprel=root", "lemma=contain", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "directive", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=Directive", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-248%22%20%3B%20A%20%5Bform%3D%22contains%22%5D%20%3B%20B%20%5Bform%3D%22Directive%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Now , to bring that home , <strong>I<\/strong> <strong>thought<\/strong> I 'd invent a little game .", "verb": "thought", "verbFeats": ["upos=VERB", "deprel=root", "lemma=think", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "i", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=I", "xpos=PE", "<b>Number=Sing<\/b>", "Person=1", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-831%22%20%3B%20A%20%5Bform%3D%22thought%22%5D%20%3B%20B%20%5Bform%3D%22I%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "For several decades , Rymer 's <strong>view<\/strong> <strong>held<\/strong> sway ;", "verb": "held", "verbFeats": ["upos=VERB", "deprel=root", "lemma=hold", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "view", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=view", "xpos=S", "<b>Number=Sing<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2046%22%20%3B%20A%20%5Bform%3D%22held%22%5D%20%3B%20B%20%5Bform%3D%22view%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "She has gone into the issue in some depth and in the committee debate <strong>she<\/strong> <strong>took<\/strong> account of many of the amendments that have been tabled regarding this report .", "verb": "took", "verbFeats": ["upos=VERB", "deprel=conj", "lemma=take", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "she", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=she", "xpos=PE", "Gender=Fem", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-372%22%20%3B%20A%20%5Bform%3D%22took%22%5D%20%3B%20B%20%5Bform%3D%22she%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "In his last phase , <strong>he<\/strong> <strong>wrote<\/strong> tragicomedies , also known as romances , and collaborated with other playwrights .", "verb": "wrote", "verbFeats": ["upos=VERB", "deprel=root", "lemma=write", "xpos=V", "Mood=Ind", "<b>Number=Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "he", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=he", "xpos=PE", "Gender=Masc", "<b>Number=Sing<\/b>", "Person=3", "PronType=Prs"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-1816%22%20%3B%20A%20%5Bform%3D%22wrote%22%5D%20%3B%20B%20%5Bform%3D%22he%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "<strong>Others<\/strong> <strong>read<\/strong> the same passages as the expression of intense friendship rather than sexual love .", "verb": "read", "verbFeats": ["upos=VERB", "deprel=root", "lemma=read", "xpos=V", "Mood=Ind", "<b>Number=Plur<\/b>", "Person=3", "Tense=Pres", "VerbForm=Fin"], "nsubj": "others", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=other", "xpos=PI", "<b>Number=Plur<\/b>", "PronType=Ind"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2082%22%20%3B%20A%20%5Bform%3D%22read%22%5D%20%3B%20B%20%5Bform%3D%22Others%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}, {"sentence": "Around 230 years after Shakespeare 's death , <strong>doubts<\/strong> <strong>began<\/strong> to be expressed about the authorship of the works attributed to him .", "verb": "began", "verbFeats": ["upos=VERB", "deprel=root", "lemma=begin", "xpos=V", "Mood=Ind", "<b>Number=Plur,Sing<\/b>", "Person=3", "Tense=Past", "VerbForm=Fin"], "nsubj": "doubts", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=doubt", "xpos=S", "<b>Number=Plur<\/b>", "Person=3"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_English-ParTUT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22en_partut-ud-2067%22%20%3B%20A%20%5Bform%3D%22began%22%5D%20%3B%20B%20%5Bform%3D%22doubts%22%5D%20%20%7D", "treebankName": "UD_English-ParTUT"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "English \u00b7 ParTUT \u00b7 Verb_nsubj_Number", "r
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

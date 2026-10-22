@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det", "roleB": "np head", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Galician", "languageName": "Galician", "accuracy": "99.8%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "406", "predictor": "NP head-DET_Person", "rootAccuracy": "84.9%", "trainAccuracy": "99.6%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9782608695652174, "pooledTestN": 46, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 452, "pooledUnkRows": 5, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "PUD", "rows": 226, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Galician/UD_Galician-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "TreeGal", "rows": 226, "unkRows": 4, "status": "ok", "excluded": false, "reason": null, "acc": 0.9565217391304348, "pooledAcc": 0.9565217391304348, "delta": 0.0, "diverges": false, "href": "Galician/UD_Galician-TreeGal.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Person"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Person"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Person"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Person"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 345, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 62, "H": 0.1623, "acc": 0.9762, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 1, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 61, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 344, "H": 0.0158, "acc": 0.9986, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 344, "color": "var(--yes)"}, {"cls": "no", "cnt": 0, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 344, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 406, "H": 0.6126, "acc": 0.8489, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 345, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}], "rule": "DET.lemma = seu", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "Pero esta obra aparca , a o <strong>noso</strong> <strong>entender</strong> , de xeito case definitivo o proxecto de Peter Eisenman para o Novo Riazor , que fora apresentado por lo presidente de o Deportivo en 2003 e que inclu\u00eda , practicamente , case todas as instalaci\u00f3ns contidas en este proxecto xa en construci\u00f3n , ademais de o propio campo de f\u00fatbol , hostalar\u00eda m\u00faltipla e hotel de luxo , parque infantil , amplos espazos verdes e aparcadoiros , tanto p\u00fablicos coma privados .", "verb": "entender", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=entender", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22353%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22entender%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Por la <strong>mi\u00f1a</strong> <strong>parte</strong> , eu son mestra en ikebana por las escolas Sogetsu e Koriu , despois de sete anos de pr\u00e1ctica en o Xap\u00f3n .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=parte", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22936%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Edici\u00f3ns A <strong>Nosa</strong> <strong>Terra</strong> , onde publicou alg\u00fans de os seus traballos , prepara O libro de as columnas , un traballo que recoller\u00e1 todas as s\u00faas colaboraci\u00f3ns en A Nosa Terra onde quincenalmente publicaba as s\u00faas colaboraci\u00f3ns .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22614%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "De todos modos , o <strong>meu</strong> <strong>p\u00fablico</strong> \u00e9 , sobre todo , xuvenil .", "verb": "p\u00fablico", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u00fablico", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sms", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22809%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%BAblico%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os galegos diferenciamos nos de outros pobos por termos unha cultura diferente , un pa\u00eds rico mal xestionado , a mocidade cami\u00f1o de a emigraci\u00f3n , e a estas alturas de a historia \u00e9 inadmis\u00edbel que se siga denigrando o noso acento , a <strong>nosa</strong> <strong>identidade</strong> .", "verb": "identidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=identidade", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22600%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22identidade%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>mi\u00f1a</strong> <strong>postura</strong> sobre iso v\u00e9n de longo e o mesmo sucede con o meu partido .", "verb": "postura", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=postura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22269%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22postura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Reclaman as\u00ed mesmo , a participaci\u00f3n directa de Galiza en a UE , cando os asuntos sexan de o <strong>noso</strong> <strong>interese</strong> , e a capacidade de definir as pol\u00edticas estatais ( coincidente en o fondo con Iniciativas 21 ) .", "verb": "interese", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=interese", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22518%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22interese%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Villar explicou para A <strong>Nosa</strong> <strong>Terra</strong> que realizar\u00e1 unha intervenci\u00f3n \" cr\u00edtica con esta comisi\u00f3n de investigaci\u00f3n , cr\u00edtica con a xesti\u00f3n de a cat\u00e1strofe , e en a que abordaremos cuesti\u00f3ns como a falla de medios , a manipulaci\u00f3n e a situaci\u00f3n actual , que nos obriga a non poder pasar p\u00e1xina en o tema Prestige .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22374%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os editores cubanos fixemos o pos\u00edbel para lograr a publicaci\u00f3n de alg\u00fans de os seus t\u00edtulos e , xunto con a s\u00faa morte , deploramos que en vida Cabrera Infante , de xeito expreso , prohibise ser publicado en o <strong>noso</strong> <strong>pa\u00eds</strong> , antepo\u00f1endo a a literatura e a o co\u00f1ecemento de a s\u00faa obra por lo p\u00fablico lector cubano a s\u00faa obsesi\u00f3n pol\u00edtica contra a Revoluci\u00f3n , amplificada en sistem\u00e1ticas declaraci\u00f3ns que a propaganda tendenciosa se encargaba de axigantar .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2247%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Edici\u00f3ns A Nosa Terra , onde publicou alg\u00fans de os seus traballos , prepara O libro de as columnas , un traballo que recoller\u00e1 todas as s\u00faas colaboraci\u00f3ns en A <strong>Nosa</strong> <strong>Terra</strong> onde quincenalmente publicaba as s\u00faas colaboraci\u00f3ns .", "verb": "Terra", "verbFeats": ["upos=PROPN", "deprel=nmod", "lemma=terra", "xpos=Sp00", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22614%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Fronte a unha pleiade de autores ( cineastas ou escritores ) que preferiron pasar por alto o <strong>noso</strong> <strong>pa\u00eds</strong> ou que o usaron como recurso folcl\u00f3rico , Amen\u00e1bar demostrou que ter sensibilidade a este respecto non \u00e9 tan dif\u00edcil , nin converte o produto en algo raro .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22870%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>nosa</strong> <strong>editorial</strong> , usando a intermediaci\u00f3n de alg\u00fans escritores cubanos que o co\u00f1ec\u00edan e que viaxaban a Londres por diferentes motivos , fixo varios intentos por lograr a s\u00faa aprobaci\u00f3n para publicar t\u00edtulos representativos dentro de a s\u00faa obra , como Tres tristes tigres e A Habana para un infante difunto .", "verb": "editorial", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=editorial", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2248%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22editorial%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed te\u00f1o que dicir que estivo mal que se nos catalogase como pol\u00edticos ou que se dixera que as voces que defendiamos a o <strong>noso</strong> <strong>mar</strong> defendiamos pol\u00edticas partidarias , cando , en realidade , s\u00f3 cumpriamos con a nosa obriga como patr\u00f3ns maiores de dicir o que estaba a pasar e non cal\u00e1bamos fronte a o poder .", "verb": "mar", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=mar", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22390%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22mar%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed te\u00f1o que dicir que estivo mal que se nos catalogase como pol\u00edticos ou que se dixera que as voces que defendiamos a o noso mar defendiamos pol\u00edticas partidarias , cando , en realidade , s\u00f3 cumpriamos con a <strong>nosa</strong> <strong>obriga</strong> como patr\u00f3ns maiores de dicir o que estaba a pasar e non cal\u00e1bamos fronte a o poder .", "verb": "obriga", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=obriga", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22390%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22obriga%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "En a <strong>mi\u00f1a</strong> primeira <strong>achega</strong> a esta Comisi\u00f3n de Investigaci\u00f3n quixera dicir lles que esta cat\u00e1strofe non desaparece porque nos empe\u00f1emos en mirar para outro lado .", "verb": "achega", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=achega", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22385%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22achega%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Un discurso que nos amosa dous tipos de vida distintos : a de <strong>os</strong> <strong>habitantes</strong> de Abades , que ven a s\u00faa vida coti\u00e1 condicionada por las cont\u00ednuas acci\u00f3ns represoras , e a de os fuxidos , refuxiados en covas de dificil acceso , unha vida que dificilmente se pode chamar as\u00ed .", "verb": "habitantes", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=habitante", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "os", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=o", "xpos=Ddmp", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "PronType=Art"], "label": "yes", "route": {"0": "o"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22630%22%20%3B%20A%20%5Bform%3D%22os%22%5D%20%3B%20B%20%5Bform%3D%22habitantes%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}], "2": [{"sentence": "Por se todo fose pouco , tam\u00e9n cando mandaba en Madrid Felipe Gonz\u00e1lez , a Comandancia de a Flota foi trasladada de Ferrol a Rota ( C\u00e1diz ) , con a influencia que isto tivo en unha cidade de as caracter\u00edsticas navais de Ferrol , e con Jos\u00e9 Mar\u00eda Aznar en a Moncloa , a capital galega de o mar foi desposu\u00edda de a <strong>s\u00faa</strong> <strong>condici\u00f3n</strong> de sede de a Zona Mar\u00edtima de o Cant\u00e1brico .", "verb": "condici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=condici\u00f3n", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22960%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22condici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Tam\u00e9n sinalou que Rogers presentara hai pouco unha nova aplicaci\u00f3n que axuda a clientela a monitorizar o <strong>seu</strong> <strong>uso</strong> de datos .", "verb": "uso", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=uso", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01046057%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22uso%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O pr\u00f3ximo 5 de marzo Miguel Barros presentar\u00e1 o seu libro Discurso e tempo . En a procura de un socialismo para Galiza ( A Nosa Terra ) , en o que reivindica non s\u00f3 a <strong>s\u00faa</strong> <strong>traxectoria</strong> de socialista e galeguista , sen\u00f3n en a que aposta por un entendemento necesario con os nacionalistas .", "verb": "traxectoria", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=traxectoria", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22147%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22traxectoria%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Afirma o dereito de Galiza a determinar o sistema institucional de o autogoberno e a realizaci\u00f3n de a <strong>s\u00faa</strong> <strong>condici\u00f3n</strong> nacional .", "verb": "condici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=condici\u00f3n", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22843%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22condici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "\u00c9 fant\u00e1stico que conseguisen o Acordo de Par\u00eds , mais as <strong>s\u00faas</strong> <strong>contribuci\u00f3ns</strong> en este momento est\u00e1n lonxe de o obxectivo de 1,5 graos .", "verb": "contribuci\u00f3ns", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=contribuci\u00f3n", "xpos=NCFP000", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "nsubj": "s\u00faas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FP0", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01022027%22%20%3B%20A%20%5Bform%3D%22s%C3%BAas%22%5D%20%3B%20B%20%5Bform%3D%22contribuci%C3%B3ns%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Entre os <strong>seus</strong> <strong>t\u00edtulos</strong> m\u00e1is peculiares atopan se o de embaixador internacional de a Asociaci\u00f3n de Hospitais e de Sa\u00fade de a Cidade de Nova York , e unha praza en a Escola de Negocios de Harvard .", "verb": "t\u00edtulos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=t\u00edtulo", "xpos=NCMP000", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MP0", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01079069%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%ADtulos%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O hist\u00f3rico edificio consistorial de Obermarsberg ten a <strong>s\u00faa</strong> <strong>orixe</strong> en o s\u00e9culo XIII e foi renovado tras a Guerra de os Trinta Anos .", "verb": "orixe", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=orixe", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02004021%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22orixe%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Tras chegar a a cima de a s\u00faa carreira en o <strong>seu</strong> <strong>pa\u00eds</strong> , Australia , Geyer volveu a os \u00c1nxeles en 1984 para vivir al\u00ed e centrar se en probar sorte en aquela escena musical .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pa\u00eds", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01122064%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "A <strong>s\u00faa</strong> <strong>importancia</strong> reside en dous feitos .", "verb": "importancia", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=importancia", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01071036%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22importancia%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "A muller de Trump , Melania Trump , fixo a <strong>s\u00faa</strong> primeira <strong>aparici\u00f3n</strong> p\u00fablica desde a convenci\u00f3n Republicana en xullo .", "verb": "aparici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=aparici\u00f3n", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01039039%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22aparici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Como este , parte de o dereito inalien\u00e1bel de Galiza , de os seus homes e de as s\u00faas mulleres , a decidir libre e democraticamente o <strong>seu</strong> <strong>futuro</strong> e , en o exercicio de este dereito , opta por la integraci\u00f3n de Galiza , libre e paccionadamente , como Comunidade Aut\u00f3noma en un Estado espa\u00f1ol plurinacional .", "verb": "futuro", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=futuro", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22339%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22futuro%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Notaba os efectos de as elecci\u00f3ns a o <strong>seu</strong> <strong>redor</strong> cando xurd\u00edan conflitos e en a curiosa intersecci\u00f3n entre as novas e vellas ideas .", "verb": "redor", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=redor", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01058064%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22redor%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "\u00c9 evidente que os escritores de obras para os m\u00e1is novos son debedores de o ensino , mais o certo \u00e9 que Contos por palabras se desmarca por la tem\u00e1tica variada de os relatos , por la aposta de a imaxinaci\u00f3n e fantas\u00eda , por la fina iron\u00eda e humor que atopamos en as s\u00faas p\u00e1xinas mais sobre todo porque o que narran estes dez contos que forman o libro nada te\u00f1en que ver con o mundo infantil e xuvenil , ag\u00e1s que estes tam\u00e9n poden achegar se a <strong>s\u00faa</strong> <strong>lectura</strong> .", "verb": "lectura", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=lectura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3afs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22706%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22lectura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Respecto a as pr\u00e1cticas relixiosas , Fiorello foi educado dentro de a Igrexa episcopal e foi membro de a Igrexa protestante toda a <strong>s\u00faa</strong> <strong>vida</strong> .", "verb": "vida", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=vida", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w04008006%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vida%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Desafortunadamente , o r\u00e1pido crecemento de a poboaci\u00f3n e a expansi\u00f3n urbana cubriron gran parte de estes ecosistemas con o <strong>seu</strong> <strong>desenvolvemento</strong> .", "verb": "desenvolvemento", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=desenvolvemento", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01046011%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22desenvolvemento%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}], "0": [{"sentence": "Por la <strong>mi\u00f1a</strong> <strong>parte</strong> , eu son mestra en ikebana por las escolas Sogetsu e Koriu , despois de sete anos de pr\u00e1ctica en o Xap\u00f3n .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=parte", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22936%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>Nosa</strong> <strong>Terra</strong> prepara un libro que recoller\u00e1 as s\u00faas colaboraci\u00f3ns", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22608%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "\u00a1 <strong>meu</strong> <strong>Deus</strong> !", "verb": "Deus", "verbFeats": ["upos=PROPN", "deprel=root", "lemma=deus", "xpos=Sp00", "<b>Person=3</b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sms", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2272%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22Deus%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>mi\u00f1a</strong> <strong>postura</strong> sobre iso v\u00e9n de longo e o mesmo sucede con o meu partido .", "verb": "postura", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=postura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22269%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22postura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Reclaman as\u00ed mesmo , a participaci\u00f3n directa de Galiza en a UE , cando os asuntos sexan de o <strong>noso</strong> <strong>interese</strong> , e a capacidade de definir as pol\u00edticas estatais ( coincidente en o fondo con Iniciativas 21 ) .", "verb": "interese", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=interese", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22518%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22interese%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Villar explicou para A <strong>Nosa</strong> <strong>Terra</strong> que realizar\u00e1 unha intervenci\u00f3n \" cr\u00edtica con esta comisi\u00f3n de investigaci\u00f3n , cr\u00edtica con a xesti\u00f3n de a cat\u00e1strofe , e en a que abordaremos cuesti\u00f3ns como a falla de medios , a manipulaci\u00f3n e a situaci\u00f3n actual , que nos obriga a non poder pasar p\u00e1xina en o tema Prestige .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22374%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Lembrei me de Mabel Ribera , de o seu discurso en a recepci\u00f3n de o Goya , non creo que cando falaba de a necesidade de que os nosos actores e actrices fosen co\u00f1ecidos f\u00f3ra de o <strong>noso</strong> <strong>pa\u00eds</strong> estivese a falar de papeis coma este .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22595%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "S\u00f3 as pombas de os <strong>nosos</strong> <strong>labios</strong> poden frear estes preparativos .", "verb": "labios", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=labio", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "nosos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pmp", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22438%22%20%3B%20A%20%5Bform%3D%22nosos%22%5D%20%3B%20B%20%5Bform%3D%22labios%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "En a <strong>mi\u00f1a</strong> primeira <strong>achega</strong> a esta Comisi\u00f3n de Investigaci\u00f3n quixera dicir lles que esta cat\u00e1strofe non desaparece porque nos empe\u00f1emos en mirar para outro lado .", "verb": "achega", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=achega", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22385%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22achega%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os galegos diferenciamos nos de outros pobos por termos unha cultura diferente , un pa\u00eds rico mal xestionado , a mocidade cami\u00f1o de a emigraci\u00f3n , e a estas alturas de a historia \u00e9 inadmis\u00edbel que se siga denigrando o noso acento , a <strong>nosa</strong> <strong>identidade</strong> .", "verb": "identidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=identidade", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22600%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22identidade%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Non vira moitos de os episodios cando o <strong>meu</strong> <strong>tel\u00e9fono</strong> comezou a iluminar se .", "verb": "tel\u00e9fono", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=tel\u00e9fono", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=DP1MSS", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1</b>", "Poss=Yes"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01137010%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22tel%C3%A9fono%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "As artes visuais avanzaron porque est\u00e1n a o <strong>noso</strong> <strong>arredor</strong> .", "verb": "arredor", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=arredor", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22801%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22arredor%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Todos os d\u00edas o vemos en os <strong>nosos</strong> <strong>medios</strong> e en os de os compa\u00f1eiros .", "verb": "medios", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=medio", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "nosos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pmp", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22488%22%20%3B%20A%20%5Bform%3D%22nosos%22%5D%20%3B%20B%20%5Bform%3D%22medios%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Fronte a unha pleiade de autores ( cineastas ou escritores ) que preferiron pasar por alto o <strong>noso</strong> <strong>pa\u00eds</strong> ou que o usaron como recurso folcl\u00f3rico , Amen\u00e1bar demostrou que ter sensibilidade a este respecto non \u00e9 tan dif\u00edcil , nin converte o produto en algo raro .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22870%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As \u00faltimas cifras corresponden a o 24 de outubro de o ano pasado e indican nos que o <strong>noso</strong> <strong>di\u00e9sel</strong> custa 1,335 euros por litro , en contraste con a media de a eurozona de 1,165 euros .", "verb": "di\u00e9sel", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=di\u00e9sel", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=DP1MSP", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n04006014%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22di%C3%A9sel%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O seu so\u00f1o \u00e9 terminar aqu\u00ed a <strong>s\u00faa</strong> <strong>carreira</strong> profesional .", "verb": "carreira", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=carreira", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01103013%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22carreira%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "De onde v\u00e9n toda a <strong>s\u00faa</strong> <strong>enerx\u00eda</strong> ? Ou esa voz , que pode explotar con suficiente forza como para crear ondas de choque ?", "verb": "enerx\u00eda", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=enerx\u00eda", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01116018%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22enerx%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Con todo , o <strong>seu</strong> <strong>rival</strong> Prabowo Subianto tam\u00e9n declarou a victoria , o que confundiu a a cidadan\u00eda indonesia .", "verb": "rival", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=rival", "xpos=NCMS000", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01113058%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22rival%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Mu\u00ed\u00f1o presenta as <strong>s\u00faas</strong> novas <strong>creaci\u00f3ns</strong>", "verb": "creaci\u00f3ns", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=creaci\u00f3n", "xpos=Scfp", "Gender=Fem", "Number=Plur", "<b>Person=3</b>"], "nsubj": "s\u00faas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfp", "Gender=Fem", "Number=Plur", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22535%22%20%3B%20A%20%5Bform%3D%22s%C3%BAas%22%5D%20%3B%20B%20%5Bform%3D%22creaci%C3%B3ns%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed e todo , non houbo m\u00e1is reco\u00f1ecemento p\u00fablico de a s\u00faa resistencia en o per\u00edodo de guerra ou de o <strong>seu</strong> <strong>traballo</strong> humanitario ata despois de o fin de o r\u00e9xime comunista en Polonia .", "verb": "traballo", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=traballo", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01121052%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22traballo%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Tras a Revoluci\u00f3n Rusa de 1917 alg\u00fans pa\u00edses , como Finlandia , Polonia e os Estados B\u00e1lticos , ga\u00f1aron a <strong>s\u00faa</strong> <strong>independencia</strong> .", "verb": "independencia", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=independencia", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02013093%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22independencia%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Os pobos nativos americanos de toda Am\u00e9rica depend\u00edan de iso como base de os <strong>seus</strong> <strong>tratamentos</strong> m\u00e9dicos .", "verb": "tratamentos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=tratamento", "xpos=NCMP000", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MP0", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01029049%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22tratamentos%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "elaborado un primeiro documento de bases , apresentado o 23 de Xullo de o ano pasado , culmina agora un proceso de reflexi\u00f3n aberto e rigoroso en o que os participantes , a a marxe de calquera militancia ou directriz partidaria , puxeron o mellor de o seu saber e de a <strong>s\u00faa</strong> <strong>experiencia</strong> a o servizo de Galiza .", "verb": "experiencia", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=experiencia", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22334%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22experiencia%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>s\u00faa</strong> <strong>biograf\u00eda</strong> oficial tam\u00e9n afirma que Kim compuxo seis \u00f3peras e que lle gusta montar musicais complexos .", "verb": "biograf\u00eda", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=biograf\u00eda", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01114053%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22biograf%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O ano seguinte , en 1977 , recibiu o distintivo de a American Friendship Medal por a postura amig\u00e1bel de a <strong>s\u00faa</strong> <strong>prensa</strong> en relaci\u00f3n con os Estados Unidos .", "verb": "prensa", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=prensa", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02019085%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22prensa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Cando se pousan , golpean outras part\u00edculas que a a <strong>s\u00faa</strong> <strong>vez</strong> poden ser lanzadas a o aire , iniciando unha reacci\u00f3n en cadea .", "verb": "vez", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=vez", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01040104%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vez%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Como este , parte de o dereito inalien\u00e1bel de Galiza , de os <strong>seus</strong> <strong>homes</strong> e de as s\u00faas mulleres , a decidir libre e democraticamente o seu futuro e , en o exercicio de este dereito , opta por la integraci\u00f3n de Galiza , libre e paccionadamente , como Comunidade Aut\u00f3noma en un Estado espa\u00f1ol plurinacional .", "verb": "homes", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=home", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3</b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3smp", "Gender=Masc", "Number=Plur", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22339%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22homes%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A deterioraci\u00f3n de a sa\u00fade de Hitchcock reduciu a s\u00faa produci\u00f3n en as d\u00faas \u00faltimas d\u00e9cadas de a <strong>s\u00faa</strong> <strong>vida</strong> .", "verb": "vida", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vida", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01107013%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vida%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "E as\u00ed como o de 1931 recoll\u00eda o mellor de a doutrina xur\u00eddica , econ\u00f3mica e pol\u00edtica de a <strong>s\u00faa</strong> <strong>\u00e9poca</strong> para as p\u00f3r a o servizo de o pa\u00eds , tam\u00e9n este \u00e9 ambicioso e exixente a o dese\u00f1ar o pa\u00eds por lo que se aposta _ equilibrado territorialmente , sustent\u00e1bel ambientalmente , xusto e avanzado socialmente _ e regular o goberno que se quere para ese pa\u00eds _ democr\u00e1tico , transparente e eficaz .", "verb": "\u00e9poca", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u00e9poca", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3</b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3</b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22340%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A9poca%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Lu\u00eds o Xerm\u00e1nico invadiu Moravia e substitu\u00edu a Mojm\u00edr I con o <strong>seu</strong> <strong>sobri\u00f1o</strong> Rastiv , quen se converteu en San Rastislav .", "verb": "sobri\u00f1o", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=sobri\u00f1o", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3</b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01010048%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22sobri%C3%B1o%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det", "roleB": "np head", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Galician", "languageName": "Galician", "accuracy": "99.8%", "testAccuracy": "100.0%", "testN": 46, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "406", "predictor": "NP head-DET_Person", "rootAccuracy": "84.9%", "trainAccuracy": "99.6%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9782608695652174, "pooledTestN": 46, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 452, "pooledUnkRows": 5, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "PUD", "rows": 226, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Galician/UD_Galician-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "TreeGal", "rows": 226, "unkRows": 4, "status": "ok", "excluded": false, "reason": null, "acc": 0.9565217391304348, "pooledAcc": 0.9565217391304348, "delta": 0.0, "diverges": false, "href": "Galician/UD_Galician-TreeGal.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "xpos"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Person"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 345, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 62, "H": 0.1623, "acc": 0.9762, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 1, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 61, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 344, "H": 0.0158, "acc": 0.9986, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 344, "color": "var(--yes)"}, {"cls": "no", "cnt": 0, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 344, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 406, "H": 0.6126, "acc": 0.8489, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 345, "color": "var(--yes)"}, {"cls": "no", "cnt": 61, "color": "var(--no)"}], "rule": "DET.lemma = seu", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "Un discurso que nos amosa dous tipos de vida distintos : a de <strong>os<\/strong> <strong>habitantes<\/strong> de Abades , que ven a s\u00faa vida coti\u00e1 condicionada por las cont\u00ednuas acci\u00f3ns represoras , e a de os fuxidos , refuxiados en covas de dificil acceso , unha vida que dificilmente se pode chamar as\u00ed .", "verb": "habitantes", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=habitante", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "os", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=o", "xpos=Ddmp", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "o"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22630%22%20%3B%20A%20%5Bform%3D%22os%22%5D%20%3B%20B%20%5Bform%3D%22habitantes%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Pero esta obra aparca , a o <strong>noso<\/strong> <strong>entender<\/strong> , de xeito case definitivo o proxecto de Peter Eisenman para o Novo Riazor , que fora apresentado por lo presidente de o Deportivo en 2003 e que inclu\u00eda , practicamente , case todas as instalaci\u00f3ns contidas en este proxecto xa en construci\u00f3n , ademais de o propio campo de f\u00fatbol , hostalar\u00eda m\u00faltipla e hotel de luxo , parque infantil , amplos espazos verdes e aparcadoiros , tanto p\u00fablicos coma privados .", "verb": "entender", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=entender", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22353%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22entender%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Por la <strong>mi\u00f1a<\/strong> <strong>parte<\/strong> , eu son mestra en ikebana por las escolas Sogetsu e Koriu , despois de sete anos de pr\u00e1ctica en o Xap\u00f3n .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=parte", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22936%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Edici\u00f3ns A <strong>Nosa<\/strong> <strong>Terra<\/strong> , onde publicou alg\u00fans de os seus traballos , prepara O libro de as columnas , un traballo que recoller\u00e1 todas as s\u00faas colaboraci\u00f3ns en A Nosa Terra onde quincenalmente publicaba as s\u00faas colaboraci\u00f3ns .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22614%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "De todos modos , o <strong>meu<\/strong> <strong>p\u00fablico<\/strong> \u00e9 , sobre todo , xuvenil .", "verb": "p\u00fablico", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u00fablico", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sms", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22809%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%BAblico%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os galegos diferenciamos nos de outros pobos por termos unha cultura diferente , un pa\u00eds rico mal xestionado , a mocidade cami\u00f1o de a emigraci\u00f3n , e a estas alturas de a historia \u00e9 inadmis\u00edbel que se siga denigrando o noso acento , a <strong>nosa<\/strong> <strong>identidade<\/strong> .", "verb": "identidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=identidade", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22600%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22identidade%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>mi\u00f1a<\/strong> <strong>postura<\/strong> sobre iso v\u00e9n de longo e o mesmo sucede con o meu partido .", "verb": "postura", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=postura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22269%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22postura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Reclaman as\u00ed mesmo , a participaci\u00f3n directa de Galiza en a UE , cando os asuntos sexan de o <strong>noso<\/strong> <strong>interese<\/strong> , e a capacidade de definir as pol\u00edticas estatais ( coincidente en o fondo con Iniciativas 21 ) .", "verb": "interese", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=interese", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22518%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22interese%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Villar explicou para A <strong>Nosa<\/strong> <strong>Terra<\/strong> que realizar\u00e1 unha intervenci\u00f3n \" cr\u00edtica con esta comisi\u00f3n de investigaci\u00f3n , cr\u00edtica con a xesti\u00f3n de a cat\u00e1strofe , e en a que abordaremos cuesti\u00f3ns como a falla de medios , a manipulaci\u00f3n e a situaci\u00f3n actual , que nos obriga a non poder pasar p\u00e1xina en o tema Prestige .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22374%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os editores cubanos fixemos o pos\u00edbel para lograr a publicaci\u00f3n de alg\u00fans de os seus t\u00edtulos e , xunto con a s\u00faa morte , deploramos que en vida Cabrera Infante , de xeito expreso , prohibise ser publicado en o <strong>noso<\/strong> <strong>pa\u00eds<\/strong> , antepo\u00f1endo a a literatura e a o co\u00f1ecemento de a s\u00faa obra por lo p\u00fablico lector cubano a s\u00faa obsesi\u00f3n pol\u00edtica contra a Revoluci\u00f3n , amplificada en sistem\u00e1ticas declaraci\u00f3ns que a propaganda tendenciosa se encargaba de axigantar .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2247%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Edici\u00f3ns A Nosa Terra , onde publicou alg\u00fans de os seus traballos , prepara O libro de as columnas , un traballo que recoller\u00e1 todas as s\u00faas colaboraci\u00f3ns en A <strong>Nosa<\/strong> <strong>Terra<\/strong> onde quincenalmente publicaba as s\u00faas colaboraci\u00f3ns .", "verb": "Terra", "verbFeats": ["upos=PROPN", "deprel=nmod", "lemma=terra", "xpos=Sp00", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22614%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Fronte a unha pleiade de autores ( cineastas ou escritores ) que preferiron pasar por alto o <strong>noso<\/strong> <strong>pa\u00eds<\/strong> ou que o usaron como recurso folcl\u00f3rico , Amen\u00e1bar demostrou que ter sensibilidade a este respecto non \u00e9 tan dif\u00edcil , nin converte o produto en algo raro .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22870%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>nosa<\/strong> <strong>editorial<\/strong> , usando a intermediaci\u00f3n de alg\u00fans escritores cubanos que o co\u00f1ec\u00edan e que viaxaban a Londres por diferentes motivos , fixo varios intentos por lograr a s\u00faa aprobaci\u00f3n para publicar t\u00edtulos representativos dentro de a s\u00faa obra , como Tres tristes tigres e A Habana para un infante difunto .", "verb": "editorial", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=editorial", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2248%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22editorial%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed te\u00f1o que dicir que estivo mal que se nos catalogase como pol\u00edticos ou que se dixera que as voces que defendiamos a o <strong>noso<\/strong> <strong>mar<\/strong> defendiamos pol\u00edticas partidarias , cando , en realidade , s\u00f3 cumpriamos con a nosa obriga como patr\u00f3ns maiores de dicir o que estaba a pasar e non cal\u00e1bamos fronte a o poder .", "verb": "mar", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=mar", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22390%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22mar%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed te\u00f1o que dicir que estivo mal que se nos catalogase como pol\u00edticos ou que se dixera que as voces que defendiamos a o noso mar defendiamos pol\u00edticas partidarias , cando , en realidade , s\u00f3 cumpriamos con a <strong>nosa<\/strong> <strong>obriga<\/strong> como patr\u00f3ns maiores de dicir o que estaba a pasar e non cal\u00e1bamos fronte a o poder .", "verb": "obriga", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=obriga", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22390%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22obriga%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "En a <strong>mi\u00f1a<\/strong> primeira <strong>achega<\/strong> a esta Comisi\u00f3n de Investigaci\u00f3n quixera dicir lles que esta cat\u00e1strofe non desaparece porque nos empe\u00f1emos en mirar para outro lado .", "verb": "achega", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=achega", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22385%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22achega%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}], "2": [{"sentence": "Por se todo fose pouco , tam\u00e9n cando mandaba en Madrid Felipe Gonz\u00e1lez , a Comandancia de a Flota foi trasladada de Ferrol a Rota ( C\u00e1diz ) , con a influencia que isto tivo en unha cidade de as caracter\u00edsticas navais de Ferrol , e con Jos\u00e9 Mar\u00eda Aznar en a Moncloa , a capital galega de o mar foi desposu\u00edda de a <strong>s\u00faa<\/strong> <strong>condici\u00f3n<\/strong> de sede de a Zona Mar\u00edtima de o Cant\u00e1brico .", "verb": "condici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=condici\u00f3n", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22960%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22condici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Tam\u00e9n sinalou que Rogers presentara hai pouco unha nova aplicaci\u00f3n que axuda a clientela a monitorizar o <strong>seu<\/strong> <strong>uso<\/strong> de datos .", "verb": "uso", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=uso", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01046057%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22uso%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O pr\u00f3ximo 5 de marzo Miguel Barros presentar\u00e1 o seu libro Discurso e tempo . En a procura de un socialismo para Galiza ( A Nosa Terra ) , en o que reivindica non s\u00f3 a <strong>s\u00faa<\/strong> <strong>traxectoria<\/strong> de socialista e galeguista , sen\u00f3n en a que aposta por un entendemento necesario con os nacionalistas .", "verb": "traxectoria", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=traxectoria", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22147%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22traxectoria%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Afirma o dereito de Galiza a determinar o sistema institucional de o autogoberno e a realizaci\u00f3n de a <strong>s\u00faa<\/strong> <strong>condici\u00f3n<\/strong> nacional .", "verb": "condici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=condici\u00f3n", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22843%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22condici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "\u00c9 fant\u00e1stico que conseguisen o Acordo de Par\u00eds , mais as <strong>s\u00faas<\/strong> <strong>contribuci\u00f3ns<\/strong> en este momento est\u00e1n lonxe de o obxectivo de 1,5 graos .", "verb": "contribuci\u00f3ns", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=contribuci\u00f3n", "xpos=NCFP000", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "s\u00faas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FP0", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01022027%22%20%3B%20A%20%5Bform%3D%22s%C3%BAas%22%5D%20%3B%20B%20%5Bform%3D%22contribuci%C3%B3ns%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Entre os <strong>seus<\/strong> <strong>t\u00edtulos<\/strong> m\u00e1is peculiares atopan se o de embaixador internacional de a Asociaci\u00f3n de Hospitais e de Sa\u00fade de a Cidade de Nova York , e unha praza en a Escola de Negocios de Harvard .", "verb": "t\u00edtulos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=t\u00edtulo", "xpos=NCMP000", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MP0", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01079069%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%ADtulos%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O hist\u00f3rico edificio consistorial de Obermarsberg ten a <strong>s\u00faa<\/strong> <strong>orixe<\/strong> en o s\u00e9culo XIII e foi renovado tras a Guerra de os Trinta Anos .", "verb": "orixe", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=orixe", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02004021%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22orixe%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Tras chegar a a cima de a s\u00faa carreira en o <strong>seu<\/strong> <strong>pa\u00eds<\/strong> , Australia , Geyer volveu a os \u00c1nxeles en 1984 para vivir al\u00ed e centrar se en probar sorte en aquela escena musical .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pa\u00eds", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01122064%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "A <strong>s\u00faa<\/strong> <strong>importancia<\/strong> reside en dous feitos .", "verb": "importancia", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=importancia", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01071036%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22importancia%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "A muller de Trump , Melania Trump , fixo a <strong>s\u00faa<\/strong> primeira <strong>aparici\u00f3n<\/strong> p\u00fablica desde a convenci\u00f3n Republicana en xullo .", "verb": "aparici\u00f3n", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=aparici\u00f3n", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01039039%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22aparici%C3%B3n%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Como este , parte de o dereito inalien\u00e1bel de Galiza , de os seus homes e de as s\u00faas mulleres , a decidir libre e democraticamente o <strong>seu<\/strong> <strong>futuro<\/strong> e , en o exercicio de este dereito , opta por la integraci\u00f3n de Galiza , libre e paccionadamente , como Comunidade Aut\u00f3noma en un Estado espa\u00f1ol plurinacional .", "verb": "futuro", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=futuro", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22339%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22futuro%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Notaba os efectos de as elecci\u00f3ns a o <strong>seu<\/strong> <strong>redor<\/strong> cando xurd\u00edan conflitos e en a curiosa intersecci\u00f3n entre as novas e vellas ideas .", "verb": "redor", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=redor", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01058064%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22redor%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "\u00c9 evidente que os escritores de obras para os m\u00e1is novos son debedores de o ensino , mais o certo \u00e9 que Contos por palabras se desmarca por la tem\u00e1tica variada de os relatos , por la aposta de a imaxinaci\u00f3n e fantas\u00eda , por la fina iron\u00eda e humor que atopamos en as s\u00faas p\u00e1xinas mais sobre todo porque o que narran estes dez contos que forman o libro nada te\u00f1en que ver con o mundo infantil e xuvenil , ag\u00e1s que estes tam\u00e9n poden achegar se a <strong>s\u00faa<\/strong> <strong>lectura<\/strong> .", "verb": "lectura", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=lectura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3afs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22706%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22lectura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Respecto a as pr\u00e1cticas relixiosas , Fiorello foi educado dentro de a Igrexa episcopal e foi membro de a Igrexa protestante toda a <strong>s\u00faa<\/strong> <strong>vida<\/strong> .", "verb": "vida", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=vida", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w04008006%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vida%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Desafortunadamente , o r\u00e1pido crecemento de a poboaci\u00f3n e a expansi\u00f3n urbana cubriron gran parte de estes ecosistemas con o <strong>seu<\/strong> <strong>desenvolvemento<\/strong> .", "verb": "desenvolvemento", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=desenvolvemento", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01046011%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22desenvolvemento%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}], "0": [{"sentence": "O seu so\u00f1o \u00e9 terminar aqu\u00ed a <strong>s\u00faa<\/strong> <strong>carreira<\/strong> profesional .", "verb": "carreira", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=carreira", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01103013%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22carreira%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "De onde v\u00e9n toda a <strong>s\u00faa<\/strong> <strong>enerx\u00eda<\/strong> ? Ou esa voz , que pode explotar con suficiente forza como para crear ondas de choque ?", "verb": "enerx\u00eda", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=enerx\u00eda", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01116018%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22enerx%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Con todo , o <strong>seu<\/strong> <strong>rival<\/strong> Prabowo Subianto tam\u00e9n declarou a victoria , o que confundiu a a cidadan\u00eda indonesia .", "verb": "rival", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=rival", "xpos=NCMS000", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01113058%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22rival%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Mu\u00ed\u00f1o presenta as <strong>s\u00faas<\/strong> novas <strong>creaci\u00f3ns<\/strong>", "verb": "creaci\u00f3ns", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=creaci\u00f3n", "xpos=Scfp", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "s\u00faas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfp", "Gender=Fem", "Number=Plur", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22535%22%20%3B%20A%20%5Bform%3D%22s%C3%BAas%22%5D%20%3B%20B%20%5Bform%3D%22creaci%C3%B3ns%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As\u00ed e todo , non houbo m\u00e1is reco\u00f1ecemento p\u00fablico de a s\u00faa resistencia en o per\u00edodo de guerra ou de o <strong>seu<\/strong> <strong>traballo<\/strong> humanitario ata despois de o fin de o r\u00e9xime comunista en Polonia .", "verb": "traballo", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=traballo", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01121052%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22traballo%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Tras a Revoluci\u00f3n Rusa de 1917 alg\u00fans pa\u00edses , como Finlandia , Polonia e os Estados B\u00e1lticos , ga\u00f1aron a <strong>s\u00faa<\/strong> <strong>independencia<\/strong> .", "verb": "independencia", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=independencia", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02013093%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22independencia%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Os pobos nativos americanos de toda Am\u00e9rica depend\u00edan de iso como base de os <strong>seus<\/strong> <strong>tratamentos<\/strong> m\u00e9dicos .", "verb": "tratamentos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=tratamento", "xpos=NCMP000", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MP0", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01029049%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22tratamentos%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "elaborado un primeiro documento de bases , apresentado o 23 de Xullo de o ano pasado , culmina agora un proceso de reflexi\u00f3n aberto e rigoroso en o que os participantes , a a marxe de calquera militancia ou directriz partidaria , puxeron o mellor de o seu saber e de a <strong>s\u00faa<\/strong> <strong>experiencia<\/strong> a o servizo de Galiza .", "verb": "experiencia", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=experiencia", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22334%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22experiencia%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>s\u00faa<\/strong> <strong>biograf\u00eda<\/strong> oficial tam\u00e9n afirma que Kim compuxo seis \u00f3peras e que lle gusta montar musicais complexos .", "verb": "biograf\u00eda", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=biograf\u00eda", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01114053%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22biograf%C3%ADa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "O ano seguinte , en 1977 , recibiu o distintivo de a American Friendship Medal por a postura amig\u00e1bel de a <strong>s\u00faa<\/strong> <strong>prensa<\/strong> en relaci\u00f3n con os Estados Unidos .", "verb": "prensa", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=prensa", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w02019085%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22prensa%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Cando se pousan , golpean outras part\u00edculas que a a <strong>s\u00faa<\/strong> <strong>vez<\/strong> poden ser lanzadas a o aire , iniciando unha reacci\u00f3n en cadea .", "verb": "vez", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=vez", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01040104%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vez%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Como este , parte de o dereito inalien\u00e1bel de Galiza , de os <strong>seus<\/strong> <strong>homes<\/strong> e de as s\u00faas mulleres , a decidir libre e democraticamente o seu futuro e , en o exercicio de este dereito , opta por la integraci\u00f3n de Galiza , libre e paccionadamente , como Comunidade Aut\u00f3noma en un Estado espa\u00f1ol plurinacional .", "verb": "homes", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=home", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "seus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3smp", "Gender=Masc", "Number=Plur", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22339%22%20%3B%20A%20%5Bform%3D%22seus%22%5D%20%3B%20B%20%5Bform%3D%22homes%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A deterioraci\u00f3n de a sa\u00fade de Hitchcock reduciu a s\u00faa produci\u00f3n en as d\u00faas \u00faltimas d\u00e9cadas de a <strong>s\u00faa<\/strong> <strong>vida<\/strong> .", "verb": "vida", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vida", "xpos=NCFS000", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3FS0", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01107013%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22vida%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "E as\u00ed como o de 1931 recoll\u00eda o mellor de a doutrina xur\u00eddica , econ\u00f3mica e pol\u00edtica de a <strong>s\u00faa<\/strong> <strong>\u00e9poca<\/strong> para as p\u00f3r a o servizo de o pa\u00eds , tam\u00e9n este \u00e9 ambicioso e exixente a o dese\u00f1ar o pa\u00eds por lo que se aposta _ equilibrado territorialmente , sustent\u00e1bel ambientalmente , xusto e avanzado socialmente _ e regular o goberno que se quere para ese pa\u00eds _ democr\u00e1tico , transparente e eficaz .", "verb": "\u00e9poca", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u00e9poca", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "s\u00faa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=Md3sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=3<\/b>", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22340%22%20%3B%20A%20%5Bform%3D%22s%C3%BAa%22%5D%20%3B%20B%20%5Bform%3D%22%C3%A9poca%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Lu\u00eds o Xerm\u00e1nico invadiu Moravia e substitu\u00edu a Mojm\u00edr I con o <strong>seu<\/strong> <strong>sobri\u00f1o<\/strong> Rastiv , quen se converteu en San Rastislav .", "verb": "sobri\u00f1o", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=sobri\u00f1o", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "seu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=seu", "xpos=DP3MS0", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "Poss=Yes"], "label": "yes", "route": {"0": "seu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22w01010048%22%20%3B%20A%20%5Bform%3D%22seu%22%5D%20%3B%20B%20%5Bform%3D%22sobri%C3%B1o%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "Por la <strong>mi\u00f1a<\/strong> <strong>parte<\/strong> , eu son mestra en ikebana por las escolas Sogetsu e Koriu , despois de sete anos de pr\u00e1ctica en o Xap\u00f3n .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=parte", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22936%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>Nosa<\/strong> <strong>Terra<\/strong> prepara un libro que recoller\u00e1 as s\u00faas colaboraci\u00f3ns", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22608%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "\u00a1 <strong>meu<\/strong> <strong>Deus<\/strong> !", "verb": "Deus", "verbFeats": ["upos=PROPN", "deprel=root", "lemma=deus", "xpos=Sp00", "<b>Person=3<\/b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sms", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2272%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22Deus%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "A <strong>mi\u00f1a<\/strong> <strong>postura<\/strong> sobre iso v\u00e9n de longo e o mesmo sucede con o meu partido .", "verb": "postura", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=postura", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22269%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22postura%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Reclaman as\u00ed mesmo , a participaci\u00f3n directa de Galiza en a UE , cando os asuntos sexan de o <strong>noso<\/strong> <strong>interese<\/strong> , e a capacidade de definir as pol\u00edticas estatais ( coincidente en o fondo con Iniciativas 21 ) .", "verb": "interese", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=interese", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22518%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22interese%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Villar explicou para A <strong>Nosa<\/strong> <strong>Terra<\/strong> que realizar\u00e1 unha intervenci\u00f3n \" cr\u00edtica con esta comisi\u00f3n de investigaci\u00f3n , cr\u00edtica con a xesti\u00f3n de a cat\u00e1strofe , e en a que abordaremos cuesti\u00f3ns como a falla de medios , a manipulaci\u00f3n e a situaci\u00f3n actual , que nos obriga a non poder pasar p\u00e1xina en o tema Prestige .", "verb": "terra", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=terra", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22374%22%20%3B%20A%20%5Bform%3D%22Nosa%22%5D%20%3B%20B%20%5Bform%3D%22Terra%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Lembrei me de Mabel Ribera , de o seu discurso en a recepci\u00f3n de o Goya , non creo que cando falaba de a necesidade de que os nosos actores e actrices fosen co\u00f1ecidos f\u00f3ra de o <strong>noso<\/strong> <strong>pa\u00eds<\/strong> estivese a falar de papeis coma este .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22595%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "S\u00f3 as pombas de os <strong>nosos<\/strong> <strong>labios<\/strong> poden frear estes preparativos .", "verb": "labios", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=labio", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "nosos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pmp", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22438%22%20%3B%20A%20%5Bform%3D%22nosos%22%5D%20%3B%20B%20%5Bform%3D%22labios%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "En a <strong>mi\u00f1a<\/strong> primeira <strong>achega<\/strong> a esta Comisi\u00f3n de Investigaci\u00f3n quixera dicir lles que esta cat\u00e1strofe non desaparece porque nos empe\u00f1emos en mirar para outro lado .", "verb": "achega", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=achega", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "mi\u00f1a", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=Md1sfs", "Gender=Fem", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22385%22%20%3B%20A%20%5Bform%3D%22mi%C3%B1a%22%5D%20%3B%20B%20%5Bform%3D%22achega%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Os galegos diferenciamos nos de outros pobos por termos unha cultura diferente , un pa\u00eds rico mal xestionado , a mocidade cami\u00f1o de a emigraci\u00f3n , e a estas alturas de a historia \u00e9 inadmis\u00edbel que se siga denigrando o noso acento , a <strong>nosa<\/strong> <strong>identidade<\/strong> .", "verb": "identidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=identidade", "xpos=Scfs", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "nosa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pfs", "Gender=Fem", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22600%22%20%3B%20A%20%5Bform%3D%22nosa%22%5D%20%3B%20B%20%5Bform%3D%22identidade%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Non vira moitos de os episodios cando o <strong>meu<\/strong> <strong>tel\u00e9fono<\/strong> comezou a iluminar se .", "verb": "tel\u00e9fono", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=tel\u00e9fono", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "meu", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=meu", "xpos=DP1MSS", "Gender=Masc", "Number=Sing", "Number[psor]=Sing", "<b>Person=1<\/b>", "Poss=Yes"], "label": "no", "route": {"0": "meu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n01137010%22%20%3B%20A%20%5Bform%3D%22meu%22%5D%20%3B%20B%20%5Bform%3D%22tel%C3%A9fono%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}, {"sentence": "As artes visuais avanzaron porque est\u00e1n a o <strong>noso<\/strong> <strong>arredor<\/strong> .", "verb": "arredor", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=arredor", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22801%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22arredor%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Todos os d\u00edas o vemos en os <strong>nosos<\/strong> <strong>medios<\/strong> e en os de os compa\u00f1eiros .", "verb": "medios", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=medio", "xpos=Scmp", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "nsubj": "nosos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pmp", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22488%22%20%3B%20A%20%5Bform%3D%22nosos%22%5D%20%3B%20B%20%5Bform%3D%22medios%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "Fronte a unha pleiade de autores ( cineastas ou escritores ) que preferiron pasar por alto o <strong>noso<\/strong> <strong>pa\u00eds<\/strong> ou que o usaron como recurso folcl\u00f3rico , Amen\u00e1bar demostrou que ter sensibilidade a este respecto non \u00e9 tan dif\u00edcil , nin converte o produto en algo raro .", "verb": "pa\u00eds", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=pa\u00eds", "xpos=Scms", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=Md1pms", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-TreeGal%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22870%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22pa%C3%ADs%22%5D%20%20%7D", "treebankName": "UD_Galician-TreeGal"}, {"sentence": "As \u00faltimas cifras corresponden a o 24 de outubro de o ano pasado e indican nos que o <strong>noso<\/strong> <strong>di\u00e9sel<\/strong> custa 1,335 euros por litro , en contraste con a media de a eurozona de 1,165 euros .", "verb": "di\u00e9sel", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=di\u00e9sel", "xpos=NCMS000", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "nsubj": "noso", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=noso", "xpos=DP1MSP", "Gender=Masc", "Number=Sing", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes"], "label": "no", "route": {"0": "noso"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Galician-PUD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22n04006014%22%20%3B%20A%20%5Bform%3D%22noso%22%5D%20%3B%20B%20%5Bform%3D%22di%C3%A9sel%22%5D%20%20%7D", "treebankName": "UD_Galician-PUD"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Galician \u00b7 NP head-DET_Person", "roleA": "det"
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

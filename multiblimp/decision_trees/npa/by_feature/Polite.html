@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP 2.0 - Agreement Overview</title>
+    <title>MultiBLiMP – Morphological Agreement – Decision Trees</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -221,7 +221,7 @@
         /* NPA's own group section: a role-pair/feature card grid with a
            toggle switching which axis is the top-level grouping, instead
            of the flat per-panel grid other groups use -- see
-           word_order.viz_overview._npa_toggle_group_html. */
+           agreement_trees.report.viz_overview._npa_toggle_group_html. */
         .npa-view-toggle {
             display: inline-flex;
             border: 1px solid var(--border-hover);
@@ -279,7 +279,7 @@
         <div class="header">
             <div class="title-section">
                 <div class="back-links"><a href="../../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Main Page</a><a href="../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Overview</a></div>
-                <h1>MultiBLiMP 2.0 &mdash; Agreement Overview</h1>
+                <h1>MultiBLiMP &ndash; Morphological Agreement &ndash; Decision Trees</h1>
                 <p class="description">
                     This page gives an overview of agreement predictability across dependency relations and languages,
                     grouped by what the subject agrees with (verb, participle, auxiliary, ...). Each panel shows the
@@ -367,6 +367,16 @@
             };
         })();
 
+        // Axes start at 0.44 unless some point, in any panel, lies below it (a multi-class view, e.g.
+        // the data-debugging pages' split unk classes, can have a root accuracy under 0.5); then
+        // every panel's axes extend to the lowest such point.
+        const AX_LO_FIXED = 0.44;
+        const AX_LO = AX_LO_FIXED !== null ? AX_LO_FIXED : (() => {
+            const vals = Object.values(allData).flatMap(g => (g.acc || []).flatMap(d => [d.base, d.tree]))
+                .filter(v => Number.isFinite(v));
+            return vals.length ? Math.min(0.44, Math.floor((Math.min(...vals) - 0.03) * 20) / 20) : 0.44;
+        })();
+
         function renderMiniPlot(el, points) {
             const url = el.dataset.url;
             // Some languages' accuracy is NaN (too few items to compute it);
@@ -376,7 +386,12 @@
 
             // y = x reference over the fixed axis range: points above it are
             // languages where the tree beat the majority-class baseline.
-            const baseLine = { x: [0.5, 1], y: [0.5, 1] };
+            // Every panel shares the lowest lower bound any panel needs (see AX_LO), so all the
+            // charts have the same x and y scale.
+            const axLo = AX_LO;
+            const axTicks = [];
+            for (let t = Math.ceil(axLo * 10) / 10; t <= 1.0001; t += 0.1) axTicks.push(Math.round(t * 10) / 10);
+            const baseLine = { x: [Math.min(0.5, axLo), 1], y: [Math.min(0.5, axLo), 1] };
 
             const traceLine = {
                 x: baseLine.x,
@@ -399,7 +414,7 @@
                 marker: {
                     size: points.map(d => d.n_items),
                     sizemode: 'area',
-                    sizeref: 2 * Math.max(...points.map(d => d.n_items)) / (20 ** 2),
+                    sizeref: 2 * Math.max(1, ...points.map(d => d.n_items)) / (20 ** 2),
                     sizemin: 3,
                     color: points.map(d => d.color ?? THEME.accent),
                     opacity: 0.75,
@@ -417,7 +432,7 @@
                 // below chance in a majority-vote leaf) rather than autoscaled, so
                 // the same fixed reference points hold across every panel instead
                 // of each tightly-clustered panel silently rescaling to its own
-                // tiny range. Upper bound 1.02, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
+                // tiny range. Upper bound 1.05, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
                 // exactly at an edge has real radius (area-scaled by n_items) and
                 // would otherwise clip against the plot border.
                 xaxis: {
@@ -426,8 +441,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 yaxis: {
@@ -436,8 +451,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 // Transparent, not a fixed white/panel color: .panel paints its

@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Irish", "languageName": "Irish", "accuracy": "99.8%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "2,518", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "99.8%", "trainAccuracy": "99.8%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 1.0, "pooledTestN": 280, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 2798, "pooledUnkRows": 405, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "Cadhan", "rows": 70, "unkRows": 12, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Irish/UD_Irish-Cadhan.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "IDT", "rows": 2728, "unkRows": 393, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Irish/UD_Irish-IDT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 2514, "color": "var(--yes)"}, {"cls": "no", "cnt": 4, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 2518, "H": 0.0189, "acc": 0.9982, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2514, "color": "var(--yes)"}, {"cls": "no", "cnt": 4, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 2514, "correctSwaps": 696, "pairRoleCounts": {"A": 696}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Chonaic mise mo chreach is mo chr\u00e1 iad Is n\u00edl dh\u00e1 bharr a'm ach <strong>cn\u00e1mha</strong> <strong>tinn</strong> , I gc\u00f3na\u00ed ag faire orthu nach bocht an c\u00e1s \u00e9 A bheith ar garda de l\u00f3 is d' o\u00edche .", "verb": "cn\u00e1mha", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cn\u00e1mh", "xpos=Noun", "Case=Nom", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "tinn", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=tinn", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221350%22%20%3B%20A%20%5Bform%3D%22tinn%22%5D%20%3B%20B%20%5Bform%3D%22cn%C3%A1mha%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cheapf\u00e1 ar dt\u00fas nach n-aireof\u00e1 ar do chloigeann \u00ed , ach bheadh a fhios agat d\u00e1 laghad suarach <strong>gortach</strong> <strong>\u00ed</strong> go raibh s\u00ed ann in \u00e1it eic\u00ednt , agus gur ceist eile f\u00f3s \u00ed d' ualach g\u00e9agach na croise a chaithf\u00ed a iompar .", "verb": "\u00ed", "verbFeats": ["upos=PRON", "deprel=nmod", "lemma=\u00ed", "xpos=Pers", "<b>Gender=Fem</b>", "Number=Sing", "Person=3"], "nsubj": "gortach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=gortach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22106%22%20%3B%20A%20%5Bform%3D%22gortach%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Thug na <strong>p\u00e1ist\u00ed</strong> ruaig <strong>amh\u00e1in</strong> ar an siopa sin .", "verb": "p\u00e1ist\u00ed", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u00e1iste", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22553%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A1ist%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Nuair a fh\u00f3gair Bord na nGear\u00e1n de chuid na Scoile nach raibh s\u00e9 inni\u00fail \u00e9isteacht lena c\u00e1s , thug s\u00ed an c\u00e1s chun <strong>c\u00fairte</strong> riarach\u00e1in <strong>Ghearm\u00e1nach</strong> .", "verb": "c\u00fairte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=c\u00fairt", "xpos=Noun", "Case=Gen", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ghearm\u00e1nach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Gearm\u00e1nach", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224139%22%20%3B%20A%20%5Bform%3D%22Ghearm%C3%A1nach%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%BAirte%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "\" D\u00e9antar cinneadh ar chuile ch\u00e1s ann f\u00e9in agus breathna\u00edonn an ch\u00fairt ar an gc\u00e1s \u00f3 taobh <strong>thuismitheora</strong> \" <strong>stuama</strong> agus c\u00f3ir \" .", "verb": "thuismitheora", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=tuismitheoir", "xpos=Noun", "Case=Gen", "Form=Len", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "stuama", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=stuama", "xpos=Adj", "Case=Gen", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224005%22%20%3B%20A%20%5Bform%3D%22stuama%22%5D%20%3B%20B%20%5Bform%3D%22thuismitheora%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Chuaigh m\u00e9 amach <strong>maidin</strong> <strong>amh\u00e1in</strong> go moch Mar a bhfuil an garra\u00ed pr\u00e1ta\u00ed agam ar l\u00e9ibheann an tsl\u00e9ibhe Agus sarar leag m\u00e9 cos ar ghruaimh\u00edn an iomaire Fuair m\u00e9 an boladh br\u00e9an le gaoth .", "verb": "maidin", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=maidin", "xpos=Noun", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222689%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22maidin%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "L\u00e1imhse\u00e1lann Comhairle Cathrach Bhaile \u00c1tha Cliath ceadanna le haghaidh n\u00edos m\u00f3 n\u00e1 4,000 ionad ar an tsr\u00e1id a bhfuil ina measc droichid , tr\u00e1nna agus p\u00e1irceanna , chomh maith le taobh istigh <strong>foirgneamh</strong> sibhialta <strong>\u00e9ags\u00fail</strong> .", "verb": "foirgneamh", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=foirgneamh", "xpos=Noun", "Case=Gen", "<b>Gender=Masc</b>", "NounType=Weak", "Number=Plur"], "nsubj": "\u00e9ags\u00fail", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e9ags\u00fail", "xpos=Adj", "Case=Gen", "<b>Gender=Masc</b>", "NounType=Weak", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223942%22%20%3B%20A%20%5Bform%3D%22%C3%A9ags%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22foirgneamh%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Is de bharr a chont\u00fairt don neodracht mh\u00edleata is m\u00f3 a bh\u00ed imn\u00ed , sin agus an tsl\u00ed shotalach ar chaith na p\u00e1irtithe , na ceardchumainn , eagras na bhfost\u00f3ir\u00ed , agus an <strong>Cliarlathas</strong> <strong>Caitliceach</strong> leis an bpobal tr\u00e1th an Reifrinn .", "verb": "cliarlathas", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=cliarlathas", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "caitliceach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Caitliceach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221337%22%20%3B%20A%20%5Bform%3D%22Caitliceach%22%5D%20%3B%20B%20%5Bform%3D%22Cliarlathas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Murab ionann is na gearrsc\u00e9alta a bhfuil <strong>rian</strong> <strong>l\u00e1idir</strong> an nua-aoiseachais orthu , baineann Gr\u00f3ga Cloch le leagan amach R\u00e9 na hAthbheochana ar an \u00farsc\u00e9al , leagan amach a th\u00e1inig \u00f3 thuiscint\u00ed an 19\u00fa haois i Sasana ar an \u00farsc\u00e9al r\u00e9ala\u00edoch agus a \u00e9il\u00edos sc\u00e9al lean\u00fanach \u00e1 reic go croineola\u00edoch ag \u00fadar uilefhiosach .", "verb": "rian", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=rian", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "l\u00e1idir", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=l\u00e1idir", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221795%22%20%3B%20A%20%5Bform%3D%22l%C3%A1idir%22%5D%20%3B%20B%20%5Bform%3D%22rian%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "An tseachtain seo caite phl\u00e9igh muid domhan saibhir an iarnua-aimsearachais mar mhodh machnaimh agus thug muid faoi deara : imn\u00ed faoin <strong>taobh</strong> ' <strong>dorcha</strong> ' den r\u00e9as\u00fanachas nua-aimseartha ; agus sp\u00e9is i nd\u00edth\u00f3g\u00e1il na gcoincheapa nua-aimseartha a bhfuil cuma chomh socair orthu ar n\u00f3s ' norm\u00e1ltacht ' agus ' f\u00e9ini\u00falacht ' .", "verb": "taobh", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=taobh", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "dorcha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=dorcha", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22967%22%20%3B%20A%20%5Bform%3D%22dorcha%22%5D%20%3B%20B%20%5Bform%3D%22taobh%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "N\u00ed fol\u00e1ir iarratas a dh\u00e9anamh <strong>taobh</strong> <strong>istigh</strong> de 6 mh\u00ed \u00f3n am a fuarthas deon\u00fa ionada\u00edochta .", "verb": "taobh", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=taobh", "xpos=Noun", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "istigh", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=istigh", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223513%22%20%3B%20A%20%5Bform%3D%22istigh%22%5D%20%3B%20B%20%5Bform%3D%22taobh%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "N\u00ed m\u00f3r don ch\u00fairt cinneadh a dh\u00e9anamh ar theip ar an tuismitheoir ina <strong>d(h)ualgas</strong> <strong>mor\u00e1lta</strong> sol\u00e1thar cu\u00ed a chur ar f\u00e1il don ph\u00e1iste bunaithe ar a (h)acmhainn\u00ed .", "verb": "d(h)ualgas", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=dualgas", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "Person=3"], "nsubj": "mor\u00e1lta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mor\u00e1lta", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223635%22%20%3B%20A%20%5Bform%3D%22mor%C3%A1lta%22%5D%20%3B%20B%20%5Bform%3D%22d%28h%29ualgas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cuims\u00edonn an cruinni\u00fa mullaigh teilif\u00eds , scann\u00e1n , cluich\u00edocht , beochan , <strong>r\u00e9altacht</strong> <strong>fh\u00edor\u00fail</strong> , l\u00edonra\u00ed s\u00f3isialta , ard\u00e1in nua chraolt\u00f3ireachta agus gach gn\u00e9 de sc\u00e9ala\u00edocht fh\u00edse .", "verb": "r\u00e9altacht", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=r\u00e9altacht", "xpos=Noun", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "fh\u00edor\u00fail", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00edor\u00fail", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223781%22%20%3B%20A%20%5Bform%3D%22fh%C3%ADor%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22r%C3%A9altacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Bh\u00ed m\u00f3rchuid den Chruinni\u00fa Mullaigh gafa le d\u00edosp\u00f3ireachta\u00ed mar gheall ar conas a chuideoidh t\u00edortha saibhre an ' tuaiscirt ' le t\u00edortha an Tr\u00ed\u00fa Domhan chun dul i ngleic lena bhfadhbanna geilleagair agus comhshaoil , agus chun a bheith ag forbairt ag an <strong>am</strong> <strong>c\u00e9anna</strong> .", "verb": "am", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=am", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "c\u00e9anna", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=c\u00e9anna", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222439%22%20%3B%20A%20%5Bform%3D%22c%C3%A9anna%22%5D%20%3B%20B%20%5Bform%3D%22am%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "' Mar gur <strong>Eola\u00edocht</strong> <strong>Sh\u00f3isialta</strong> at\u00e1 sa T\u00edreola\u00edocht Dhaonna , n\u00ed haon iontas \u00e9 go mbeadh tionchar ag forbairt\u00ed ar fud na nEola\u00edochta\u00ed S\u00f3isialta ar an t\u00edreola\u00edocht chomh maith .", "verb": "eola\u00edocht", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=eola\u00edocht", "xpos=Noun", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "sh\u00f3isialta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00f3isialta", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221522%22%20%3B%20A%20%5Bform%3D%22Sh%C3%B3isialta%22%5D%20%3B%20B%20%5Bform%3D%22Eola%C3%ADocht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Glacaimid le tabhartais leabhar faoi r\u00e9ir ag <strong>crit\u00e9ir</strong> <strong>\u00e1irithe</strong> ( F\u00e9ach Aguis\u00edn C le haghaidh mionsonra\u00ed ) .", "verb": "crit\u00e9ir", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=crit\u00e9ar", "xpos=Noun", "Case=Nom", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "\u00e1irithe", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e1irithe", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "NounType=Slender", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223697%22%20%3B%20A%20%5Bform%3D%22%C3%A1irithe%22%5D%20%3B%20B%20%5Bform%3D%22crit%C3%A9ir%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Chuir Se\u00f3n Luid faoi i gContae an Chl\u00e1ir nuair a bh\u00ed s\u00e9 timpeall deich mbliana fichead d' aois , agus d\u00e1la oid\u00ed eile , an tr\u00e1th sin , chaith s\u00e9 <strong>saol</strong> <strong>f\u00e1nach</strong> , seal in \u00e1it agus seal in \u00e1it eile .", "verb": "saol", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=saol", "xpos=Noun", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "f\u00e1nach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00e1nach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221846%22%20%3B%20A%20%5Bform%3D%22f%C3%A1nach%22%5D%20%3B%20B%20%5Bform%3D%22saol%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "\u00d3ir t\u00e1 Nin\u00ec ach oiread leis an l\u00e1mhscr\u00edbhinn imithe ina rian ar \u00edochtar mo chro\u00ed mar a bheadh rud \u00e9igin \u00edonghlan dothuigthe ann , rud ceomhar diamhair mar is dual do na briongl\u00f3id\u00ed , an p\u00e9ire acu tar \u00e9is le\u00e1 ina ch\u00e9ile ina n-aon <strong>rian</strong> <strong>amh\u00e1in</strong> , faoi mar a bheadh Nin\u00ec d\u00edscaoilte agus an l\u00e1mhscr\u00edbhinn ina l\u00e1mha aici , an l\u00e1mhscr\u00edbhinn in \u00e9ind\u00ed l\u00e9i , ina cuid dhl\u00fath di , \u00ed aontaithe ar fad lena pearsa si\u00fad .", "verb": "rian", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=rian", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "Person=3"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221719%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22rian%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "C\u00e9 go moltar don tosnaitheoir an fhli\u00fait neamheochrach a sheinnt is den <strong>dearadh</strong> agus den gcaighde\u00e1n d\u00edreach <strong>c\u00e9anna</strong> \u00e9 leis an bhfli\u00fait eochrach , at\u00e1 n\u00edos costas\u00fala .", "verb": "dearadh", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=dearadh", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "c\u00e9anna", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=c\u00e9anna", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2275%22%20%3B%20A%20%5Bform%3D%22c%C3%A9anna%22%5D%20%3B%20B%20%5Bform%3D%22dearadh%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}]}, "PAIRS": [{"origSentence": "Le Teitheadh na nIarla\u00ed thit an t\u00f3in as an ch\u00f3ras Ghaelach agus f\u00e1gadh na Gaeil gan <strong>cumhacht</strong> <strong>pholaiti\u00fail</strong> n\u00e1 eacnama\u00edoch .", "swapSentence": "Le Teitheadh na nIarla\u00ed thit an t\u00f3in as an ch\u00f3ras Ghaelach agus f\u00e1gadh na Gaeil gan <strong>cumhacht</strong> <strong>polaiti\u00fail</strong> n\u00e1 eacnama\u00edoch .", "nsubj": "pholaiti\u00fail", "verb": "cumhacht", "nsubjFeats": ["lemma=polaiti\u00fail", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem</b>", "Number=Sing"], "verbFeats": ["lemma=cumhacht", "deprel=obl", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "polaiti\u00fail", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221192%22%20%3B%20A%20%5Bform%3D%22pholaiti%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22cumhacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "Nuair a sh\u00edl s\u00ed sin a dh\u00e9anamh ( n\u00ed raibh fhios agam-sa go raibh s\u00ed le n-a dh\u00e9anamh mar bh\u00ed na s\u00faile d\u00fanta agam ) , chuireas cosamhlacht fh\u00edochmhar orm f\u00e9in , leigeas dh\u00e1 <strong>bh\u00fairt</strong> <strong>uathbh\u00e1sach'</strong> asam , mar leigfeadh tarbh agus an sgian ar a sg\u00f3rnach , agus thosuigheas ag cur na gcor dh\u00edom ar n\u00f3s eascon a bheadh i ngreim glaice ag duine .", "swapSentence": "Nuair a sh\u00edl s\u00ed sin a dh\u00e9anamh ( n\u00ed raibh fhios agam-sa go raibh s\u00ed le n-a dh\u00e9anamh mar bh\u00ed na s\u00faile d\u00fanta agam ) , chuireas cosamhlacht fh\u00edochmhar orm f\u00e9in , leigeas dh\u00e1 <strong>bh\u00fairt</strong> <strong>uaf\u00e1sacha</strong> asam , mar leigfeadh tarbh agus an sgian ar a sg\u00f3rnach , agus thosuigheas ag cur na gcor dh\u00edom ar n\u00f3s eascon a bheadh i ngreim glaice ag duine .", "nsubj": "uathbh\u00e1sach'", "verb": "bh\u00fairt", "nsubjFeats": ["lemma=uaf\u00e1sach", "Case=Nom", "<b>Gender=Fem</b>", "NounType=Slender", "Number=Plur"], "verbFeats": ["lemma=b\u00fair", "deprel=obj", "upos=NOUN", "Case=Nom", "Form=Len"], "ungrammatical": "uaf\u00e1sacha", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22deoraidheacht-906%22%20%3B%20A%20%5Bform%3D%22uathbh%C3%A1sach%27%22%5D%20%3B%20B%20%5Bform%3D%22bh%C3%BAirt%22%5D%20%20%7D", "treebankName": "UD_Irish-Cadhan", "leaf": "0"}, {"origSentence": "Faoi sti\u00fair theagasc\u00f3ir\u00ed oilte agus mheant\u00f3ir\u00ed , cuireann na h\u00f3g\u00e1naigh lena gcuid inni\u00falachta ar r\u00edomhair\u00ed , chomh maith le f\u00e9inmhuin\u00edn , scileanna agus <strong>soghluaisteacht</strong> <strong>sh\u00f3isialta</strong> a fhorbairt , a chuid\u00edonn leo ar feadh a saoil .", "swapSentence": "Faoi sti\u00fair theagasc\u00f3ir\u00ed oilte agus mheant\u00f3ir\u00ed , cuireann na h\u00f3g\u00e1naigh lena gcuid inni\u00falachta ar r\u00edomhair\u00ed , chomh maith le f\u00e9inmhuin\u00edn , scileanna agus <strong>soghluaisteacht</strong> <strong>s\u00f3isialta</strong> a fhorbairt , a chuid\u00edonn leo ar feadh a saoil .", "nsubj": "sh\u00f3isialta", "verb": "soghluaisteacht", "nsubjFeats": ["lemma=s\u00f3isialta", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem</b>", "Number=Sing"], "verbFeats": ["lemma=soghluaisteacht", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "s\u00f3isialta", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224404%22%20%3B%20A%20%5Bform%3D%22sh%C3%B3isialta%22%5D%20%3B%20B%20%5Bform%3D%22soghluaisteacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "T\u00e1 dh\u00e1 sprioc againn , <strong>ceann</strong> <strong>fadt\u00e9armach</strong> agus ceann gearrth\u00e9armach , agus muid ag cur leis an mbaili\u00fach\u00e1n .", "swapSentence": "T\u00e1 dh\u00e1 sprioc againn , <strong>ceann</strong> <strong>fhadt\u00e9armach</strong> agus ceann gearrth\u00e9armach , agus muid ag cur leis an mbaili\u00fach\u00e1n .", "nsubj": "fadt\u00e9armach", "verb": "ceann", "nsubjFeats": ["lemma=fadt\u00e9armach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=ceann", "deprel=dislocated", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "fhadt\u00e9armach", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223871%22%20%3B%20A%20%5Bform%3D%22fadt%C3%A9armach%22%5D%20%3B%20B%20%5Bform%3D%22ceann%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "N\u00ed f\u00e9idir cl\u00e1sal i gComhaont\u00fa Scartha - a deir nach nd\u00e9anfaidh c\u00e9ile / <strong>p\u00e1irt\u00ed</strong> <strong>sibhialta</strong> cothabh\u00e1il a lorg sa todhcha\u00ed n\u00f3 m\u00e9ad\u00fa ar chothabh\u00e1il a lorg - a chur i bhfeidhm .", "swapSentence": "N\u00ed f\u00e9idir cl\u00e1sal i gComhaont\u00fa Scartha - a deir nach nd\u00e9anfaidh c\u00e9ile / <strong>p\u00e1irt\u00ed</strong> <strong>shibhialta</strong> cothabh\u00e1il a lorg sa todhcha\u00ed n\u00f3 m\u00e9ad\u00fa ar chothabh\u00e1il a lorg - a chur i bhfeidhm .", "nsubj": "sibhialta", "verb": "p\u00e1irt\u00ed", "nsubjFeats": ["lemma=sibhialta", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=p\u00e1irt\u00ed", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "shibhialta", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223640%22%20%3B%20A%20%5Bform%3D%22sibhialta%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A1irt%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "\" T\u00e1 r\u00f3l t\u00e1bhachtach ag fiontair sh\u00f3isialta i dtac\u00fa le pobail \u00e1iti\u00fala , i <strong>gcuimsi\u00fa</strong> <strong>s\u00f3isialta</strong> a chur chun cinn , agus i gcuidi\u00fa leo si\u00fad is m\u00f3 at\u00e1 scoite amach \u00f3n margadh saothair . \"", "swapSentence": "\" T\u00e1 r\u00f3l t\u00e1bhachtach ag fiontair sh\u00f3isialta i dtac\u00fa le pobail \u00e1iti\u00fala , i <strong>gcuimsi\u00fa</strong> <strong>sh\u00f3isialta</strong> a chur chun cinn , agus i gcuidi\u00fa leo si\u00fad is m\u00f3 at\u00e1 scoite amach \u00f3n margadh saothair . \"", "nsubj": "s\u00f3isialta", "verb": "gcuimsi\u00fa", "nsubjFeats": ["lemma=s\u00f3isialta", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=cuimsi\u00fa", "deprel=obj", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Ecl"], "ungrammatical": "sh\u00f3isialta", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223430%22%20%3B%20A%20%5Bform%3D%22s%C3%B3isialta%22%5D%20%3B%20B%20%5Bform%3D%22gcuimsi%C3%BA%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "Tugann <strong>cuid</strong> <strong>mh\u00f3r</strong> den \u00e1bhar fianaise ar na hathruithe s\u00edora\u00ed ar shr\u00e1id-dreacha agus fhoirgnimh Bhaile \u00c1tha Cliath , chomh maith le himeachta\u00ed t\u00e1bhachtacha s\u00f3isialta , cult\u00fartha , sp\u00f3irt agus polaiti\u00fala sa Chathair .", "swapSentence": "Tugann <strong>cuid</strong> <strong>m\u00f3r</strong> den \u00e1bhar fianaise ar na hathruithe s\u00edora\u00ed ar shr\u00e1id-dreacha agus fhoirgnimh Bhaile \u00c1tha Cliath , chomh maith le himeachta\u00ed t\u00e1bhachtacha s\u00f3isialta , cult\u00fartha , sp\u00f3irt agus polaiti\u00fala sa Chathair .", "nsubj": "mh\u00f3r", "verb": "cuid", "nsubjFeats": ["lemma=m\u00f3r", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem</b>", "Number=Sing"], "verbFeats": ["lemma=cuid", "deprel=nsubj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "m\u00f3r", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223108%22%20%3B%20A%20%5Bform%3D%22mh%C3%B3r%22%5D%20%3B%20B%20%5Bform%3D%22cuid%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "Mar thoradh ar rannph\u00e1irt\u00edocht an <strong>phobail</strong> <strong>\u00e1iti\u00fail</strong> th\u00e1inig molta\u00ed chun cinn um ghn\u00edomhartha chun feasacht a mh\u00fascailt faoin Mainistir .", "swapSentence": "Mar thoradh ar rannph\u00e1irt\u00edocht an <strong>phobail</strong> <strong>\u00e1iti\u00fala</strong> th\u00e1inig molta\u00ed chun cinn um ghn\u00edomhartha chun feasacht a mh\u00fascailt faoin Mainistir .", "nsubj": "\u00e1iti\u00fail", "verb": "phobail", "nsubjFeats": ["lemma=\u00e1iti\u00fail", "xpos=Adj", "Case=Gen", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=pobal", "deprel=nmod", "upos=NOUN", "xpos=Noun", "Case=Gen", "Form=Len"], "ungrammatical": "\u00e1iti\u00fala", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[gen]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224839%22%20%3B%20A%20%5Bform%3D%22%C3%A1iti%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22phobail%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "Ionas nach bhf\u00e1gfar na r\u00e9igi\u00fain Ghaeltachta taobh thiar , t\u00e1 dul chun cinn d\u00e9anta ag Gcom ar bhealach strucht\u00fartha agus t\u00e1 l\u00edon suntasach forbairt\u00ed d\u00e9anta acu gur f\u00e9idir a \u00fas\u00e1id mar shamhlacha i <strong>gcur</strong> i bhfeidhm <strong>forleathan</strong> sna blianta at\u00e1 romhainn .", "swapSentence": "Ionas nach bhf\u00e1gfar na r\u00e9igi\u00fain Ghaeltachta taobh thiar , t\u00e1 dul chun cinn d\u00e9anta ag Gcom ar bhealach strucht\u00fartha agus t\u00e1 l\u00edon suntasach forbairt\u00ed d\u00e9anta acu gur f\u00e9idir a \u00fas\u00e1id mar shamhlacha i <strong>gcur</strong> i bhfeidhm <strong>fhorleathan</strong> sna blianta at\u00e1 romhainn .", "nsubj": "forleathan", "verb": "gcur", "nsubjFeats": ["lemma=forleathan", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=cur", "deprel=nmod", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Ecl"], "ungrammatical": "fhorleathan", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224743%22%20%3B%20A%20%5Bform%3D%22forleathan%22%5D%20%3B%20B%20%5Bform%3D%22gcur%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}, {"origSentence": "Is \u00e9 at\u00e1 ann n\u00e1 margadh agus <strong>cruinni\u00fa</strong> mullaigh <strong>domhanda</strong> do ghn\u00f3 na teilif\u00edse agus na siamsa\u00edochta digit\u00ed , tr\u00ed phl\u00e9 ardleibh\u00e9il a chur ar f\u00e1il faoi threochta\u00ed l\u00e1rnacha sa tionscal \u00e1bhair domhanda .", "swapSentence": "Is \u00e9 at\u00e1 ann n\u00e1 margadh agus <strong>cruinni\u00fa</strong> mullaigh <strong>dhomhanda</strong> do ghn\u00f3 na teilif\u00edse agus na siamsa\u00edochta digit\u00ed , tr\u00ed phl\u00e9 ardleibh\u00e9il a chur ar f\u00e1il faoi threochta\u00ed l\u00e1rnacha sa tionscal \u00e1bhair domhanda .", "nsubj": "domhanda", "verb": "cruinni\u00fa", "nsubjFeats": ["lemma=domhanda", "xpos=Adj", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing"], "verbFeats": ["lemma=cruinni\u00fa", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "dhomhanda", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224295%22%20%3B%20A%20%5Bform%3D%22domhanda%22%5D%20%3B%20B%20%5Bform%3D%22cruinni%C3%BA%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "0"}]};
+const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Irish", "languageName": "Irish", "accuracy": "99.6%", "testAccuracy": "99.6%", "testN": 284, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "2,547", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "99.5%", "trainAccuracy": "99.6%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9964788732394366, "pooledTestN": 284, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 2831, "pooledUnkRows": 387, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "Cadhan", "rows": 70, "unkRows": 12, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Irish/UD_Irish-Cadhan.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "IDT", "rows": 2761, "unkRows": 375, "status": "ok", "excluded": false, "reason": null, "acc": 0.9963898916967509, "pooledAcc": 0.9963898916967509, "delta": 0.0, "diverges": false, "href": "Irish/UD_Irish-IDT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 2534, "color": "var(--yes)"}, {"cls": "no", "cnt": 13, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 2536, "H": 0.0257, "acc": 0.9974, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2530, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 2530, "correctSwaps": 661, "pairRoleCounts": {"A": 661}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 11, "H": 0.9544, "acc": 0.625, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 4, "color": "var(--yes)"}, {"cls": "no", "cnt": 7, "color": "var(--no)"}], "rule": "predict: no / yes", "predicted": "no / yes", "majorityLabel": "no", "keep": false, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 2547, "H": 0.0477, "acc": 0.9947, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 2534, "color": "var(--yes)"}, {"cls": "no", "cnt": 13, "color": "var(--no)"}], "rule": "ADJ.Degree = Cmp,Sup", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "\u201c Brisfidh Dr\u00fatar isteach <strong>beathach<\/strong> <strong>allta<\/strong> l\u00e1 ar bith den tseachtmhain , agus c\u00fapla ceann Dia Domhnaigh , \u201d arsa an tiom\u00e1naidhe , ag tabhairt l\u00e9im ar an trucaill agus ag tabhairt a gcinn do na caiple .", "verb": "beathach", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=beith\u00edoch", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "allta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=allta", "Case=Gen", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22scairt-136%22%20%3B%20A%20%5Bform%3D%22allta%22%5D%20%3B%20B%20%5Bform%3D%22beathach%22%5D%20%20%7D", "treebankName": "UD_Irish-Cadhan"}, {"sentence": "T\u00e1 <strong>c\u00fains\u00ed<\/strong> <strong>difri\u00fala<\/strong> ann inar thr\u00e9igeann c\u00e9ile / p\u00e1irt\u00ed sibhialta a c(h)uid cearta faoin Acht Comharbachta .", "verb": "c\u00fains\u00ed", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=c\u00fainse", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "difri\u00fala", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=difri\u00fail", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224697%22%20%3B%20A%20%5Bform%3D%22difri%C3%BAla%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%BAins%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Leanfar de bheith ag f\u00e1il <strong>teidil<\/strong> <strong>\u00fara<\/strong> agus dara l\u00e1imhe sna r\u00e9ims\u00ed \u00e1bhair sin .", "verb": "teidil", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=teideal", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "\u00fara", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00far", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=Slender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224283%22%20%3B%20A%20%5Bform%3D%22%C3%BAra%22%5D%20%3B%20B%20%5Bform%3D%22teidil%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "N\u00ed <strong>rud<\/strong> <strong>m\u00f3r<\/strong> \u00e9 c\u00e1in na m\u00e1la\u00ed .", "verb": "rud", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=rud", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "m\u00f3r", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=m\u00f3r", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221853%22%20%3B%20A%20%5Bform%3D%22m%C3%B3r%22%5D%20%3B%20B%20%5Bform%3D%22rud%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Oiri\u00fanacht - Measaimid nach bhfuil s\u00e9 oiri\u00fanach <strong>leabhair<\/strong> <strong>\u00e1irithe<\/strong> a ligean ar iasacht don phobal agus n\u00ed ghlacfaimid le bronntanais den chine\u00e1l sin , lena n-\u00e1ir\u00edtear an t-\u00e1bhar a leanas .", "verb": "leabhair", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=leabhar", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "\u00e1irithe", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e1irithe", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=Slender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224182%22%20%3B%20A%20%5Bform%3D%22%C3%A1irithe%22%5D%20%3B%20B%20%5Bform%3D%22leabhair%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Urra\u00edonn Comhairle Cathrach Bhaile \u00c1tha Cliath an D\u00e1mhachtain agus is iad <strong>Leabharlanna<\/strong> <strong>Poibl\u00ed<\/strong> Chathair Bhaile \u00c1tha Cliath a riarann \u00ed .", "verb": "leabharlanna", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=leabharlann", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "poibl\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=poibl\u00ed", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224016%22%20%3B%20A%20%5Bform%3D%22Poibl%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22Leabharlanna%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Dar leis d\u00e1 mbeadh n\u00edos m\u00f3 \u00e9ilimh ar an <strong>modh<\/strong> <strong>org\u00e1nach<\/strong> go rachadh a thuilleadh feirmeoir\u00ed leis ; ach faoi mar at\u00e1 s\u00e9 anois n\u00edl ach 2% den mhargadh ag t\u00e1irg\u00ed org\u00e1nacha .", "verb": "modh", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=modh", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "org\u00e1nach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=org\u00e1nach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222381%22%20%3B%20A%20%5Bform%3D%22org%C3%A1nach%22%5D%20%3B%20B%20%5Bform%3D%22modh%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "An duine rialta baoth Is m\u00e9anar don duine rialta sin nach mbaineann pl\u00e9isi\u00far agus l\u00fach\u00e1ir ach amh\u00e1in as <strong>briathra<\/strong> agus gn\u00edomhartha <strong>s\u00e1rnaofa<\/strong> an Tiarna , agus tr\u00edothusan go meallann s\u00e9 daoine chun Dia a ghr\u00e1\u00fa go h\u00e1thasach gealgh\u00e1ireach .", "verb": "briathra", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=briathar", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur", "Person=3"], "nsubj": "s\u00e1rnaofa", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=s\u00e1rnaofa", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22932%22%20%3B%20A%20%5Bform%3D%22s%C3%A1rnaofa%22%5D%20%3B%20B%20%5Bform%3D%22briathra%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "San <strong>am<\/strong> <strong>ch\u00e9anna<\/strong> bh\u00ed smaointi\u00fa pisreogach ag teacht fr\u00edd mo cheann gur tr\u00ed ghn\u00e9 den anam amh\u00e1in Cathal Mac Eachmharcaigh agus m\u00e9 f\u00e9in agus Ruair\u00ed \u00d3 Canainn - Cathal an t-\u00e9igeas domhain fili\u00fanta agus mise n\u00ed ba ghairbhe n\u00e1 sin , eadar an fhil\u00edocht agus \u00e9achta\u00ed an tsaoil , agus Ruair\u00ed garbh go leor lena bhealach a throid thart ceithre ceathr\u00fana an domhain .", "verb": "am", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=am", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ch\u00e9anna", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=c\u00e9anna", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22817%22%20%3B%20A%20%5Bform%3D%22ch%C3%A9anna%22%5D%20%3B%20B%20%5Bform%3D%22am%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Glacann siad ina \u00e1irithe go gcomhl\u00edonfaidh an tSualainn , mar bhall den <strong>Aontas<\/strong> <strong>Eorpach<\/strong> , dl\u00ed an Chomhphobail go hioml\u00e1n ina thaobh seo .", "verb": "Aontas", "verbFeats": ["upos=PROPN", "deprel=nmod", "lemma=aontas", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "eorpach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Eorpach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224068%22%20%3B%20A%20%5Bform%3D%22Eorpach%22%5D%20%3B%20B%20%5Bform%3D%22Aontas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Dar leis d\u00e1 mbeadh n\u00edos m\u00f3 \u00e9ilimh ar an modh org\u00e1nach go rachadh a thuilleadh feirmeoir\u00ed leis ; ach faoi mar at\u00e1 s\u00e9 anois n\u00edl ach 2% den mhargadh ag <strong>t\u00e1irg\u00ed<\/strong> <strong>org\u00e1nacha<\/strong> .", "verb": "t\u00e1irg\u00ed", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=t\u00e1irge", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "org\u00e1nacha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=org\u00e1nach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222381%22%20%3B%20A%20%5Bform%3D%22org%C3%A1nacha%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%A1irg%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Bh\u00ed <strong>ionada\u00edocht<\/strong> <strong>l\u00e1idir<\/strong> \u00f3 chomhlachta\u00ed Gaeltachta ina measc si\u00fad a roghna\u00edodh i gcomhar maoinithe .", "verb": "ionada\u00edocht", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=ionada\u00edocht", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "l\u00e1idir", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=l\u00e1idir", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224475%22%20%3B%20A%20%5Bform%3D%22l%C3%A1idir%22%5D%20%3B%20B%20%5Bform%3D%22ionada%C3%ADocht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rinne an tSeirbh\u00eds um <strong>Cheapach\u00e1in<\/strong> <strong>Phoibl\u00ed<\/strong> meas\u00fan\u00fa ar na ceapaithe go l\u00e9ir .", "verb": "cheapach\u00e1in", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ceapach\u00e1n", "xpos=Noun", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "phoibl\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=poibl\u00ed", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "NounType=Slender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224161%22%20%3B%20A%20%5Bform%3D%22Phoibl%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22Cheapach%C3%A1in%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Caithr\u00e9im 's fearr fo <strong>ghr\u00e9in<\/strong> <strong>ghloin<\/strong> do neoch dar ghein ar talmhoin 's as buaine dh\u00f3 thall iar ndol buaidh ar dheamhan 's ar dhomhon .", "verb": "ghr\u00e9in", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=grian", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ghloin", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=glan", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-Cadhan%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22bardic_1387-36%22%20%3B%20A%20%5Bform%3D%22ghloin%22%5D%20%3B%20B%20%5Bform%3D%22ghr%C3%A9in%22%5D%20%20%7D", "treebankName": "UD_Irish-Cadhan"}, {"sentence": "M\u00e1s fi\u00fa breis agus an sciar dl\u00edthi\u00fail teach an teaghlaigh , is gn\u00e1ch go mbeadh ar an gc\u00e9ile / <strong>bp\u00e1irtn\u00e9ir<\/strong> <strong>sibhialta<\/strong> an difr\u00edocht a \u00edoc le heast\u00e1t an duine \u00e9agtha .", "verb": "bp\u00e1irtn\u00e9ir", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=p\u00e1irtn\u00e9ir", "xpos=Noun", "Case=Nom", "Form=Ecl", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "sibhialta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=sibhialta", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224101%22%20%3B%20A%20%5Bform%3D%22sibhialta%22%5D%20%3B%20B%20%5Bform%3D%22bp%C3%A1irtn%C3%A9ir%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rib\u00edneach ( <strong>l\u00edneach<\/strong> ) : <strong>tithe<\/strong> sr\u00e1idbhaile leagtha amach ceann i ndiaidh a ch\u00e9ile ina l\u00edne fhada chaol , ar feadh an bh\u00f3thair , ar feadh an ch\u00f3sta n\u00f3 ag bun cnoic aird .", "verb": "tithe", "verbFeats": ["upos=NOUN", "deprel=parataxis", "lemma=teach", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "l\u00edneach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=l\u00edneach", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221601%22%20%3B%20A%20%5Bform%3D%22l%C3%ADneach%22%5D%20%3B%20B%20%5Bform%3D%22tithe%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Nuair a fh\u00f3gair Bord na nGear\u00e1n de chuid na Scoile nach raibh s\u00e9 inni\u00fail \u00e9isteacht lena c\u00e1s , thug s\u00ed an c\u00e1s chun <strong>c\u00fairte<\/strong> riarach\u00e1in <strong>Ghearm\u00e1nach<\/strong> .", "verb": "c\u00fairte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=c\u00fairt", "xpos=Noun", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ghearm\u00e1nach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Gearm\u00e1nach", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224139%22%20%3B%20A%20%5Bform%3D%22Ghearm%C3%A1nach%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%BAirte%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rinne an t\u00dadar\u00e1s dul chun cinn lean\u00fanach ar an bpolasa\u00ed at\u00e1 aige <strong>ionaid<\/strong> ghn\u00f3 seirbh\u00eds\u00ed <strong>nua-aimseartha<\/strong> agus ionaid fiontair a fhorbairt ar fud na Gaeltachta .", "verb": "ionaid", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ionad", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "nua-aimseartha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nua-aimseartha", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223789%22%20%3B%20A%20%5Bform%3D%22nua-aimseartha%22%5D%20%3B%20B%20%5Bform%3D%22ionaid%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Thug na <strong>p\u00e1ist\u00ed<\/strong> ruaig <strong>amh\u00e1in<\/strong> ar an siopa sin .", "verb": "p\u00e1ist\u00ed", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u00e1iste", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22553%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A1ist%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cheapf\u00e1 ar dt\u00fas nach n-aireof\u00e1 ar do chloigeann \u00ed , ach bheadh a fhios agat d\u00e1 laghad suarach <strong>gortach<\/strong> <strong>\u00ed<\/strong> go raibh s\u00ed ann in \u00e1it eic\u00ednt , agus gur ceist eile f\u00f3s \u00ed d' ualach g\u00e9agach na croise a chaithf\u00ed a iompar .", "verb": "\u00ed", "verbFeats": ["upos=PRON", "deprel=nmod", "lemma=\u00ed", "xpos=Pers", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "gortach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=gortach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22106%22%20%3B%20A%20%5Bform%3D%22gortach%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Chonaic mise mo chreach is mo chr\u00e1 iad Is n\u00edl dh\u00e1 bharr a'm ach <strong>cn\u00e1mha<\/strong> <strong>tinn<\/strong> , I gc\u00f3na\u00ed ag faire orthu nach bocht an c\u00e1s \u00e9 A bheith ar garda de l\u00f3 is d' o\u00edche .", "verb": "cn\u00e1mha", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cn\u00e1mh", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "tinn", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=tinn", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221350%22%20%3B%20A%20%5Bform%3D%22tinn%22%5D%20%3B%20B%20%5Bform%3D%22cn%C3%A1mha%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}], "2": [{"sentence": "Is ansin at\u00e1 ceann de na <strong>foraoiseacha<\/strong> b\u00e1ist\u00ed pr\u00edomh\u00fala is <strong>fairsinge<\/strong> d\u00e1 bhfuil f\u00e1gtha san Indin\u00e9is .", "verb": "foraoiseacha", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=foraois", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur", "Person=3"], "nsubj": "fairsinge", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=fairsing", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur,Sing"], "label": "yes", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222327%22%20%3B%20A%20%5Bform%3D%22fairsinge%22%5D%20%3B%20B%20%5Bform%3D%22foraoiseacha%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "N\u00ed raibh an chuid ba shine acu ach cheithre bliana d\u00e9ag d' aois agus n\u00ed raibh na hocht bliana sl\u00e1naithe ag an <strong>gcuid<\/strong> ab <strong>\u00f3ige<\/strong> acu .", "verb": "gcuid", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cuid", "xpos=Noun", "Case=Nom", "Definite=Def", "Form=Ecl", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "\u00f3ige", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00f3g", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222602%22%20%3B%20A%20%5Bform%3D%22%C3%B3ige%22%5D%20%3B%20B%20%5Bform%3D%22gcuid%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "FEAR LE CEANN R\u00cd AIR Cuimhn\u00ed Cinn ar Ph\u00e1draig \u00d3 hIceadha Foilsithe ag <strong>Coiste<\/strong> Dhaonscoil na Mumhan <strong>Teoranta<\/strong> Euro 5 Is iad Coiste Dhaonscoil na Mumhan a chuir an leabhar cuimhneach\u00e1in seo ar Ph\u00e1draig \u00d3 hIceadha i dtoll a ch\u00e9ile .", "verb": "coiste", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=coiste", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "teoranta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=teoranta", "xpos=Adj", "Case=Nom", "Degree=Cmp,Sup", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22381%22%20%3B%20A%20%5Bform%3D%22Teoranta%22%5D%20%3B%20B%20%5Bform%3D%22Coiste%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "I ngach gn\u00edomha\u00edocht a bhaineann le leana\u00ed , b\u00edodh s\u00e9 \u00e1 glacadh ag \u00fadar\u00e1is phoibl\u00ed n\u00f3 institi\u00faid\u00ed pr\u00edobh\u00e1ideacha , t\u00e1 pr\u00edomhleas an linbh ar na <strong>d\u00e1la\u00ed<\/strong> is <strong>t\u00e1bhachta\u00ed<\/strong> at\u00e1 le cur san \u00e1ireamh .", "verb": "d\u00e1la\u00ed", "verbFeats": ["upos=NOUN", "deprel=xcomp:pred", "lemma=d\u00e1il", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "t\u00e1bhachta\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=t\u00e1bhachtach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223490%22%20%3B%20A%20%5Bform%3D%22t%C3%A1bhachta%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22d%C3%A1la%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "<strong>TADHG<\/strong> ( n\u00edos <strong>ci\u00faine<\/strong> ) : N\u00ed hin at\u00e1im ag r\u00e1 in aon chor , ach i ndeireadh an lae n\u00edl ann domsa ach sp\u00f3rt .", "verb": "TADHG", "verbFeats": ["upos=PROPN", "deprel=root", "lemma=Tadhg", "xpos=Noun", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ci\u00faine", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ci\u00fain", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Plur,Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222011%22%20%3B%20A%20%5Bform%3D%22ci%C3%BAine%22%5D%20%3B%20B%20%5Bform%3D%22TADHG%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Tabharfar an <strong>t-eolas<\/strong> is <strong>deireana\u00ed<\/strong> faoin gcl\u00e1r tr\u00ed mhe\u00e1n nuachtlitreacha m\u00edos\u00fala agus thuairisc\u00ed an LRP .", "verb": "t-eolas", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=eolas", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "deireana\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=deireanach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224512%22%20%3B%20A%20%5Bform%3D%22deireana%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22t-eolas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rinneadh slad ar na <strong>ceantair<\/strong> is <strong>boichte<\/strong> agus n\u00ed de thaisme gur tharla s\u00e9 mar sin .", "verb": "ceantair", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ceantar", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "boichte", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=bocht", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22675%22%20%3B%20A%20%5Bform%3D%22boichte%22%5D%20%3B%20B%20%5Bform%3D%22ceantair%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "T\u00e1 s\u00ed ina c\u00f3na\u00ed ar an Aird\u00edn , Croithshl\u00ed , ceantar na gcnoc lena fear c\u00e9ile Hi\u00fada\u00ed agus a seachtar clainne , Caoimh\u00edn (20) , Michelle (19) , Antoin (17) , Aodh ( 110 , an c\u00fapla Deirdre agus Sin\u00e9ad (9) agus an <strong>duine<\/strong> is <strong>\u00f3ige<\/strong> Gear\u00f3id (4) .", "verb": "duine", "verbFeats": ["upos=NOUN", "deprel=list", "lemma=duine", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "\u00f3ige", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00f3g", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222315%22%20%3B%20A%20%5Bform%3D%22%C3%B3ige%22%5D%20%3B%20B%20%5Bform%3D%22duine%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Ag labhairt di inniu , d\u00fairt an tAire Heather Humphreys TD : \" Is cur chuige comhph\u00e1irt\u00edochta \u00e9 seo idir an SPNF agus na h\u00fain\u00e9ir\u00ed \u00e1iti\u00fala tal\u00fan , arb iad na <strong>daoine<\/strong> is <strong>t\u00e1bhachta\u00ed<\/strong> iad \u00f3 thaobh na gn\u00e1th\u00f3ga at\u00e1 ag an mbeag\u00e1n Crotach at\u00e1 f\u00e1gtha a bhainisti\u00fa \" .", "verb": "daoine", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=duine", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "t\u00e1bhachta\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=t\u00e1bhachtach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224686%22%20%3B%20A%20%5Bform%3D%22t%C3%A1bhachta%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22daoine%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Bh\u00ed 14 Sr\u00e1id Henrietta a t\u00f3gadh timpeall 1750 , ina h\u00e1it ch\u00f3naithe cheithre st\u00f3ir ar shr\u00e1id fhaiseanta ch\u00f3naitheach agus \u00e9 i measc na <strong>dtithe<\/strong> Seoirseacha luatha ab <strong>\u00e1ille<\/strong> sa chathair .", "verb": "dtithe", "verbFeats": ["upos=NOUN", "deprel=xcomp:pred", "lemma=teach", "xpos=Noun", "Case=Gen", "Definite=Def", "Form=Ecl", "<b>Gender=Masc<\/b>", "NounType=Strong", "Number=Plur"], "nsubj": "\u00e1ille", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e1lainn", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur,Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223436%22%20%3B%20A%20%5Bform%3D%22%C3%A1ille%22%5D%20%3B%20B%20%5Bform%3D%22dtithe%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "' Caid\u00e9 'n <strong>sc\u00e9ala<\/strong> is <strong>deireana\u00ed<\/strong> \u00f3n fhronta ?", "verb": "sc\u00e9ala", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=sc\u00e9ala", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "deireana\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=deireanach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22359%22%20%3B%20A%20%5Bform%3D%22deireana%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22sc%C3%A9ala%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}], "0": [{"sentence": "Is ionann sin agus a r\u00e1 nach f\u00e9idir na breosla\u00ed seo a \u00fas\u00e1id ach aon <strong>uair<\/strong> <strong>amh\u00e1in<\/strong> .", "verb": "uair", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=uair", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222716%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22uair%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "F\u00e9adfar faisn\u00e9is a \u00e1ir\u00edtear i gcumars\u00e1id inmhe\u00e1nach \u00fadar\u00e1s \u00e1iti\u00fail a chosaint \u00f3na heisi\u00faint sa ch\u00e1s go bhfuil <strong>c\u00faiseanna<\/strong> <strong>maithe<\/strong> agus substainti\u00fala \u00e9 sin a dh\u00e9anamh .", "verb": "c\u00faiseanna", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=c\u00fais", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "maithe", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=maith", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223574%22%20%3B%20A%20%5Bform%3D%22maithe%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%BAiseanna%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Oibr\u00edonn t\u00fa f\u00e9in agus do ch\u00e9ile / ph\u00e1irtn\u00e9ir le <strong>dl\u00edod\u00f3ir\u00ed<\/strong> <strong>comhoibritheacha<\/strong> .", "verb": "dl\u00edod\u00f3ir\u00ed", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=dl\u00edod\u00f3ir", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "comhoibritheacha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=comhoibritheach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223537%22%20%3B%20A%20%5Bform%3D%22comhoibritheacha%22%5D%20%3B%20B%20%5Bform%3D%22dl%C3%ADod%C3%B3ir%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Ionas nach bhf\u00e1gfar na r\u00e9igi\u00fain Ghaeltachta taobh thiar , t\u00e1 dul chun cinn d\u00e9anta ag G-Com ar bhealach strucht\u00fartha agus t\u00e1 l\u00edon suntasach forbairt\u00ed d\u00e9anta acu gur f\u00e9idir a \u00fas\u00e1id mar shamhlacha i <strong>gcur<\/strong> i bhfeidhm <strong>forleathan<\/strong> san blianta at\u00e1 romhainn .", "verb": "gcur", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cur", "xpos=Noun", "Case=Nom", "Form=Ecl", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "forleathan", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=forleathan", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224193%22%20%3B%20A%20%5Bform%3D%22forleathan%22%5D%20%3B%20B%20%5Bform%3D%22gcur%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "T\u00e1 an fhosta\u00edocht ph\u00e1irtaimseartha agus sh\u00e9as\u00fartha ina <strong>foinse<\/strong> <strong>th\u00e1bhachtach<\/strong> ioncaim ag pobail \u00e1iti\u00fala agus b\u00edonn tionchar m\u00f3r aige sin ar a l\u00e1n de na pobail sin ina bhfuil an Ghaeilge l\u00e1idir mar theanga pobail .", "verb": "foinse", "verbFeats": ["upos=NOUN", "deprel=xcomp:pred", "lemma=foinse", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "th\u00e1bhachtach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=t\u00e1bhachtach", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224398%22%20%3B%20A%20%5Bform%3D%22th%C3%A1bhachtach%22%5D%20%3B%20B%20%5Bform%3D%22foinse%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "L\u00e9irigh na figi\u00fair\u00ed fosta\u00edochta , a bh\u00ed ar aon dul leis an <strong>treocht<\/strong> <strong>n\u00e1isi\u00fanta<\/strong> , go raibh f\u00e1s lean\u00fanach ar an fhosta\u00edocht san earn\u00e1il seirbh\u00eds\u00ed ach go raibh an earn\u00e1il traidisi\u00fanta d\u00e9ant\u00fasa\u00edochta f\u00f3s ag dul i l\u00e9ig .", "verb": "treocht", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=treocht", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "n\u00e1isi\u00fanta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=n\u00e1isi\u00fanta", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224693%22%20%3B%20A%20%5Bform%3D%22n%C3%A1isi%C3%BAnta%22%5D%20%3B%20B%20%5Bform%3D%22treocht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "T\u00e1 an-bh\u00e9im curtha ag an \u00dadar\u00e1s ar th\u00e1bhacht na hearn\u00e1la teicneola\u00edochta-bhunaithe agus <strong>seirbh\u00eds\u00ed<\/strong> <strong>nua-aimseartha<\/strong> .", "verb": "seirbh\u00eds\u00ed", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=seirbh\u00eds", "xpos=Noun", "Case=Gen", "<b>Gender=Fem<\/b>", "NounType=Strong", "Number=Plur"], "nsubj": "nua-aimseartha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nua-aimseartha", "xpos=Adj", "Case=Gen", "<b>Gender=Fem<\/b>", "NounType=Strong", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224733%22%20%3B%20A%20%5Bform%3D%22nua-aimseartha%22%5D%20%3B%20B%20%5Bform%3D%22seirbh%C3%ADs%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Sna leabharlanna brainse t\u00e1 stoc do <strong>dhaoine<\/strong> <strong>f\u00e1sta<\/strong> , do leana\u00ed agus do dhaoine \u00f3ga f\u00e1sta faoi gach \u00e1bhar agus i ngach form\u00e1id .", "verb": "dhaoine", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=duine", "xpos=Noun", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "f\u00e1sta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=f\u00e1sta", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "<b>Gender=Fem,Masc<\/b>", "Number=Plur,Sing", "VerbForm=Part"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223609%22%20%3B%20A%20%5Bform%3D%22f%C3%A1sta%22%5D%20%3B%20B%20%5Bform%3D%22dhaoine%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cuims\u00edonn an l\u00e9ann \u00c9ireannach saothair a bhfuil <strong>t\u00e1bhacht<\/strong> <strong>n\u00e1isi\u00fanta<\/strong> leo i r\u00e9ims\u00ed na staire , na beathaisn\u00e9ise agus na litr\u00edochta agus leanfar de bheith \u00e1 dtioms\u00fa mar bhaili\u00fach\u00e1n taighde t\u00e1bhachtach a chuirfidh breis le Baili\u00fach\u00e1n Baile \u00c1tha Cliath .", "verb": "t\u00e1bhacht", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=t\u00e1bhacht", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "n\u00e1isi\u00fanta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=n\u00e1isi\u00fanta", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223917%22%20%3B%20A%20%5Bform%3D%22n%C3%A1isi%C3%BAnta%22%5D%20%3B%20B%20%5Bform%3D%22t%C3%A1bhacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "T\u00e1 <strong>riachtanas<\/strong> <strong>dl\u00edthi\u00fail<\/strong> ann in \u00c9irinn go gcaithfear gach b\u00e1s a tharla\u00edonn sa St\u00e1t a thuairisci\u00fa agus a chl\u00e1r\u00fa .", "verb": "riachtanas", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=riachtanas", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "dl\u00edthi\u00fail", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=dl\u00edthi\u00fail", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223220%22%20%3B%20A%20%5Bform%3D%22dl%C3%ADthi%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22riachtanas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "' Athr\u00e1 - Nuair a \u00fas\u00e1ideann an file an <strong>focal<\/strong> <strong>c\u00e9anna<\/strong> , n\u00f3 an fr\u00e1sa c\u00e9anna , c\u00fapla uair i ndiaidh a ch\u00e9ile tugtar athr\u00e1 air sin .", "verb": "focal", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=focal", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "c\u00e9anna", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=c\u00e9anna", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22132%22%20%3B%20A%20%5Bform%3D%22c%C3%A9anna%22%5D%20%3B%20B%20%5Bform%3D%22focal%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cuirfidh gach imreoir f\u00e1ilte roimh na <strong>gn\u00e9ithe<\/strong> <strong>nua<\/strong> seo ach n\u00edl aon amhras ann ach nach mbeadh na hathruithe seo tarlaithe murach an br\u00fa a chuir an GPA orthu , agus go mbeidh a thuilleadh ag teacht .", "verb": "gn\u00e9ithe", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=gn\u00e9", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "nua", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nua", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22649%22%20%3B%20A%20%5Bform%3D%22nua%22%5D%20%3B%20B%20%5Bform%3D%22gn%C3%A9ithe%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "I dt\u00fas b\u00e1ire , b' ann don bhuis\u00e9ad chun an comhbheartas talmha\u00edochta a mhaoini\u00fa , agus \u00e9 mar aidhm neamhsple\u00e1chas agus f\u00e9inriar na talmha\u00edochta sna <strong>Comhphobail<\/strong> <strong>Eorpacha<\/strong> a \u00e1irithi\u00fa .", "verb": "comhphobail", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=comhphobal", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "eorpacha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Eorpach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "NounType=Slender", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223160%22%20%3B%20A%20%5Bform%3D%22Eorpacha%22%5D%20%3B%20B%20%5Bform%3D%22Comhphobail%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "N\u00ed m\u00f3r do na seirbh\u00eds\u00ed c\u00faram leana\u00ed at\u00e1 ag glacadh p\u00e1irte sa sc\u00e9im COL\u00d3 cl\u00e1r oideachais r\u00e9amhscola\u00edochta iomchu\u00ed a chur ar f\u00e1il a chlo\u00edonn le prionsabail s\u00edolta , an <strong>Chreatlach<\/strong> <strong>n\u00e1isi\u00fanta<\/strong> d\u2019 oideachas agus c\u00faram na luath-\u00f3ige .", "verb": "chreatlach", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=creatlach", "xpos=Noun", "Case=Nom", "Definite=Def", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "n\u00e1isi\u00fanta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=n\u00e1isi\u00fanta", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224608%22%20%3B%20A%20%5Bform%3D%22n%C3%A1isi%C3%BAnta%22%5D%20%3B%20B%20%5Bform%3D%22Chreatlach%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cinneadh ag Ionadaithe Rialtais na mBallst\u00e1t maidir le su\u00edomh sealadach institi\u00faid\u00ed \u00e1irithe agus <strong>ranna<\/strong> <strong>\u00e1irithe<\/strong> de chuid na gComhphobal .", "verb": "ranna", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=roinn", "xpos=Noun", "Case=Gen", "<b>Gender=Fem<\/b>", "NounType=Strong", "Number=Plur"], "nsubj": "\u00e1irithe", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e1irithe", "xpos=Adj", "Case=Gen", "<b>Gender=Fem<\/b>", "NounType=Strong", "Number=Plur"], "label": "yes", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224905%22%20%3B%20A%20%5Bform%3D%22%C3%A1irithe%22%5D%20%3B%20B%20%5Bform%3D%22ranna%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "<strong>TADHG<\/strong> ( n\u00edos <strong>ci\u00faine<\/strong> ) : N\u00ed hin at\u00e1im ag r\u00e1 in aon chor , ach i ndeireadh an lae n\u00edl ann domsa ach sp\u00f3rt .", "verb": "TADHG", "verbFeats": ["upos=PROPN", "deprel=root", "lemma=Tadhg", "xpos=Noun", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "ci\u00faine", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ci\u00fain", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Plur,Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222011%22%20%3B%20A%20%5Bform%3D%22ci%C3%BAine%22%5D%20%3B%20B%20%5Bform%3D%22TADHG%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rib\u00edneach ( <strong>l\u00edneach<\/strong> ) : <strong>tithe<\/strong> sr\u00e1idbhaile leagtha amach ceann i ndiaidh a ch\u00e9ile ina l\u00edne fhada chaol , ar feadh an bh\u00f3thair , ar feadh an ch\u00f3sta n\u00f3 ag bun cnoic aird .", "verb": "tithe", "verbFeats": ["upos=NOUN", "deprel=parataxis", "lemma=teach", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "l\u00edneach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=l\u00edneach", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221601%22%20%3B%20A%20%5Bform%3D%22l%C3%ADneach%22%5D%20%3B%20B%20%5Bform%3D%22tithe%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Tabharfar an <strong>t-eolas<\/strong> is <strong>deireana\u00ed<\/strong> faoin gcl\u00e1r tr\u00ed mhe\u00e1n nuachtlitreacha m\u00edos\u00fala agus thuairisc\u00ed an LRP .", "verb": "t-eolas", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=eolas", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "deireana\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=deireanach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224512%22%20%3B%20A%20%5Bform%3D%22deireana%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22t-eolas%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rinneadh slad ar na <strong>ceantair<\/strong> is <strong>boichte<\/strong> agus n\u00ed de thaisme gur tharla s\u00e9 mar sin .", "verb": "ceantair", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ceantar", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "boichte", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=bocht", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22675%22%20%3B%20A%20%5Bform%3D%22boichte%22%5D%20%3B%20B%20%5Bform%3D%22ceantair%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "T\u00e1 s\u00ed ina c\u00f3na\u00ed ar an Aird\u00edn , Croithshl\u00ed , ceantar na gcnoc lena fear c\u00e9ile Hi\u00fada\u00ed agus a seachtar clainne , Caoimh\u00edn (20) , Michelle (19) , Antoin (17) , Aodh ( 110 , an c\u00fapla Deirdre agus Sin\u00e9ad (9) agus an <strong>duine<\/strong> is <strong>\u00f3ige<\/strong> Gear\u00f3id (4) .", "verb": "duine", "verbFeats": ["upos=NOUN", "deprel=list", "lemma=duine", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "\u00f3ige", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00f3g", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222315%22%20%3B%20A%20%5Bform%3D%22%C3%B3ige%22%5D%20%3B%20B%20%5Bform%3D%22duine%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Nuair a fh\u00f3gair Bord na nGear\u00e1n de chuid na Scoile nach raibh s\u00e9 inni\u00fail \u00e9isteacht lena c\u00e1s , thug s\u00ed an c\u00e1s chun <strong>c\u00fairte<\/strong> riarach\u00e1in <strong>Ghearm\u00e1nach<\/strong> .", "verb": "c\u00fairte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=c\u00fairt", "xpos=Noun", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ghearm\u00e1nach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=Gearm\u00e1nach", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224139%22%20%3B%20A%20%5Bform%3D%22Ghearm%C3%A1nach%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%BAirte%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Rinne an t\u00dadar\u00e1s dul chun cinn lean\u00fanach ar an bpolasa\u00ed at\u00e1 aige <strong>ionaid<\/strong> ghn\u00f3 seirbh\u00eds\u00ed <strong>nua-aimseartha<\/strong> agus ionaid fiontair a fhorbairt ar fud na Gaeltachta .", "verb": "ionaid", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ionad", "xpos=Noun", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "nua-aimseartha", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nua-aimseartha", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223789%22%20%3B%20A%20%5Bform%3D%22nua-aimseartha%22%5D%20%3B%20B%20%5Bform%3D%22ionaid%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Thug na <strong>p\u00e1ist\u00ed<\/strong> ruaig <strong>amh\u00e1in<\/strong> ar an siopa sin .", "verb": "p\u00e1ist\u00ed", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u00e1iste", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "amh\u00e1in", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=amh\u00e1in", "xpos=Adj", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22553%22%20%3B%20A%20%5Bform%3D%22amh%C3%A1in%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A1ist%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Ag labhairt di inniu , d\u00fairt an tAire Heather Humphreys TD : \" Is cur chuige comhph\u00e1irt\u00edochta \u00e9 seo idir an SPNF agus na h\u00fain\u00e9ir\u00ed \u00e1iti\u00fala tal\u00fan , arb iad na <strong>daoine<\/strong> is <strong>t\u00e1bhachta\u00ed<\/strong> iad \u00f3 thaobh na gn\u00e1th\u00f3ga at\u00e1 ag an mbeag\u00e1n Crotach at\u00e1 f\u00e1gtha a bhainisti\u00fa \" .", "verb": "daoine", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=duine", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "t\u00e1bhachta\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=t\u00e1bhachtach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224686%22%20%3B%20A%20%5Bform%3D%22t%C3%A1bhachta%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22daoine%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Cheapf\u00e1 ar dt\u00fas nach n-aireof\u00e1 ar do chloigeann \u00ed , ach bheadh a fhios agat d\u00e1 laghad suarach <strong>gortach<\/strong> <strong>\u00ed<\/strong> go raibh s\u00ed ann in \u00e1it eic\u00ednt , agus gur ceist eile f\u00f3s \u00ed d' ualach g\u00e9agach na croise a chaithf\u00ed a iompar .", "verb": "\u00ed", "verbFeats": ["upos=PRON", "deprel=nmod", "lemma=\u00ed", "xpos=Pers", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "gortach", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=gortach", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22106%22%20%3B%20A%20%5Bform%3D%22gortach%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Chonaic mise mo chreach is mo chr\u00e1 iad Is n\u00edl dh\u00e1 bharr a'm ach <strong>cn\u00e1mha<\/strong> <strong>tinn<\/strong> , I gc\u00f3na\u00ed ag faire orthu nach bocht an c\u00e1s \u00e9 A bheith ar garda de l\u00f3 is d' o\u00edche .", "verb": "cn\u00e1mha", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=cn\u00e1mh", "xpos=Noun", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "tinn", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=tinn", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "(not set)"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221350%22%20%3B%20A%20%5Bform%3D%22tinn%22%5D%20%3B%20B%20%5Bform%3D%22cn%C3%A1mha%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "Bh\u00ed 14 Sr\u00e1id Henrietta a t\u00f3gadh timpeall 1750 , ina h\u00e1it ch\u00f3naithe cheithre st\u00f3ir ar shr\u00e1id fhaiseanta ch\u00f3naitheach agus \u00e9 i measc na <strong>dtithe<\/strong> Seoirseacha luatha ab <strong>\u00e1ille<\/strong> sa chathair .", "verb": "dtithe", "verbFeats": ["upos=NOUN", "deprel=xcomp:pred", "lemma=teach", "xpos=Noun", "Case=Gen", "Definite=Def", "Form=Ecl", "<b>Gender=Masc<\/b>", "NounType=Strong", "Number=Plur"], "nsubj": "\u00e1ille", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00e1lainn", "xpos=Adj", "Case=Dat,Gen,Nom,Voc", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "NounType=NotSlender", "Number=Plur,Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223436%22%20%3B%20A%20%5Bform%3D%22%C3%A1ille%22%5D%20%3B%20B%20%5Bform%3D%22dtithe%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}, {"sentence": "' Caid\u00e9 'n <strong>sc\u00e9ala<\/strong> is <strong>deireana\u00ed<\/strong> \u00f3n fhronta ?", "verb": "sc\u00e9ala", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=sc\u00e9ala", "xpos=Noun", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "deireana\u00ed", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=deireanach", "xpos=Adj", "Case=Gen", "Degree=Cmp,Sup", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "Cmp,Sup"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22359%22%20%3B%20A%20%5Bform%3D%22deireana%C3%AD%22%5D%20%3B%20B%20%5Bform%3D%22sc%C3%A9ala%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT"}]}, "PAIRS": [{"origSentence": "Faoi sti\u00fair theagasc\u00f3ir\u00ed oilte agus mheant\u00f3ir\u00ed , cuireann na h\u00f3g\u00e1naigh lena gcuid inni\u00falachta ar r\u00edomhair\u00ed , chomh maith le f\u00e9inmhuin\u00edn , scileanna agus <strong>soghluaisteacht<\/strong> <strong>sh\u00f3isialta<\/strong> a fhorbairt , a chuid\u00edonn leo ar feadh a saoil .", "swapSentence": "Faoi sti\u00fair theagasc\u00f3ir\u00ed oilte agus mheant\u00f3ir\u00ed , cuireann na h\u00f3g\u00e1naigh lena gcuid inni\u00falachta ar r\u00edomhair\u00ed , chomh maith le f\u00e9inmhuin\u00edn , scileanna agus <strong>soghluaisteacht<\/strong> <strong>s\u00f3isialta<\/strong> a fhorbairt , a chuid\u00edonn leo ar feadh a saoil .", "nsubj": "sh\u00f3isialta", "verb": "soghluaisteacht", "nsubjFeats": ["lemma=s\u00f3isialta", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=soghluaisteacht", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "s\u00f3isialta", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224404%22%20%3B%20A%20%5Bform%3D%22sh%C3%B3isialta%22%5D%20%3B%20B%20%5Bform%3D%22soghluaisteacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Le Teitheadh na nIarla\u00ed thit an t\u00f3in as an ch\u00f3ras Ghaelach agus f\u00e1gadh na Gaeil gan <strong>cumhacht<\/strong> <strong>pholaiti\u00fail<\/strong> n\u00e1 eacnama\u00edoch .", "swapSentence": "Le Teitheadh na nIarla\u00ed thit an t\u00f3in as an ch\u00f3ras Ghaelach agus f\u00e1gadh na Gaeil gan <strong>cumhacht<\/strong> <strong>polaiti\u00fail<\/strong> n\u00e1 eacnama\u00edoch .", "nsubj": "pholaiti\u00fail", "verb": "cumhacht", "nsubjFeats": ["lemma=polaiti\u00fail", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=cumhacht", "deprel=obl", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "polaiti\u00fail", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221192%22%20%3B%20A%20%5Bform%3D%22pholaiti%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22cumhacht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Ina <strong>aiste<\/strong> <strong>th\u00e1bhachtach<\/strong> inar phl\u00e9igh s\u00e9 ionad an eala\u00edont\u00f3ra i saol luaineach athra\u00edoch nach gcreideann sna luachanna seanda a th\u00e1inig anuas chugainn le hoidhreacht , d\u00fairt W. H. Auden go gcaithfear sainmh\u00edni\u00fa nua a thabhairt ar an rud is traidisi\u00fan ann .", "swapSentence": "Ina <strong>aiste<\/strong> <strong>t\u00e1bhachtach<\/strong> inar phl\u00e9igh s\u00e9 ionad an eala\u00edont\u00f3ra i saol luaineach athra\u00edoch nach gcreideann sna luachanna seanda a th\u00e1inig anuas chugainn le hoidhreacht , d\u00fairt W. H. Auden go gcaithfear sainmh\u00edni\u00fa nua a thabhairt ar an rud is traidisi\u00fan ann .", "nsubj": "th\u00e1bhachtach", "verb": "aiste", "nsubjFeats": ["lemma=t\u00e1bhachtach", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=aiste", "deprel=obl", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "t\u00e1bhachtach", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222027%22%20%3B%20A%20%5Bform%3D%22th%C3%A1bhachtach%22%5D%20%3B%20B%20%5Bform%3D%22aiste%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Bhain 42 duine tairbhe as an Sc\u00e9im Forbartha Bainist\u00edochta le linn 2007 chomh maith le 39 foch\u00e9im\u00ed Gaeltachta a chaith tr\u00e9imhse ar <strong>thaith\u00ed<\/strong> oibre <strong>phraitici\u00fail<\/strong> le linn an tSamhraidh .", "swapSentence": "Bhain 42 duine tairbhe as an Sc\u00e9im Forbartha Bainist\u00edochta le linn 2007 chomh maith le 39 foch\u00e9im\u00ed Gaeltachta a chaith tr\u00e9imhse ar <strong>thaith\u00ed<\/strong> oibre <strong>praitici\u00fail<\/strong> le linn an tSamhraidh .", "nsubj": "phraitici\u00fail", "verb": "thaith\u00ed", "nsubjFeats": ["lemma=praitici\u00fail", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=taith\u00ed", "deprel=obl", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Len"], "ungrammatical": "praitici\u00fail", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223740%22%20%3B%20A%20%5Bform%3D%22phraitici%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22thaith%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Is f\u00e9idir le c\u00e9ile / p\u00e1irtn\u00e9ir sibhialta a c(h)earta don <strong>chuid<\/strong> cheart <strong>dhl\u00edthi\u00fail<\/strong> a thr\u00e9igean .", "swapSentence": "Is f\u00e9idir le c\u00e9ile / p\u00e1irtn\u00e9ir sibhialta a c(h)earta don <strong>chuid<\/strong> cheart <strong>dl\u00edthi\u00fail<\/strong> a thr\u00e9igean .", "nsubj": "dhl\u00edthi\u00fail", "verb": "chuid", "nsubjFeats": ["lemma=dl\u00edthi\u00fail", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=cuid", "deprel=nmod", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Len"], "ungrammatical": "dl\u00edthi\u00fail", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224325%22%20%3B%20A%20%5Bform%3D%22dhl%C3%ADthi%C3%BAil%22%5D%20%3B%20B%20%5Bform%3D%22chuid%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Bh\u00ed a cos f\u00e9in ag breathn\u00fa uirthi , an <strong>chos<\/strong> <strong>ch\u00e9anna<\/strong> go baileach ar dhath an sp\u00e1inn\u00e9ir , b\u00e1n is donn , s\u00fail ghrinn ag an gcos is an ts\u00fail sin ag amhastrach uirthi .", "swapSentence": "Bh\u00ed a cos f\u00e9in ag breathn\u00fa uirthi , an <strong>chos<\/strong> <strong>c\u00e9anna<\/strong> go baileach ar dhath an sp\u00e1inn\u00e9ir , b\u00e1n is donn , s\u00fail ghrinn ag an gcos is an ts\u00fail sin ag amhastrach uirthi .", "nsubj": "ch\u00e9anna", "verb": "chos", "nsubjFeats": ["lemma=c\u00e9anna", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=cos", "deprel=dislocated", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Len"], "ungrammatical": "c\u00e9anna", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221027%22%20%3B%20A%20%5Bform%3D%22ch%C3%A9anna%22%5D%20%3B%20B%20%5Bform%3D%22chos%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Leanfaidh Cathair Bhaile \u00c1tha Cliath ar aghaidh ag infheisti\u00fa i nglacadh p\u00e1irte an phobail sa chult\u00far agus sa chruthaitheacht , agus ag tac\u00fa le deiseanna do ch\u00e1ch p\u00e1irt a ghlacadh i <strong>saol<\/strong> <strong>cult\u00fartha<\/strong> na Cathrach agus \u00e1 gcur chun cinn .", "swapSentence": "Leanfaidh Cathair Bhaile \u00c1tha Cliath ar aghaidh ag infheisti\u00fa i nglacadh p\u00e1irte an phobail sa chult\u00far agus sa chruthaitheacht , agus ag tac\u00fa le deiseanna do ch\u00e1ch p\u00e1irt a ghlacadh i <strong>saol<\/strong> <strong>chult\u00fartha<\/strong> na Cathrach agus \u00e1 gcur chun cinn .", "nsubj": "cult\u00fartha", "verb": "saol", "nsubjFeats": ["lemma=cult\u00fartha", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "verbFeats": ["lemma=saol", "deprel=obl", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "chult\u00fartha", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%223390%22%20%3B%20A%20%5Bform%3D%22cult%C3%BArtha%22%5D%20%3B%20B%20%5Bform%3D%22saol%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "Th\u00e9adh s\u00e9 ag stradad\u00f3ireacht go mullach an chnoc\u00e1in ardtr\u00e1thn\u00f3na ag tn\u00fath\u00e1n leis an ascaill\u00edn f\u00e9ir thirim agus leis an <strong>mbeada\u00edocht<\/strong> <strong>bheag<\/strong> eile a bh\u00edodh de bhrabach ar a l\u00e1mh ghna\u00ed\u00fail .", "swapSentence": "Th\u00e9adh s\u00e9 ag stradad\u00f3ireacht go mullach an chnoc\u00e1in ardtr\u00e1thn\u00f3na ag tn\u00fath\u00e1n leis an ascaill\u00edn f\u00e9ir thirim agus leis an <strong>mbeada\u00edocht<\/strong> <strong>beag<\/strong> eile a bh\u00edodh de bhrabach ar a l\u00e1mh ghna\u00ed\u00fail .", "nsubj": "bheag", "verb": "mbeada\u00edocht", "nsubjFeats": ["lemma=beag", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=beada\u00edocht", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Ecl"], "ungrammatical": "beag", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221798%22%20%3B%20A%20%5Bform%3D%22bheag%22%5D%20%3B%20B%20%5Bform%3D%22mbeada%C3%ADocht%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "N\u00edl ansin ach mo <strong>thuairim<\/strong> <strong>phearsanta<\/strong> f\u00e9in .", "swapSentence": "N\u00edl ansin ach mo <strong>thuairim<\/strong> <strong>pearsanta<\/strong> f\u00e9in .", "nsubj": "phearsanta", "verb": "thuairim", "nsubjFeats": ["lemma=pearsanta", "xpos=Adj", "Case=Nom", "Form=Len", "<b>Gender=Fem<\/b>", "Number=Sing"], "verbFeats": ["lemma=tuairim", "deprel=nsubj", "upos=NOUN", "xpos=Noun", "Case=Nom", "Form=Len"], "ungrammatical": "pearsanta", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22765%22%20%3B%20A%20%5Bform%3D%22phearsanta%22%5D%20%3B%20B%20%5Bform%3D%22thuairim%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}, {"origSentence": "T\u00e1 c\u00fains\u00ed difri\u00fala ann inar thr\u00e9igeann c\u00e9ile / <strong>p\u00e1irt\u00ed<\/strong> <strong>sibhialta<\/strong> a c(h)uid cearta faoin Acht Comharbachta .", "swapSentence": "T\u00e1 c\u00fains\u00ed difri\u00fala ann inar thr\u00e9igeann c\u00e9ile / <strong>p\u00e1irt\u00ed<\/strong> <strong>shibhialta<\/strong> a c(h)uid cearta faoin Acht Comharbachta .", "nsubj": "sibhialta", "verb": "p\u00e1irt\u00ed", "nsubjFeats": ["lemma=sibhialta", "xpos=Adj", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "verbFeats": ["lemma=p\u00e1irt\u00ed", "deprel=conj", "upos=NOUN", "xpos=Noun", "Case=Nom"], "ungrammatical": "shibhialta", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[ADJ]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Irish-IDT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%224697%22%20%3B%20A%20%5Bform%3D%22sibhialta%22%5D%20%3B%20B%20%5Bform%3D%22p%C3%A1irt%C3%AD%22%5D%20%20%7D", "treebankName": "UD_Irish-IDT", "leaf": "1"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Irish \u00b7 NP head-ADJ_Gender", "roleA": "adj", "
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

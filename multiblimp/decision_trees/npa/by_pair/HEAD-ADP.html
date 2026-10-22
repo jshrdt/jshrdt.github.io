@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP 2.0 - Agreement Overview</title>
+    <title>MultiBLiMP – Morphological Agreement – Decision Trees</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -221,7 +221,7 @@
         /* NPA's own group section: a role-pair/feature card grid with a
            toggle switching which axis is the top-level grouping, instead
            of the flat per-panel grid other groups use -- see
-           word_order.viz_overview._npa_toggle_group_html. */
+           agreement_trees.report.viz_overview._npa_toggle_group_html. */
         .npa-view-toggle {
             display: inline-flex;
             border: 1px solid var(--border-hover);
@@ -279,7 +279,7 @@
         <div class="header">
             <div class="title-section">
                 <div class="back-links"><a href="../../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Main Page</a><a href="../../index.html" class="back-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>Overview</a></div>
-                <h1>MultiBLiMP 2.0 &mdash; Agreement Overview</h1>
+                <h1>MultiBLiMP &ndash; Morphological Agreement &ndash; Decision Trees</h1>
                 <p class="description">
                     This page gives an overview of agreement predictability across dependency relations and languages,
                     grouped by what the subject agrees with (verb, participle, auxiliary, ...). Each panel shows the
@@ -313,8 +313,12 @@
                 <div class="panel-label"><a href="../../npa/HEAD-ADP_C/index.html">Case</a></div>
             </div>
             <div class="panel">
-                <div id="plot-npa_HEAD-ADP_Abbr" class="mini-plot" data-url="../../npa/HEAD-ADP_Abbr/index.html" data-deprel="npa/HEAD-ADP_Abbr"></div>
-                <div class="panel-label"><a href="../../npa/HEAD-ADP_Abbr/index.html">Abbr</a></div>
+                <div id="plot-npa_HEAD-ADP_Animacy" class="mini-plot" data-url="../../npa/HEAD-ADP_Animacy/index.html" data-deprel="npa/HEAD-ADP_Animacy"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADP_Animacy/index.html">Animacy</a></div>
+            </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADP_Def" class="mini-plot" data-url="../../npa/HEAD-ADP_Def/index.html" data-deprel="npa/HEAD-ADP_Def"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADP_Def/index.html">Definite</a></div>
             </div>
             <div class="panel">
                 <div id="plot-npa_HEAD-ADP_Polite" class="mini-plot" data-url="../../npa/HEAD-ADP_Polite/index.html" data-deprel="npa/HEAD-ADP_Polite"></div>
@@ -347,7 +351,7 @@
           });
         })();
 
-        const allData = {"npa/HEAD-ADP_Abbr": {"acc": []}, "npa/HEAD-ADP_C": {"acc": [{"name": "Aromanian", "base": 0.9210526315789473, "tree": 0.9210526315789473, "n_items": 17, "url": "../../npa/HEAD-ADP_C/Aromanian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.7458333333333333, "tree": 0.8152777777777778, "n_items": 268, "url": "../../npa/HEAD-ADP_C/Bhojpuri.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9672853204222984, "tree": 0.9695044045457603, "n_items": 14384, "url": "../../npa/HEAD-ADP_C/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.9690173324406754, "tree": 0.9940861414862754, "n_items": 13026, "url": "../../npa/HEAD-ADP_C/Czech.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.9838250977603982, "tree": 0.9880910060433701, "n_items": 2767, "url": "../../npa/HEAD-ADP_C/Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.9992199047462638, "tree": 0.9992199047462638, "n_items": 12168, "url": "../../npa/HEAD-ADP_C/German.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.5191999358666025, "tree": 0.920995670995671, "n_items": 5997, "url": "../../npa/HEAD-ADP_C/Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.9888440408117501, "tree": 0.9888440408117501, "n_items": 8819, "url": "../../npa/HEAD-ADP_C/Icelandic.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.987001733102253, "tree": 0.987001733102253, "n_items": 1708, "url": "../../npa/HEAD-ADP_C/Lithuanian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.8922413793103449, "tree": 0.8922413793103449, "n_items": 103, "url": "../../npa/HEAD-ADP_C/Marathi.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.7203703703703703, "tree": 0.8722222222222222, "n_items": 194, "url": "../../npa/HEAD-ADP_C/Old_Georgian.html", "color": "#2563eb"}, {"name": "Pashto", "base": 0.9803664921465969, "tree": 0.9803664921465969, "n_items": 374, "url": "../../npa/HEAD-ADP_C/Pashto.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.5852307882687786, "tree": 0.6341108773666625, "n_items": 9458, "url": "../../npa/HEAD-ADP_C/Romanian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9588535373875688, "tree": 0.959122029802658, "n_items": 7142, "url": "../../npa/HEAD-ADP_C/Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.5158890290037831, "tree": 0.8548549810844893, "n_items": 1919, "url": "../../npa/HEAD-ADP_C/Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9921044864226682, "tree": 0.9921044864226682, "n_items": 6722, "url": "../../npa/HEAD-ADP_C/Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.9866065373660654, "tree": 0.9866065373660654, "n_items": 14548, "url": "../../npa/HEAD-ADP_C/Slovenian.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9818778782193416, "tree": 0.992708511001194, "n_items": 11513, "url": "../../npa/HEAD-ADP_C/Ukrainian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.5651737967914439, "tree": 0.8629010695187166, "n_items": 3252, "url": "../../npa/HEAD-ADP_C/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_G": {"acc": [{"name": "Bhojpuri", "base": 0.7456395348837209, "tree": 0.8590116279069767, "n_items": 256, "url": "../../npa/HEAD-ADP_G/Bhojpuri.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.5614476573938506, "tree": 0.7105142752562226, "n_items": 6135, "url": "../../npa/HEAD-ADP_G/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.616504854368932, "tree": 0.7394822006472492, "n_items": 190, "url": "../../npa/HEAD-ADP_G/Irish.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.5403587443946188, "tree": 0.6883408071748879, "n_items": 120, "url": "../../npa/HEAD-ADP_G/Marathi.html", "color": "#2563eb"}, {"name": "Northern Kurdish", "base": 0.9202898550724637, "tree": 0.9202898550724637, "n_items": 63, "url": "../../npa/HEAD-ADP_G/Northern_Kurdish.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.5422025723472669, "tree": 0.5422025723472669, "n_items": 2023, "url": "../../npa/HEAD-ADP_G/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.6088991234586243, "tree": 0.812732134898232, "n_items": 4098, "url": "../../npa/HEAD-ADP_G/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_N": {"acc": [{"name": "Bhojpuri", "base": 0.8014084507042254, "tree": 0.9, "n_items": 284, "url": "../../npa/HEAD-ADP_N/Bhojpuri.html", "color": "#2563eb"}, {"name": "Bororo", "base": 0.6777620396600567, "tree": 0.7854107648725213, "n_items": 478, "url": "../../npa/HEAD-ADP_N/Bororo.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.7445554355651548, "tree": 0.7445554355651548, "n_items": 8273, "url": "../../npa/HEAD-ADP_N/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.9250386398763524, "tree": 0.9590417310664606, "n_items": 1795, "url": "../../npa/HEAD-ADP_N/Irish.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.8682795698924731, "tree": 0.8682795698924731, "n_items": 161, "url": "../../npa/HEAD-ADP_N/Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.5975877192982456, "tree": 0.8212719298245614, "n_items": 183, "url": "../../npa/HEAD-ADP_N/Marathi.html", "color": "#2563eb"}, {"name": "Northern Kurdish", "base": 0.9637681159420289, "tree": 0.9637681159420289, "n_items": 66, "url": "../../npa/HEAD-ADP_N/Northern_Kurdish.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.7243300210779886, "tree": 0.7610659439927733, "n_items": 2405, "url": "../../npa/HEAD-ADP_N/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8094557823129251, "tree": 0.8189795918367347, "n_items": 5949, "url": "../../npa/HEAD-ADP_N/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_P": {"acc": [{"name": "Bororo", "base": 0.8645171537484116, "tree": 0.9166137229987293, "n_items": 2721, "url": "../../npa/HEAD-ADP_P/Bororo.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.9907511210762332, "tree": 0.9963565022421524, "n_items": 1767, "url": "../../npa/HEAD-ADP_P/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.9490489130434783, "tree": 0.9490489130434783, "n_items": 698, "url": "../../npa/HEAD-ADP_P/Irish.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.9882860665844636, "tree": 0.9882860665844636, "n_items": 801, "url": "../../npa/HEAD-ADP_P/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Polite": {"acc": [{"name": "Javanese", "base": 0.8580246913580247, "tree": 0.8580246913580247, "n_items": 69, "url": "../../npa/HEAD-ADP_Polite/Javanese.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Rel": {"acc": [{"name": "Guajajara", "base": 0.7361111111111112, "tree": 0.7731481481481481, "n_items": 28, "url": "../../npa/HEAD-ADP_Rel/Guajajara.html", "color": "#2563eb"}, {"name": "Tupinamba", "base": 0.5535714285714286, "tree": 0.6964285714285714, "n_items": 12, "url": "../../npa/HEAD-ADP_Rel/Tupinamba.html", "color": "#2563eb"}]}};
+        const allData = {"npa/HEAD-ADP_Animacy": {"acc": []}, "npa/HEAD-ADP_C": {"acc": [{"name": "Aromanian", "base": 0.9210526315789473, "tree": 0.9210526315789473, "n_items": 17, "url": "../../npa/HEAD-ADP_C/Aromanian.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.7560646900269542, "tree": 0.8153638814016172, "n_items": 280, "url": "../../npa/HEAD-ADP_C/Bhojpuri.html", "color": "#2563eb"}, {"name": "Croatian", "base": 0.9675564819795589, "tree": 0.9697081764389457, "n_items": 14389, "url": "../../npa/HEAD-ADP_C/Croatian.html", "color": "#2563eb"}, {"name": "Czech", "base": 0.9688289493238222, "tree": 0.9939441224550454, "n_items": 13038, "url": "../../npa/HEAD-ADP_C/Czech.html", "color": "#2563eb"}, {"name": "Georgian", "base": 0.9845001741553465, "tree": 0.9883315917798676, "n_items": 2826, "url": "../../npa/HEAD-ADP_C/Georgian.html", "color": "#2563eb"}, {"name": "German", "base": 0.9896143485041826, "tree": 0.9896143485041826, "n_items": 13959, "url": "../../npa/HEAD-ADP_C/German.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.9966442953020134, "tree": 0.9966442953020134, "n_items": 445, "url": "../../npa/HEAD-ADP_C/Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.6765741299537317, "tree": 0.9566317977603433, "n_items": 20179, "url": "../../npa/HEAD-ADP_C/Hindi.html", "color": "#2563eb"}, {"name": "Icelandic", "base": 0.9850724721372062, "tree": 0.9850724721372062, "n_items": 17058, "url": "../../npa/HEAD-ADP_C/Icelandic.html", "color": "#2563eb"}, {"name": "Lithuanian", "base": 0.9847675040085516, "tree": 0.9847675040085516, "n_items": 1842, "url": "../../npa/HEAD-ADP_C/Lithuanian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.8566176470588235, "tree": 0.8566176470588235, "n_items": 116, "url": "../../npa/HEAD-ADP_C/Marathi.html", "color": "#2563eb"}, {"name": "Old Georgian", "base": 0.7214022140221402, "tree": 0.8800738007380073, "n_items": 195, "url": "../../npa/HEAD-ADP_C/Old_Georgian.html", "color": "#2563eb"}, {"name": "Pashto", "base": 0.970886075949367, "tree": 0.970886075949367, "n_items": 383, "url": "../../npa/HEAD-ADP_C/Pashto.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.5681818181818182, "tree": 0.75, "n_items": 12, "url": "../../npa/HEAD-ADP_C/Punjabi.html", "color": "#2563eb"}, {"name": "Romanian", "base": 0.5811587117276783, "tree": 0.6293161400721139, "n_items": 9509, "url": "../../npa/HEAD-ADP_C/Romanian.html", "color": "#2563eb"}, {"name": "Serbian", "base": 0.9588535373875688, "tree": 0.959122029802658, "n_items": 7142, "url": "../../npa/HEAD-ADP_C/Serbian.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.6460749705832913, "tree": 0.8886367456715414, "n_items": 3843, "url": "../../npa/HEAD-ADP_C/Sindhi.html", "color": "#2563eb"}, {"name": "Slovak", "base": 0.9921044864226682, "tree": 0.9921044864226682, "n_items": 6722, "url": "../../npa/HEAD-ADP_C/Slovak.html", "color": "#2563eb"}, {"name": "Slovenian", "base": 0.9866065373660654, "tree": 0.9866065373660654, "n_items": 14548, "url": "../../npa/HEAD-ADP_C/Slovenian.html", "color": "#2563eb"}, {"name": "Turkish", "base": 0.5334728033472803, "tree": 0.9142259414225942, "n_items": 127, "url": "../../npa/HEAD-ADP_C/Turkish.html", "color": "#2563eb"}, {"name": "Ukrainian", "base": 0.9814453125, "tree": 0.9922299592391305, "n_items": 11557, "url": "../../npa/HEAD-ADP_C/Ukrainian.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.5926246640788295, "tree": 0.9058524932815766, "n_items": 6821, "url": "../../npa/HEAD-ADP_C/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Def": {"acc": []}, "npa/HEAD-ADP_G": {"acc": [{"name": "Bhojpuri", "base": 0.7404891304347826, "tree": 0.8355978260869565, "n_items": 272, "url": "../../npa/HEAD-ADP_G/Bhojpuri.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.7042410714285714, "tree": 0.7890625, "n_items": 132, "url": "../../npa/HEAD-ADP_G/Greek.html", "color": "#2563eb"}, {"name": "Hausa", "base": 0.6714285714285714, "tree": 0.7, "n_items": 23, "url": "../../npa/HEAD-ADP_G/Hausa.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.6266768120843197, "tree": 0.7228891894938564, "n_items": 11118, "url": "../../npa/HEAD-ADP_G/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.6160941475826972, "tree": 0.6930661577608143, "n_items": 968, "url": "../../npa/HEAD-ADP_G/Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.5589615723085949, "tree": 0.8417424464652391, "n_items": 1905, "url": "../../npa/HEAD-ADP_G/Italian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.6090604026845637, "tree": 0.6996644295302014, "n_items": 181, "url": "../../npa/HEAD-ADP_G/Marathi.html", "color": "#2563eb"}, {"name": "Northern Kurdish", "base": 0.9202898550724637, "tree": 0.9202898550724637, "n_items": 63, "url": "../../npa/HEAD-ADP_G/Northern_Kurdish.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.5717493953702637, "tree": 0.7690314407462858, "n_items": 4964, "url": "../../npa/HEAD-ADP_G/Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.5729166666666666, "tree": 0.6145833333333334, "n_items": 27, "url": "../../npa/HEAD-ADP_G/Punjabi.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.6843216759587768, "tree": 0.6843216759587768, "n_items": 4050, "url": "../../npa/HEAD-ADP_G/Sindhi.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.698424442896936, "tree": 0.8336960306406686, "n_items": 8023, "url": "../../npa/HEAD-ADP_G/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_N": {"acc": [{"name": "Bhojpuri", "base": 0.8034300791556728, "tree": 0.8825857519788918, "n_items": 304, "url": "../../npa/HEAD-ADP_N/Bhojpuri.html", "color": "#2563eb"}, {"name": "Bororo", "base": 0.7673512747875354, "tree": 0.8204674220963173, "n_items": 1083, "url": "../../npa/HEAD-ADP_N/Bororo.html", "color": "#2563eb"}, {"name": "Greek", "base": 0.6395089285714286, "tree": 0.7600446428571429, "n_items": 286, "url": "../../npa/HEAD-ADP_N/Greek.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.7609332006322815, "tree": 0.7705345120309115, "n_items": 12997, "url": "../../npa/HEAD-ADP_N/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.8519142419601837, "tree": 0.9202143950995406, "n_items": 2781, "url": "../../npa/HEAD-ADP_N/Irish.html", "color": "#2563eb"}, {"name": "Italian", "base": 0.6253991291727141, "tree": 0.9246734397677794, "n_items": 2154, "url": "../../npa/HEAD-ADP_N/Italian.html", "color": "#2563eb"}, {"name": "Komi Zyrian", "base": 0.8813131313131313, "tree": 0.8813131313131313, "n_items": 174, "url": "../../npa/HEAD-ADP_N/Komi_Zyrian.html", "color": "#2563eb"}, {"name": "Marathi", "base": 0.6512125534950072, "tree": 0.8252496433666191, "n_items": 244, "url": "../../npa/HEAD-ADP_N/Marathi.html", "color": "#2563eb"}, {"name": "Northern Kurdish", "base": 0.9637681159420289, "tree": 0.9637681159420289, "n_items": 66, "url": "../../npa/HEAD-ADP_N/Northern_Kurdish.html", "color": "#2563eb"}, {"name": "Portuguese", "base": 0.7669160523709979, "tree": 0.8632962922213665, "n_items": 6970, "url": "../../npa/HEAD-ADP_N/Portuguese.html", "color": "#2563eb"}, {"name": "Punjabi", "base": 0.8454545454545455, "tree": 0.8454545454545455, "n_items": 46, "url": "../../npa/HEAD-ADP_N/Punjabi.html", "color": "#2563eb"}, {"name": "Sindhi", "base": 0.7684049079754601, "tree": 0.8118910140743414, "n_items": 4258, "url": "../../npa/HEAD-ADP_N/Sindhi.html", "color": "#2563eb"}, {"name": "Turkish", "base": 0.7786069651741293, "tree": 0.8051409618573798, "n_items": 469, "url": "../../npa/HEAD-ADP_N/Turkish.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.827267175572519, "tree": 0.827267175572519, "n_items": 13546, "url": "../../npa/HEAD-ADP_N/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_P": {"acc": [{"name": "Basque", "base": 0.6319444444444444, "tree": 0.9097222222222222, "n_items": 26, "url": "../../npa/HEAD-ADP_P/Basque.html", "color": "#2563eb"}, {"name": "Bhojpuri", "base": 0.94, "tree": 0.94, "n_items": 23, "url": "../../npa/HEAD-ADP_P/Bhojpuri.html", "color": "#2563eb"}, {"name": "Bororo", "base": 0.8754641909814324, "tree": 0.9216180371352786, "n_items": 3300, "url": "../../npa/HEAD-ADP_P/Bororo.html", "color": "#2563eb"}, {"name": "Hindi", "base": 0.9984481935381188, "tree": 0.9984481935381188, "n_items": 12546, "url": "../../npa/HEAD-ADP_P/Hindi.html", "color": "#2563eb"}, {"name": "Irish", "base": 0.9709553528564571, "tree": 0.9843975036005761, "n_items": 2022, "url": "../../npa/HEAD-ADP_P/Irish.html", "color": "#2563eb"}, {"name": "Turkish", "base": 0.9609053497942387, "tree": 0.9609053497942387, "n_items": 233, "url": "../../npa/HEAD-ADP_P/Turkish.html", "color": "#2563eb"}, {"name": "Urdu", "base": 0.8046569994422755, "tree": 0.9963283138129764, "n_items": 8656, "url": "../../npa/HEAD-ADP_P/Urdu.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Polite": {"acc": [{"name": "Javanese", "base": 0.8580246913580247, "tree": 0.8580246913580247, "n_items": 69, "url": "../../npa/HEAD-ADP_Polite/Javanese.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Rel": {"acc": [{"name": "Guajajara", "base": 0.7361111111111112, "tree": 0.7731481481481481, "n_items": 28, "url": "../../npa/HEAD-ADP_Rel/Guajajara.html", "color": "#2563eb"}, {"name": "Tupinamba", "base": 0.5535714285714286, "tree": 0.6964285714285714, "n_items": 12, "url": "../../npa/HEAD-ADP_Rel/Tupinamba.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so
@@ -363,6 +367,16 @@
             };
         })();
 
+        // Axes start at 0.44 unless some point, in any panel, lies below it (a multi-class view, e.g.
+        // the data-debugging pages' split unk classes, can have a root accuracy under 0.5); then
+        // every panel's axes extend to the lowest such point.
+        const AX_LO_FIXED = 0.44;
+        const AX_LO = AX_LO_FIXED !== null ? AX_LO_FIXED : (() => {
+            const vals = Object.values(allData).flatMap(g => (g.acc || []).flatMap(d => [d.base, d.tree]))
+                .filter(v => Number.isFinite(v));
+            return vals.length ? Math.min(0.44, Math.floor((Math.min(...vals) - 0.03) * 20) / 20) : 0.44;
+        })();
+
         function renderMiniPlot(el, points) {
             const url = el.dataset.url;
             // Some languages' accuracy is NaN (too few items to compute it);
@@ -372,7 +386,12 @@
 
             // y = x reference over the fixed axis range: points above it are
             // languages where the tree beat the majority-class baseline.
-            const baseLine = { x: [0.5, 1], y: [0.5, 1] };
+            // Every panel shares the lowest lower bound any panel needs (see AX_LO), so all the
+            // charts have the same x and y scale.
+            const axLo = AX_LO;
+            const axTicks = [];
+            for (let t = Math.ceil(axLo * 10) / 10; t <= 1.0001; t += 0.1) axTicks.push(Math.round(t * 10) / 10);
+            const baseLine = { x: [Math.min(0.5, axLo), 1], y: [Math.min(0.5, axLo), 1] };
 
             const traceLine = {
                 x: baseLine.x,
@@ -395,7 +414,7 @@
                 marker: {
                     size: points.map(d => d.n_items),
                     sizemode: 'area',
-                    sizeref: 2 * Math.max(...points.map(d => d.n_items)) / (20 ** 2),
+                    sizeref: 2 * Math.max(1, ...points.map(d => d.n_items)) / (20 ** 2),
                     sizemin: 3,
                     color: points.map(d => d.color ?? THEME.accent),
                     opacity: 0.75,
@@ -413,7 +432,7 @@
                 // below chance in a majority-vote leaf) rather than autoscaled, so
                 // the same fixed reference points hold across every panel instead
                 // of each tightly-clustered panel silently rescaling to its own
-                // tiny range. Upper bound 1.02, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
+                // tiny range. Upper bound 1.05, lower 0.44 (extra room around the 0.5/0.5 corner so the two 0.5 tick labels don't collide): a marker sitting
                 // exactly at an edge has real radius (area-scaled by n_items) and
                 // would otherwise clip against the plot border.
                 xaxis: {
@@ -422,8 +441,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 yaxis: {
@@ -432,8 +451,8 @@
                     gridcolor: THEME.grid,
                     zeroline: false,
                     tickfont: { size: 9 },
-                    range: [0.44, 1.02],
-                    tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    range: [axLo, 1.05],
+                    tickvals: axTicks,
                     autorange: false,
                 },
                 // Transparent, not a fixed white/panel color: .panel paints its

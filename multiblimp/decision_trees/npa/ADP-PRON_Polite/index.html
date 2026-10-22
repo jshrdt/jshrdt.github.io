@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP 2.0 - NP ADP–PRON (Polite) Agreement Overview</title>
+    <title>MultiBLiMP – Morphological Agreement – NP ADP–PRON (Polite)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -142,11 +142,11 @@
         }
         .no-data-list {
             font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.25rem;
-            padding: 0.1rem 0.875rem 0.6rem 2rem; column-width: 16rem; column-gap: 1.5rem; background: var(--detail-bg);
+            padding: 0.1rem 0.875rem 0.6rem 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); column-gap: 1.5rem; background: var(--detail-bg);
             border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px;
         }
-        .no-data-list li { margin: 0.15rem 0; break-inside: avoid; }
-.no-data-list.four-cols { column-count: 4; column-width: auto; }
+        .no-data-list li { margin: 0.15rem 0; }
+.no-data-list.four-cols { grid-template-columns: repeat(4, 1fr); }
         .notes-disclosure { margin-bottom: 1.25rem; }
         .notes-disclosure > summary {
             cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
@@ -217,7 +217,7 @@
         .modal-close:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .modal.modal-wide { max-width: 1100px; }
 
-        /* examples modal: the pre-rendered HTML from sva_trees.create_pairs.
+        /* examples modal: the pre-rendered HTML from agreement_trees.pairs.create_pairs.
            bucket_examples_html (same markup/classes the former standalone
            flowchart page used) is dropped in as-is, so these rules mirror
            that page's example-table CSS, translated onto this page's tokens. */
@@ -475,7 +475,7 @@
     <div class="container">
         <div class="header">
             <div class="title-section">
-                <h1>MultiBLiMP 2.0 - NP ADP–PRON (Polite) Agreement Overview</h1>
+                <h1>MultiBLiMP – Morphological Agreement – NP ADP–PRON (Polite)</h1>
                 <div class="subtitle">
                     NP ADP–PRON (Polite) agreement prediction through decision trees. Click a language row (or the <strong>Results</strong> button) to open its create_pairs results below. The small chevron after N Keep (or the <strong>Diagnostics</strong> button) is separate: it opens just the bucket breakdown, inline, right where those items dropped out of the pipeline.
                 </div>
@@ -578,7 +578,7 @@
             <div><dt>Δ Acc</dt><dd>Train Acc minus Root Acc, in percentage points; never negative. Coloured on the coverage scale (teal = good) by the share of the root&rsquo;s remaining error the tree removed, i.e. gain &divide; (100% &minus; Root Acc), clamped to 0&ndash;100%. +1 point off a root accuracy of 98% is a much bigger win than +1 point off a root accuracy of 60%.</dd></div>
             <div><dt>Test Acc</dt><dd>Raw accuracy of the same tree on the held-out split it was not fit on. Compare with Train Acc to spot overfitting: a large gap means the tree learned its training rows more than the pattern. Coloured on the same 50&ndash;100% scale, and faded (with a tooltip) when the test split has fewer than 10 rows, since that figure is then too noisy to mean much. Blank when the model has no recorded test split.</dd></div>
             <div><dt>N RAW</dt><dd>Candidate rows before the leaf-confidence filter is applied. Not coloured. There's no cheap per-language reference point (like treebank size) to scale it against, and not informative enough to be worth adding one for. A language with more than zero but fewer than 10 is left out of this table entirely and listed instead, with its full label distribution, in the "too few or uninformative agreement labels" note above &mdash; still real data, just too little of it for this language &amp; condition to draw much of a conclusion from.</dd></div>
-            <div><dt>N KEEP</dt><dd>Of those, the rows kept after the leaf-confidence filter (leaf accuracy &gt; 0.95). The ones actually attempted. Coloured on the coverage scale, as a fraction of N RAW &mdash; faded (with a hover tooltip) when N RAW is below 10, since that fraction is too noisy to mean much at that size (2/2 reads as a perfect 100% off pure small-sample luck). The colour still shows, just dimmed, rather than disappearing outright. A language whose strict pass alone wasn't enough and got a laxer, depth-aware retry (sva_trees.second_chance) gets a "retried" tag under its name &mdash; N KEEP then reflects that retry's own per-leaf thresholds, whether or not it produced any pairs.</dd></div>
+            <div><dt>N KEEP</dt><dd>Of those, the rows kept after the leaf-confidence filter (leaf accuracy &gt; 0.95). The ones actually attempted. Coloured on the coverage scale, as a fraction of N RAW &mdash; faded (with a hover tooltip) when N RAW is below 10, since that fraction is too noisy to mean much at that size (2/2 reads as a perfect 100% off pure small-sample luck). The colour still shows, just dimmed, rather than disappearing outright. A language whose strict pass alone wasn't enough and got a laxer, depth-aware retry (agreement_trees.pairs.second_chance) gets a "retried" tag under its name &mdash; N KEEP then reflects that retry's own per-leaf thresholds, whether or not it produced any pairs.</dd></div>
             <div><dt>N PAIRS</dt><dd>Rows that ended up as a correctly re-inflected minimal pair. Coloured on the coverage scale, as a fraction of N KEEP, with the same under-10 fade as N KEEP above (checked against N KEEP this time, not N RAW). Clickable when example rows are available &mdash; opens the same examples modal as the bucket breakdown.</dd></div>
           </dl>
         </div>
@@ -637,6 +637,7 @@
                 <tr><td>% covered by UM+UD</td><td><code>num_covered_um_ud</code></td><td># forms of interest</td><td><code>num_forms_of_interest</code></td><td>forms</td><td>Distinct ADP/PRON forms found via UniMorph or the UD-derived fallback.</td></tr>
                 <tr><td>% no match</td><td># no match (<code>no_candidates</code>)</td><td># UD candidates (kept)</td><td><code>n_keep</code></td><td>row</td><td>Fires once per candidate row, in place of the swap_form loop. The two are mutually exclusive.</td></tr>
                 <tr><td>% no inflection</td><td># no inflection (<code>no_inflections</code>)</td><td># UD candidates (kept)</td><td><code>n_keep</code></td><td>row</td><td>Same as "no match": fires instead of entering the swap_form loop.</td></tr>
+                <tr><td>% ambiguous reading</td><td># ambiguous reading (<code>ambiguous_readings</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Replaces correct_swaps for a row whose accepted swap forms come from different readings of the form.</td></tr>
                 <tr><td>% same inflection</td><td># same inflection (<code>same_forms</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form; a row can yield more than one item.</td></tr>
                 <tr><td>% same feature</td><td># same feature (<code>same_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
                 <tr><td>% undefined feature</td><td># undefined feature (<code>undefined_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
@@ -695,7 +696,7 @@
     (function() {
       // A deprel page like npa/HEAD-ADJ_N/index.html is linked to from
       // BOTH npa/by_pair/HEAD-ADJ.html and npa/by_feature/Number.html
-      // (see word_order.viz_overview._write_npa_subpages), so which one
+      // (see agreement_trees.report.viz_overview._write_npa_subpages), so which one
       // to send the user back to can't be baked in statically -- read it
       // off document.referrer instead, and just leave the button hidden
       // (falling back to the static "Overview" button above) when it
@@ -718,6 +719,7 @@
     const BUCKETS = [
       { key: "no_match", label: "no match", desc: "No candidate swap form was found for this row at all." },
       { key: "no_inflection", label: "no inflection", desc: "A swap form was targeted, but the inflector had nothing to offer for it." },
+      { key: "ambiguous_reading", label: "ambiguous reading", desc: "The accepted swap forms come from different readings of the form, so at least one pair would not match the sentence." },
       { key: "same_inflection", label: "same inflection", desc: "The re-inflected form came back identical to the original surface form." },
       { key: "same_feature", label: "same feature", desc: "The re-inflected form's feature value still overlapped the original — the swap didn't actually change it." },
       { key: "undefined_feature", label: "undefined feature", desc: "The target feature was undefined or missing for this form." },
@@ -726,7 +728,7 @@
     ];
 
     // Fixed left-to-right order for the distribution bar -- matches
-    // sva_trees.pipeline's palette_map order, never sorted by size, so a bar
+    // agreement_trees.vp.pipeline's palette_map order, never sorted by size, so a bar
     // reads the same way across every language and every render. A language
     // whose predictor_var was never simplified (Pipeline.simplify=False)
     // carries "+-"/"--" instead of "unk"; both are covered here so either
@@ -738,6 +740,15 @@
       ["+-", "#e5c64d"],
       ["--", "#b893de"],
     ];
+
+    // Data-debugging pages split "unk" into why (e.g. "Verb's Number unknown"); same colors as the
+    // tree pages' legend: head side yellow, dependent side blue, both grey.
+    function unkReasonColor(label) {
+      if (/both/i.test(label)) return "#94a1b2";
+      if (/^(Verb|Participle|Aux|NP head)'s /.test(label)) return "#f6c453";
+      if (/'s .* unknown/.test(label)) return "#5aa9e6";
+      return "#b893de";
+    }
 
     // Reader-facing class names (the data keeps yes/no/unk).
     function displayClass(label) {
@@ -751,7 +762,10 @@
       }
       const total = Object.values(dist).reduce((a, b) => a + b, 0);
       if (total === 0) return `<span class="dist-bar" style="background:none;"></span>`;
-      const present = LABEL_ORDER.filter(([label]) => dist[label] > 0);
+      const known = new Set(LABEL_ORDER.map(([label]) => label));
+      const extra = Object.keys(dist).filter(k => dist[k] > 0 && !known.has(k)).sort((a, b) => dist[b] - dist[a])
+        .map(k => [k, unkReasonColor(k)]);
+      const present = LABEL_ORDER.filter(([label]) => dist[label] > 0).concat(extra);
       const title = present
         .map(([label]) => `${displayClass(label)} ${(dist[label] / total * 100).toFixed(1)}%`)
         .join("  ·  ");
@@ -996,7 +1010,7 @@
           ? `<a class="lang-name-text" href="${lang.langUrl}"${nameStyle}>${lang.name}</a>`
           : `<span class="lang-name-text"${nameStyle}>${lang.name}</span>`;
         const retriedBadge = lang.retried
-          ? `<span class="retried-badge" title="sva_trees.second_chance retried this language at a laxer, depth-aware accuracy floor after the strict pass alone wasn't enough.">retried</span>`
+          ? `<span class="retried-badge" title="agreement_trees.pairs.second_chance retried this language at a laxer, depth-aware accuracy floor after the strict pass alone wasn't enough.">retried</span>`
           : "";
 
         const hasPairsExamples = lang.diag && lang.diag.examples && lang.diag.examples.correct_swaps && lang.nPairs > 0;
@@ -1127,7 +1141,7 @@
     legendOverlay.addEventListener("click", (e) => { if (e.target === legendOverlay) legendOverlay.classList.remove("open"); });
 
     // ---- examples modal: per-bucket sample rows, pre-rendered server-side
-    // by sva_trees.create_pairs.bucket_examples_html and dropped in as-is. One
+    // by agreement_trees.pairs.create_pairs.bucket_examples_html and dropped in as-is. One
     // shared overlay, content swapped in per click via a delegated listener
     // on tableBody (rows are re-created on every renderAll(), so per-button
     // listeners would need re-attaching). Covers all 11 buckets, not just
@@ -1213,7 +1227,7 @@
       closeExamplesModal();
     });
 
-    // ---- scatter plot: unchanged from the classic page ----
+    // ---- scatter plot ----
     function renderPlot() {
       const data = plotData;
       const trace = {
@@ -1223,19 +1237,24 @@
         hovertemplate: '<b>%{text}</b><br>Root Acc: %{x:.3f}<br>Train Acc: %{y:.3f}<br>N Items: %{customdata[1]:,}<br><extra></extra>',
         marker: {
           size: data.map(d => d.n_items), sizemode: 'area',
-          sizeref: 2 * Math.max(...data.map(d => d.n_items)) / (40 ** 2), sizemin: 4,
+          sizeref: 2 * Math.max(1, ...data.map(d => d.n_items)) / (40 ** 2), sizemin: 4,
           color: data.map(d => d.color), opacity: 0.6, line: { color: '#1e40af', width: 1 },
         },
       };
+      // Axes start at 0.45 unless a point lies below it: a multi-class view (the data-debugging
+      // pages split "unk" by cause) can have a root accuracy under 0.5.
+      const axLo = Math.min(0.45, Math.floor((Math.min(...data.flatMap(d => [d.base, d.tree])) - 0.03) * 20) / 20);
+      const axTicks = [];
+      for (let t = Math.ceil(axLo * 10) / 10; t <= 1.0001; t += 0.1) axTicks.push(Math.round(t * 10) / 10);
       // y = x reference: points above it are languages where the tree beat the baseline.
       const diagonal = {
-        x: [0.5, 1], y: [0.5, 1], mode: 'lines', type: 'scatter', hoverinfo: 'skip',
+        x: [Math.min(0.5, axLo), 1], y: [Math.min(0.5, axLo), 1], mode: 'lines', type: 'scatter', hoverinfo: 'skip',
         line: { color: CHART_THEME.border, width: 1, dash: 'dash' }, showlegend: false,
       };
       const layout = {
         title: { text: 'Root Accuracy vs. Train Accuracy', font: { family: 'DM Sans, system-ui, sans-serif', size: 16, color: CHART_THEME.text } },
-        xaxis: { title: { text: 'Root Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [0.45, 1.02], autorange: false, tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0], automargin: true },
-        yaxis: { title: { text: 'Train Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [0.45, 1.02], autorange: false, tickvals: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0], automargin: true },
+        xaxis: { title: { text: 'Root Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [axLo, 1.05], autorange: false, tickvals: axTicks, automargin: true },
+        yaxis: { title: { text: 'Train Accuracy', standoff: 14 }, gridcolor: CHART_THEME.border, zeroline: false, range: [axLo, 1.05], autorange: false, tickvals: axTicks, automargin: true },
         plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
         font: { family: 'DM Sans, system-ui, sans-serif', color: CHART_THEME.text },
         hovermode: 'closest', showlegend: false, margin: { t: 50, r: 30, b: 50, l: 60 },

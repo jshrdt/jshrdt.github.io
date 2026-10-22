@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num", "roleB": "np head", "decisiveFeat": "Definite", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Erzya", "languageName": "Erzya", "accuracy": "91.8%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "73", "predictor": "NP head-NUM_Definite", "rootAccuracy": "91.2%", "trainAccuracy": "91.2%", "keepThreshold": "leaf accuracy > 0.9", "keepThresholdAcc": 0.8999999999999999, "fitExcluded": [{"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Definite"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 67, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 73, "H": 0.4292, "acc": 0.9122, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 67, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.8999999999999999, "secondChance": true, "kept": 67, "correctSwaps": 16, "pairRoleCounts": {"A": 16}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "\u041d\u0435\u0442\u044c <strong>\u043a\u043e\u043b\u043c\u043e</strong> <strong>\u0440\u0430\u0441\u044c\u043a\u0435\u0442\u043d\u0435</strong> \u044d\u0440\u044c\u0432\u0430 \u0418\u043d\u0435\u0447\u0438\u0441\u0442\u044d \u0442\u0435\u0437\u044d\u043d\u044c \u0432\u0430\u0441\u0442\u043d\u0435\u0432\u0438\u0442\u044c \u043e\u0437\u043a\u0441\u043e\u043d\u044c \u044e\u0442\u0430\u0432\u0442\u043e\u043c\u043e ...", "verb": "\u0440\u0430\u0441\u044c\u043a\u0435\u0442\u043d\u0435", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u0440\u0430\u0441\u044c\u043a\u0435", "xpos=N", "Case=Nom", "<b>Definite=Def</b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A37%3A1%3AAbramovK%22%20%3B%20A%20%5Bform%3D%22%D1%80%D0%B0%D1%81%D1%8C%D0%BA%D0%B5%D1%82%D0%BD%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0414\u044b \u0438\u0441\u0442\u044f \u0432\u0435\u0439\u043a\u0435\u0442\u044c\u0441\u0442\u044d , \u0448\u0442\u043e\u0431\u0443 \u0432\u0435\u0439\u0441 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430\u0434\u043e\u0441\u0442 \u043c\u0435\u0439\u043b\u0435 \u043d\u0435\u0442\u043d\u0435 <strong>\u043a\u0430\u0432\u0442\u043e</strong> <strong>\u043a\u0435\u0432\u0442\u043d\u0435\u0441</strong> \u043a\u0430\u0440\u0430\u0437\u0442\u043d\u0435 \u0443\u043b\u0435\u0432\u0435\u043b\u044c\u0442\u044c \u043f\u0440\u043e\u043a \u0432\u0435\u0439\u043a\u0435\u043a\u0441 .", "verb": "\u043a\u0435\u0432\u0442\u043d\u0435\u0441", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u043a\u0435\u0432", "xpos=N", "Case=Ill", "<b>Definite=Def</b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A957%22%20%3B%20A%20%5Bform%3D%22%D0%BA%D0%B5%D0%B2%D1%82%D0%BD%D0%B5%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u0412\u0435\u0439\u043a\u0435</strong> \u0438\u0441\u0442\u044f\u043c\u043e \u0434\u043e\u043c\u043a\u0430 <strong>\u043a\u0430\u0448\u0442\u043e\u043c\u043e\u043d\u0442\u0435\u043d\u044c</strong> \u0441\u043e\u0432\u0430\u0441\u044c\u043a\u0430\u043a \u0441\u043e\u043d .", "verb": "\u043a\u0430\u0448\u0442\u043e\u043c\u043e\u043d\u0442\u0435\u043d\u044c", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u043a\u0430\u0448\u0442\u043e\u043c\u043e", "xpos=N", "Case=Dat", "<b>Definite=Def</b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A4167%22%20%3B%20A%20%5Bform%3D%22%D0%BA%D0%B0%D1%88%D1%82%D0%BE%D0%BC%D0%BE%D0%BD%D1%82%D0%B5%D0%BD%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%92%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043b\u043c\u043e</strong> <strong>\u0447\u0430\u0441\u0442\u043d\u044d</strong> \u043c\u0430\u0440\u044f\u0432\u0441\u0442\u044c \u043a\u043e\u043b\u043c\u043e \u0447\u0438\u043d\u044c \u043a\u0443\u0432\u0430\u043b\u043c\u043e\u0441\u043e\u0442 \u0443\u0447\u043e\u043c\u0441 \u043f\u0430\u0440\u0442\u0438\u0437\u0430\u043d\u0442\u043d\u044d\u043d\u0435\u043d\u044c \u043f\u0435\u043a \u0441\u0442\u0430\u043a\u0430\u043b\u044c .", "verb": "\u0447\u0430\u0441\u0442\u043d\u044d", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u0447\u0430\u0441", "xpos=N", "Case=Nom", "<b>Definite=Def</b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A197%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B0%D1%81%D1%82%D0%BD%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u0430\u0448\u0442\u0441\u0430\u043a <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0438\u0434\u0435\u043c\u043a\u0430\u043d\u0442\u044c</strong> \u2014 \u0430\u0432\u0430\u043d\u0442\u044c , \u043b\u0435\u0437\u044d\u0432\u0442\u0435\u043c\u0435 \u043a\u0443\u043b\u043e\u0432\u0442\u0430\u0442 \u0437\u044f\u0440\u044b\u044f : \u0432\u0435\u0441\u0435 \u043b\u0435\u0432\u043a\u0441\u044d\u043d\u0437\u044d .", "verb": "\u0438\u0434\u0435\u043c\u043a\u0430\u043d\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u0438\u0434\u0435\u043c\u043a\u0430", "xpos=N", "Case=Gen", "<b>Definite=Def</b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A987%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B4%D0%B5%D0%BC%D0%BA%D0%B0%D0%BD%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u2014 \u0410\u0437\u0451 \u0447\u0438\u0439\u0442\u044c , \u0441\u0435\u0440\u0433\u0435\u0446\u044c \u0442\u0435\u043d\u0441\u0442 , \u043b\u043e\u0442\u043a\u0430\u0441\u0442 ! \u2014 \u043c\u0435\u0440\u0441\u044c \u041b\u0430\u043f\u0448\u043e\u0432 <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446\u043d\u044d\u043d\u044c</strong> .", "verb": "\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446\u043d\u044d\u043d\u044c", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446", "xpos=N", "Case=Gen", "<b>Definite=Def</b>", "Number=Plur"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A455%22%20%3B%20A%20%5Bform%3D%22%D1%8F%D0%BA%D1%81%D1%82%D0%B5%D1%80%D0%B5%D0%B0%D1%80%D0%BC%D0%B5%D0%B5%D1%86%D0%BD%D1%8D%D0%BD%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0412\u0435\u0441\u0435\u043c\u0435\u043d\u0435\u043d\u044c \u0430 \u0441\u0442\u0443\u0432\u0442\u043e\u0432\u0438 , \u043a\u043e\u0434\u0430 <strong>\u0441\u0438\u0441\u0435\u043c</strong> <strong>\u0447\u0438\u0434\u0435</strong> \u0438\u043a\u0435\u043b\u0435 \u0432\u0435\u0439\u043a\u0435 \u0441\u0442\u0430\u043d\u0446\u0438\u044f \u043c\u0430\u043b\u0430\u0441\u043e , \u0441\u0443\u0434\u043e\u0434\u043e - \u0441\u0443\u0434\u043e\u0441 \u044d\u0448\u043a\u0435\u0432\u0441\u044c \u0413\u0440\u043e\u043c\u043e\u0432\u043e\u043d\u044c \u043e\u0442\u0440\u044f\u0434\u043e\u0437\u043e \u0430\u0448\u043e\u0442\u043d\u0435\u043d\u044c \u043c\u0430\u0440\u0442\u043e , \u0430\u0448\u043e\u0442\u043d\u0435\u0441\u0442\u044d \u0443\u043b\u044c\u043d\u0435\u0441\u0442\u044c \u043f\u0435\u043a \u043b\u0430\u043c\u043e\u043d\u0435\u0441\u0442 .", "verb": "\u0447\u0438\u0434\u0435", "verbFeats": ["upos=NOUN", "deprel=obl:cmp", "lemma=\u0447\u0438", "xpos=N", "Case=Abl", "<b>Definite=Ind</b>", "Number=Plur,Sing"], "nsubj": "\u0441\u0438\u0441\u0435\u043c", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0441\u0438\u0441\u0435\u043c", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A184%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%D0%B4%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D1%81%D0%B8%D1%81%D0%B5%D0%BC%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u043e\u0440\u0430\u0432\u0442\u044b\u0446\u044f\u0442\u043d\u0435 \u044e\u0442\u043a\u0441 \u043a\u043e\u0434\u0430-\u0431\u0443\u0442\u0438 \u043f\u0430\u043b\u044c\u0434\u044f\u0432\u0441\u0442\u044c <strong>\u043a\u0430\u0432\u0442\u043e</strong> <strong>\u044d\u0439\u043a\u0430\u043a\u0448\u0442</strong> : \u0432\u0435\u0439\u043a\u0435\u0441\u044c \u0432\u0435\u0434\u044c\u0433\u0435\u0432 \u0430\u0437\u043e\u0440\u043e\u043d\u044c \u0446\u0451\u0440\u0430 , \u043e\u043c\u0431\u043e\u0446\u0435\u0441\u044c \u2015 \u041a\u0430\u043d\u0434\u0440\u0430\u043d\u044c \u041f\u0435\u0442\u0440\u0430\u043d\u044c \u0446\u0451\u0440\u0430\u0437\u043e .", "verb": "\u044d\u0439\u043a\u0430\u043a\u0448\u0442", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u044d\u0439\u043a\u0430\u043a\u0448", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A223%22%20%3B%20A%20%5Bform%3D%22%D1%8D%D0%B9%D0%BA%D0%B0%D0%BA%D1%88%D1%82%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041b\u0430\u0442\u043a\u043e \u043f\u043e\u0442\u043c\u0430\u043a\u0441\u043e\u0441 \u043a\u0430\u0434\u043e\u0432\u0438\u043a\u0441 \u0441\u0451\u0432\u043e\u043d\u044c \u043a\u043e\u043c\u043e\u0440\u043e\u043d\u0442\u044c \u044d\u0439\u0441\u0442\u044d \u043b\u0438\u0441\u0441\u0442\u044c \u0441\u044e\u0432\u043e\u0437\u044c \u043d\u0435\u0440\u043d\u0435 \u043c\u0430\u0440\u0442\u043e <strong>\u043a\u0430\u0432\u0442\u043e</strong> \u0432\u0430\u043b\u043e\u043c\u0430 <strong>\u043f\u0435\u043d\u0447\u0442\u044c</strong> .", "verb": "\u043f\u0435\u043d\u0447\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043f\u0435\u043d\u0447", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A5009%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D0%B5%D0%BD%D1%87%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041e\u0440\u0442\u0430\u0439 <strong>\u043a\u043e\u043b\u043c\u043e</strong> <strong>\u0438\u0435\u0441</strong> \u0430\u0442\u044f\u0434\u043e\u043d\u0442\u044c\u043a\u0430\u043a \u043b\u0430\u043c\u043e \u043a\u0430\u0440\u043c\u0430\u0441\u044c \u0441\u043e\u0434\u0430\u043c\u043e .", "verb": "\u0438\u0435\u0441", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0438\u0435", "xpos=N", "Case=Ill", "<b>Definite=Ind</b>", "Number=Plur,Sing"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ErinaO1997%3A39%3AEvsevev1928%3AIurtaj%3A52%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041d\u0430\u0432\u0438\u043d\u0437\u0435 \u043a\u0435\u0434\u0435\u043d\u0437\u044d \u0432\u0435\u0434\u044c\u0431\u0430\u0440\u044c\u0441 \u0434\u044b \u043d\u0430\u0447\u043a\u043e \u0441\u0443\u0440\u0441\u043e\u043d\u0437\u043e \u0432\u0430\u043b\u0430\u0441\u044c\u043a\u0430\u0432\u0442\u044b\u0437\u0435 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430 \u0442\u0430\u0440\u043a\u0430\u043d\u0442\u044c <strong>\u043a\u0430\u0432\u0442\u043e</strong> <strong>\u0451\u043d\u0434\u043e</strong> \u0438\u0441\u0442\u044f , \u0442\u043e\u043d\u0430 \u044d\u0437\u044c \u043a\u0430\u0440\u043c\u0430 \u0441\u043e\u0434\u0430\u0432\u043e\u043c\u043e\u044f\u043a .", "verb": "\u0451\u043d\u0434\u043e", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0451\u043d", "xpos=N", "Case=Abl", "<b>Definite=Ind</b>", "Number=Plur,Sing"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A5138%22%20%3B%20A%20%5Bform%3D%22%D1%91%D0%BD%D0%B4%D0%BE%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0411\u0443\u0442\u0438 \u0431\u0430\u0436\u0430\u0442 \u044d\u0440\u044f\u043c\u043e \u0430\u0432\u043e\u043b\u044c <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0447\u0438\u0441\u044d</strong> \u2014 \u0430\u0440\u0441\u0435\u043a \u043f\u0435\u0440\u0442\u044c\u043f\u0435\u043b\u044c\u043a\u0441\u0442\u044d\u043d\u0442\u044c .", "verb": "\u0447\u0438\u0441\u044d", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0447\u0438", "xpos=N", "Case=Ine", "<b>Definite=Ind</b>", "Number=Plur,Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A2580%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%D1%81%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435</strong> <strong>\u0438\u0435\u0442\u044c</strong> \u0443\u0448 \u0441\u043b\u0443\u0436\u0438 \u043f\u043e\u043f\u043e\u043a\u0441 , \u0432\u0435\u0441\u0435 \u0446\u0435\u0440\u044c\u043a\u043e\u0432\u0430\u043d\u044c \u0441\u043b\u0443\u0436\u0431\u0430\u043d\u0442\u044c \u0432\u0435\u0442\u0435 \u0441\u0443\u0440\u043e\u043d\u0437\u043e \u043b\u0430\u0434\u0441\u043e \u0441\u043e\u0434\u0430\u0441\u044b , \u043f\u0440\u043e\u043f\u043e\u0432\u0435\u0442\u043d\u0435\u0434\u0435 \u0442\u044b\u0441\u0449\u0430\u0442 \u043b\u043e\u0432\u043d\u043e\u0441\u044c , \u0441\u043e\u0434\u0430\u0441\u044b , \u043a\u043e\u0434\u0430\u043c\u043e \u0432\u0430\u043b \u043c\u0430\u0440\u0442\u043e \u043b\u0438\u0441\u0435\u043c\u0441 \u043d\u0430\u0440\u043e\u0434\u043e\u043d\u0442\u044c \u0438\u043a\u0435\u043b\u0435\u0432 .", "verb": "\u0438\u0435\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u0438\u0435", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A209%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BC%D1%81%D1%8C%D1%81%D0%B8%D1%81%D0%B5%D0%BC%D0%B3%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u042d\u0440\u044f\u0432\u0438 \u0442\u0435\u043d\u0435\u043a \u0443\u0447\u043e\u043c\u0441 <strong>\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435</strong> <strong>\u0447\u0438</strong> ...", "verb": "\u0447\u0438", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=\u0447\u0438", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "nsubj": "\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Appr", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ChetvergovJevgenij_Velenj-vajgeljtj_1992%3A1276%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE-%D0%BD%D0%B8%D0%BB%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0421\u0442\u0430\u043a\u0430 \u0443\u043b\u044c\u043d\u0435\u0441\u044c \u0432\u0435\u043b\u044f\u0432\u0442\u043e\u043c\u0441 <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0431\u043e\u043a\u0430</strong> \u043b\u0430\u043d\u0433\u0441\u0442\u043e \u043e\u043c\u0431\u043e\u0446\u0435\u0441 .", "verb": "\u0431\u043e\u043a\u0430", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0431\u043e\u043a\u0430", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "NounType=Relat", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Sjatko%3A1965-01%3ABiushkinaM%3ACjaraxman%3A73%3A16%3A1%22%20%3B%20A%20%5Bform%3D%22%D0%B1%D0%BE%D0%BA%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u0435\u043b\u044c\u0433\u0430\u043d\u0437\u043e \u0441\u043e\u0432\u0430\u0441\u0442\u044c \u044d\u0449\u043e <strong>\u043a\u0430\u0432\u0442\u043e</strong> <strong>\u043b\u043e\u043c\u0430\u0442\u044c</strong> .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A272%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0412\u0435\u0447\u043a\u0438 \u041c\u0438\u043a\u043e\u043b \u0432\u0435\u043b\u0435\u043d\u044c \u0442\u0435\u0432\u0441\u044d \u0440\u043e\u0431\u043e\u0442\u0430\u043c\u043e \u0434\u044b \u043a\u0443\u0434\u043e\u0441\u043e\u043d\u0442\u044c \u0442\u0435\u0432\u0442\u043d\u0435 \u043f\u0443\u043f\u043e\u0440\u044c\u043a\u0448\u043d\u044d\u043c\u0435 \u043a\u0430\u0440\u043c\u0430\u0441\u0442\u044c \u2014 \u0440\u043e\u0431\u043e\u0442\u0430\u043c\u0441 \u0430 \u043a\u0438\u043d\u0435\u043d\u044c : \u043d\u0438\u0437\u044d \u041c\u0430\u0440\u044f <strong>\u043d\u0438\u043b\u0435</strong> <strong>\u0438\u0435\u0441\u044d</strong> \u0446\u0435\u0440\u044c\u0433\u0430\u0435\u0441\u0442 \u041f\u0430\u043b\u044c\u043a\u043e \u043c\u0430\u0440\u0442\u043e \u043f\u0435\u043a \u043b\u0430\u043c\u043e\u043d\u044c \u0441\u0438\u043d\u0434\u0435\u043c\u0435 \u0430 \u043a\u0435\u043d\u0435\u0440\u0438 .", "verb": "\u0438\u0435\u0441\u044d", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0438\u0435", "xpos=N", "Case=Ine", "<b>Definite=Ind</b>", "Number=Plur,Sing"], "nsubj": "\u043d\u0438\u043b\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043d\u0438\u043b\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A10%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%81%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BD%D0%B8%D0%BB%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0421\u043e\u0432\u0430\u0441\u0442\u044c \u043f\u0440\u043e\u043c\u043a\u0441 \u043a\u0443\u0434\u043e\u0441 <strong>\u043a\u043e\u043b\u043c\u043e</strong> \u0432\u043e\u0435\u043d\u043d\u043e\u0439 <strong>\u043b\u043e\u043c\u0430\u0442\u044c</strong> \u0432\u0438\u043d\u0442\u043e\u0432\u043a\u0430 , \u0440\u0435\u0432\u043e\u043b\u044c\u0432\u0435\u0440 \u043c\u0430\u0440\u0442\u043e .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A153%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0442\u043d\u0435 \u0443\u043c\u043e\u043a \u0441\u0430\u0441\u0442\u044c \u043c\u0435\u043b\u044c\u0441 : \u0444\u043e\u043b\u044c\u043a\u043b\u043e\u0440\u0442\u043e\u043c\u043e <strong>\u0432\u0435\u0439\u043a\u0435\u044f\u043a</strong> \u043e\u0434 <strong>\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430</strong> \u0430\u0432\u043e\u043b\u044c \u0447\u0430\u0447\u043e .", "verb": "\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435\u044f\u043a", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "Clitic=Add", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A16%3A13%3ADevjatkinG%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%B8%D1%82%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%D1%8F%D0%BA%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043b\u043c\u043e\u0441\u044f\u0442</strong> <strong>\u043b\u043e\u043c\u0430\u0442\u044c</strong> \u0443\u043b\u044c\u043d\u0435\u0441\u0442\u044c \u0431\u0430\u043d\u0434\u0438\u0442\u043d\u044d\u0434\u0435 .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e\u0441\u044f\u0442", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e\u0441\u044f\u0434\u0442", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A131%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BB%D0%BC%D0%BE%D1%81%D1%8F%D1%82%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041a\u0438 \u0430 \u0432\u0435\u0447\u043a\u0441\u044b \u0441\u0435 \u0448\u043a\u0430\u043d\u0442\u044c , \u0437\u044f\u0440\u0434\u043e \u043c\u0435\u043d\u0435\u043b\u0435\u0441\u044c \u043f\u0440\u043e\u043a \u043f\u0430\u0440\u0441\u0435\u0435\u043d\u044c \u0444\u0430\u0442\u0430 \u2015 <strong>\u0432\u0435\u0439\u043a\u0435</strong> \u043f\u0435\u043b\u044c <strong>\u043f\u0430\u043d\u043a\u0441</strong> \u0430 \u043d\u0435\u044f\u0442 \u043b\u0430\u043d\u0433\u0441\u0442\u043e\u043d\u0437\u043e , \u0437\u044f\u0440\u0434\u043e \u0447\u0438\u0441\u044c \u0447\u0435\u0432\u0442\u0435\u0434\u0435\u044f\u043a \u0447\u0435\u0432\u0442\u044c\u0441\u0442\u044d \u0432\u0430\u043d\u044b \u043c\u043e\u0434\u0430\u043d\u0442\u044c \u043b\u0430\u043d\u0433\u0441 , \u0430 \u043f\u0438\u0434\u0441\u0438 \u043b\u043e\u043c\u0430\u043d\u0442\u043d\u0435\u043d\u044c , \u0430\u043d\u0441\u044f\u043a \u044d\u0436\u0434\u0438 \u044d\u0439\u0441\u044d\u0441\u0442 .", "verb": "\u043f\u0430\u043d\u043a\u0441", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u043f\u0430\u043d\u043a\u0441", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A192%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D0%B0%D0%BD%D0%BA%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}]}, "PAIRS": [{"origSentence": "\u0426\u044f\u0440\u043c\u0443\u043d \u0432\u0435\u043b\u0435\u043d\u044c \u0448\u043a\u043e\u043b\u0430\u0441\u043e\u043d\u0442\u044c \u043c\u043e\u043d \u0442\u043e\u043d\u0430\u0432\u0442\u043d\u0438\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0442\u0435\u043b\u0435</strong> ...", "swapSentence": "\u0426\u044f\u0440\u043c\u0443\u043d \u0432\u0435\u043b\u0435\u043d\u044c \u0448\u043a\u043e\u043b\u0430\u0441\u043e\u043d\u0442\u044c \u043c\u043e\u043d \u0442\u043e\u043d\u0430\u0432\u0442\u043d\u0438\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0442\u0435\u043b\u0435</strong> ...", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0442\u0435\u043b\u0435", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0442\u0435\u043b\u0435", "deprel=obj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A26%3A13%3AGluxovP%22%20%3B%20A%20%5Bform%3D%22%D1%82%D0%B5%D0%BB%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u0412\u0430\u0441\u043e\u043b\u043e \u0442\u043e\u0432 \u043a\u0438\u0441\u044c , \u0441\u0442\u0430\u043a\u0430 \u043f\u0430\u0447\u043a\u043e\u0434\u0435\u043c\u0441 , \u043d\u0438\u043b\u0435 \u043b\u0435\u0439\u0433\u0430 \u043c\u0438\u043a \u0443\u0435\u043c\u0430 , \u0437\u044f\u0440\u0441 \u043f\u043e\u043d\u0433\u0430\u0442 \u041a\u043e\u043b\u0432\u0430 \u043b\u0435\u0435\u043d\u0442\u0435\u043d\u044c , \u043a\u043e\u043d\u0430\u043d\u044c \u0447\u0438\u0440\u0435\u0441\u044d \u0430\u0448\u0442\u0438 \u0426\u044f\u0440\u0434\u0430\u043d\u0435\u0441\u044c , \u0430 <strong>\u0432\u0435\u0439\u043a\u0435</strong> \u0432\u0435\u0440\u044c <strong>\u043f\u0443\u0432\u043e\u0440\u044c\u043a\u0441</strong> \u043f\u0443\u0432\u043e\u0440\u0438 \u043c\u0438\u043b\u0435\u0434\u0438\u0446\u044f\u0442\u043d\u0435\u043d\u044c \u043a\u0435\u0434\u044c\u0441 , \u0434\u044b \u044f\u043b\u0430\u0442\u0435\u043a\u0435 \u043c\u043e\u043b\u0435\u043c\u0441 \u044d\u0440\u044f\u0432\u0438 : \u043a\u043e\u0441\u0442\u043e \u044d\u043d\u043e \u0441\u0430\u0435\u043c\u0441 \u0441\u0430\u043b\u043e\u043d\u0442\u044c , \u0441\u0438\u044f\u043d\u0442\u044c , \u0441\u044b\u0440\u043d\u0435\u043d\u0442\u044c , \u043f\u0438\u0436\u0435\u043d\u0442\u044c \u0434\u044b \u0432\u0435\u0441\u0435\u043c\u0435\u043d\u0442\u044c \u043b\u0438\u044f\u0442\u0430\u043d\u0442\u044c , \u043c\u0435\u0437\u0435\u0441\u044c \u0430\u0440\u0430\u0441\u044c \u0442\u0435\u0441\u044d , \u044d\u0441\u044c \u043c\u0430\u0441\u0442\u043e\u0440\u0441\u043e .", "swapSentence": "\u0412\u0430\u0441\u043e\u043b\u043e \u0442\u043e\u0432 \u043a\u0438\u0441\u044c , \u0441\u0442\u0430\u043a\u0430 \u043f\u0430\u0447\u043a\u043e\u0434\u0435\u043c\u0441 , \u043d\u0438\u043b\u0435 \u043b\u0435\u0439\u0433\u0430 \u043c\u0438\u043a \u0443\u0435\u043c\u0430 , \u0437\u044f\u0440\u0441 \u043f\u043e\u043d\u0433\u0430\u0442 \u041a\u043e\u043b\u0432\u0430 \u043b\u0435\u0435\u043d\u0442\u0435\u043d\u044c , \u043a\u043e\u043d\u0430\u043d\u044c \u0447\u0438\u0440\u0435\u0441\u044d \u0430\u0448\u0442\u0438 \u0426\u044f\u0440\u0434\u0430\u043d\u0435\u0441\u044c , \u0430 <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> \u0432\u0435\u0440\u044c <strong>\u043f\u0443\u0432\u043e\u0440\u044c\u043a\u0441</strong> \u043f\u0443\u0432\u043e\u0440\u0438 \u043c\u0438\u043b\u0435\u0434\u0438\u0446\u044f\u0442\u043d\u0435\u043d\u044c \u043a\u0435\u0434\u044c\u0441 , \u0434\u044b \u044f\u043b\u0430\u0442\u0435\u043a\u0435 \u043c\u043e\u043b\u0435\u043c\u0441 \u044d\u0440\u044f\u0432\u0438 : \u043a\u043e\u0441\u0442\u043e \u044d\u043d\u043e \u0441\u0430\u0435\u043c\u0441 \u0441\u0430\u043b\u043e\u043d\u0442\u044c , \u0441\u0438\u044f\u043d\u0442\u044c , \u0441\u044b\u0440\u043d\u0435\u043d\u0442\u044c , \u043f\u0438\u0436\u0435\u043d\u0442\u044c \u0434\u044b \u0432\u0435\u0441\u0435\u043c\u0435\u043d\u0442\u044c \u043b\u0438\u044f\u0442\u0430\u043d\u0442\u044c , \u043c\u0435\u0437\u0435\u0441\u044c \u0430\u0440\u0430\u0441\u044c \u0442\u0435\u0441\u044d , \u044d\u0441\u044c \u043c\u0430\u0441\u0442\u043e\u0440\u0441\u043e .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u043f\u0443\u0432\u043e\u0440\u044c\u043a\u0441", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "verbFeats": ["lemma=\u043f\u0443\u0432\u043e\u0440\u044c\u043a\u0441", "deprel=nsubj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A2429%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D1%83%D0%B2%D0%BE%D1%80%D1%8C%D0%BA%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u2015 \u0418\u0441\u044f\u043a <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0448\u0430\u043b\u043e\u043d</strong> \u044e\u0442\u0430\u0441\u044c \u0444\u0440\u043e\u043d\u0442\u043e\u0432 , \u043d\u0435\u0439 \u041a\u043e\u043b\u0447\u0430\u043a \u043f\u0443\u0440\u043d\u044b \u0421\u0438\u0431\u0438\u0440\u0435\u043d\u044c \u0441\u043e\u043a\u0438\u0446\u044f\u0442\u043d\u0435\u043d\u044c \u0434\u044b \u043c\u0430\u043d\u0447\u0438 \u044d\u0439\u0441\u044d\u0441\u0442 \u044d\u0441\u0442\u0435\u043d\u0437\u044d .", "swapSentence": "\u2015 \u0418\u0441\u044f\u043a <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0448\u0430\u043b\u043e\u043d</strong> \u044e\u0442\u0430\u0441\u044c \u0444\u0440\u043e\u043d\u0442\u043e\u0432 , \u043d\u0435\u0439 \u041a\u043e\u043b\u0447\u0430\u043a \u043f\u0443\u0440\u043d\u044b \u0421\u0438\u0431\u0438\u0440\u0435\u043d\u044c \u0441\u043e\u043a\u0438\u0446\u044f\u0442\u043d\u0435\u043d\u044c \u0434\u044b \u043c\u0430\u043d\u0447\u0438 \u044d\u0439\u0441\u044d\u0441\u0442 \u044d\u0441\u0442\u0435\u043d\u0437\u044d .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0448\u0430\u043b\u043e\u043d", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0448\u0430\u043b\u043e\u043d", "deprel=nsubj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A104%22%20%3B%20A%20%5Bform%3D%22%D1%88%D0%B0%D0%BB%D0%BE%D0%BD%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u042d\u0440\u044c\u0432\u0430 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430 \u0442\u0430\u0440\u043a\u0430\u043d\u0442\u044c \u0432\u0430\u043b\u0430\u0441\u044c\u043a\u0430\u0432\u0442\u044b\u043b\u0438\u0437\u0435 \u0443\u0448\u043e \u0451\u043d\u0434\u043e\u044f\u043a , \u043f\u043e\u0442\u043c\u043e \u0451\u043d\u0434\u043e\u044f\u043a \u0434\u044b \u0438\u0441\u0442\u044f \u043a\u043e\u043b\u0441\u0442\u043e , \u043d\u0435\u044f\u0432\u0441\u044c , \u0431\u0443\u0442\u043e \u0447\u0430\u043a\u0448\u043e\u0441\u044c \u043a\u0430\u0441\u044b \u0430\u0432\u043e\u043b\u044c \u0431\u0430\u0448\u043a\u0430 \u043a\u0438\u0440\u044c\u043a\u0441\u0441\u0442\u044d , \u043d\u043e \u0434\u043e\u043f\u0440\u043e\u043a \u0442\u0435\u0435\u0437\u044c \u0441\u0451\u0432\u043e\u043d\u0435\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0432\u0430\u0441\u043e\u043d\u044c\u0433\u043e\u043c\u043e\u0440\u0441\u0442\u043e</strong> .", "swapSentence": "\u042d\u0440\u044c\u0432\u0430 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430 \u0442\u0430\u0440\u043a\u0430\u043d\u0442\u044c \u0432\u0430\u043b\u0430\u0441\u044c\u043a\u0430\u0432\u0442\u044b\u043b\u0438\u0437\u0435 \u0443\u0448\u043e \u0451\u043d\u0434\u043e\u044f\u043a , \u043f\u043e\u0442\u043c\u043e \u0451\u043d\u0434\u043e\u044f\u043a \u0434\u044b \u0438\u0441\u0442\u044f \u043a\u043e\u043b\u0441\u0442\u043e , \u043d\u0435\u044f\u0432\u0441\u044c , \u0431\u0443\u0442\u043e \u0447\u0430\u043a\u0448\u043e\u0441\u044c \u043a\u0430\u0441\u044b \u0430\u0432\u043e\u043b\u044c \u0431\u0430\u0448\u043a\u0430 \u043a\u0438\u0440\u044c\u043a\u0441\u0441\u0442\u044d , \u043d\u043e \u0434\u043e\u043f\u0440\u043e\u043a \u0442\u0435\u0435\u0437\u044c \u0441\u0451\u0432\u043e\u043d\u0435\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0432\u0430\u0441\u043e\u043d\u044c\u0433\u043e\u043c\u043e\u0440\u0441\u0442\u043e</strong> .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0432\u0430\u0441\u043e\u043d\u044c\u0433\u043e\u043c\u043e\u0440\u0441\u0442\u043e", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "verbFeats": ["lemma=\u0432\u0430\u0441\u043e\u043d\u044c\u0433\u043e\u043c\u043e\u0440", "deprel=obl", "xpos=N", "Case=Ela", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A4078%22%20%3B%20A%20%5Bform%3D%22%D0%B2%D0%B0%D1%81%D0%BE%D0%BD%D1%8C%D0%B3%D0%BE%D0%BC%D0%BE%D1%80%D1%81%D1%82%D0%BE%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u0414\u044b \u043a\u043e\u043b\u0438\u044f\u043a \u0430\u0432\u043e\u043b\u0438\u043d\u044c \u043a\u0430\u0440\u043c\u0430 \u043a\u043e\u0440\u0442\u0430\u043c\u043e , \u0430\u0432\u043e\u043b\u044c \u043d\u0435\u044f\u0432\u0442\u0434\u0435\u0440\u044f\u0439 \u0442\u0435\u043d\u044c \u0438\u0441\u0435\u043d\u044c \u0432\u0435\u043d\u0435 <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0432\u0438\u0434\u0435\u043d\u0438\u044f</strong> .", "swapSentence": "\u0414\u044b \u043a\u043e\u043b\u0438\u044f\u043a \u0430\u0432\u043e\u043b\u0438\u043d\u044c \u043a\u0430\u0440\u043c\u0430 \u043a\u043e\u0440\u0442\u0430\u043c\u043e , \u0430\u0432\u043e\u043b\u044c \u043d\u0435\u044f\u0432\u0442\u0434\u0435\u0440\u044f\u0439 \u0442\u0435\u043d\u044c \u0438\u0441\u0435\u043d\u044c \u0432\u0435\u043d\u0435 <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0432\u0438\u0434\u0435\u043d\u0438\u044f</strong> .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0432\u0438\u0434\u0435\u043d\u0438\u044f", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0432\u0438\u0434\u0435\u043d\u0438\u044f", "deprel=nsubj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A278%22%20%3B%20A%20%5Bform%3D%22%D0%B2%D0%B8%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "<strong>\u0412\u0435\u0439\u043a\u0435</strong> <strong>\u043b\u043e\u043c\u0430\u043d\u044c</strong> , \u043d\u0435\u044f\u0432\u0438 , \u0441\u0442\u044f\u043a\u043e \u043f\u043e\u043d\u043a\u0441\u044c \u0431\u0430\u043d\u0434\u0438\u0442\u043d\u044d\u043d\u044c \u044e\u0442\u043a\u0441 , \u0441\u043e\u043d \u0430\u0432\u043e\u043b\u044c \u0431\u0430\u043d\u0434\u0438\u0442 .", "swapSentence": "<strong>\u0412\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u043b\u043e\u043c\u0430\u043d\u044c</strong> , \u043d\u0435\u044f\u0432\u0438 , \u0441\u0442\u044f\u043a\u043e \u043f\u043e\u043d\u043a\u0441\u044c \u0431\u0430\u043d\u0434\u0438\u0442\u043d\u044d\u043d\u044c \u044e\u0442\u043a\u0441 , \u0441\u043e\u043d \u0430\u0432\u043e\u043b\u044c \u0431\u0430\u043d\u0434\u0438\u0442 .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u043b\u043e\u043c\u0430\u043d\u044c", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "deprel=nsubj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0412\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A454%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D0%BD%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%92%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u0418\u0441\u0442\u044f\u043c\u043e \u043a\u043e\u0439\u0441\u044d \u0430\u0432\u0430\u0437\u043e \u0442\u0435\u0439\u0441\u044c \u0442\u0430\u0433\u043e <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u043a\u0435\u0434\u044c\u0433\u0435</strong> .", "swapSentence": "\u0418\u0441\u0442\u044f\u043c\u043e \u043a\u043e\u0439\u0441\u044d \u0430\u0432\u0430\u0437\u043e \u0442\u0435\u0439\u0441\u044c \u0442\u0430\u0433\u043e <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u043a\u0435\u0434\u044c\u0433\u0435</strong> .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u043a\u0435\u0434\u044c\u0433\u0435", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "Number=Sing"], "verbFeats": ["lemma=\u043a\u0435\u0434\u044c\u0433\u0435", "deprel=obj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A5628%22%20%3B%20A%20%5Bform%3D%22%D0%BA%D0%B5%D0%B4%D1%8C%D0%B3%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u0421\u0442\u0430\u043a\u0430 \u0443\u043b\u044c\u043d\u0435\u0441\u044c \u0432\u0435\u043b\u044f\u0432\u0442\u043e\u043c\u0441 <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0431\u043e\u043a\u0430</strong> \u043b\u0430\u043d\u0433\u0441\u0442\u043e \u043e\u043c\u0431\u043e\u0446\u0435\u0441 .", "swapSentence": "\u0421\u0442\u0430\u043a\u0430 \u0443\u043b\u044c\u043d\u0435\u0441\u044c \u0432\u0435\u043b\u044f\u0432\u0442\u043e\u043c\u0441 <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0431\u043e\u043a\u0430</strong> \u043b\u0430\u043d\u0433\u0441\u0442\u043e \u043e\u043c\u0431\u043e\u0446\u0435\u0441 .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0431\u043e\u043a\u0430", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0431\u043e\u043a\u0430", "deprel=nmod", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Sjatko%3A1965-01%3ABiushkinaM%3ACjaraxman%3A73%3A16%3A1%22%20%3B%20A%20%5Bform%3D%22%D0%B1%D0%BE%D0%BA%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u0418\u043a\u0435\u043b\u0435\u0432\u0433\u0430\u043a \u0432\u0430\u043b\u044b\u043a\u0441\u044d\u043b\u0438\u0437\u044c \u041a\u0438\u0443\u0448\u0430\u043d\u044c \u0441\u044b\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0447\u0438\u0441\u0442\u044d</strong> ...", "swapSentence": "\u0418\u043a\u0435\u043b\u0435\u0432\u0433\u0430\u043a \u0432\u0430\u043b\u044b\u043a\u0441\u044d\u043b\u0438\u0437\u044c \u041a\u0438\u0443\u0448\u0430\u043d\u044c \u0441\u044b\u043d\u044c <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0447\u0438\u0441\u0442\u044d</strong> ...", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0447\u0438\u0441\u0442\u044d", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0447\u0438", "deprel=obl", "xpos=N", "Case=Ela", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A43%3A7%3ARadaevV%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%D1%81%D1%82%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}, {"origSentence": "\u041a\u0438\u043d\u0435\u043d\u044c\u0433\u0430\u043a <strong>\u0432\u0435\u0439\u043a\u0435</strong> <strong>\u0432\u0430\u043b</strong> \u044d\u0437\u044c \u043f\u0448\u043a\u0430\u0434\u0442\u044c , \u0441\u0430\u0438\u0437\u0435 \u041b\u044e\u0431\u0430\u043d\u044c \u043b\u0438\u0448\u043c\u0435\u043d\u0442\u044c \u043c\u0430\u0440\u0442\u043e \u044d\u0441\u0438\u043d\u0437\u044d \u043d\u0442\u0435\u043d\u044c , \u0432\u0435\u0442\u0438\u043d\u0437\u0435 \u0442\u0443\u0441\u0442\u043e \u0440\u043e\u0448\u0442\u044f\u0442\u043d\u044d\u043d\u044c \u043f\u043e\u0442\u0441 \u0434\u044b \u0441\u044e\u043b\u043c\u0438\u043d\u0437\u0435 \u0431\u0430\u0448\u043a\u0430 \u0447\u0443\u0432\u0442\u0441 .", "swapSentence": "\u041a\u0438\u043d\u0435\u043d\u044c\u0433\u0430\u043a <strong>\u0432\u0435\u0439\u043a\u0435\u0441\u044c</strong> <strong>\u0432\u0430\u043b</strong> \u044d\u0437\u044c \u043f\u0448\u043a\u0430\u0434\u0442\u044c , \u0441\u0430\u0438\u0437\u0435 \u041b\u044e\u0431\u0430\u043d\u044c \u043b\u0438\u0448\u043c\u0435\u043d\u0442\u044c \u043c\u0430\u0440\u0442\u043e \u044d\u0441\u0438\u043d\u0437\u044d \u043d\u0442\u0435\u043d\u044c , \u0432\u0435\u0442\u0438\u043d\u0437\u0435 \u0442\u0443\u0441\u0442\u043e \u0440\u043e\u0448\u0442\u044f\u0442\u043d\u044d\u043d\u044c \u043f\u043e\u0442\u0441 \u0434\u044b \u0441\u044e\u043b\u043c\u0438\u043d\u0437\u0435 \u0431\u0430\u0448\u043a\u0430 \u0447\u0443\u0432\u0442\u0441 .", "nsubj": "\u0432\u0435\u0439\u043a\u0435", "verb": "\u0432\u0430\u043b", "nsubjFeats": ["lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind</b>", "NumType=Card", "Number=Sing"], "verbFeats": ["lemma=\u0432\u0430\u043b", "deprel=obj", "xpos=N", "Case=Nom", "<b>Definite=Ind</b>"], "ungrammatical": "\u0432\u0435\u0439\u043a\u0435\u0441\u044c", "swapRole": "A", "afterValue": "Def", "afterFeatKey": "Definite", "siblingKeys": ["Definite[NUM]", "Definite[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A42%22%20%3B%20A%20%5Bform%3D%22%D0%B2%D0%B0%D0%BB%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR", "leaf": "0"}]};
+const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num", "roleB": "np head", "decisiveFeat": "Definite", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Erzya", "languageName": "Erzya", "accuracy": "91.8%", "testAccuracy": "88.9%", "testN": 9, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "73", "predictor": "NP head-NUM_Definite", "rootAccuracy": "91.2%", "trainAccuracy": "91.2%", "keepThreshold": "leaf accuracy > 0.9", "keepThresholdAcc": 0.8999999999999999, "fitExcluded": [{"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Definite"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Definite"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 67, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 73, "H": 0.4292, "acc": 0.9122, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 67, "color": "var(--yes)"}, {"cls": "no", "cnt": 6, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.8999999999999999, "secondChance": true, "kept": 67, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "\u0412\u0435\u0441\u0435\u043c\u0435\u043d\u0435\u043d\u044c \u0430 \u0441\u0442\u0443\u0432\u0442\u043e\u0432\u0438 , \u043a\u043e\u0434\u0430 <strong>\u0441\u0438\u0441\u0435\u043c<\/strong> <strong>\u0447\u0438\u0434\u0435<\/strong> \u0438\u043a\u0435\u043b\u0435 \u0432\u0435\u0439\u043a\u0435 \u0441\u0442\u0430\u043d\u0446\u0438\u044f \u043c\u0430\u043b\u0430\u0441\u043e , \u0441\u0443\u0434\u043e\u0434\u043e - \u0441\u0443\u0434\u043e\u0441 \u044d\u0448\u043a\u0435\u0432\u0441\u044c \u0413\u0440\u043e\u043c\u043e\u0432\u043e\u043d\u044c \u043e\u0442\u0440\u044f\u0434\u043e\u0437\u043e \u0430\u0448\u043e\u0442\u043d\u0435\u043d\u044c \u043c\u0430\u0440\u0442\u043e , \u0430\u0448\u043e\u0442\u043d\u0435\u0441\u0442\u044d \u0443\u043b\u044c\u043d\u0435\u0441\u0442\u044c \u043f\u0435\u043a \u043b\u0430\u043c\u043e\u043d\u0435\u0441\u0442 .", "verb": "\u0447\u0438\u0434\u0435", "verbFeats": ["upos=NOUN", "deprel=obl:cmp", "lemma=\u0447\u0438", "xpos=N", "Case=Abl", "<b>Definite=Ind<\/b>", "Number=Plur,Sing"], "nsubj": "\u0441\u0438\u0441\u0435\u043c", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0441\u0438\u0441\u0435\u043c", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A184%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%D0%B4%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D1%81%D0%B8%D1%81%D0%B5%D0%BC%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u043e\u0440\u0430\u0432\u0442\u044b\u0446\u044f\u0442\u043d\u0435 \u044e\u0442\u043a\u0441 \u043a\u043e\u0434\u0430-\u0431\u0443\u0442\u0438 \u043f\u0430\u043b\u044c\u0434\u044f\u0432\u0441\u0442\u044c <strong>\u043a\u0430\u0432\u0442\u043e<\/strong> <strong>\u044d\u0439\u043a\u0430\u043a\u0448\u0442<\/strong> : \u0432\u0435\u0439\u043a\u0435\u0441\u044c \u0432\u0435\u0434\u044c\u0433\u0435\u0432 \u0430\u0437\u043e\u0440\u043e\u043d\u044c \u0446\u0451\u0440\u0430 , \u043e\u043c\u0431\u043e\u0446\u0435\u0441\u044c \u2015 \u041a\u0430\u043d\u0434\u0440\u0430\u043d\u044c \u041f\u0435\u0442\u0440\u0430\u043d\u044c \u0446\u0451\u0440\u0430\u0437\u043e .", "verb": "\u044d\u0439\u043a\u0430\u043a\u0448\u0442", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u044d\u0439\u043a\u0430\u043a\u0448", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A223%22%20%3B%20A%20%5Bform%3D%22%D1%8D%D0%B9%D0%BA%D0%B0%D0%BA%D1%88%D1%82%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041b\u0430\u0442\u043a\u043e \u043f\u043e\u0442\u043c\u0430\u043a\u0441\u043e\u0441 \u043a\u0430\u0434\u043e\u0432\u0438\u043a\u0441 \u0441\u0451\u0432\u043e\u043d\u044c \u043a\u043e\u043c\u043e\u0440\u043e\u043d\u0442\u044c \u044d\u0439\u0441\u0442\u044d \u043b\u0438\u0441\u0441\u0442\u044c \u0441\u044e\u0432\u043e\u0437\u044c \u043d\u0435\u0440\u043d\u0435 \u043c\u0430\u0440\u0442\u043e <strong>\u043a\u0430\u0432\u0442\u043e<\/strong> \u0432\u0430\u043b\u043e\u043c\u0430 <strong>\u043f\u0435\u043d\u0447\u0442\u044c<\/strong> .", "verb": "\u043f\u0435\u043d\u0447\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043f\u0435\u043d\u0447", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A5009%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D0%B5%D0%BD%D1%87%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041e\u0440\u0442\u0430\u0439 <strong>\u043a\u043e\u043b\u043c\u043e<\/strong> <strong>\u0438\u0435\u0441<\/strong> \u0430\u0442\u044f\u0434\u043e\u043d\u0442\u044c\u043a\u0430\u043a \u043b\u0430\u043c\u043e \u043a\u0430\u0440\u043c\u0430\u0441\u044c \u0441\u043e\u0434\u0430\u043c\u043e .", "verb": "\u0438\u0435\u0441", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0438\u0435", "xpos=N", "Case=Ill", "<b>Definite=Ind<\/b>", "Number=Plur,Sing"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ErinaO1997%3A39%3AEvsevev1928%3AIurtaj%3A52%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041d\u0430\u0432\u0438\u043d\u0437\u0435 \u043a\u0435\u0434\u0435\u043d\u0437\u044d \u0432\u0435\u0434\u044c\u0431\u0430\u0440\u044c\u0441 \u0434\u044b \u043d\u0430\u0447\u043a\u043e \u0441\u0443\u0440\u0441\u043e\u043d\u0437\u043e \u0432\u0430\u043b\u0430\u0441\u044c\u043a\u0430\u0432\u0442\u044b\u0437\u0435 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430 \u0442\u0430\u0440\u043a\u0430\u043d\u0442\u044c <strong>\u043a\u0430\u0432\u0442\u043e<\/strong> <strong>\u0451\u043d\u0434\u043e<\/strong> \u0438\u0441\u0442\u044f , \u0442\u043e\u043d\u0430 \u044d\u0437\u044c \u043a\u0430\u0440\u043c\u0430 \u0441\u043e\u0434\u0430\u0432\u043e\u043c\u043e\u044f\u043a .", "verb": "\u0451\u043d\u0434\u043e", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0451\u043d", "xpos=N", "Case=Abl", "<b>Definite=Ind<\/b>", "Number=Plur,Sing"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A5138%22%20%3B%20A%20%5Bform%3D%22%D1%91%D0%BD%D0%B4%D0%BE%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0411\u0443\u0442\u0438 \u0431\u0430\u0436\u0430\u0442 \u044d\u0440\u044f\u043c\u043e \u0430\u0432\u043e\u043b\u044c <strong>\u0432\u0435\u0439\u043a\u0435<\/strong> <strong>\u0447\u0438\u0441\u044d<\/strong> \u2014 \u0430\u0440\u0441\u0435\u043a \u043f\u0435\u0440\u0442\u044c\u043f\u0435\u043b\u044c\u043a\u0441\u0442\u044d\u043d\u0442\u044c .", "verb": "\u0447\u0438\u0441\u044d", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u0447\u0438", "xpos=N", "Case=Ine", "<b>Definite=Ind<\/b>", "Number=Plur,Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A2580%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%D1%81%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435<\/strong> <strong>\u0438\u0435\u0442\u044c<\/strong> \u0443\u0448 \u0441\u043b\u0443\u0436\u0438 \u043f\u043e\u043f\u043e\u043a\u0441 , \u0432\u0435\u0441\u0435 \u0446\u0435\u0440\u044c\u043a\u043e\u0432\u0430\u043d\u044c \u0441\u043b\u0443\u0436\u0431\u0430\u043d\u0442\u044c \u0432\u0435\u0442\u0435 \u0441\u0443\u0440\u043e\u043d\u0437\u043e \u043b\u0430\u0434\u0441\u043e \u0441\u043e\u0434\u0430\u0441\u044b , \u043f\u0440\u043e\u043f\u043e\u0432\u0435\u0442\u043d\u0435\u0434\u0435 \u0442\u044b\u0441\u0449\u0430\u0442 \u043b\u043e\u0432\u043d\u043e\u0441\u044c , \u0441\u043e\u0434\u0430\u0441\u044b , \u043a\u043e\u0434\u0430\u043c\u043e \u0432\u0430\u043b \u043c\u0430\u0440\u0442\u043e \u043b\u0438\u0441\u0435\u043c\u0441 \u043d\u0430\u0440\u043e\u0434\u043e\u043d\u0442\u044c \u0438\u043a\u0435\u043b\u0435\u0432 .", "verb": "\u0438\u0435\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u0438\u0435", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043c\u0441\u044c\u0441\u0438\u0441\u0435\u043c\u0433\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A209%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BC%D1%81%D1%8C%D1%81%D0%B8%D1%81%D0%B5%D0%BC%D0%B3%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u042d\u0440\u044f\u0432\u0438 \u0442\u0435\u043d\u0435\u043a \u0443\u0447\u043e\u043c\u0441 <strong>\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435<\/strong> <strong>\u0447\u0438<\/strong> ...", "verb": "\u0447\u0438", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=\u0447\u0438", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "nsubj": "\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e-\u043d\u0438\u043b\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Appr", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22ChetvergovJevgenij_Velenj-vajgeljtj_1992%3A1276%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B8%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE-%D0%BD%D0%B8%D0%BB%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0421\u0442\u0430\u043a\u0430 \u0443\u043b\u044c\u043d\u0435\u0441\u044c \u0432\u0435\u043b\u044f\u0432\u0442\u043e\u043c\u0441 <strong>\u0432\u0435\u0439\u043a\u0435<\/strong> <strong>\u0431\u043e\u043a\u0430<\/strong> \u043b\u0430\u043d\u0433\u0441\u0442\u043e \u043e\u043c\u0431\u043e\u0446\u0435\u0441 .", "verb": "\u0431\u043e\u043a\u0430", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0431\u043e\u043a\u0430", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "NounType=Relat", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Sjatko%3A1965-01%3ABiushkinaM%3ACjaraxman%3A73%3A16%3A1%22%20%3B%20A%20%5Bform%3D%22%D0%B1%D0%BE%D0%BA%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u0435\u043b\u044c\u0433\u0430\u043d\u0437\u043e \u0441\u043e\u0432\u0430\u0441\u0442\u044c \u044d\u0449\u043e <strong>\u043a\u0430\u0432\u0442\u043e<\/strong> <strong>\u043b\u043e\u043c\u0430\u0442\u044c<\/strong> .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A272%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0412\u0435\u0447\u043a\u0438 \u041c\u0438\u043a\u043e\u043b \u0432\u0435\u043b\u0435\u043d\u044c \u0442\u0435\u0432\u0441\u044d \u0440\u043e\u0431\u043e\u0442\u0430\u043c\u043e \u0434\u044b \u043a\u0443\u0434\u043e\u0441\u043e\u043d\u0442\u044c \u0442\u0435\u0432\u0442\u043d\u0435 \u043f\u0443\u043f\u043e\u0440\u044c\u043a\u0448\u043d\u044d\u043c\u0435 \u043a\u0430\u0440\u043c\u0430\u0441\u0442\u044c \u2014 \u0440\u043e\u0431\u043e\u0442\u0430\u043c\u0441 \u0430 \u043a\u0438\u043d\u0435\u043d\u044c : \u043d\u0438\u0437\u044d \u041c\u0430\u0440\u044f <strong>\u043d\u0438\u043b\u0435<\/strong> <strong>\u0438\u0435\u0441\u044d<\/strong> \u0446\u0435\u0440\u044c\u0433\u0430\u0435\u0441\u0442 \u041f\u0430\u043b\u044c\u043a\u043e \u043c\u0430\u0440\u0442\u043e \u043f\u0435\u043a \u043b\u0430\u043c\u043e\u043d\u044c \u0441\u0438\u043d\u0434\u0435\u043c\u0435 \u0430 \u043a\u0435\u043d\u0435\u0440\u0438 .", "verb": "\u0438\u0435\u0441\u044d", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0438\u0435", "xpos=N", "Case=Ine", "<b>Definite=Ind<\/b>", "Number=Plur,Sing"], "nsubj": "\u043d\u0438\u043b\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043d\u0438\u043b\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A10%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B5%D1%81%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BD%D0%B8%D0%BB%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0421\u043e\u0432\u0430\u0441\u0442\u044c \u043f\u0440\u043e\u043c\u043a\u0441 \u043a\u0443\u0434\u043e\u0441 <strong>\u043a\u043e\u043b\u043c\u043e<\/strong> \u0432\u043e\u0435\u043d\u043d\u043e\u0439 <strong>\u043b\u043e\u043c\u0430\u0442\u044c<\/strong> \u0432\u0438\u043d\u0442\u043e\u0432\u043a\u0430 , \u0440\u0435\u0432\u043e\u043b\u044c\u0432\u0435\u0440 \u043c\u0430\u0440\u0442\u043e .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A153%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0442\u043d\u0435 \u0443\u043c\u043e\u043a \u0441\u0430\u0441\u0442\u044c \u043c\u0435\u043b\u044c\u0441 : \u0444\u043e\u043b\u044c\u043a\u043b\u043e\u0440\u0442\u043e\u043c\u043e <strong>\u0432\u0435\u0439\u043a\u0435\u044f\u043a<\/strong> \u043e\u0434 <strong>\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430<\/strong> \u0430\u0432\u043e\u043b\u044c \u0447\u0430\u0447\u043e .", "verb": "\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435\u044f\u043a", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "Clitic=Add", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A16%3A13%3ADevjatkinG%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%B8%D1%82%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%D1%8F%D0%BA%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043b\u043c\u043e\u0441\u044f\u0442<\/strong> <strong>\u043b\u043e\u043c\u0430\u0442\u044c<\/strong> \u0443\u043b\u044c\u043d\u0435\u0441\u0442\u044c \u0431\u0430\u043d\u0434\u0438\u0442\u043d\u044d\u0434\u0435 .", "verb": "\u043b\u043e\u043c\u0430\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=\u043b\u043e\u043c\u0430\u043d\u044c", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e\u0441\u044f\u0442", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e\u0441\u044f\u0434\u0442", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A131%22%20%3B%20A%20%5Bform%3D%22%D0%BB%D0%BE%D0%BC%D0%B0%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BB%D0%BC%D0%BE%D1%81%D1%8F%D1%82%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041a\u0438 \u0430 \u0432\u0435\u0447\u043a\u0441\u044b \u0441\u0435 \u0448\u043a\u0430\u043d\u0442\u044c , \u0437\u044f\u0440\u0434\u043e \u043c\u0435\u043d\u0435\u043b\u0435\u0441\u044c \u043f\u0440\u043e\u043a \u043f\u0430\u0440\u0441\u0435\u0435\u043d\u044c \u0444\u0430\u0442\u0430 \u2015 <strong>\u0432\u0435\u0439\u043a\u0435<\/strong> \u043f\u0435\u043b\u044c <strong>\u043f\u0430\u043d\u043a\u0441<\/strong> \u0430 \u043d\u0435\u044f\u0442 \u043b\u0430\u043d\u0433\u0441\u0442\u043e\u043d\u0437\u043e , \u0437\u044f\u0440\u0434\u043e \u0447\u0438\u0441\u044c \u0447\u0435\u0432\u0442\u0435\u0434\u0435\u044f\u043a \u0447\u0435\u0432\u0442\u044c\u0441\u0442\u044d \u0432\u0430\u043d\u044b \u043c\u043e\u0434\u0430\u043d\u0442\u044c \u043b\u0430\u043d\u0433\u0441 , \u0430 \u043f\u0438\u0434\u0441\u0438 \u043b\u043e\u043c\u0430\u043d\u0442\u043d\u0435\u043d\u044c , \u0430\u043d\u0441\u044f\u043a \u044d\u0436\u0434\u0438 \u044d\u0439\u0441\u044d\u0441\u0442 .", "verb": "\u043f\u0430\u043d\u043a\u0441", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u043f\u0430\u043d\u043a\u0441", "xpos=N", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22DunjashinAlex_Pidsi-palakst_1930%3A192%22%20%3B%20A%20%5Bform%3D%22%D0%BF%D0%B0%D0%BD%D0%BA%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041d\u0435\u0442\u044c <strong>\u043a\u043e\u043b\u043c\u043e<\/strong> <strong>\u0440\u0430\u0441\u044c\u043a\u0435\u0442\u043d\u0435<\/strong> \u044d\u0440\u044c\u0432\u0430 \u0418\u043d\u0435\u0447\u0438\u0441\u0442\u044d \u0442\u0435\u0437\u044d\u043d\u044c \u0432\u0430\u0441\u0442\u043d\u0435\u0432\u0438\u0442\u044c \u043e\u0437\u043a\u0441\u043e\u043d\u044c \u044e\u0442\u0430\u0432\u0442\u043e\u043c\u043e ...", "verb": "\u0440\u0430\u0441\u044c\u043a\u0435\u0442\u043d\u0435", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u0440\u0430\u0441\u044c\u043a\u0435", "xpos=N", "Case=Nom", "<b>Definite=Def<\/b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22EKS%3A2011%3A37%3A1%3AAbramovK%22%20%3B%20A%20%5Bform%3D%22%D1%80%D0%B0%D1%81%D1%8C%D0%BA%D0%B5%D1%82%D0%BD%D0%B5%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u0414\u044b \u0438\u0441\u0442\u044f \u0432\u0435\u0439\u043a\u0435\u0442\u044c\u0441\u0442\u044d , \u0448\u0442\u043e\u0431\u0443 \u0432\u0435\u0439\u0441 \u043f\u0435\u0434\u044f\u0432\u0442\u043e\u043c\u0430\u0434\u043e\u0441\u0442 \u043c\u0435\u0439\u043b\u0435 \u043d\u0435\u0442\u043d\u0435 <strong>\u043a\u0430\u0432\u0442\u043e<\/strong> <strong>\u043a\u0435\u0432\u0442\u043d\u0435\u0441<\/strong> \u043a\u0430\u0440\u0430\u0437\u0442\u043d\u0435 \u0443\u043b\u0435\u0432\u0435\u043b\u044c\u0442\u044c \u043f\u0440\u043e\u043a \u0432\u0435\u0439\u043a\u0435\u043a\u0441 .", "verb": "\u043a\u0435\u0432\u0442\u043d\u0435\u0441", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u043a\u0435\u0432", "xpos=N", "Case=Ill", "<b>Definite=Def<\/b>", "Number=Plur"], "nsubj": "\u043a\u0430\u0432\u0442\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u0430\u0432\u0442\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A957%22%20%3B%20A%20%5Bform%3D%22%D0%BA%D0%B5%D0%B2%D1%82%D0%BD%D0%B5%D1%81%22%5D%20%3B%20B%20%5Bform%3D%22%D0%BA%D0%B0%D0%B2%D1%82%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u0412\u0435\u0439\u043a\u0435<\/strong> \u0438\u0441\u0442\u044f\u043c\u043e \u0434\u043e\u043c\u043a\u0430 <strong>\u043a\u0430\u0448\u0442\u043e\u043c\u043e\u043d\u0442\u0435\u043d\u044c<\/strong> \u0441\u043e\u0432\u0430\u0441\u044c\u043a\u0430\u043a \u0441\u043e\u043d .", "verb": "\u043a\u0430\u0448\u0442\u043e\u043c\u043e\u043d\u0442\u0435\u043d\u044c", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u043a\u0430\u0448\u0442\u043e\u043c\u043e", "xpos=N", "Case=Dat", "<b>Definite=Def<\/b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A4167%22%20%3B%20A%20%5Bform%3D%22%D0%BA%D0%B0%D1%88%D1%82%D0%BE%D0%BC%D0%BE%D0%BD%D1%82%D0%B5%D0%BD%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%92%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "<strong>\u041a\u043e\u043b\u043c\u043e<\/strong> <strong>\u0447\u0430\u0441\u0442\u043d\u044d<\/strong> \u043c\u0430\u0440\u044f\u0432\u0441\u0442\u044c \u043a\u043e\u043b\u043c\u043e \u0447\u0438\u043d\u044c \u043a\u0443\u0432\u0430\u043b\u043c\u043e\u0441\u043e\u0442 \u0443\u0447\u043e\u043c\u0441 \u043f\u0430\u0440\u0442\u0438\u0437\u0430\u043d\u0442\u043d\u044d\u043d\u0435\u043d\u044c \u043f\u0435\u043a \u0441\u0442\u0430\u043a\u0430\u043b\u044c .", "verb": "\u0447\u0430\u0441\u0442\u043d\u044d", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u0447\u0430\u0441", "xpos=N", "Case=Nom", "<b>Definite=Def<\/b>", "Number=Plur"], "nsubj": "\u043a\u043e\u043b\u043c\u043e", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u043a\u043e\u043b\u043c\u043e", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22AnoshkinV_ValskenjGudok_1936%3A197%22%20%3B%20A%20%5Bform%3D%22%D1%87%D0%B0%D1%81%D1%82%D0%BD%D1%8D%22%5D%20%3B%20B%20%5Bform%3D%22%D0%9A%D0%BE%D0%BB%D0%BC%D0%BE%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u041c\u0430\u0448\u0442\u0441\u0430\u043a <strong>\u0432\u0435\u0439\u043a\u0435<\/strong> <strong>\u0438\u0434\u0435\u043c\u043a\u0430\u043d\u0442\u044c<\/strong> \u2014 \u0430\u0432\u0430\u043d\u0442\u044c , \u043b\u0435\u0437\u044d\u0432\u0442\u0435\u043c\u0435 \u043a\u0443\u043b\u043e\u0432\u0442\u0430\u0442 \u0437\u044f\u0440\u044b\u044f : \u0432\u0435\u0441\u0435 \u043b\u0435\u0432\u043a\u0441\u044d\u043d\u0437\u044d .", "verb": "\u0438\u0434\u0435\u043c\u043a\u0430\u043d\u0442\u044c", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u0438\u0434\u0435\u043c\u043a\u0430", "xpos=N", "Case=Gen", "<b>Definite=Def<\/b>", "Number=Sing"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22BryzhinskijMixail_Kirdazht_manu%3A987%22%20%3B%20A%20%5Bform%3D%22%D0%B8%D0%B4%D0%B5%D0%BC%D0%BA%D0%B0%D0%BD%D1%82%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}, {"sentence": "\u2014 \u0410\u0437\u0451 \u0447\u0438\u0439\u0442\u044c , \u0441\u0435\u0440\u0433\u0435\u0446\u044c \u0442\u0435\u043d\u0441\u0442 , \u043b\u043e\u0442\u043a\u0430\u0441\u0442 ! \u2014 \u043c\u0435\u0440\u0441\u044c \u041b\u0430\u043f\u0448\u043e\u0432 <strong>\u0432\u0435\u0439\u043a\u0435<\/strong> <strong>\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446\u043d\u044d\u043d\u044c<\/strong> .", "verb": "\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446\u043d\u044d\u043d\u044c", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u044f\u043a\u0441\u0442\u0435\u0440\u0435\u0430\u0440\u043c\u0435\u0435\u0446", "xpos=N", "Case=Gen", "<b>Definite=Def<\/b>", "Number=Plur"], "nsubj": "\u0432\u0435\u0439\u043a\u0435", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=\u0432\u0435\u0439\u043a\u0435", "xpos=Num", "Case=Nom", "<b>Definite=Ind<\/b>", "NumType=Card", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Erzya-JR%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22GluxovP_KedrovojPeshtj_1929%3A455%22%20%3B%20A%20%5Bform%3D%22%D1%8F%D0%BA%D1%81%D1%82%D0%B5%D1%80%D0%B5%D0%B0%D1%80%D0%BC%D0%B5%D0%B5%D1%86%D0%BD%D1%8D%D0%BD%D1%8C%22%5D%20%3B%20B%20%5Bform%3D%22%D0%B2%D0%B5%D0%B9%D0%BA%D0%B5%22%5D%20%20%7D", "treebankName": "UD_Erzya-JR"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Erzya \u00b7 NP head-NUM_Definite", "roleA": "num",
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

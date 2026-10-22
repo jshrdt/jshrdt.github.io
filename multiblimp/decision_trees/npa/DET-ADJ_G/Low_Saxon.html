@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "roleB": "adj", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Low_Saxon", "languageName": "Low_Saxon", "accuracy": "99.1%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "351", "predictor": "DET-ADJ_Gender", "rootAccuracy": "99.0%", "trainAccuracy": "99.0%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 348, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 351, "H": 0.0804, "acc": 0.9901, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 348, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 348, "correctSwaps": 585, "pairRoleCounts": {"A": 501, "B": 84}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "As de buur m\u00e5l to slot weer un de markgr\u00e5ve gerade by disk saet , let hee em herin koamen un by sik sitten an syne s\u00fclverne t\u00e5fel , un wys em al dat s\u00fclvergeskir un al de kostb\u00e5rkeiden , leyt de muskanten spealen , un den buur van <strong>de</strong> <strong>sk\u00f6ynsten</strong> spysen geaven , un vynen wyn d\u00e5rto , sou veal as hee much .", "verb": "sk\u00f6ynsten", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sk\u00f6yn", "Case=Acc,Dat", "Degree=Sup", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0005_DNS_1882_SLE_sleeswyk_de_markgraef_to_sleeswik_unn_de_buer_to_boklund%22%20%3B%20A%20%5Bform%3D%22sk%C3%B6ynsten%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "De nat\u00fc\u00fcr hadde der vast ab\u00fc\u00fcs mid had , en um et wear good te maken , hadde see hum <strong>en</strong> eywig <strong>kleyn</strong> boavenlyv geaven .", "verb": "kleyn", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kleyn", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0908_NNS_1872_GRO_gronningen_n_oetmiening_ien_n_jachtwaide%22%20%3B%20A%20%5Bform%3D%22kleyn%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "See weren uut der n\u00e5berskop un d\u00f6\u00e4r <strong>den</strong> <strong>hougen</strong> sney klabasterd , \u00fcm by der goden Marigge in selskop to sitten , d\u00e4n dan geit de arbeid swanke van der hand , de tyd werdt eynen nich lang , un de sl\u00e5p k\u00fcmt ouk nich sou bolde .", "verb": "hougen", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=houg", "Case=Acc", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0038_DWF_1882_westfalen_bielefeld_-_in_der_spinnstuaben_bi_der_aulen_marigge_un_janhiarm_04%22%20%3B%20A%20%5Bform%3D%22hougen%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Dat weer jo sou <strong>en</strong> <strong>bitterb\u00f6ysen</strong> skiksaalshoon , dat my de tr\u00e5nen in eynsento as sp\u00f6\u00f6lwater \u00f6\u00e4ver de neasenboage wegsimden .", "verb": "bitterb\u00f6ysen", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=bitterb\u00f6yse", "Case=Nom", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0637_MVP_1855_meakelenborgsk_Kaspar-Ohm-un-ick%22%20%3B%20A%20%5Bform%3D%22bitterb%C3%B6ysen%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Junges , junges , wat sin y <strong>en</strong> mooi <strong>knap</strong> br\u00fc\u00fcdjen eworden !", "verb": "knap", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=knap", "Case=Nom", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0297_NWF_1882_OVY_deventer_t.w._van_marie_-_de_bruud_en_de_wedevrouwe.txt%22%20%3B%20A%20%5Bform%3D%22knap%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "\u2013 \u00c4ver as hee dat d\u00e5n hadde , kam ne weykm\u00f6digheid \u00f6\u00e4ver em , hee sakkede up synen stool tosamen un keyk my \u00f6\u00e4ver dat pr\u00fc\u00fcssiske landrecht weg in de ougen , d\u00e4n hee was up <strong>den</strong> <strong>vorn\u00fcftigen</strong> inval koamen , de leve mid dat pr\u00fc\u00fcssiske landrecht to vordryven , un sead :", "verb": "vorn\u00fcftigen", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=vorn\u00fcftig", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0683_MVP_1862_meakelenborgsk_ut-mine-festungstid%22%20%3B%20A%20%5Bform%3D%22vorn%C3%BCftigen%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "En buur uut Gassen moste by winterdagen n\u00e5 Boye g\u00e5n un kam 't \u00e5vends wear tor\u00fcgge ; hee geit synes weages lyke uut , avers hee v\u00f6\u00f6lt , dat jim immer eyner in de syde st\u00f6t ; as hee sik to 'r halve kikt , geit de groute kearl mid en langen stokke neaven \u00f6\u00e4me her un is gans knisterswart , dee vorleidt den buren , dat hee gans van den weage afkumt un oaver Sniebarge un Lemkulen weg , do s\u00fc\u00fct hee an den lesten ende <strong>en</strong> <strong>l\u00fctjet</strong> lucht un denkt : \u2018 du sast d\u00e5r m\u00e5l up to g\u00e5n . \u2019", "verb": "l\u00fctjet", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=l\u00fcttik", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0929_OFL_1882_oustfalen_celle_de_buer_ut_gassen%22%20%3B%20A%20%5Bform%3D%22l%C3%BCtjet%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Dat is <strong>de</strong> <strong>junge</strong> vrouwe Hopsasa .", "verb": "junge", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=jung", "Case=Nom", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0158_DWF_2018_MON_m%C3%B6nsterland_paul-baumann_christine-koch-ausgew%C3%A4hlte-gedichte-%C3%BCbertragen-in-m%C3%BCnsterl%C3%A4nder-mundart-von-paul-baumann%22%20%3B%20A%20%5Bform%3D%22junge%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "D\u00e4n de ersbiskop was katoolsk , un keyner van uns hadde to <strong>synen</strong> <strong>geistliken</strong> stand rechten fiduts .", "verb": "geistliken", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=geystlik", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "synen", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=syn", "Case=Acc,Dat", "<b>Gender=Masc</b>", "Number=Sing", "Poss=Yes", "PronType=Prs"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0619_MVP_1862_meakelenborgsk_ut-mine-festungstid%22%20%3B%20A%20%5Bform%3D%22geistliken%22%5D%20%3B%20B%20%5Bform%3D%22synen%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "<strong>De</strong> <strong>old</strong> klokke gung gans good , aver see hadde sou en harden slag .", "verb": "old", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=old", "Case=Nom", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0586_DNS_1907_HOL_holsteynsk_maren%22%20%3B%20A%20%5Bform%3D%22old%22%5D%20%3B%20B%20%5Bform%3D%22De%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Now , ik wul dat ik see ouk kreyg ; m\u00e5r by my is et de eyne middag koffy med roggent\u00f6nnis en de andere middag t\u00f6nnis med koffy , - see n\u00f6men et te <strong>'n</strong> <strong>minste</strong> koffy , m\u00e5r ik segge et is apennat .", "verb": "minste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=min", "Case=Dat", "Degree=Sup", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "'n", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=et", "Case=Dat", "Definite=Def", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0370_NWF_1868_OVY_zwolle_hoe_andries_aan_een_varken_kwam%22%20%3B%20A%20%5Bform%3D%22minste%22%5D%20%3B%20B%20%5Bform%3D%22%27n%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "J\u00e5 , dat kan ek seggen , as ek see to <strong>'m</strong> <strong>eyrsten</strong> m\u00e5le hourde , sou dachte ek nich anders , as dat ek in dem himmel w\u00f6re ; sou kunnen de bloodskelme kwinkeleren !", "verb": "eyrsten", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=eyrst", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing"], "nsubj": "'m", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Dat", "Definite=Def", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0966_OFL_1670-90_oustfalen_hannover_leichen-predigt_auf_michael_wichman%22%20%3B%20A%20%5Bform%3D%22eyrsten%22%5D%20%3B%20B%20%5Bform%3D%22%27m%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Un <strong>dat</strong> <strong>eyrste</strong> m\u00e5l is de olde weaderhekse koamen as eyne bunte muus .", "verb": "eyrste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=eyrst", "Case=Nom", "Degree=Pos", "<b>Gender=Neut</b>", "NumType=Ord", "Number=Sing"], "nsubj": "dat", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0577_MVP_1843_meakelenborgsk_Witt-Duweken%22%20%3B%20A%20%5Bform%3D%22eyrste%22%5D%20%3B%20B%20%5Bform%3D%22dat%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "D\u00fcrten was ouk upsprungen un keyk \u00e4ver den konrektor syne skulder un sead mid en gewissen ingrim v\u00f6\u00e4r sik hen : \u00bb <strong>De</strong> <strong>olde</strong> Gel ! \u00ab \u2013", "verb": "olde", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=old", "Case=Nom", "Degree=Pos", "<b>Gender=Fem,Masc</b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem,Masc</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0590_MVP_1866_meakelenborgsk_dorchlauchting%22%20%3B%20A%20%5Bform%3D%22olde%22%5D%20%3B%20B%20%5Bform%3D%22De%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Is de nacht v\u00f6\u00e4rby , dan richt see ougen en hande up \u00fcm <strong>de</strong> <strong>nye</strong> margen te untvangen .", "verb": "nye", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0310_NWF_20XX_ACH_achterhooksk_zo-mos-t-waen%22%20%3B%20A%20%5Bform%3D%22nye%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Eyrst w\u00e4n man eyn van <strong>de</strong> <strong>sw\u00e5ren</strong> dekkel upheav , saeg man d\u00e5rin de gladde figuur van en kroos oader vat .", "verb": "sw\u00e5ren", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sw\u00e5r", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0187_DNS_%3C1899_HOL_holstein_klaus-groth_in-t-fahrhus%22%20%3B%20A%20%5Bform%3D%22sw%C3%A5ren%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Un d\u00e5rmid weer d\u00e4n de gew\u00f6\u00e4nlike larm inleided un de olde stryd ny anvungen , of Napoleon en grouten man weer odder <strong>de</strong> <strong>old</strong> Fritz , bet man tolest to en punkt kaem , woor man doch nich wyder kaem , as geagen enander an skrygen , un d\u00e4n word man wedder rowig un vorn\u00fcftig .", "verb": "old", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=old", "Case=Nom", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0585_DNS_%3C1899_HOL_holsteynsk_in-t-fahrhus_fragment%22%20%3B%20A%20%5Bform%3D%22old%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Up dem slotte to Hannover is immer eyne starke wake , averst see het \u00f6\u00e4n doch nich afholden kund , dat hee nich in <strong>de</strong> <strong>v\u00f6rstliken</strong> gemakke henin drungen un nich alleyne alle v\u00f6rstliken kinder un gem\u00e5linnen , s\u00fcnderen ouk den landesheyren s\u00fclvest oaverw\u00e4ldigd het .", "verb": "v\u00f6rstliken", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=v\u00f6rstlik", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Neut</b>", "Number=Plur", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0959_OFL_1670-90_oustfalen_hannover_leichen-predigt_auf_michael_wichman%22%20%3B%20A%20%5Bform%3D%22v%C3%B6rstliken%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}]}, "PAIRS": [{"origSentence": "Yn de h\u00f6\u00f6rn van de haerd sat Pijt Bobbelhoes mid <strong>syn</strong> dikke <strong>golden</strong> orlogykedde .", "swapSentence": "Yn de h\u00f6\u00f6rn van de haerd sat Pijt Bobbelhoes mid <strong>syme</strong> dikke <strong>golden</strong> orlogykedde .", "nsubj": "syn", "verb": "golden", "nsubjFeats": ["lemma=syn", "Case=Acc,Dat", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=golden", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "ungrammatical": "syme", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0373_NNS_1872_GRO_gronningen_n_oetmiening_ien_n_jachtwaide%22%20%3B%20A%20%5Bform%3D%22golden%22%5D%20%3B%20B%20%5Bform%3D%22syn%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>en</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "swapSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>eyne</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "nsubj": "en", "verb": "gem\u00e4sted", "nsubjFeats": ["lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=m\u00e4sted", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing", "Tense=Past"], "ungrammatical": "eyne", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0860_BRA_1874_marksk_dat-evanjeljum-van-n-verloarnen-soahn%22%20%3B%20A%20%5Bform%3D%22gem%C3%A4sted%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>en</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "swapSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>eynen</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "nsubj": "en", "verb": "gem\u00e4sted", "nsubjFeats": ["lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=m\u00e4sted", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing", "Tense=Past"], "ungrammatical": "eynen", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0860_BRA_1874_marksk_dat-evanjeljum-van-n-verloarnen-soahn%22%20%3B%20A%20%5Bform%3D%22gem%C3%A4sted%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>en</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "swapSentence": "Nu aver disse dyn s\u00f6\u00e4n k\u00fcmt , dee syn good med de minsker doudsl\u00e5n het , hest du em <strong>ne</strong> <strong>gem\u00e4sted</strong> kalv slachted .", "nsubj": "en", "verb": "gem\u00e4sted", "nsubjFeats": ["lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Neut</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=m\u00e4sted", "Case=Acc", "Degree=Pos", "<b>Gender=Neut</b>", "Number=Sing", "Tense=Past"], "ungrammatical": "ne", "swapRole": "A", "afterValue": "Fem/Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0860_BRA_1874_marksk_dat-evanjeljum-van-n-verloarnen-soahn%22%20%3B%20A%20%5Bform%3D%22gem%C3%A4sted%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "De meyste buren sk\u00fcdden mid et h\u00f6yvd , as of see seggen wullen : \u201e <strong>En</strong> <strong>aldergemeynste</strong> bodel ; ik wul et m\u00e5r uut was . \u201c", "swapSentence": "De meyste buren sk\u00fcdden mid et h\u00f6yvd , as of see seggen wullen : \u201e <strong>Eyne</strong> <strong>aldergemeynste</strong> bodel ; ik wul et m\u00e5r uut was . \u201c", "nsubj": "en", "verb": "aldergemeynste", "nsubjFeats": ["lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=allergemeyn", "Case=Nom", "Degree=Sup", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "Eyne", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0919_NNS_1872_GRO_gronningen_n_oetmiening_ien_n_jachtwaide%22%20%3B%20A%20%5Bform%3D%22aldergemeynste%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "De meyste buren sk\u00fcdden mid et h\u00f6yvd , as of see seggen wullen : \u201e <strong>En</strong> <strong>aldergemeynste</strong> bodel ; ik wul et m\u00e5r uut was . \u201c", "swapSentence": "De meyste buren sk\u00fcdden mid et h\u00f6yvd , as of see seggen wullen : \u201e <strong>Ne</strong> <strong>aldergemeynste</strong> bodel ; ik wul et m\u00e5r uut was . \u201c", "nsubj": "en", "verb": "aldergemeynste", "nsubjFeats": ["lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=allergemeyn", "Case=Nom", "Degree=Sup", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "Ne", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0919_NNS_1872_GRO_gronningen_n_oetmiening_ien_n_jachtwaide%22%20%3B%20A%20%5Bform%3D%22aldergemeynste%22%5D%20%3B%20B%20%5Bform%3D%22En%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>de</strong> <strong>leve</strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "swapSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>dean</strong> <strong>leve</strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "nsubj": "de", "verb": "leve", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=leev", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "ungrammatical": "dean", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0083_DNS_1817_HOL_den_bloodtuugn_for_unsen_gloobm_henrick_van_zutphen%22%20%3B%20A%20%5Bform%3D%22leve%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>'n</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "'n", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Dat</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "Dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "\u2013 Sou was ouk , as en leyrer syne skooljungens eyns vr\u00e5gde : wo et en junger burse an te vangen h\u00e4dde , \u00fcmme v\u00f6\u00e4r dat land un de gemeynde <strong>en</strong> <strong>geachteter</strong> man te werden ?", "swapSentence": "\u2013 Sou was ouk , as en leyrer syne skooljungens eyns vr\u00e5gde : wo et en junger burse an te vangen h\u00e4dde , \u00fcmme v\u00f6\u00e4r dat land un de gemeynde <strong>eyne</strong> <strong>geachteter</strong> man te werden ?", "nsubj": "en", "verb": "geachteter", "nsubjFeats": ["lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=geachtet", "Case=Nom", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "eyne", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0670_DWF_1878_SUD_suderlandsk_caspar-brocksieper_der-plattdeutsche-volksspeigel_daunlots-12%22%20%3B%20A%20%5Bform%3D%22geachteter%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>de</strong> <strong>leve</strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "swapSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>de</strong> <strong>leev</strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "nsubj": "de", "verb": "leve", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=leev", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "ungrammatical": "leev", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0083_DNS_1817_HOL_den_bloodtuugn_for_unsen_gloobm_henrick_van_zutphen%22%20%3B%20A%20%5Bform%3D%22leve%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Den</strong> <strong>ander</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "ander", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Den</strong> <strong>andere</strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "andere", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> dag kaemen de j\u00f6den tohoupe un naemen sik vaste voar , see wollen nich eyr eaten un drinken , bet see Paulus \u00fcmmebrocht h\u00e4dden .", "swapSentence": "<strong>Den</strong> <strong>ander</strong> dag kaemen de j\u00f6den tohoupe un naemen sik vaste voar , see wollen nich eyr eaten un drinken , bet see Paulus \u00fcmmebrocht h\u00e4dden .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "ander", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0765_DWF_1933_OWL_ravensbergsk_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den</strong> <strong>anderen</strong> dag kaemen de j\u00f6den tohoupe un naemen sik vaste voar , see wollen nich eyr eaten un drinken , bet see Paulus \u00fcmmebrocht h\u00e4dden .", "swapSentence": "<strong>Den</strong> <strong>andere</strong> dag kaemen de j\u00f6den tohoupe un naemen sik vaste voar , see wollen nich eyr eaten un drinken , bet see Paulus \u00fcmmebrocht h\u00e4dden .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "andere", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0765_DWF_1933_OWL_ravensbergsk_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Nu hee en stunde sik d\u00e5r vorwyld het , do segt hee to den kulengraver : \u00bb Du givst my nu dat geleid bet an <strong>de</strong> <strong>grout</strong> karkenpoorte un morgen \u00e5vend b\u00fcst du by my to gast . \u00ab", "swapSentence": "Nu hee en stunde sik d\u00e5r vorwyld het , do segt hee to den kulengraver : \u00bb Du givst my nu dat geleid bet an <strong>de</strong> <strong>groutet</strong> karkenpoorte un morgen \u00e5vend b\u00fcst du by my to gast . \u00ab", "nsubj": "de", "verb": "grout", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=grout", "Case=Acc", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "ungrammatical": "groutet", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0461_DNS_1845_HOL_holsteynsk_De-Kulengrawer%22%20%3B%20A%20%5Bform%3D%22grout%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Van der tyd s\u00fc\u00fct hee niks meyr ; aver mid der syde , woor \u00f6\u00e4n <strong>de</strong> <strong>swarte</strong> kearl inne bufd hat , mot hee noch hinken .", "swapSentence": "Van der tyd s\u00fc\u00fct hee niks meyr ; aver mid der syde , woor \u00f6\u00e4n <strong>de</strong> <strong>swart</strong> kearl inne bufd hat , mot hee noch hinken .", "nsubj": "de", "verb": "swarte", "nsubjFeats": ["lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=swart", "Case=Nom", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "ungrammatical": "swart", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0936_OFL_1882_oustfalen_celle_de_buer_ut_gassen%22%20%3B%20A%20%5Bform%3D%22swarte%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Als ik nu by dem m\u00f6ller P\u00f6lz weer , do wardt hee eynm\u00e5l n\u00e5 Kensbarg ryde , <strong>syne</strong> <strong>groute</strong> vr\u00fcnd bes\u00f6ke .", "swapSentence": "Als ik nu by dem m\u00f6ller P\u00f6lz weer , do wardt hee eynm\u00e5l n\u00e5 Kensbarg ryde , <strong>syne</strong> <strong>groutet</strong> vr\u00fcnd bes\u00f6ke .", "nsubj": "syne", "verb": "groute", "nsubjFeats": ["lemma=syn", "Case=Acc", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=grout", "Case=Acc", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "groutet", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0969_NPR_1893_EYL_de-mella-polz%22%20%3B%20A%20%5Bform%3D%22groute%22%5D%20%3B%20B%20%5Bform%3D%22syne%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Hee st\u00f6t by de arbeid midto mid <strong>den</strong> <strong>langen</strong> handsteal d\u00e5ran un saeg achtern\u00e5 , dat hee niks raf raak .", "swapSentence": "Hee st\u00f6t by de arbeid midto mid <strong>den</strong> <strong>lange</strong> handsteal d\u00e5ran un saeg achtern\u00e5 , dat hee niks raf raak .", "nsubj": "den", "verb": "langen", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=lang", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "lange", "swapRole": "B", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0676_DNS_1876_HOL_holsteynsk_mien-jungsparadies%22%20%3B%20A%20%5Bform%3D%22langen%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Aver gel\u00f6yvet my , dat <strong>usse</strong> <strong>leve</strong> heyre noch syne last dermid krigt . \u201c", "swapSentence": "Aver gel\u00f6yvet my , dat <strong>usse</strong> <strong>leev</strong> heyre noch syne last dermid krigt . \u201c", "nsubj": "usse", "verb": "leve", "nsubjFeats": ["lemma=uns", "Case=Nom", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=leev", "Case=Nom", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "ungrammatical": "leev", "swapRole": "B", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0184_DWF_%3C1993_SUD_%C3%A4nne-n%C3%B6cker_plattdeutsche-gedichte-und-prosa%22%20%3B%20A%20%5Bform%3D%22leve%22%5D%20%3B%20B%20%5Bform%3D%22usse%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}]};
+const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "roleB": "adj", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Low_Saxon", "languageName": "Low_Saxon", "accuracy": "99.2%", "testAccuracy": "97.5%", "testN": 40, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "355", "predictor": "DET-ADJ_Gender", "rootAccuracy": "99.0%", "trainAccuracy": "99.0%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "b", "feat": "Gender"}, {"role": "a", "feat": "Gender"}]}, "CLASSES": [{"cls": "yes", "cnt": 352, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 355, "H": 0.0797, "acc": 0.9902, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 352, "color": "var(--yes)"}, {"cls": "no", "cnt": 3, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 352, "correctSwaps": 405, "pairRoleCounts": {"A": 334, "B": 71}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "W\u00e4n et nu aver an vroide feylt to dat vroidenvest , sou mus wy de sake van <strong>en<\/strong> <strong>ander<\/strong> syde anseen , dat n\u00e4\u00e4mlik de vroide skal maked un herv\u00f6\u00e4rropen warden .", "verb": "ander", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ander", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc,Dat", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0088_DNS_1817_HOL_den_bloodtuugn_for_unsen_gloobm_henrick_van_zutphen%22%20%3B%20A%20%5Bform%3D%22ander%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "At Alkana <strong>dat<\/strong> <strong>n\u00f6ggeste<\/strong> m\u00e5l med Hanna esl\u00e5pen hadde , do was et goder hoapeninge un as dat sou wyd was , do brachte et en suan up de werld un n\u00f6mede ne Samuel , wyl dat et ne van dem heyren erbiaden hadde .", "verb": "n\u00f6ggeste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=naegst", "Case=Acc", "Degree=Sup", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "dat", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0727_DWF_2010_SUD_suderlandsk_horst-ludwigsen_ut-di%C3%A4m-ollen-testament-4-daunlots-17%22%20%3B%20A%20%5Bform%3D%22n%C3%B6ggeste%22%5D%20%3B%20B%20%5Bform%3D%22dat%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "\u2013 \u00c4ver as hee dat d\u00e5n hadde , kam ne weykm\u00f6digheid \u00f6\u00e4ver em , hee sakkede up synen stool tosamen un keyk my \u00f6\u00e4ver dat pr\u00fc\u00fcssiske landrecht weg in de ougen , d\u00e4n hee was up den vorn\u00fcftigen inval koamen , de leve mid <strong>dat<\/strong> <strong>pr\u00fc\u00fcssiske<\/strong> landrecht to vordryven , un sead :", "verb": "pr\u00fc\u00fcssiske", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=preu\u00dfisch", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "dat", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0683_MVP_1862_meakelenborgsk_ut-mine-festungstid%22%20%3B%20A%20%5Bform%3D%22pr%C3%BC%C3%BCssiske%22%5D%20%3B%20B%20%5Bform%3D%22dat%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Wo hee hen kumt , is hee gans van <strong>den<\/strong> <strong>rechten<\/strong> weage af un n\u00e5 Scheuen koamen .", "verb": "rechten", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=recht", "Case=Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Dat", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0930_OFL_1882_oustfalen_celle_de_buer_ut_gassen%22%20%3B%20A%20%5Bform%3D%22rechten%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "D\u00fcsse Johann Friederich was en braav man , uutbenoamen dat hee katolisk was ; do kreygen de paters de slotkerke in , un laesen d\u00e5r de misse , dat gav <strong>en<\/strong> <strong>grout<\/strong> upseen in Hannover ; ek ging der s\u00fclvest mannigm\u00e5l hen , as ek noch sou en jung bengel was , deyls , God mag my de s\u00fcnde vorgeaven ! puur uut nyskyrigheid , deyls ouk , de sk\u00f6yne musik an to h\u00f6yren .", "verb": "grout", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=grout", "Case=Acc", "Degree=Pos", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0965_OFL_1670-90_oustfalen_hannover_leichen-predigt_auf_michael_wichman%22%20%3B%20A%20%5Bform%3D%22grout%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "\u2013 Hanning segt , see het ne idee \u2013 wat dat is , weyt ik nich ; \u00e4ver et wardt wol n\u00e5 dat s\u00fclvige henstangelen , wat wy lunen un skrullen un maf\u00f6kens n\u00f6men \u2013 un d\u00e5r het see nu v\u00f6\u00e4rdeam m\u00e5l en book leasen , d\u00e5r het inst\u00e5n , dat hyr \u00f6ldlings m\u00e5l wat mid <strong>en<\/strong> <strong>jung<\/strong> m\u00e4den passeerd is \u2013 ik weyt nich \u2013 de olden namens !", "verb": "jung", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=jung", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc,Dat", "Definite=Ind", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0618_MVP_1868_meakelenborgsk_de-reis-nah-konstantinopel%22%20%3B%20A%20%5Bform%3D%22jung%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "<strong>De<\/strong> <strong>prachtige<\/strong> skolen , et nette stadh\u00fc\u00fcs mid byn\u00e5 al wat der in was , ouk see vordweynen in de houg upflikkerende vlammen ; de karke l\u00f6yp grout gev\u00e5r .", "verb": "prachtige", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=pr\u00e4chtig", "Case=Nom", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0008_NWF_1882_OVY_genemuiden_h.w._van_dalfsen_-_n_braand%22%20%3B%20A%20%5Bform%3D%22prachtige%22%5D%20%3B%20B%20%5Bform%3D%22De%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Now , ik wul dat ik see ouk kreyg ; m\u00e5r by my is et de eyne middag koffy med roggent\u00f6nnis en de andere middag t\u00f6nnis med koffy , - see n\u00f6men et te <strong>'n<\/strong> <strong>minste<\/strong> koffy , m\u00e5r ik segge et is apennat .", "verb": "minste", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=min", "Case=Dat", "Degree=Sup", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "'n", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=et", "Case=Dat", "Definite=Def", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0370_NWF_1868_OVY_zwolle_hoe_andries_aan_een_varken_kwam%22%20%3B%20A%20%5Bform%3D%22minste%22%5D%20%3B%20B%20%5Bform%3D%22%27n%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "See seggen , dat v\u00f6\u00e4r olden tyden , as de l\u00fcde noch in de aerde woand hebben , d\u00e5r ouk l\u00fcde in woand hebben , un <strong>de<\/strong> <strong>kleyne<\/strong> h\u00f6lle , dee dale an den akker to seen is , dat sal de poortend\u00f6\u00e4re west syn .", "verb": "kleyne", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kleyn", "Case=Nom", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0883_BRA_1843_marksk_Der-Silberberg%22%20%3B%20A%20%5Bform%3D%22kleyne%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Dat hadde ik w\u00fcrklik d\u00e5n , jungens , sou st\u00e5tsk w\u00f6ren <strong>de<\/strong> <strong>beiden<\/strong> vrouwens .", "verb": "beiden", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=beide", "Case=Nom", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0576_DNS_1913_HAM_hamborgsk_hamborger_janmooten%22%20%3B%20A%20%5Bform%3D%22beiden%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "D\u00fcrten was ouk upsprungen un keyk \u00e4ver den konrektor syne skulder un sead mid en gewissen ingrim v\u00f6\u00e4r sik hen : \u00bb <strong>De<\/strong> <strong>olde<\/strong> Gel ! \u00ab \u2013", "verb": "olde", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=old", "Case=Nom", "Degree=Pos", "<b>Gender=Fem,Masc<\/b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem,Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0590_MVP_1866_meakelenborgsk_dorchlauchting%22%20%3B%20A%20%5Bform%3D%22olde%22%5D%20%3B%20B%20%5Bform%3D%22De%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Is de nacht v\u00f6\u00e4rby , dan richt see ougen en hande up \u00fcm <strong>de<\/strong> <strong>nye<\/strong> margen te untvangen .", "verb": "nye", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=ny", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0310_NWF_20XX_ACH_achterhooksk_zo-mos-t-waen%22%20%3B%20A%20%5Bform%3D%22nye%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Eyrst w\u00e4n man eyn van <strong>de<\/strong> <strong>sw\u00e5ren<\/strong> dekkel upheav , saeg man d\u00e5rin de gladde figuur van en kroos oader vat .", "verb": "sw\u00e5ren", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sw\u00e5r", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0187_DNS_%3C1899_HOL_holstein_klaus-groth_in-t-fahrhus%22%20%3B%20A%20%5Bform%3D%22sw%C3%A5ren%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "Un d\u00e5rmid weer d\u00e4n de gew\u00f6\u00e4nlike larm inleided un de olde stryd ny anvungen , of Napoleon <strong>en<\/strong> <strong>grouten<\/strong> man weer odder de old Fritz , bet man tolest to en punkt kaem , woor man doch nich wyder kaem , as geagen enander an skrygen , un d\u00e4n word man wedder rowig un vorn\u00fcftig .", "verb": "grouten", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=grout", "Case=Nom", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0585_DNS_%3C1899_HOL_holsteynsk_in-t-fahrhus_fragment%22%20%3B%20A%20%5Bform%3D%22grouten%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "My d\u00fccht aver , hee wolde <strong>eyne<\/strong> <strong>kruse<\/strong> nease maken , w\u00e4n man em up der k\u00f6ste , anstad vleysk , hoi voarsette .", "verb": "kruse", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kruus", "Case=Acc", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "eyne", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0952_OFL_1670-90_oustfalen_hannover_leichen-predigt_auf_michael_wichman%22%20%3B%20A%20%5Bform%3D%22kruse%22%5D%20%3B%20B%20%5Bform%3D%22eyne%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "As de buur m\u00e5l to slot weer un de markgr\u00e5ve gerade by disk saet , let hee em herin koamen un by sik sitten an syne s\u00fclverne t\u00e5fel , un wys em al dat s\u00fclvergeskir un al de kostb\u00e5rkeiden , leyt de muskanten spealen , un den buur van <strong>de<\/strong> <strong>sk\u00f6ynsten<\/strong> spysen geaven , un vynen wyn d\u00e5rto , sou veal as hee much .", "verb": "sk\u00f6ynsten", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=sk\u00f6yn", "Case=Acc,Dat", "Degree=Sup", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "de", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0005_DNS_1882_SLE_sleeswyk_de_markgraef_to_sleeswik_unn_de_buer_to_boklund%22%20%3B%20A%20%5Bform%3D%22sk%C3%B6ynsten%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "De nat\u00fc\u00fcr hadde der vast ab\u00fc\u00fcs mid had , en um et wear good te maken , hadde see hum <strong>en<\/strong> eywig <strong>kleyn<\/strong> boavenlyv geaven .", "verb": "kleyn", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=kleyn", "Case=Acc", "Degree=Pos", "<b>Gender=Neut<\/b>", "Number=Sing"], "nsubj": "en", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=en", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0908_NNS_1872_GRO_gronningen_n_oetmiening_ien_n_jachtwaide%22%20%3B%20A%20%5Bform%3D%22kleyn%22%5D%20%3B%20B%20%5Bform%3D%22en%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}, {"sentence": "See weren uut der n\u00e5berskop un d\u00f6\u00e4r <strong>den<\/strong> <strong>hougen<\/strong> sney klabasterd , \u00fcm by der goden Marigge in selskop to sitten , d\u00e4n dan geit de arbeid swanke van der hand , de tyd werdt eynen nich lang , un de sl\u00e5p k\u00fcmt ouk nich sou bolde .", "verb": "hougen", "verbFeats": ["upos=ADJ", "deprel=amod", "lemma=houg", "Case=Acc", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "den", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0038_DWF_1882_westfalen_bielefeld_-_in_der_spinnstuaben_bi_der_aulen_marigge_un_janhiarm_04%22%20%3B%20A%20%5Bform%3D%22hougen%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC"}]}, "PAIRS": [{"origSentence": "Et givt nist up der weld , wat sou vyn un sou k\u00fcnstlik tesammensetted un sou wyse inerichted is , ar <strong>de<\/strong> <strong>minsklike<\/strong> k\u00f6rper ; et givt aver ouk nist , wat sou ofte durch dumheid un oavermood voar immer vorhudeld un vorprudeld wardt , ar gerade dee .", "swapSentence": "Et givt nist up der weld , wat sou vyn un sou k\u00fcnstlik tesammensetted un sou wyse inerichted is , ar <strong>dat<\/strong> <strong>minsklike<\/strong> k\u00f6rper ; et givt aver ouk nist , wat sou ofte durch dumheid un oavermood voar immer vorhudeld un vorprudeld wardt , ar gerade dee .", "nsubj": "de", "verb": "minsklike", "nsubjFeats": ["lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=minsklik", "Case=Nom", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0094_OFL_1846_bronswik_smelzkop_-_ower_de_kunst_jesunt_te_sin%22%20%3B%20A%20%5Bform%3D%22minsklike%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "\u2013 Neet lange d\u00e5rn\u00e5 kwam iam <strong>ne<\/strong> <strong>wille<\/strong> s\u00fc\u00e4ge enteagen un vr\u00e5gde : \" Pannek\u00f6\u00f6ksken , hwoor wolst du hen ? \"", "swapSentence": "\u2013 Neet lange d\u00e5rn\u00e5 kwam iam <strong>en<\/strong> <strong>wille<\/strong> s\u00fc\u00e4ge enteagen un vr\u00e5gde : \" Pannek\u00f6\u00f6ksken , hwoor wolst du hen ? \"", "nsubj": "ne", "verb": "wille", "nsubjFeats": ["lemma=en", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=wild", "Case=Nom", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "ungrammatical": "en", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0807_DWF_%3C1879_SUD_suderlandsk_johann-friedrich-leopold-woeste_daunlots-23%22%20%3B%20A%20%5Bform%3D%22wille%22%5D%20%3B%20B%20%5Bform%3D%22ne%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Un Hein klauw in de bout un wrig n\u00e5 den grouten dalailama van sneldamper r\u00f6\u00e4ver , dee as <strong>dat<\/strong> gr\u00f6tste <strong>d\u00fc\u00fctske<\/strong> skip den name van den gr\u00f6tsten d\u00fc\u00fctsken hadde un \u00bb Goethe \u00ab heyten dea .", "swapSentence": "Un Hein klauw in de bout un wrig n\u00e5 den grouten dalailama van sneldamper r\u00f6\u00e4ver , dee as <strong>de<\/strong> gr\u00f6tste <strong>d\u00fc\u00fctske<\/strong> skip den name van den gr\u00f6tsten d\u00fc\u00fctsken hadde un \u00bb Goethe \u00ab heyten dea .", "nsubj": "dat", "verb": "d\u00fc\u00fctske", "nsubjFeats": ["lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=d\u00fc\u00fctsk", "Case=Nom", "Degree=Pos", "<b>Gender=Neut<\/b>", "Number=Sing"], "ungrammatical": "de", "swapRole": "A", "afterValue": "Fem/Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0550_DNS_1911_HAM_hamborgsk_hein_godenwind_de_admirol_von_moskitonien%22%20%3B%20A%20%5Bform%3D%22d%C3%BC%C3%BCtske%22%5D%20%3B%20B%20%5Bform%3D%22dat%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den<\/strong> <strong>anderen<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Dat<\/strong> <strong>anderen<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "Dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "See hevt souwat twey m\u00e5nd vorstek g\u00e5n l\u00e5ten en as ik up en \u00e5vend in de eyrste skoolweake n\u00e5st h\u00f6\u00e4r komme te fytsen , stelle ik <strong>de<\/strong> glupends <strong>originele<\/strong> vr\u00e5ge : \u201c Heb jy en gode vakanty had ? \u201d", "swapSentence": "See hevt souwat twey m\u00e5nd vorstek g\u00e5n l\u00e5ten en as ik up en \u00e5vend in de eyrste skoolweake n\u00e5st h\u00f6\u00e4r komme te fytsen , stelle ik <strong>dat<\/strong> glupends <strong>originele<\/strong> vr\u00e5ge : \u201c Heb jy en gode vakanty had ? \u201d", "nsubj": "de", "verb": "originele", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=originel", "Case=Acc", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "ungrammatical": "dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0352_NWF_20XX_DRE_drentsk_Daphne%22%20%3B%20A%20%5Bform%3D%22originele%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "As wy tosamen by <strong>den<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "swapSentence": "As wy tosamen by <strong>'n<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "nsubj": "den", "verb": "warm", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=warm", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "'n", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0710_DNS_1876_HOL_holsteynsk_mien-jungsparadies%22%20%3B%20A%20%5Bform%3D%22warm%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "As wy tosamen by <strong>den<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "swapSentence": "As wy tosamen by <strong>dat<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "nsubj": "den", "verb": "warm", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=warm", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0710_DNS_1876_HOL_holsteynsk_mien-jungsparadies%22%20%3B%20A%20%5Bform%3D%22warm%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "As wy tosamen by <strong>den<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "swapSentence": "As wy tosamen by <strong>der<\/strong> <strong>warm<\/strong> oaven un brennen licht in de stuve saeten , do weer myn vurcht un angst weg , as de k\u00fcl un dat d\u00fc\u00fcster , ik set my gans behaaglik an den disk un wunder my , dat Anna nich eavensou weer .", "nsubj": "den", "verb": "warm", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=warm", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "der", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0710_DNS_1876_HOL_holsteynsk_mien-jungsparadies%22%20%3B%20A%20%5Bform%3D%22warm%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "See saeten alle vergen\u00f6\u00f6glik to houpe un de l\u00fcdens traeden bolde mid den rechten , bolde mid <strong>den<\/strong> <strong>linken<\/strong> voot dat rad un de vinger t\u00fc\u00e4gen uut den dysen de fynen spyrs vlas , dee mid spye nat maked w\u00f6rden un dan d\u00fc\u00e4r de sluken as en vuagel up de spole lepen .", "swapSentence": "See saeten alle vergen\u00f6\u00f6glik to houpe un de l\u00fcdens traeden bolde mid den rechten , bolde mid <strong>'n<\/strong> <strong>linken<\/strong> voot dat rad un de vinger t\u00fc\u00e4gen uut den dysen de fynen spyrs vlas , dee mid spye nat maked w\u00f6rden un dan d\u00fc\u00e4r de sluken as en vuagel up de spole lepen .", "nsubj": "den", "verb": "linken", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=link", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "'n", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0041_DWF_1882_westfalen_bielefeld_-_in_der_spinnstuaben_bi_der_aulen_marigge_un_janhiarm_07%22%20%3B%20A%20%5Bform%3D%22linken%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "See saeten alle vergen\u00f6\u00f6glik to houpe un de l\u00fcdens traeden bolde mid den rechten , bolde mid <strong>den<\/strong> <strong>linken<\/strong> voot dat rad un de vinger t\u00fc\u00e4gen uut den dysen de fynen spyrs vlas , dee mid spye nat maked w\u00f6rden un dan d\u00fc\u00e4r de sluken as en vuagel up de spole lepen .", "swapSentence": "See saeten alle vergen\u00f6\u00f6glik to houpe un de l\u00fcdens traeden bolde mid den rechten , bolde mid <strong>dat<\/strong> <strong>linken<\/strong> voot dat rad un de vinger t\u00fc\u00e4gen uut den dysen de fynen spyrs vlas , dee mid spye nat maked w\u00f6rden un dan d\u00fc\u00e4r de sluken as en vuagel up de spole lepen .", "nsubj": "den", "verb": "linken", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=link", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "dat", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0041_DWF_1882_westfalen_bielefeld_-_in_der_spinnstuaben_bi_der_aulen_marigge_un_janhiarm_07%22%20%3B%20A%20%5Bform%3D%22linken%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>de<\/strong> <strong>leve<\/strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "swapSentence": "S\u00fc ! eyn is dat van de vealen n\u00e5deylen , dee d\u00e5ruut entspreaken mut , w\u00e4n man syd twintig d\u00f6rtig j\u00e5r allerley kr\u00e5mst\u00fckke , w\u00e5rvan man vr\u00f6er niks wus , by <strong>de<\/strong> <strong>leev<\/strong> jugend insmuggelt un inv\u00f6\u00f6rt , besunders in v\u00f6\u00e4rneame familien oader dee et weasen willet , d\u00e5rd\u00f6\u00e4rch dat kristendoom meyr un minder vordr\u00e4ngd wardt , wat nich wol to m\u00f6ten is .", "nsubj": "de", "verb": "leve", "nsubjFeats": ["lemma=de", "Case=Acc,Dat", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=leev", "Case=Acc,Dat", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "ungrammatical": "leev", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc,dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0083_DNS_1817_HOL_den_bloodtuugn_for_unsen_gloobm_henrick_van_zutphen%22%20%3B%20A%20%5Bform%3D%22leve%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den<\/strong> <strong>anderen<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Den<\/strong> <strong>ander<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "ander", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "<strong>Den<\/strong> <strong>anderen<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "swapSentence": "<strong>Den<\/strong> <strong>andere<\/strong> morgen heelden de hougenpreester un de \u00e4ldsten r\u00e5d , wo see Jesus an m besten up de syde bringen k\u00f6nnen .", "nsubj": "den", "verb": "anderen", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=ander", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "andere", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0135_DWF_1933_OWL_ravensberg_heinrich-stolte_ravensberg_das-neue-testament%22%20%3B%20A%20%5Bform%3D%22anderen%22%5D%20%3B%20B%20%5Bform%3D%22Den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "As dat j\u00e5r bolde to ende g\u00fcng , k\u00f6f de snyder en grout st\u00fck t\u00fc\u00fcg , dat sneyd hee mid <strong>syne<\/strong> <strong>grouten<\/strong> skaere twei in luter fitskes un fetskes .", "swapSentence": "As dat j\u00e5r bolde to ende g\u00fcng , k\u00f6f de snyder en grout st\u00fck t\u00fc\u00fcg , dat sneyd hee mid <strong>syne<\/strong> <strong>groutem<\/strong> skaere twei in luter fitskes un fetskes .", "nsubj": "syne", "verb": "grouten", "nsubjFeats": ["lemma=syn", "Case=Dat", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=grout", "Case=Dat", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "ungrammatical": "groutem", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0547_DNS_1909_NNI_noordneddersassisk_oldenburg_aberglaube-und-sagen-aus-dem-herzogtum-oldenburg%22%20%3B%20A%20%5Bform%3D%22grouten%22%5D%20%3B%20B%20%5Bform%3D%22syne%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "De linke hand hadde see in de syde stemd , un in de recht h\u00f6ld see <strong>earen<\/strong> <strong>nygen<\/strong> h\u00e5rbessen , un de m\u00fctsenb\u00e4nder vl\u00f6ygen ear man sou \u00fcm den kop as stormwimpels .", "swapSentence": "De linke hand hadde see in de syde stemd , un in de recht h\u00f6ld see <strong>earen<\/strong> <strong>nyet<\/strong> h\u00e5rbessen , un de m\u00fctsenb\u00e4nder vl\u00f6ygen ear man sou \u00fcm den kop as stormwimpels .", "nsubj": "earen", "verb": "nygen", "nsubjFeats": ["lemma=ear", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=ny", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "nyet", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0475_MVP_1855_meakelenborgsk_Kaspar-Ohm-un-ick%22%20%3B%20A%20%5Bform%3D%22nygen%22%5D%20%3B%20B%20%5Bform%3D%22earen%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "De linke hand hadde see in de syde stemd , un in de recht h\u00f6ld see <strong>earen<\/strong> <strong>nygen<\/strong> h\u00e5rbessen , un de m\u00fctsenb\u00e4nder vl\u00f6ygen ear man sou \u00fcm den kop as stormwimpels .", "swapSentence": "De linke hand hadde see in de syde stemd , un in de recht h\u00f6ld see <strong>earen<\/strong> <strong>nyges<\/strong> h\u00e5rbessen , un de m\u00fctsenb\u00e4nder vl\u00f6ygen ear man sou \u00fcm den kop as stormwimpels .", "nsubj": "earen", "verb": "nygen", "nsubjFeats": ["lemma=ear", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=ny", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "nyges", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0475_MVP_1855_meakelenborgsk_Kaspar-Ohm-un-ick%22%20%3B%20A%20%5Bform%3D%22nygen%22%5D%20%3B%20B%20%5Bform%3D%22earen%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "- De sunne brende un penkerde van vr\u00f6 morgens an , as w\u00e4n see <strong>det<\/strong> <strong>letste<\/strong> bitjen gras up de wisken noch vorsengen s\u00fcl un de uutsichten up hervstvr\u00fcchte , tom\u00e5l up de t\u00fcffelen , dee doch by de landl\u00fcde sou ne groute rolle sp\u00f6\u00e4len , w\u00fcrden van dag to dag truriger .", "swapSentence": "- De sunne brende un penkerde van vr\u00f6 morgens an , as w\u00e4n see <strong>det<\/strong> <strong>lest<\/strong> bitjen gras up de wisken noch vorsengen s\u00fcl un de uutsichten up hervstvr\u00fcchte , tom\u00e5l up de t\u00fcffelen , dee doch by de landl\u00fcde sou ne groute rolle sp\u00f6\u00e4len , w\u00fcrden van dag to dag truriger .", "nsubj": "det", "verb": "letste", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Neut<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=lest", "Case=Acc", "Degree=Sup", "<b>Gender=Neut<\/b>", "Number=Sing"], "ungrammatical": "lest", "swapRole": "B", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0855_BRA_1885_marksk_dree-wiehnachten%22%20%3B%20A%20%5Bform%3D%22letste%22%5D%20%3B%20B%20%5Bform%3D%22det%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Van der tyd s\u00fc\u00fct hee niks meyr ; aver mid der syde , woor \u00f6\u00e4n <strong>de<\/strong> <strong>swarte<\/strong> kearl inne bufd hat , mot hee noch hinken .", "swapSentence": "Van der tyd s\u00fc\u00fct hee niks meyr ; aver mid der syde , woor \u00f6\u00e4n <strong>de<\/strong> <strong>swart<\/strong> kearl inne bufd hat , mot hee noch hinken .", "nsubj": "de", "verb": "swarte", "nsubjFeats": ["lemma=de", "Case=Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=swart", "Case=Nom", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "ungrammatical": "swart", "swapRole": "B", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0936_OFL_1882_oustfalen_celle_de_buer_ut_gassen%22%20%3B%20A%20%5Bform%3D%22swarte%22%5D%20%3B%20B%20%5Bform%3D%22de%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Aver gel\u00f6yvet my , dat <strong>usse<\/strong> <strong>leve<\/strong> heyre noch syne last dermid krigt . \u201c", "swapSentence": "Aver gel\u00f6yvet my , dat <strong>usse<\/strong> <strong>leev<\/strong> heyre noch syne last dermid krigt . \u201c", "nsubj": "usse", "verb": "leve", "nsubjFeats": ["lemma=uns", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Prs"], "verbFeats": ["lemma=leev", "Case=Nom", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "leev", "swapRole": "B", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0184_DWF_%3C1993_SUD_%C3%A4nne-n%C3%B6cker_plattdeutsche-gedichte-und-prosa%22%20%3B%20A%20%5Bform%3D%22leve%22%5D%20%3B%20B%20%5Bform%3D%22usse%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}, {"origSentence": "Hee hadde sik <strong>den<\/strong> <strong>grouten<\/strong> rune t\u00f6ymd , dee eyrst en beatjen mid em r\u00fcmdans , aver bald in den sney un \u00fcnder synen meyster sinniger word \u2013 hee w\u00fcs en peard to halteren .", "swapSentence": "Hee hadde sik <strong>den<\/strong> <strong>grout<\/strong> rune t\u00f6ymd , dee eyrst en beatjen mid em r\u00fcmdans , aver bald in den sney un \u00fcnder synen meyster sinniger word \u2013 hee w\u00fcs en peard to halteren .", "nsubj": "den", "verb": "grouten", "nsubjFeats": ["lemma=de", "Case=Acc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Art"], "verbFeats": ["lemma=grout", "Case=Acc", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "ungrammatical": "grout", "swapRole": "B", "afterValue": "Fem/Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Low_Saxon-LSDC%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22LSDC_0605_DNS_1907_HOL_holsteynsk_maren%22%20%3B%20A%20%5Bform%3D%22grouten%22%5D%20%3B%20B%20%5Bform%3D%22den%22%5D%20%20%7D", "treebankName": "UD_Low_Saxon-LSDC", "leaf": "0"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Low_Saxon \u00b7 DET-ADJ_Gender", "roleA": "det", "
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

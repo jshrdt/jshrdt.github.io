@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Romanian \u00b7 RRT", "languageName": "Romanian", "accuracy": "99.5%", "testAccuracy": "99.7%", "testN": 762, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "6,852", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "99.5%", "trainAccuracy": "99.5%", "treebank": "RRT", "nav": {"pooledAcc": 0.9938080495356038, "pooledTestN": 1615, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 16140, "pooledUnkRows": 810, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "ArT", "rows": 3, "unkRows": 1, "status": "too few samples", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 7614, "unkRows": 464, "status": "ok", "excluded": false, "reason": null, "acc": 0.9973753280839895, "pooledAcc": 0.9973753280839895, "delta": 0.0, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "SiMoNERo", "rows": 8523, "unkRows": 345, "status": "ok", "excluded": false, "reason": null, "acc": 0.9906213364595545, "pooledAcc": 0.9906213364595545, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 6815, "color": "var(--yes)"}, {"cls": "no", "cnt": 37, "color": "var(--no)"}, {"cls": "unk", "cnt": 464, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 6852, "H": 0.049, "acc": 0.9945, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 6815, "color": "var(--yes)"}, {"cls": "no", "cnt": 37, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "( 4 ) \u00cen cazul \u00een care cererea nu \u00eendepline\u0219te condi\u021biile formale men\u021bionate anterior , este posibil s\u0103 se cear\u0103 corectarea sau completarea acesteia ; \u00eentre timp , pot fi ordonate <strong>m\u0103suri</strong> <strong>asigur\u0103torii</strong> .", "verb": "m\u0103suri", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=m\u0103sur\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "asigur\u0103torii", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=asigur\u0103tor", "xpos=Afpmpry", "Case=Acc,Nom", "Definite=Def", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5873%22%20%3B%20A%20%5Bform%3D%22asigur%C4%83torii%22%5D%20%3B%20B%20%5Bform%3D%22m%C4%83suri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Enorm\u0103 ca plictiseala , <strong>tenace</strong> ca orice democra\u021bie , <strong>meduza</strong> \" Sbur\u0103torul \" m\u0103 va uza \u0219i supune .", "verb": "meduza", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=meduz\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "tenace", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=tenace", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6898%22%20%3B%20A%20%5Bform%3D%22tenace%22%5D%20%3B%20B%20%5Bform%3D%22meduza%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cenregistrarea grafic\u0103 cu ajutorul microelectrozilor a poten\u021bialului de <strong>ac\u021biune</strong> <strong>celular</strong> la nivelul inimii , a ar\u0103tat c\u0103 exist\u0103 mai multe tipuri distincte ale acestuia , \u00een func\u021bie de zona de recoltare ( fig. 5.3 ) .", "verb": "ac\u021biune", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ac\u021biune", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "celular", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=celular", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7284%22%20%3B%20A%20%5Bform%3D%22celular%22%5D%20%3B%20B%20%5Bform%3D%22ac%C8%9Biune%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "A tratat cu dispre\u021b asigur\u0103rile pre- alegerilor Conservatorilor \u00een ceea ce prive\u0219te politica taxelor , descriind guvernul ca \" <strong>\u00een\u0219el\u0103torii</strong> <strong>politici</strong> care au ajuns la putere prin necinste total\u0103 \u0219i prin \u00een\u0219elarea electoratului \" .", "verb": "\u00een\u0219el\u0103torii", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u00een\u0219el\u0103torie", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "politici", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=politic", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4825%22%20%3B%20A%20%5Bform%3D%22politici%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AEn%C8%99el%C4%83torii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pierdut <strong>c\u0103\u021bea</strong> <strong>Ciob\u0103nesc</strong> german , r\u0103spunde la numele de Ra\u0219a , purta zgard\u0103 neagr\u0103 \u0219i este tatuat\u0103 \u00een ureche .", "verb": "c\u0103\u021bea", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=c\u0103\u021bea", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ciob\u0103nesc", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ciob\u0103nesc", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-95%22%20%3B%20A%20%5Bform%3D%22Ciob%C4%83nesc%22%5D%20%3B%20B%20%5Bform%3D%22c%C4%83%C8%9Bea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>M\u0103runt</strong> \u0219i gras , cu must\u0103\u021bi \u0219i cioc , cu ceas de aur purtat la vest\u0103 , <strong>Nea</strong> Tomi\u021b\u0103 , cum \u00eei ziceam noi , ne f\u0103cea lec\u021bii frumoase .", "verb": "nea", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=nene", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "m\u0103runt", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=m\u0103runt", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6769%22%20%3B%20A%20%5Bform%3D%22M%C4%83runt%22%5D%20%3B%20B%20%5Bform%3D%22Nea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen timpul regimului Antonescu , Pogromul de la Ia\u0219i din 27 - 29 iunie 1941 a fost printre cele mai grave <strong>evenimente</strong> de acest fel din lume , prea pu\u021bin <strong>cunoscut</strong> ie\u0219enilor \u00een\u0219i\u0219i at\u00e2t \u00eenainte , c\u00e2t \u0219i dup\u0103 Revolu\u021bia rom\u00e2n\u0103 din 1989 .", "verb": "evenimente", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=eveniment", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "cunoscut", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cunoscut", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-723%22%20%3B%20A%20%5Bform%3D%22cunoscut%22%5D%20%3B%20B%20%5Bform%3D%22evenimente%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Aceast\u0103 teorie datorat\u0103 lui de Martonne a fost verificat\u0103 \u0219i \u00eensu\u0219it\u0103 de <strong>geografii</strong> <strong>rom\u00e2ni</strong> .", "verb": "geografii", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=geografie", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "rom\u00e2ni", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rom\u00e2n", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6595%22%20%3B%20A%20%5Bform%3D%22rom%C3%A2ni%22%5D%20%3B%20B%20%5Bform%3D%22geografii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "V\u0103 rog s\u0103 accepta\u021bi , <strong>stimate</strong> <strong>domn</strong> , expresia \u00eenaltei mele considera\u021bii .", "verb": "domn", "verbFeats": ["upos=NOUN", "deprel=vocative", "lemma=domn", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "stimate", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=stimat", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4503%22%20%3B%20A%20%5Bform%3D%22stimate%22%5D%20%3B%20B%20%5Bform%3D%22domn%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Registrul task se \u00eencarc\u0103 apoi cu selectorul unui nou TSS , \u0219i fiecare registru general este \u00eenc\u0103rcat cu <strong>valorile</strong> respective , din <strong>noul</strong> TSS .", "verb": "valorile", "verbFeats": ["upos=NOUN", "deprel=obl:pmod", "lemma=valoare", "xpos=Ncfpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "noul", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nou", "xpos=Afpmsry", "Case=Acc,Nom", "Definite=Def", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7902%22%20%3B%20A%20%5Bform%3D%22noul%22%5D%20%3B%20B%20%5Bform%3D%22valorile%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Sufixul - anie a p\u0103truns \u00een rom\u00e2n\u0103 prin cuvinte \u00eemprumutate din slav\u0103 , pe <strong>cale</strong> <strong>savant</strong> .", "verb": "cale", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cale", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "savant", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=savant", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3414%22%20%3B%20A%20%5Bform%3D%22savant%22%5D%20%3B%20B%20%5Bform%3D%22cale%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "De aceea , este cazul s\u0103 fie scutite determin\u0103rile comune ale costurilor din trecut ale riscurilor cu condi\u021bia ca datele statistice disponibile s\u0103 fie furnizate \u00een modul c\u00e2t mai detaliat \u0219i mai diferen\u021biat corespunz\u0103tor din prep. de <strong>vedere</strong> <strong>actuar</strong> .", "verb": "vedere", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vedere", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "actuar", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=actuar", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1892%22%20%3B%20A%20%5Bform%3D%22actuar%22%5D%20%3B%20B%20%5Bform%3D%22vedere%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen poezie este permis s\u0103 spui mai mult dec\u00e2t \u00eentr- o scrisoare \u00een proz\u0103 , sau chiar \u00een fa\u021ba <strong>fiin\u021bei</strong> <strong>dragi</strong> .", "verb": "fiin\u021bei", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=fiin\u021b\u0103", "xpos=Ncfsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "dragi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=drag", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6871%22%20%3B%20A%20%5Bform%3D%22dragi%22%5D%20%3B%20B%20%5Bform%3D%22fiin%C8%9Bei%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "V\u0103 rog s\u0103 primi\u021bi , <strong>stimate</strong> <strong>domn</strong> , expresia \u00eenaltei mele considera\u021bii .", "verb": "domn", "verbFeats": ["upos=NOUN", "deprel=vocative", "lemma=domn", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "stimate", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=stimat", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Plur"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5682%22%20%3B%20A%20%5Bform%3D%22stimate%22%5D%20%3B%20B%20%5Bform%3D%22domn%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Cel mai vechi indiciu cunoscut asupra unei denumiri geografice cu <strong>men\u021biunea</strong> \u201e <strong>rum\u00e2nesc</strong> \u201d este con\u021binut\u0103 de unele versiuni ale operei Getica de Iordanes :", "verb": "men\u021biunea", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=men\u021biune", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "rum\u00e2nesc", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rum\u00e2nesc", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-705%22%20%3B%20A%20%5Bform%3D%22rum%C3%A2nesc%22%5D%20%3B%20B%20%5Bform%3D%22men%C8%9Biunea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dup\u0103 c\u0103derea comunismului , ora\u0219ul a r\u0103mas cel mai important centru cultural din afara <strong>arcului</strong> <strong>carpatic</strong> , dup\u0103 Bucure\u0219ti .", "verb": "arcului", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=arc", "xpos=Ncmsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "carpatic", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=carpatic", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-700%22%20%3B%20A%20%5Bform%3D%22carpatic%22%5D%20%3B%20B%20%5Bform%3D%22arcului%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Fermierii care folosesc <strong>hormoni</strong> de cre\u0219tere <strong>ilegali</strong> pe vitele lor ar putea fi exclu\u0219i pe via\u021b\u0103 de la a primi subsidii CE , potrivit unor propuneri de la Comisia European\u0103 .", "verb": "hormoni", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=hormon", "xpos=Ncmp-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "ilegali", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ilegal", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4703%22%20%3B%20A%20%5Bform%3D%22ilegali%22%5D%20%3B%20B%20%5Bform%3D%22hormoni%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pentru o zi de cazare cu trei <strong>mese</strong> <strong>incluse</strong> , un turist pl\u0103te\u0219te \u00een jur de 50 de euro , ceea ce \u00eenseamn\u0103 c\u0103 un sejur de trei zile cost\u0103 ceva mai mult de 500 de lei .", "verb": "mese", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=mas\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "incluse", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=inclus", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1287%22%20%3B%20A%20%5Bform%3D%22incluse%22%5D%20%3B%20B%20%5Bform%3D%22mese%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "La 14 decembrie 1900 ( ziua de na\u0219tere a mecanicii cuantice ) Max Planck a introdus ipoteza c\u0103 emisia \u0219i absorb\u021bia energiei radiante de c\u0103tre materie nu are loc \u00een <strong>mod</strong> <strong>continuu</strong> , ci \u00een \u201e cuante de energie \u201d .", "verb": "mod", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=mod", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "continuu", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=continuu", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-710%22%20%3B%20A%20%5Bform%3D%22continuu%22%5D%20%3B%20B%20%5Bform%3D%22mod%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Mecanismul \u021bine de <strong>recuperarea</strong> doar <strong>par\u021bial\u0103</strong> a num\u0103rului canalelor de Na + necesare pentru o nou\u0103 excita\u021bie .", "verb": "recuperarea", "verbFeats": ["upos=NOUN", "deprel=obl:pmod", "lemma=recuperare", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "par\u021bial\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=par\u021bial", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7329%22%20%3B%20A%20%5Bform%3D%22par%C8%9Bial%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22recuperarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dup\u0103 ce Traian Vuia , Aurel Vlaicu \u0219i Henri Coand\u0103 au contribuit prin rezultate de pionierat la dezvoltarea avia\u021biei , \u00een 1920 a luat fiin\u021b\u0103 Compania de Naviga\u021bie Aerian\u0103 Franco-Rom\u00e2n\u0103 , care oferea servicii de transport aerian de pasageri , m\u0103rfuri \u0219i po\u0219t\u0103 , fiind prima <strong>companie</strong> <strong>aerian\u0103</strong> din lume care a efectuat zboruri transcontinentale .", "verb": "companie", "verbFeats": ["upos=NOUN", "deprel=advcl", "lemma=companie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "aerian\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=aerian", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7570%22%20%3B%20A%20%5Bform%3D%22aerian%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22companie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "7 . ' Riscuri noi ' \u00eenseamn\u0103 riscuri care nu existau anterior \u0219i \u00een cazul c\u0103rora acoperirea asigur\u0103rii impune conceperea unui <strong>produs</strong> de asigurare complet <strong>nou</strong> , care s\u0103 nu implice extinderea , \u00eembun\u0103t\u0103\u021birea sau \u00eenlocuirea unui produs de asigurare existent .", "verb": "produs", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=produs", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "nou", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nou", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1935%22%20%3B%20A%20%5Bform%3D%22nou%22%5D%20%3B%20B%20%5Bform%3D%22produs%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "O men\u021biune merit\u0103 prefa\u021ba ce aborda , \u00een <strong>spirit</strong> <strong>luminist</strong> , aspecte privitoare la constituirea limbajului \u0219tiin\u021bific .", "verb": "spirit", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=spirit", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "luminist", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=luminist", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2093%22%20%3B%20A%20%5Bform%3D%22luminist%22%5D%20%3B%20B%20%5Bform%3D%22spirit%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Andrassy Gyula era , din 1871 , ministrul Afacerilor Str\u0103ine al <strong>Imperiului</strong> Austro- <strong>Ungar</strong> .", "verb": "imperiului", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=imperiu", "xpos=Ncmsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "ungar", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ungar", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2915%22%20%3B%20A%20%5Bform%3D%22Ungar%22%5D%20%3B%20B%20%5Bform%3D%22Imperiului%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "La Paris intr\u0103 \u00een cercul intelectualilor revolu\u021bionari francezi , f\u0103c\u00e2nd o impresie deosebit\u0103 prin <strong>cultura</strong> \u0219i distinc\u021bia ei <strong>intelectual\u0103</strong> .", "verb": "cultura", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cultur\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "intelectual\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=intelectual", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2194%22%20%3B%20A%20%5Bform%3D%22intelectual%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22cultura%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dup\u0103 decembrie 1989 , Rom\u00e2nia \u0219i- a reorientat politica pe calea \u00eent\u0103ririi leg\u0103turilor cu occidentul , \u00een mod special cu Statele Unite \u0219i <strong>Uniunea</strong> <strong>European\u0103</strong> .", "verb": "uniunea", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=uniune", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "european\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=european", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7534%22%20%3B%20A%20%5Bform%3D%22European%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22Uniunea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Erau , la cealalt\u0103 mas\u0103 , de lemn cioplit grosolan , <strong>localnicii</strong> <strong>statornici</strong> , \u00een straiele lor aspre de c\u00e2nep\u0103 \u0219i p\u0103r , cu talere de paltin \u0219i cupele scobite \u00een corn r\u0103sucit de bour .", "verb": "localnicii", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=localnic", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "statornici", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=statornic", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3327%22%20%3B%20A%20%5Bform%3D%22statornici%22%5D%20%3B%20B%20%5Bform%3D%22localnicii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 5 ) Sub rezerva alineatului ( 3 ) , un <strong>comitet</strong> <strong>\u0219tiin\u021bific</strong> poate solicita informa\u021bii suplimentare de la p\u0103r\u021bile interesate \u00een vederea unei consult\u0103ri \u0219tiin\u021bifice .", "verb": "comitet", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=comitet", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u0219tiin\u021bific", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u0219tiin\u021bific", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-538%22%20%3B%20A%20%5Bform%3D%22%C8%99tiin%C8%9Bific%22%5D%20%3B%20B%20%5Bform%3D%22comitet%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Un predicator , victim\u0103 a unei <strong>boli</strong> <strong>irositoare</strong> , s- ar referi \u00een amvon la apropiata lui moarte f\u0103r\u0103 s\u0103 -\u0219i \u0219ocheze congrega\u021bia .", "verb": "boli", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=boal\u0103", "xpos=Ncfson", "Case=Dat,Gen", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "irositoare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=irositor", "xpos=Afpfson", "Case=Dat,Gen", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5134%22%20%3B%20A%20%5Bform%3D%22irositoare%22%5D%20%3B%20B%20%5Bform%3D%22boli%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "S\u0103m\u0103n\u0103torismul s\u0103u excesiv \u0219i dogmatic l- a descalificat \u00een ochii moderni\u0219tilor , care i- au repro\u0219at insensibilitatea la <strong>literatura</strong> mai <strong>nou\u0103</strong> .", "verb": "literatura", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=literatur\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "nou\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=nou", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem</b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2429%22%20%3B%20A%20%5Bform%3D%22nou%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22literatura%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "roleA": "adj", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Romanian \u00b7 RRT", "languageName": "Romanian", "accuracy": "98.8%", "testAccuracy": "99.0%", "testN": 773, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "6,953", "predictor": "NP head-ADJ_Gender", "rootAccuracy": "98.7%", "trainAccuracy": "98.8%", "treebank": "RRT", "nav": {"pooledAcc": 0.986469864698647, "pooledTestN": 1626, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 16257, "pooledUnkRows": 696, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "SiMoNERo", "rows": 8528, "unkRows": 340, "status": "ok", "excluded": false, "reason": null, "acc": 0.984759671746776, "pooledAcc": 0.984759671746776, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 7726, "unkRows": 355, "status": "ok", "excluded": false, "reason": null, "acc": 0.9896507115135834, "pooledAcc": 0.9883570504527813, "delta": 0.001293661060802087, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "ArT", "rows": 3, "unkRows": 1, "status": "too few samples", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 6866, "color": "var(--yes)"}, {"cls": "no", "cnt": 87, "color": "var(--no)"}, {"cls": "unk", "cnt": 355, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 6858, "H": 0.0479, "acc": 0.9947, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 6822, "color": "var(--yes)"}, {"cls": "no", "cnt": 36, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 95, "H": 0.9962, "acc": 0.5365, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 44, "color": "var(--yes)"}, {"cls": "no", "cnt": 51, "color": "var(--no)"}], "rule": "predict: no / yes", "predicted": "no / yes", "majorityLabel": "no", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 6953, "H": 0.0975, "acc": 0.9874, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 6866, "color": "var(--yes)"}, {"cls": "no", "cnt": 87, "color": "var(--no)"}], "rule": "ADJ.form = mare", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "A \u00eentocmit apoi lucr\u0103ri de gramatic\u0103 , precum \u0219i un <strong>manual<\/strong> de conversa\u021bie <strong>maghiar-german-rom\u00e2n-ceh-s\u00e2rb<\/strong> .", "verb": "manual", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=manual", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "maghiar-german-rom\u00e2n-ceh-s\u00e2rb", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=maghiar-german-rom\u00e2n-ceh-s\u00e2rb", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "maghiar-german-rom\u00e2n-ceh-s\u00e2rb"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-216%22%20%3B%20A%20%5Bform%3D%22maghiar-german-rom%C3%A2n-ceh-s%C3%A2rb%22%5D%20%3B%20B%20%5Bform%3D%22manual%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Trebuie s\u0103 \u0219ti\u021bi c\u0103 <strong>activitatea<\/strong> <strong>sexual\u0103<\/strong> implic\u0103 un risc posibil pentru pacien\u021bii cu boli de inim\u0103 , din cauz\u0103 c\u0103 supune inima la un efort suplimentar .", "verb": "activitatea", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=activitate", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "sexual\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=sexual", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "sexual\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4045%22%20%3B%20A%20%5Bform%3D%22sexual%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22activitatea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Pre\u0219edintele<\/strong> <strong>pakistanez<\/strong> Pervez Musharraf a afirmat c\u0103 liderul Al-Qaida , Osama bin Laden , este \u00een via\u021b\u0103 , dar nu se \u0219tie unde se afl\u0103 .", "verb": "pre\u0219edintele", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=pre\u0219edinte", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "pakistanez", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=pakistanez", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "pakistanez"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1139%22%20%3B%20A%20%5Bform%3D%22pakistanez%22%5D%20%3B%20B%20%5Bform%3D%22Pre%C8%99edintele%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Anexa XIII la acord se modific\u0103 astfel cum se specific\u0103 \u00een anexa la <strong>prezenta<\/strong> <strong>decizie<\/strong> .", "verb": "decizie", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=decizie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "prezenta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=prezent", "xpos=Afpfsry", "Case=Acc,Nom", "Definite=Def", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "prezenta"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5760%22%20%3B%20A%20%5Bform%3D%22prezenta%22%5D%20%3B%20B%20%5Bform%3D%22decizie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Cel mai vechi indiciu cunoscut asupra unei <strong>denumiri<\/strong> <strong>geografice<\/strong> cu men\u021biunea \u201e rum\u00e2nesc \u201d este con\u021binut\u0103 de unele versiuni ale operei Getica de Iordanes :", "verb": "denumiri", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=denumire", "xpos=Ncfson", "Case=Dat,Gen", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "geografice", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=geografic", "xpos=Afpfson", "Case=Dat,Gen", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "geografice"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-705%22%20%3B%20A%20%5Bform%3D%22geografice%22%5D%20%3B%20B%20%5Bform%3D%22denumiri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Se \u00eent\u00e2mplase , poate , prin anii c\u00e2nd pe Colchester c\u0103zuse <strong>bomba<\/strong> <strong>atomic\u0103<\/strong> .", "verb": "bomba", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=bomb\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "atomic\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=atomic", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "atomic\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-641%22%20%3B%20A%20%5Bform%3D%22atomic%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22bomba%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i \u00een tot timpul \u0103sta , ca s\u0103 nu aib\u0103 nimeni nici cel mai mic dubiu asupra realit\u0103\u021bii pe care o acopereau l\u0103tr\u0103turile viclene ale lui Goldstein , \u00een spatele lui , pe tele-ecran , m\u0103r\u0219\u0103luiau interminabile coloane ale armatei eurasiene - r\u00e2nduri peste r\u00e2nduri de <strong>b\u0103rba\u021bi<\/strong> <strong>solizi<\/strong> , cu fe\u021be asiatice imobile , care veneau \u00een valuri p\u00e2n\u0103 la suprafa\u021ba ecranului \u0219i pe urm\u0103 disp\u0103reau pentru a fi \u00eenlocuite de altele exact la fel .", "verb": "b\u0103rba\u021bi", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=b\u0103rbat", "xpos=Ncmp-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "solizi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=solid", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "solizi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-47%22%20%3B%20A%20%5Bform%3D%22solizi%22%5D%20%3B%20B%20%5Bform%3D%22b%C4%83rba%C8%9Bi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Asemenea refren se auzea adeseori \u00een momente de <strong>cov\u00e2r\u0219itoare<\/strong> <strong>emo\u021bie<\/strong> .", "verb": "emo\u021bie", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=emo\u021bie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "cov\u00e2r\u0219itoare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cov\u00e2r\u0219itor", "xpos=Afpf--n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>"], "label": "yes", "route": {"0": "cov\u00e2r\u0219itoare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-166%22%20%3B%20A%20%5Bform%3D%22cov%C3%A2r%C8%99itoare%22%5D%20%3B%20B%20%5Bform%3D%22emo%C8%9Bie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pe baza datelor din <strong>studiile<\/strong> <strong>clinice<\/strong> \u00een desf\u0103\u0219urare , cre\u0219terea LFTs a disp\u0103rut \u00eentr- o lun\u0103 la 80% din pacien\u021bi dup\u0103 sc\u0103derea dozei sau \u00eentreruperea tratamentului .", "verb": "studiile", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=studiu", "xpos=Ncfpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "clinice", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=clinic", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "clinice"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-369%22%20%3B%20A%20%5Bform%3D%22clinice%22%5D%20%3B%20B%20%5Bform%3D%22studiile%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Bexarotenul are un profil de reac\u021bii adverse diferit de al celorlal\u021bi retinoizi selectivi pentru <strong>receptorii<\/strong> ne- <strong>retinoizi<\/strong> X ( RXR ) administra\u021bi pe cale oral\u0103 .", "verb": "receptorii", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=receptor", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "retinoizi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=neretinoid", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "retinoizi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-373%22%20%3B%20A%20%5Bform%3D%22retinoizi%22%5D%20%3B%20B%20%5Bform%3D%22receptorii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Bine informat , cu <strong>lecturi<\/strong> <strong>moderne<\/strong> \u201e la zi \u201d , criticul surprinde \u00eens\u0103 prin redistribuirea accentelor interpretative .", "verb": "lecturi", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=lectur\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "moderne", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=modern", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "moderne"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2320%22%20%3B%20A%20%5Bform%3D%22moderne%22%5D%20%3B%20B%20%5Bform%3D%22lecturi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Aceast\u0103 <strong>interesant\u0103<\/strong> <strong>convorbire<\/strong> dintre un mare dasc\u0103l \u0219i un elev care nu era al s\u0103u a durat \u00eentreaga or\u0103 de curs \u0219i i- a interesat nespus pe asisten\u021bi .", "verb": "convorbire", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=convorbire", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "Person=3"], "nsubj": "interesant\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=interesant", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "interesant\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6860%22%20%3B%20A%20%5Bform%3D%22interesant%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22convorbire%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Pre\u0219edintele<\/strong> <strong>rus<\/strong> , Vladimir Putin , a acuzat interven\u021bionismul occidental \u00een Ucraina , denun\u021b\u00e2nd \u0219i pericolul reprezentat de o democra\u021bie \" cu caschet\u0103 colonial\u0103 \" , care ar diviza statul ucrainean .", "verb": "pre\u0219edintele", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=pre\u0219edinte", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "rus", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rus", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "rus"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1532%22%20%3B%20A%20%5Bform%3D%22rus%22%5D%20%3B%20B%20%5Bform%3D%22Pre%C8%99edintele%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Apartamentul lui se g\u0103sea la etajul \u0219apte , a\u0219a \u00eenc\u00e2t Winston , care avea treizeci \u0219i nou\u0103 de ani \u0219i o ulcera\u021bie varicoas\u0103 deasupra <strong>gleznei<\/strong> <strong>drepte<\/strong> , o lu\u0103 pe jos , \u00eencet , oprindu -se de mai multe ori s\u0103 se odihneasc\u0103 .", "verb": "gleznei", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=glezn\u0103", "xpos=Ncfsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "drepte", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=drept", "xpos=Afpfson", "Case=Dat,Gen", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "drepte"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-226%22%20%3B%20A%20%5Bform%3D%22drepte%22%5D%20%3B%20B%20%5Bform%3D%22gleznei%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Printre cei mai talenta\u021bi <strong>actori<\/strong> <strong>rom\u00e2ni<\/strong> , se num\u0103r\u0103 :", "verb": "actori", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=actor", "xpos=Ncmp-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "rom\u00e2ni", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rom\u00e2n", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "rom\u00e2ni"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7444%22%20%3B%20A%20%5Bform%3D%22rom%C3%A2ni%22%5D%20%3B%20B%20%5Bform%3D%22actori%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Denumirea Rumunense constituie o <strong>translitera\u021bie<\/strong> latinizant\u0103 a unei pronun\u021bii slave pentru \u201e <strong>rum\u00e2nesc<\/strong> \u201d .", "verb": "translitera\u021bie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=translitera\u021bie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "rum\u00e2nesc", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rum\u00e2nesc", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "rum\u00e2nesc"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-679%22%20%3B%20A%20%5Bform%3D%22rum%C3%A2nesc%22%5D%20%3B%20B%20%5Bform%3D%22translitera%C8%9Bie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "V\u0103 rog s\u0103 accepta\u021bi , <strong>stimate<\/strong> <strong>domn<\/strong> , expresia \u00eenaltei mele considera\u021bii .", "verb": "domn", "verbFeats": ["upos=NOUN", "deprel=vocative", "lemma=domn", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "stimate", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=stimat", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "stimate"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4503%22%20%3B%20A%20%5Bform%3D%22stimate%22%5D%20%3B%20B%20%5Bform%3D%22domn%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Nu opri\u021bi tratamentul cu Tasmar sau cu orice alte <strong>medica\u021bii<\/strong> <strong>antiparkinson<\/strong> f\u0103r\u0103 a v\u0103 informa medicul deoarece aceasta ar putea m\u0103ri riscul de SNM .", "verb": "medica\u021bii", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=medica\u021bie", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur", "Person=3"], "nsubj": "antiparkinson", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=antiparkinson", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "antiparkinson"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4455%22%20%3B%20A%20%5Bform%3D%22antiparkinson%22%5D%20%3B%20B%20%5Bform%3D%22medica%C8%9Bii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Sufixul - anie a p\u0103truns \u00een rom\u00e2n\u0103 prin cuvinte \u00eemprumutate din slav\u0103 , pe <strong>cale<\/strong> <strong>savant<\/strong> .", "verb": "cale", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cale", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "savant", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=savant", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "savant"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3414%22%20%3B%20A%20%5Bform%3D%22savant%22%5D%20%3B%20B%20%5Bform%3D%22cale%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Aceast\u0103 teorie datorat\u0103 lui de Martonne a fost verificat\u0103 \u0219i \u00eensu\u0219it\u0103 de <strong>geografii<\/strong> <strong>rom\u00e2ni<\/strong> .", "verb": "geografii", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=geografie", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "rom\u00e2ni", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rom\u00e2n", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "rom\u00e2ni"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6595%22%20%3B%20A%20%5Bform%3D%22rom%C3%A2ni%22%5D%20%3B%20B%20%5Bform%3D%22geografii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Principalele <strong>campusuri<\/strong> <strong>studen\u021be\u0219ti<\/strong> se afl\u0103 \u00een Tudor Vladimirescu ( 22 c\u0103mine ) - unde se afl\u0103 cel mai mare c\u0103min din partea de sud-est a Europei , Titu Maiorescu ( 4 c\u0103mine ) , T\u00e2rgu\u0219or-Copou ( 4 c\u0103mine ) , Codrescu ( 5 c\u0103mine \u0219i complexul interna\u021bional Gaudeamus ) \u0219i Agronomie ( 4 c\u0103mine ) .", "verb": "campusuri", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=campus", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "studen\u021be\u0219ti", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=studen\u021besc", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "studen\u021be\u0219ti"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7681%22%20%3B%20A%20%5Bform%3D%22studen%C8%9Be%C8%99ti%22%5D%20%3B%20B%20%5Bform%3D%22campusuri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 4 ) \u00cen cazul \u00een care cererea nu \u00eendepline\u0219te condi\u021biile formale men\u021bionate anterior , este posibil s\u0103 se cear\u0103 corectarea sau completarea acesteia ; \u00eentre timp , pot fi ordonate <strong>m\u0103suri<\/strong> <strong>asigur\u0103torii<\/strong> .", "verb": "m\u0103suri", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=m\u0103sur\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "asigur\u0103torii", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=asigur\u0103tor", "xpos=Afpmpry", "Case=Acc,Nom", "Definite=Def", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "asigur\u0103torii"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5873%22%20%3B%20A%20%5Bform%3D%22asigur%C4%83torii%22%5D%20%3B%20B%20%5Bform%3D%22m%C4%83suri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "R\u00e2ul mai ales , sticlos , egal , bogat , dar \u0219i insipid ca marele s\u0103u c\u00e2nt\u0103re\u021b , Siretul lene\u0219 se confund\u0103 cu una din cele mai <strong>dragi<\/strong> <strong>vedenii<\/strong> .", "verb": "vedenii", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vedenie", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "dragi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=drag", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "dragi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6911%22%20%3B%20A%20%5Bform%3D%22dragi%22%5D%20%3B%20B%20%5Bform%3D%22vedenii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Culoarea sa era de un ro\u0219u str\u0103lucitor pe parte <strong>m\u00e2inii<\/strong> <strong>st\u00e2ngi<\/strong> , dar se \u00eempr\u0103\u0219tia ca \u0219i cum se ducea spre dreapta termin\u00e2ndu -se \u00eentr- o culoare verde sp\u0103l\u0103cit\u0103 .", "verb": "m\u00e2inii", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=m\u00e2n\u0103", "xpos=Ncfsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "st\u00e2ngi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=st\u00e2ng", "xpos=Afpmp-n", "Case=Acc,Dat,Gen,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "st\u00e2ngi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4812%22%20%3B%20A%20%5Bform%3D%22st%C3%A2ngi%22%5D%20%3B%20B%20%5Bform%3D%22m%C3%A2inii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Lui Winston i se trezir\u0103 ni\u0219te <strong>vagi<\/strong> <strong>amintiri<\/strong> , ceva ce v\u0103zuse demult pe un perete sau pe un panou - o sticl\u0103 mare f\u0103cut\u0103 din lumini electrice care parc\u0103 se mi\u0219ca \u00een sus \u0219i \u00een jos , turn\u00e2ndu -\u0219i con\u021binutul \u00eentr- un pahar .", "verb": "amintiri", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=amintire", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur", "Person=3"], "nsubj": "vagi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=vag", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "vagi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-120%22%20%3B%20A%20%5Bform%3D%22vagi%22%5D%20%3B%20B%20%5Bform%3D%22amintiri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>M\u0103runt<\/strong> \u0219i gras , cu must\u0103\u021bi \u0219i cioc , cu ceas de aur purtat la vest\u0103 , <strong>Nea<\/strong> Tomi\u021b\u0103 , cum \u00eei ziceam noi , ne f\u0103cea lec\u021bii frumoase .", "verb": "nea", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=nene", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "m\u0103runt", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=m\u0103runt", "xpos=Afpms-n", "Case=Acc,Dat,Gen,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "m\u0103runt"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6769%22%20%3B%20A%20%5Bform%3D%22M%C4%83runt%22%5D%20%3B%20B%20%5Bform%3D%22Nea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 8 ) Ar trebui luate m\u0103suri pentru ca persoanele juridice s\u0103 poat\u0103 fi trase la r\u0103spundere pentru infrac\u021biunile men\u021bionate de <strong>prezenta<\/strong> <strong>decizie-cadru<\/strong> , s\u0103v\u00e2r\u0219ite \u00een interesul propriu .", "verb": "decizie-cadru", "verbFeats": ["upos=NOUN", "deprel=obl:agent", "lemma=decizie-cadru", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "prezenta", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=prezent", "xpos=Afpfsry", "Case=Acc,Nom", "Definite=Def", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "prezenta"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5621%22%20%3B%20A%20%5Bform%3D%22prezenta%22%5D%20%3B%20B%20%5Bform%3D%22decizie-cadru%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Valoarea<\/strong> poten\u021bialului <strong>membranar<\/strong> la care cele dou\u0103 tendin\u021be opuse se egalizeaz\u0103 este numit\u0103 poten\u021bial de echilibru al acelui ion , put\u00e2nd fi calculat\u0103 pe baza ecua\u021biei lui Nerst [ 7 ] .", "verb": "valoarea", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=valoare", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "membranar", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=membranar", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "membranar"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7281%22%20%3B%20A%20%5Bform%3D%22membranar%22%5D%20%3B%20B%20%5Bform%3D%22Valoarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen poezie este permis s\u0103 spui mai mult dec\u00e2t \u00eentr- o scrisoare \u00een proz\u0103 , sau chiar \u00een fa\u021ba <strong>fiin\u021bei<\/strong> <strong>dragi<\/strong> .", "verb": "fiin\u021bei", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=fiin\u021b\u0103", "xpos=Ncfsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "dragi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=drag", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "dragi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6871%22%20%3B%20A%20%5Bform%3D%22dragi%22%5D%20%3B%20B%20%5Bform%3D%22fiin%C8%9Bei%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "V\u0103 rog s\u0103 primi\u021bi , <strong>stimate<\/strong> <strong>domn<\/strong> , expresia \u00eenaltei mele considera\u021bii .", "verb": "domn", "verbFeats": ["upos=NOUN", "deprel=vocative", "lemma=domn", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "stimate", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=stimat", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "no", "route": {"0": "stimate"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5682%22%20%3B%20A%20%5Bform%3D%22stimate%22%5D%20%3B%20B%20%5Bform%3D%22domn%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}], "2": [{"sentence": "Scoate\u021bi capacul ap\u0103s\u00e2nd cu grij\u0103 p\u0103r\u021bile laterale ale acestuia \u00eentre <strong>degetul<\/strong> <strong>mare<\/strong> \u0219i cel ar\u0103t\u0103tor \u0219i tr\u0103g\u00e2ndu -l \u00een sus \u2013 vezi figura a. 3 .", "verb": "degetul", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=deget", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3883%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22degetul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Forma\u021bi un pliu de piele prin prinderea pielii \u00eentre <strong>degetul<\/strong> <strong>mare<\/strong> \u0219i cel ar\u0103t\u0103tor .", "verb": "degetul", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=deget", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3950%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22degetul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Acas\u0103 , \u00een schimb , evenimentul declan\u0219eaz\u0103 un <strong>mare<\/strong> <strong>entuziasm<\/strong> , A. fiind cople\u0219it de onoruri , ceea ce provoac\u0103 , firesc , invidii \u0219i c\u00e2rteli .", "verb": "entuziasm", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=entuziasm", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-265%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22entuziasm%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Rezult\u0103 un <strong>num\u0103r<\/strong> destul de <strong>mare<\/strong> de poeme \u00een care sunetele \u0219i parfumurile se cheam\u0103 \u0219i se confund\u0103 \u00eentr- o muzic\u0103 a suspinelor .", "verb": "num\u0103r", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=num\u0103r", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2686%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22num%C4%83r%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Procesul celor 22 de directori de la fabrica de parfum Thanh Huong , acuza\u021bi \u00een leg\u0103tur\u0103 cu \" cel mai <strong>mare<\/strong> <strong>caz<\/strong> de fraud\u0103 cunoscut p\u00e2n\u0103 acum \" , implic\u00e2nd 153.000 milioane de dong , s- a \u00eencheiat pe 27 octombrie .", "verb": "caz", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=caz", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5007%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22caz%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Astfel , era c\u00e2te un moment c\u00e2nd ura lui Winston nu se \u00eendrepta deloc spre Goldstein ci , dimpotriv\u0103 , spre <strong>Fratele<\/strong> cel <strong>Mare<\/strong> , spre Partid \u0219i spre Poli\u021bia G\u00e2ndirii ; \u00cen asemenea momente , inima lui se \u00eentorcea c\u0103tre ereticul acela singuratic \u0219i batjocorit de pe ecran , singurul campion al adev\u0103rului \u0219i logicii \u00eentr- o lume de minciuni .", "verb": "fratele", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=frate", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-141%22%20%3B%20A%20%5Bform%3D%22Mare%22%5D%20%3B%20B%20%5Bform%3D%22Fratele%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\" <strong>Dumnezeule<\/strong> <strong>mare<\/strong> \" , a spus el , lovindu -se la cap de rama de sus a u\u0219ii .", "verb": "dumnezeule", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=dumnezeu", "xpos=Ncmsvy", "Case=Voc", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5336%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22Dumnezeule%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dar , \u00een acela\u0219i moment , fiecare scosese c\u00e2te un oftat ad\u00e2nc de u\u0219urare : figura cea monstruoas\u0103 se transformase \u00een figura <strong>Fratelui<\/strong> cel <strong>Mare<\/strong> , cu p\u0103rul negru , cu musta\u021ba neagr\u0103 , plin de for\u021b\u0103 \u0219i de o lini\u0219te misterioas\u0103 , umpl\u00e2nd aproape tot ecranul .", "verb": "fratelui", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=frate", "xpos=Ncmsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-154%22%20%3B%20A%20%5Bform%3D%22Mare%22%5D%20%3B%20B%20%5Bform%3D%22Fratelui%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Principiul exproprierii silite e un <strong>principiu<\/strong> <strong>mare<\/strong> , un principiu \u00een adev\u0103r revolu\u021bionar , \u0219i \u00eenc\u0103 \u00een \u00een\u021belesul cel bun al cuv\u00e2ntului .", "verb": "principiu", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=principiu", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-329%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22principiu%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "La unul din capete se afla un <strong>afi\u0219<\/strong> mult prea <strong>mare<\/strong> pentru interior , care \u00eenf\u0103\u021bi\u0219a figura enorm\u0103 , lat\u0103 de peste un metru , a unui b\u0103rbat \u00een jur de patruzeci \u0219i cinci de ani , cu o musta\u021b\u0103 neagr\u0103 \u0219i stufoas\u0103 , \u0219i cu tr\u0103s\u0103turi frumoase dar dure .", "verb": "afi\u0219", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=afi\u0219", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-181%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22afi%C8%99%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "- Acum , c\u0103 s- a m\u0103rit pr\u0103v\u0103lia , trebuie <strong>capital<\/strong> mai <strong>mare<\/strong> .", "verb": "capital", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=capital", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6417%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22capital%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 4 ) \u00cen paralel , Comisia a \u00eentreprins \u0219i a finan\u021bat un num\u0103r de studii \u0219tiin\u021bifice \u0219i proiecte de cercetare specifice cu privire la cei \u0219ase hormoni , \u00een vederea ob\u021binerii unui <strong>num\u0103r<\/strong> c\u00e2t mai <strong>mare<\/strong> de informa\u021bii \u0219tiin\u021bifice care \u00eenc\u0103 lipsesc , a\u0219a cum s- a stabilit \u00een interpret\u0103rile \u0219i constat\u0103rile rapoartelor grupului special \u0219i organului de apel al OMC \u00een cazul hormonilor .", "verb": "num\u0103r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=num\u0103r", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1800%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22num%C4%83r%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Se \u00eenv\u00e2rti \u00een jurul soclului imensei columne \u00een v\u00e2rful c\u0103reia se \u00een\u0103l\u021ba statuia <strong>Fratelui<\/strong> cel <strong>Mare<\/strong> , cu ochii la cer , c\u0103tre sud , unde \u00eenfr\u00e2nsese avioanele eurasiene - \u00een urm\u0103 cu c\u00e2\u021biva ani erau avioanele estasiene - \u00een B\u0103t\u0103lia pentru Aerobaza Unu .", "verb": "fratelui", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=frate", "xpos=Ncmsoy", "Case=Dat,Gen", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-329%22%20%3B%20A%20%5Bform%3D%22Mare%22%5D%20%3B%20B%20%5Bform%3D%22Fratelui%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Bucure\u0219ti este cel mai <strong>mare<\/strong> <strong>ora\u0219<\/strong> \u0219i totodat\u0103 capitala Rom\u00e2niei .", "verb": "ora\u0219", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=ora\u0219", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7409%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22ora%C8%99%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Copiii se pot \u00eeneca \u00eentr- un inch sau doi de ap\u0103 , a\u0219a c\u0103 nu -i l\u0103sa\u021bi singuri \u00eentr- o baie - chiar \u0219i \u00eentr- un scaun de siguran\u021b\u0103 - \u00eentr- o piscin\u0103 de gr\u0103din\u0103 , sau cu un <strong>castron<\/strong> <strong>mare<\/strong> de ap\u0103 .", "verb": "castron", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=castron", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5182%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22castron%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen <strong>mare<\/strong> <strong>dezorientare<\/strong> se g\u0103sir\u0103 c\u00e2teva minute Sm\u0103r\u0103ndache \u0219i Sm\u0103r\u0103nd\u0103chioaia , care se \u0219i consultar\u0103 din ochi .", "verb": "dezorientare", "verbFeats": ["upos=NOUN", "deprel=xcomp", "lemma=dezorientare", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6681%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22dezorientare%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Un STUDENT , c\u0103ruia i s- a interzis de c\u0103tre poli\u021bie s\u0103 canoteze \u00een cea mai <strong>mare<\/strong> <strong>cascad\u0103<\/strong> din Anglia , s- a r\u0103nit grav \u00eentr- o plonjare \u00eendr\u0103znea\u021b\u0103 .", "verb": "cascad\u0103", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cascad\u0103", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4730%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22cascad%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ora\u0219ul-sta\u021biune Predeal este situat chiar \u00een l\u0103ca\u0219ul unde drumul trece dinspre sud c\u0103tre nord , peste Carpa\u021bi , ceea ce \u00eei confer\u0103 statutul de ora\u0219 situat la cea mai <strong>mare<\/strong> <strong>altitudine<\/strong> din Rom\u00e2nia .", "verb": "altitudine", "verbFeats": ["upos=NOUN", "deprel=obl:pmod", "lemma=altitudine", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1345%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22altitudine%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i d\u00e2ndu -i patru jimble , rumene \u0219i frumoase , de -\u021bi venea s\u0103 le m\u0103n\u00e2nci din ochi , \u00eel b\u0103tu pe um\u0103r \u0219i -i mai ur\u0103 \u0219i <strong>poft\u0103<\/strong> <strong>mare<\/strong> .", "verb": "poft\u0103", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=poft\u0103", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7114%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22poft%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "C\u00e2teva dintre speciile rare de p\u0103s\u0103ri aflate \u00een zona Dobrogei sunt pelicanul cre\u021b , cormoranul mic , lop\u0103tarul , g\u00e2sca cu piept ro\u0219u \u0219i <strong>g\u00e2rli\u021ba<\/strong> <strong>mare<\/strong> , dar \u0219i leb\u0103da de iarn\u0103 .", "verb": "g\u00e2rli\u021ba", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=g\u00e2rli\u021b\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7399%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22g%C3%A2rli%C8%9Ba%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Plaja P este diferen\u021ba dintre cea mai <strong>mare<\/strong> ( H ) \u0219i cea mai mic\u0103 ( L ) <strong>valoare<\/strong> a valorilor xi dintr- un set de date .", "verb": "valoare", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=valoare", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-8022%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22valoare%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Oamenii se foiau \u00een sus \u0219i -n jos pe scaune \u0219i zbierau \u00een <strong>gura<\/strong> <strong>mare<\/strong> , sfor\u021b\u00e2ndu -se pentru a acoperi vocea beh\u0103itoare de la tele-ecran , care te scotea din min\u021bi .", "verb": "gura", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=gur\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-129%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22gura%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen statele din sud-estul continentului european , porumbul dob\u00e2nde\u0219te , de asemenea , o <strong>mare<\/strong> <strong>utilizare<\/strong> , \u00een defavoarea consumului de mei .", "verb": "utilizare", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=utilizare", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-99%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22utilizare%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i c\u00e2nd \u0219tiam c\u0103 \u00een\u0219i\u0219i medicii no\u0219tri , \u00een <strong>mare<\/strong> <strong>parte<\/strong> , \u0219i chiar Direc\u021bia sanitar\u0103 erau foarte sceptici \u00een privin\u021ba rezultatului injec\u021biilor ce f\u0103ceam \u00een mas\u0103 , era de admirat \u00eencrederea popula\u021biei \" 557 .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=parte", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7095%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Un act de <strong>mare<\/strong> <strong>iubire<\/strong> \u0219i domneasc\u0103 d\u0103rnicie r\u0103scump\u0103rar\u0103 cetatea voastr\u0103 din p\u0103cate grele \u0219i vechi .", "verb": "iubire", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=iubire", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6900%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22iubire%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ele sunt produse prin bombardarea unei \u021binte metalice de c\u0103tre electroni de <strong>mare<\/strong> <strong>energie<\/strong> .", "verb": "energie", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=energie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7785%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22energie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Se- aude un sunet monoton \u0219i ad\u00e2nc , c\u00e2teodat\u0103 mai scurt , c\u00e2teodat\u0103 mai lung , ca de <strong>mare<\/strong> <strong>pas\u0103re<\/strong> de noapte .", "verb": "pas\u0103re", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pas\u0103re", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3033%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22pas%C4%83re%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Tot ceeace -i lipse\u0219te p\u00e2n\u0103 \u00een prezent spre atingerea unei reputa\u021bii universale , este numai o c\u00e2t mai <strong>mare<\/strong> \u0219i sistematic\u0103 <strong>exploatare<\/strong> \u0219i industrializare a unor atari bog\u0103\u021bii .", "verb": "exploatare", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=exploatare", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2897%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22exploatare%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Uneori , infec\u021bia c\u0103p\u0103ta o <strong>mare<\/strong> <strong>extindere<\/strong> \u0219i se prezenta sub forme deosebit de grave , pentru ca , foarte cur\u00e2nd , contaminarea s\u0103 se reduc\u0103 sim\u021bitor \u0219i f\u0103r\u0103 s\u0103 mai afecteze localit\u0103\u021bile apropiate .", "verb": "extindere", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=extindere", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7079%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22extindere%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Reprezint\u0103 intervalul de timp pe parcursul c\u0103ruia exist\u0103 posibilitatea ob\u021binerii de r\u0103spunsuri propagate , folosind stimuli cu <strong>intensitate<\/strong> mai <strong>mare<\/strong> dec\u00e2t valoarea prag .", "verb": "intensitate", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=intensitate", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7327%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22intensitate%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}], "0": [{"sentence": "Oina , sau hoina cum i se mai spunea , este socotit\u0103 un <strong>joc<\/strong> sportiv <strong>na\u021bional<\/strong> pentru rom\u00e2ni , av\u00e2nd , pe p\u0103m\u00e2ntul rom\u00e2nesc , o vechime de cel pu\u021bin 6 secole , a\u0219a cum men\u021bioneaz\u0103 cronici \u0219i hrisoave care \u00eei subliniaz\u0103 popularitatea de care se bucura printre copii \u0219i tineri , o\u0219teni \u0219i voievozi .", "verb": "joc", "verbFeats": ["upos=NOUN", "deprel=xcomp", "lemma=joc", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "na\u021bional", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=na\u021bional", "xpos=Afpms-n", "Case=Acc,Dat,Gen,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "na\u021bional"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7614%22%20%3B%20A%20%5Bform%3D%22na%C8%9Bional%22%5D%20%3B%20B%20%5Bform%3D%22joc%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Seria bimodal\u0103 este o serie de distribu\u021bie de date grupate \u00een care apar dou\u0103 clase modale , separate de clase cu <strong>frecven\u021b\u0103<\/strong> mai <strong>joas\u0103<\/strong> .", "verb": "frecven\u021b\u0103", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=frecven\u021b\u0103", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "joas\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=jos", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "joas\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-8005%22%20%3B%20A%20%5Bform%3D%22joas%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22frecven%C8%9B%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Prietena<\/strong> <strong>apropiat\u0103<\/strong> Christine Barber a spus cur\u021bii c\u0103 conversa\u021bia a ap\u0103rut acas\u0103 la Paula \u00een Grafto Drive , Upton , Wirral , pe 3 iunie anul trecut .", "verb": "prietena", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=prieten\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "apropiat\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=apropiat", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "apropiat\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5420%22%20%3B%20A%20%5Bform%3D%22apropiat%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22Prietena%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Valoarea<\/strong> <strong>crescut\u0103<\/strong> a ARP a fost asociat\u0103 independent cu un risc cardiovascular sporit la pacien\u021bii hipertensivi \u0219i normotensivi .", "verb": "valoarea", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=valoare", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "crescut\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=crescut", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "crescut\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3703%22%20%3B%20A%20%5Bform%3D%22crescut%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22Valoarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ast\u0103zi pe acest grind , numit Caraorman , o <strong>p\u0103dure<\/strong> <strong>rar\u0103<\/strong> de stejari monumentali se lupt\u0103 s\u0103 supravie\u021buiasc\u0103 asaltului nisipurilor mobile , ce iau sub lumina soarelui o culoare str\u0103lucitoare alb-roz .", "verb": "p\u0103dure", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=p\u0103dure", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "rar\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rar", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "rar\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7076%22%20%3B%20A%20%5Bform%3D%22rar%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22p%C4%83dure%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dup\u0103 cel de- al Doilea <strong>R\u0103zboi<\/strong> <strong>Mondial<\/strong> , regimul comunist a introdus o cenzur\u0103 aspr\u0103 \u0219i a folosit cultura ca pe un mijloc de control \u0219i subordonare a poporului .", "verb": "r\u0103zboi", "verbFeats": ["upos=NOUN", "deprel=obl:tmod", "lemma=r\u0103zboi", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mondial", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mondial", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mondial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7437%22%20%3B%20A%20%5Bform%3D%22Mondial%22%5D%20%3B%20B%20%5Bform%3D%22R%C4%83zboi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "La cre\u0219terea tensiunii de accelerare <strong>spectrul<\/strong> <strong>continuu<\/strong> de raze X se deplaseaz\u0103 \u00een regiunea lungimilor de und\u0103 scurte , iar intensitatea radia\u021biei emise cre\u0219te .", "verb": "spectrul", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=spectru", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "continuu", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=continuu", "xpos=Afpms-n", "Case=Acc,Dat,Gen,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "continuu"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7798%22%20%3B%20A%20%5Bform%3D%22continuu%22%5D%20%3B%20B%20%5Bform%3D%22spectrul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "De circa cinci luni , noul ad\u0103post pentru <strong>c\u00e2inii<\/strong> <strong>vagabonzi<\/strong> , administrat de asocia\u021biile \" Casa c\u00e2inelui \" \u0219i \" Col\u021b Alb \" , asigur\u0103 condi\u021bii de protec\u021bie \u0219i hr\u0103nire a animalelor .", "verb": "c\u00e2inii", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=c\u00e2ine", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "vagabonzi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=vagabond", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "vagabonzi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1314%22%20%3B%20A%20%5Bform%3D%22vagabonzi%22%5D%20%3B%20B%20%5Bform%3D%22c%C3%A2inii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Dispozi\u021biile relevante din prezenta directiv\u0103 se aplic\u0103 dac\u0103 una dintre sumele ob\u021binute prin calculele prev\u0103zute la lit. ( a ) , ( b ) sau ( c ) este mai mare sau egal\u0103 cu 1 , conform cu rezolu\u021bia legislativ\u0103 a Parlamentului European din 19 noiembrie 2003 ( nepublicat\u0103 \u00eenc\u0103 \u00een <strong>Jurnalul<\/strong> <strong>Oficial<\/strong> ) \u0219i decizia Consiliului din 1 decembrie 2003 .", "verb": "jurnalul", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=jurnal", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "oficial", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=oficial", "xpos=Afpms-n", "Case=Acc,Dat,Gen,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "oficial"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-177%22%20%3B%20A%20%5Bform%3D%22Oficial%22%5D%20%3B%20B%20%5Bform%3D%22Jurnalul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Trebuie s\u0103 fie o \u00een\u0103l\u021bime , s\u0103 spunem h , a\u0219a \u00eenc\u00e2t un animal s\u0103 -\u0219i rup\u0103 pur \u0219i simplu g\u00e2tul dac\u0103 ar c\u0103dea de la acea \u00een\u0103l\u021bime , dar s\u0103 supravie\u021buiasc\u0103 dac\u0103 ar c\u0103dea de la o <strong>\u00een\u0103l\u021bime<\/strong> pu\u021bin mai <strong>mic\u0103<\/strong> .", "verb": "\u00een\u0103l\u021bime", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u00een\u0103l\u021bime", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mic\u0103", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mic", "xpos=Afpfsrn", "Case=Acc,Nom", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "mic\u0103"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5255%22%20%3B%20A%20%5Bform%3D%22mic%C4%83%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AEn%C4%83l%C8%9Bime%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ora a treia , c\u00e2nd subdirectorul trecu \u00een inspec\u021bie s\u0103 vad\u0103 dac\u0103 nu cumva vreunul din <strong>cei<\/strong> <strong>elimina\u021bi<\/strong> s- a \u00eentors l- a g\u0103sit pe P\u00e2rvu st\u00e2nd lini\u0219tit \u00een banc\u0103 \u0219i citind .", "verb": "cei", "verbFeats": ["upos=PRON", "deprel=nmod", "lemma=acela", "xpos=Pd3mpr", "Case=Acc,Nom", "<b>Gender=Masc<\/b>", "Number=Plur", "Person=3", "PronType=Dem"], "nsubj": "elimina\u021bi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=eliminat", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "elimina\u021bi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7124%22%20%3B%20A%20%5Bform%3D%22elimina%C8%9Bi%22%5D%20%3B%20B%20%5Bform%3D%22cei%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Autorizat ELECTRICA , execut instala\u021bii electrice , sanitare , tablouri , <strong>ma\u0219ini<\/strong> <strong>automate<\/strong> .", "verb": "ma\u0219ini", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=ma\u0219in\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "automate", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=automat", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "automate"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-919%22%20%3B%20A%20%5Bform%3D%22automate%22%5D%20%3B%20B%20%5Bform%3D%22ma%C8%99ini%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pre\u0219edintele Consiliului este autorizat s\u0103 numeasc\u0103 persoana \u00eemputernicit\u0103 ( <strong>persoanele<\/strong> <strong>\u00eemputernicite<\/strong> ) s\u0103 semneze Acordul interimar \u00een numele Comunit\u0103\u021bii Europene .", "verb": "persoanele", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=persoan\u0103", "xpos=Ncfpry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "\u00eemputernicite", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=\u00eemputernicit", "xpos=Afpfp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Plur"], "label": "yes", "route": {"0": "\u00eemputernicite"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6156%22%20%3B%20A%20%5Bform%3D%22%C3%AEmputernicite%22%5D%20%3B%20B%20%5Bform%3D%22persoanele%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen \u0219edin\u021ba din data de 21 decembrie , Consiliul Local al municipiului Timi\u0219oara a aprobat hot\u0103r\u00e2rea cu privire la <strong>bugetul<\/strong> <strong>local<\/strong> al Prim\u0103riei pentru anul 2005 .", "verb": "bugetul", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=buget", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "local", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=local", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "local"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1163%22%20%3B%20A%20%5Bform%3D%22local%22%5D%20%3B%20B%20%5Bform%3D%22bugetul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Cele mai vechi atest\u0103ri documentare ale termenului de \u201e rum\u00e2n / rom\u00e2n \u201d cunoscute \u00een <strong>mod<\/strong> <strong>cert<\/strong> sunt con\u021binute \u00een relat\u0103ri , jurnale \u0219i rapoarte de c\u0103l\u0103torie redactate de umani\u0219ti renascenti\u0219ti din secolul al XVI -lea care , fiind \u00een majoritate trimi\u0219i ai Sf\u00e2ntului Scaun , au c\u0103l\u0103torit \u00een \u021aara Rom\u00e2neasc\u0103 , Moldova \u0219i Transilvania .", "verb": "mod", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=mod", "xpos=Ncms-n", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "cert", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=cert", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "yes", "route": {"0": "cert"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-702%22%20%3B%20A%20%5Bform%3D%22cert%22%5D%20%3B%20B%20%5Bform%3D%22mod%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i d\u00e2ndu -i patru jimble , rumene \u0219i frumoase , de -\u021bi venea s\u0103 le m\u0103n\u00e2nci din ochi , \u00eel b\u0103tu pe um\u0103r \u0219i -i mai ur\u0103 \u0219i <strong>poft\u0103<\/strong> <strong>mare<\/strong> .", "verb": "poft\u0103", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=poft\u0103", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7114%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22poft%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Sultanul renun\u021b\u0103 s\u0103 ia cetatea de scaun , T\u00e2rgovi\u0219te , se retrage c\u0103tre Br\u0103ila \u0219i p\u0103r\u0103se\u0219te \u021bara \u00een care <strong>oastea<\/strong> <strong>mare<\/strong> piere de foame .", "verb": "oastea", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=oaste", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3589%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22oastea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ast\u0103zi pe acest grind , numit Caraorman , o p\u0103dure rar\u0103 de stejari monumentali se lupt\u0103 s\u0103 supravie\u021buiasc\u0103 asaltului nisipurilor mobile , ce iau sub lumina soarelui o <strong>culoare<\/strong> str\u0103lucitoare <strong>alb-roz<\/strong> .", "verb": "culoare", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=culoare", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "alb-roz", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=alb-roz", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "alb-roz"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7076%22%20%3B%20A%20%5Bform%3D%22alb-roz%22%5D%20%3B%20B%20%5Bform%3D%22culoare%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Datele str\u00e2ns grupate vor avea \u00eempr\u0103\u0219tiere mic\u0103 , iar cele care nu sunt grupate ( sunt \u00eempr\u0103\u0219tiate ) vor avea o <strong>dispersie<\/strong> mai <strong>mare<\/strong> .", "verb": "dispersie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=dispersie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-8020%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22dispersie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "O compara\u021bie a mor\u021bilor de cancer timpurii observate \u00een Copeland cu mor\u021bile a\u0219teptate arat\u0103 chiar o mai <strong>mare<\/strong> <strong>cre\u0219tere<\/strong> \u00een anii 1974 p\u00e2n\u0103 \u00een 1980 .", "verb": "cre\u0219tere", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=cre\u0219tere", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5190%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22cre%C8%99tere%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "De aceea , este cazul s\u0103 fie scutite determin\u0103rile comune ale costurilor din trecut ale riscurilor cu condi\u021bia ca datele statistice disponibile s\u0103 fie furnizate \u00een modul c\u00e2t mai detaliat \u0219i mai diferen\u021biat corespunz\u0103tor din prep. de <strong>vedere<\/strong> <strong>actuar<\/strong> .", "verb": "vedere", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vedere", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "actuar", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=actuar", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "actuar"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1892%22%20%3B%20A%20%5Bform%3D%22actuar%22%5D%20%3B%20B%20%5Bform%3D%22vedere%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Originea mult mai \u00eendep\u0103rtat\u0103 \u00een timp a eposului este probat\u0103 de existen\u021ba <strong>b.<\/strong> <strong>mitico-fantastice<\/strong> ( cum ar fi Soarele \u0219i luna ) .", "verb": "b.", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=b.", "xpos=Yn", "Abbr=Yes", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "mitico-fantastice", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mitico-fantastic", "xpos=Afpfson", "Case=Dat,Gen", "Definite=Ind", "Degree=Pos", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mitico-fantastice"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2721%22%20%3B%20A%20%5Bform%3D%22mitico-fantastice%22%5D%20%3B%20B%20%5Bform%3D%22b.%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ele sunt produse prin bombardarea unei \u021binte metalice de c\u0103tre electroni de <strong>mare<\/strong> <strong>energie<\/strong> .", "verb": "energie", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=energie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7785%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22energie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Denumirea Rumunense constituie o <strong>translitera\u021bie<\/strong> latinizant\u0103 a unei pronun\u021bii slave pentru \u201e <strong>rum\u00e2nesc<\/strong> \u201d .", "verb": "translitera\u021bie", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=translitera\u021bie", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "rum\u00e2nesc", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=rum\u00e2nesc", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "rum\u00e2nesc"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-679%22%20%3B%20A%20%5Bform%3D%22rum%C3%A2nesc%22%5D%20%3B%20B%20%5Bform%3D%22translitera%C8%9Bie%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i c\u00e2nd \u0219tiam c\u0103 \u00een\u0219i\u0219i medicii no\u0219tri , \u00een <strong>mare<\/strong> <strong>parte<\/strong> , \u0219i chiar Direc\u021bia sanitar\u0103 erau foarte sceptici \u00een privin\u021ba rezultatului injec\u021biilor ce f\u0103ceam \u00een mas\u0103 , era de admirat \u00eencrederea popula\u021biei \" 557 .", "verb": "parte", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=parte", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7095%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22parte%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Se duc pe teren cu <strong>\u00eencheieturi<\/strong> \u0219i mu\u0219chi <strong>ne\u00eenc\u0103lzi\u021bi<\/strong> pe vreme rece \u0219i apoi se \u00eentreab\u0103 de ce \u00ee\u0219i \u00eentind un mu\u0219chi prima dat\u0103 c\u00e2nd se \u00eentind dup\u0103 minge .", "verb": "\u00eencheieturi", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u00eencheietur\u0103", "xpos=Ncfp-n", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "ne\u00eenc\u0103lzi\u021bi", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ne\u00eenc\u0103lzit", "xpos=Afpmp-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "no", "route": {"0": "ne\u00eenc\u0103lzi\u021bi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5555%22%20%3B%20A%20%5Bform%3D%22ne%C3%AEnc%C4%83lzi%C8%9Bi%22%5D%20%3B%20B%20%5Bform%3D%22%C3%AEncheieturi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pierdut <strong>c\u0103\u021bea<\/strong> <strong>Ciob\u0103nesc<\/strong> german , r\u0103spunde la numele de Ra\u0219a , purta zgard\u0103 neagr\u0103 \u0219i este tatuat\u0103 \u00een ureche .", "verb": "c\u0103\u021bea", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=c\u0103\u021bea", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "ciob\u0103nesc", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=ciob\u0103nesc", "xpos=Afpms-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "ciob\u0103nesc"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-95%22%20%3B%20A%20%5Bform%3D%22Ciob%C4%83nesc%22%5D%20%3B%20B%20%5Bform%3D%22c%C4%83%C8%9Bea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Vorbea pe nas , c\u0103sca <strong>gura<\/strong> <strong>mare<\/strong> \u0219i rotund\u0103 \u0219i rostea vorbele at\u00e2t de rar \u0219i desp\u0103r\u021bindu -le \u00een silabe , \u00eenc\u00e2t puteai s\u0103 scrii \u00eentocmai toat\u0103 lec\u021bia pe maculator .", "verb": "gura", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=gur\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-661%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22gura%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Aceast\u0103 frumoas\u0103 victorie profilactic\u0103 se datore\u0219te numai vaccin\u0103rii aplicate pe <strong>scar\u0103<\/strong> <strong>mare<\/strong> , cu tenacitate , vigilen\u021b\u0103 \u0219i \u00eencredere \" .", "verb": "scar\u0103", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=scar\u0103", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7013%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22scar%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pentru reac\u021biile adverse legate de doze , categoria de frecven\u021b\u0103 reflect\u0103 <strong>doza<\/strong> mai <strong>mare<\/strong> de rosiglitazon\u0103 .", "verb": "doza", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=doz\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "mare", "nsubjFeats": ["upos=ADJ", "deprel=amod", "lemma=mare", "xpos=Afp-s-n", "Definite=Ind", "Degree=Pos", "<b>Gender=Masc<\/b>", "Number=Sing"], "label": "no", "route": {"0": "mare"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-349%22%20%3B%20A%20%5Bform%3D%22mare%22%5D%20%3B%20B%20%5Bform%3D%22doza%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 NP head-ADJ_Gender", "ro
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

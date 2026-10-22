@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "det", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Lithuanian", "languageName": "Lithuanian", "accuracy": "99.5%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "817", "predictor": "NP head-DET_Gender", "rootAccuracy": "99.4%", "trainAccuracy": "99.4%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.9891304347826086, "pooledTestN": 92, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 908, "pooledUnkRows": 80, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "ALKSNIS", "rows": 847, "unkRows": 7, "status": "ok", "excluded": false, "reason": null, "acc": 0.9882352941176471, "pooledAcc": 0.9882352941176471, "delta": 0.0, "diverges": false, "href": "Lithuanian/UD_Lithuanian-ALKSNIS.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "HSE", "rows": 61, "unkRows": 73, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Lithuanian/UD_Lithuanian-HSE.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 813, "color": "var(--yes)"}, {"cls": "no", "cnt": 4, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 817, "H": 0.0492, "acc": 0.9945, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 813, "color": "var(--yes)"}, {"cls": "no", "cnt": 4, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 813, "correctSwaps": 644, "pairRoleCounts": {"A": 644}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Kai kuri\u0173 ekspert\u0173 manymu , tai gali b\u016bti \u017eenklas , kad \u201e Vilniaus prekyba \u201c nusprend\u0117 i\u0161parduoti <strong>\u0161ios</strong> <strong>g\u0117rim\u0173</strong> bendrov\u0117s produkcij\u0105 ir \u0161ios pozicijas u\u017eleisti kitam stambiam gamintojui - bendrovei \u201e Vilniaus degtin\u0117 \u201c .", "verb": "g\u0117rim\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=g\u0117rimas", "xpos=dkt.vyr.dgs.K.", "Case=Gen", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "\u0161ios", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.mot.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-6-s22%22%20%3B%20A%20%5Bform%3D%22%C5%A1ios%22%5D%20%3B%20B%20%5Bform%3D%22g%C4%97rim%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "6 ) sudaryti palankias s\u0105lygas pl\u0117toti <strong>vis\u0173</strong> meno <strong>\u0161ak\u0173</strong> ir \u017eanr\u0173 m\u0117g\u0117j\u0173 meno veikl\u0105 , kaip b\u016bd\u0105 nacionaliniam kult\u016bros paveldui i\u0161saugoti , dain\u0173 \u0161ven\u010di\u0173 tradicijoms ir region\u0173 kult\u016brai pl\u0117toti , ir siekti \u012ftraukti \u012f j\u0105 daugiau bendruomeni\u0173 , kolektyv\u0173 , individ\u0173 .", "verb": "\u0161ak\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0161aka", "xpos=dkt.mot.dgs.K.", "Case=Gen", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "vis\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Tot"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Nutarimas_kulturos_politikos_kaitos_gaires-s139%22%20%3B%20A%20%5Bform%3D%22vis%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22%C5%A1ak%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Jei Rusijai sekasi , tai baisu , jei nesiseka , tai didel\u0117 laim\u0117 ; Rusijos klest\u0117jimas , ekonominis ir kult\u016brinis atgimimas b\u016bt\u0173 baisiausia , kas gali i\u0161tikti <strong>jos</strong> <strong>kaimynus</strong> ir pasaul\u012f .", "verb": "kaimynus", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=kaimynas", "xpos=NN", "Case=Acc", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "jos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=jos", "xpos=PRP$", "Case=Gen", "<b>Gender=Fem</b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22189%22%20%3B%20A%20%5Bform%3D%22jos%22%5D%20%3B%20B%20%5Bform%3D%22kaimynus%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "<strong>Kiekvienas</strong> <strong>k\u016bdikis</strong> i\u0161siver\u017eia \u012f regim\u0105 \u0161vies\u0105 , o vis\u0105 gyvenim\u0105 ilgisi neregimos .", "verb": "k\u016bdikis", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=k\u016bdikis", "xpos=dkt.bendr.vns.V.", "Case=Nom", "<b>Gender=Com</b>", "Number=Sing"], "nsubj": "kiekvienas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=kiekvienas", "xpos=\u012fv.vyr.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Tot"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s78%22%20%3B%20A%20%5Bform%3D%22Kiekvienas%22%5D%20%3B%20B%20%5Bform%3D%22k%C5%ABdikis%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "\u0160is \u012fsitikinimas kartu yra taiklus \u0161iuolaikinio , beje , ir Lietuvoje vis labiau pripa\u017e\u012fstamo , transnacionalinio po\u017ei\u016brio \u012f migracij\u0105 pasirinkimas , kai taikant transnacionalizmo paradigm\u0105 migracija matoma ne per iki \u0161iol bent jau sociologijoje ir ekonomikoje buvusius \u012fprastus ( beje , rutini\u0161kai ir <strong>\u0161iame</strong> <strong>darbe</strong> neapeinamus ) \u201e st\u016bmos \u201c \u2013 \u201e traukos \u201c veiksnius , o kaip kilm\u0117s \u0161alies ir tikslo \u0161alies s\u0105veika , i\u0161 anksto migrant\u0173 nelaikant atsiribojusiais nuo kurios nors j\u0173 , o b\u016btent palaikan\u010diais ir mezgan\u010diais ry\u0161ius tarp abiej\u0173 .", "verb": "darbe", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=darbas", "xpos=dkt.vyr.vns.Vt.", "Case=Loc", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u0161iame", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.Vt.", "Case=Loc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Ciubrinsko_rec_74s-s10%22%20%3B%20A%20%5Bform%3D%22%C5%A1iame%22%5D%20%3B%20B%20%5Bform%3D%22darbe%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "<strong>\u0160io</strong> <strong>darbo</strong> tikslas - \u012fvertinti pagrindini\u0173 Lietuvos televizijos kanal\u0173 ( TV 3 , LNK , LRT ) rodom\u0105 smurt\u0105 .", "verb": "darbo", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=darbas", "xpos=dkt.vyr.vns.K.", "Case=Gen", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u0161io", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22mok_santr3_63_sak-s48%22%20%3B%20A%20%5Bform%3D%22%C5%A0io%22%5D%20%3B%20B%20%5Bform%3D%22darbo%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Vyn\u0105 gurk\u0161nojusiems jaunuoliams <strong>ta</strong> <strong>daina</strong> pasirod\u0117 labai sava .", "verb": "daina", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=daina", "xpos=dkt.mot.vns.V.", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "ta", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.mot.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-11-s19%22%20%3B%20A%20%5Bform%3D%22ta%22%5D%20%3B%20B%20%5Bform%3D%22daina%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Gal jos kaip tik ir saugo <strong>tas</strong> mano lengvai pa\u017eeid\u017eiamas <strong>ribas</strong> , gal esu jomis apraizgyta kaip kokiais nei\u0161dylan\u010diais n\u0117riniais , kad nei\u0161tirp\u010diau nakties erdv\u0117s begalyb\u0117je .", "verb": "ribas", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=riba", "xpos=dkt.mot.dgs.G.", "Case=Acc", "<b>Gender=Fem</b>", "Number=Plur"], "nsubj": "tas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.mot.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s44%22%20%3B%20A%20%5Bform%3D%22tas%22%5D%20%3B%20B%20%5Bform%3D%22ribas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Seksas \u2013 vienintel\u0117 sritis , kur galiu vyrui deramai atsiker\u0161yti , \u2013 kai tik jis ima \u0161nopuoti ir vaitoti , prane\u0161damas <strong>visiems</strong> <strong>kaimynams</strong> apie savo aistr\u0105 , imu prunk\u0161ti ir kikenti .", "verb": "kaimynams", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=kaimynas", "xpos=dkt.vyr.dgs.N.", "Case=Dat", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "visiems", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.N.", "Case=Dat", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Tot"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Parulskis-7-s17%22%20%3B%20A%20%5Bform%3D%22visiems%22%5D%20%3B%20B%20%5Bform%3D%22kaimynams%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Nusipirkau j\u012f i\u0161 klajojan\u010dio prekybos agento \u2013 tiesa , greitai j\u0173 visi \u0117m\u0117 neapk\u0119sti , ir dabar , ko gero , <strong>tokios</strong> <strong>profesijos</strong> apskritai nebeliko .", "verb": "profesijos", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=profesija", "xpos=dkt.mot.vns.K.", "Case=Gen", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "tokios", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=toks", "xpos=\u012fv.mot.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Parulskis-4-s5%22%20%3B%20A%20%5Bform%3D%22tokios%22%5D%20%3B%20B%20%5Bform%3D%22profesijos%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "\u2013 Kreipiuosi \u012f <strong>visus</strong> <strong>berniukus</strong> !", "verb": "berniukus", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=berniukas", "xpos=dkt.vyr.dgs.G.", "Case=Acc", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "visus", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Tot"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Kuncinas-s114%22%20%3B%20A%20%5Bform%3D%22visus%22%5D%20%3B%20B%20%5Bform%3D%22berniukus%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Buvo <strong>tokia</strong> <strong>formul\u0117</strong> , jog Partija \u2013 epochos garb\u0117 , protas ir s\u0105\u017ein\u0117 ( ir tai visai nenuostabu , turint omeny , kokias pareigas tarybiniais laikais \u0117jo daugelis verslo t\u016bz\u0173 ) .", "verb": "formul\u0117", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=formul\u0117", "xpos=dkt.mot.vns.V.", "Case=Nom", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "tokia", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=toks", "xpos=\u012fv.mot.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Katkus-2-s33%22%20%3B%20A%20%5Bform%3D%22tokia%22%5D%20%3B%20B%20%5Bform%3D%22formul%C4%97%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Ta\u010diau kaltinimai avanti\u016brizmu i\u0161nyksta , kai LTSR AT po pusme\u010dio <strong>\u0161\u012f</strong> ir kitus Konstitucijos <strong>straipsnius</strong> pakei\u010dia .", "verb": "straipsnius", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=straipsnis", "xpos=dkt.vyr.dgs.G.", "Case=Acc", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "\u0161\u012f", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Antanaicio_rec_77s-s48%22%20%3B%20A%20%5Bform%3D%22%C5%A1%C4%AF%22%5D%20%3B%20B%20%5Bform%3D%22straipsnius%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Tod\u0117l , remdamasi <strong>\u0161iame</strong> <strong>komunikate</strong> i\u0161nagrin\u0117tais pasiekimais ir pristatyta \u012fgyta patirtimi , ir kaip reikalavo Europos Vadov\u0173 Taryba , Komisija ketina nagrin\u0117ti galimyb\u0119 valstyb\u0117ms nar\u0117ms iki 2010 m . pavasario pateikti Europos inovacij\u0173 akt\u0105 , \u012f kur\u012f bus \u012ftrauktos visos darnaus vystymosi s\u0105lygos ir kuris bus pagrindin\u0117 sud\u0117tin\u0117 Europos reform\u0173 darbotvark\u0117s dalis .", "verb": "komunikate", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=komunikatas", "xpos=dkt.vyr.vns.Vt.", "Case=Loc", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u0161iame", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.Vt.", "Case=Loc", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222009_komunikatas-s156%22%20%3B%20A%20%5Bform%3D%22%C5%A1iame%22%5D%20%3B%20B%20%5Bform%3D%22komunikate%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Ji de\u0161iniesiems paai\u0161kino , kad \u0161ie savo gretose nepasteb\u0117jo \u0161alies prie\u0161\u0173 : \u201e <strong>tie</strong> keli <strong>\u017emon\u0117s</strong> vis\u0105 reikal\u0105 jums gadino \u201c .", "verb": "\u017emon\u0117s", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=\u017emogus", "xpos=dkt.vyr.dgs.V.", "Case=Nom", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "tie", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.vyr.dgs.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-9-s20%22%20%3B%20A%20%5Bform%3D%22tie%22%5D%20%3B%20B%20%5Bform%3D%22%C5%BEmon%C4%97s%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Pirmiausia \u2013 ar buvo tikslinga \u0161alia kit\u0173 teorini\u0173 prieig\u0173 naudoti <strong>pa\u010di\u0173</strong> <strong>autori\u0173</strong> kritikuojam\u0105 tradicin\u012f migracijos teorizavim\u0105 per st\u016bmos / traukos veiksni\u0173 prizm\u0119 , jeigu p . 172 pripa\u017e\u012fstama , kad n\u0117ra tikslios i\u0161vykusi\u0173j\u0173 sociodemografin\u0117s charakteristikos , tod\u0117l ne\u012fmanoma j\u0173 reprezentatyvi apklausa .", "verb": "autori\u0173", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=autorius", "xpos=dkt.vyr.dgs.K.", "Case=Gen", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "pa\u010di\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=pats", "xpos=\u012fv.vyr.dgs.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Emp"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Ciubrinsko_rec_74s-s44%22%20%3B%20A%20%5Bform%3D%22pa%C4%8Di%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22autori%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Ta\u010diau per visus \u0161iuos metus daugiausiai echinokokoz\u0117s atvej\u0173 u\u017eregistruota Vilniaus rajone - tai yra 46 atvejai , arba 39 proc . , <strong>vis\u0173</strong> <strong>atvej\u0173</strong> Lietuvoje .", "verb": "atvej\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=atvejis", "xpos=dkt.vyr.dgs.K.", "Case=Gen", "<b>Gender=Masc</b>", "Number=Plur"], "nsubj": "vis\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Plur", "PronType=Tot"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22parazitine-s19%22%20%3B%20A%20%5Bform%3D%22vis%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22atvej%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Netik\u0117jome , kad <strong>\u0161iuo</strong> <strong>darbu</strong> bus susidom\u0117ta ne k\u0105 ma\u017eiau nei lietuvi\u0161ku midumi ar skiland\u017eiais .", "verb": "darbu", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=darbas", "xpos=dkt.vyr.vns.\u012en.", "Case=Ins", "<b>Gender=Masc</b>", "Number=Sing"], "nsubj": "\u0161iuo", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-11-s5%22%20%3B%20A%20%5Bform%3D%22%C5%A1iuo%22%5D%20%3B%20B%20%5Bform%3D%22darbu%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "12 . Savaranki\u0161kos \u012fmon\u0117s darbuotoj\u0173 skai\u010diumi laikomas tik \u0161ioje \u012fmon\u0117je dirban\u010di\u0173 darbuotoj\u0173 skai\u010dius , o \u012fmon\u0117s metin\u0117s pajamos ir balanse nurodyto turto vert\u0117 nustatoma remiantis tik <strong>\u0161ios</strong> <strong>\u012fmon\u0117s</strong> finansiniais duomenimis , nurodytais \u012fmon\u0117s metin\u0117je finansin\u0117je atskaitomyb\u0117je ar kituose finansiniuose dokumentuose .", "verb": "\u012fmon\u0117s", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u012fmon\u0117", "xpos=dkt.mot.vns.K.", "Case=Gen", "<b>Gender=Fem</b>", "Number=Sing"], "nsubj": "\u0161ios", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.mot.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Smulkiojo_ir_vidutinio_verslo_pletros_istatymas-s61%22%20%3B%20A%20%5Bform%3D%22%C5%A1ios%22%5D%20%3B%20B%20%5Bform%3D%22%C4%AFmon%C4%97s%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}]}, "PAIRS": [{"origSentence": "Mokymasis vyksta nedidel\u0117je grup\u0117je ( <strong>\u0161iuo</strong> <strong>metu</strong> Lietuvoje \u0161is metodas taikomas kol kas tik vaikams ) , siekiant sujungti tris pagrindinius komponentus : elges\u012f , emocijas , suvokim\u0105 .", "swapSentence": "Mokymasis vyksta nedidel\u0117je grup\u0117je ( <strong>\u0161ia</strong> <strong>metu</strong> Lietuvoje \u0161is metodas taikomas kol kas tik vaikams ) , siekiant sujungti tris pagrindinius komponentus : elges\u012f , emocijas , suvokim\u0105 .", "nsubj": "\u0161iuo", "verb": "metu", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.vns.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=metas", "deprel=obl", "upos=NOUN", "xpos=dkt.vyr.vns.\u012en.", "Case=Ins"], "ungrammatical": "\u0161ia", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[ins]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22pikti_tevai-s103%22%20%3B%20A%20%5Bform%3D%22%C5%A1iuo%22%5D%20%3B%20B%20%5Bform%3D%22metu%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Daugeliui skaitytoj\u0173 <strong>\u0161is</strong> <strong>patarimas</strong> grei\u010diausiai neaktualus , bet vis d\u0117lto verta prisiminti , kad alkoholis \u2013 karjeros prie\u0161as .", "swapSentence": "Daugeliui skaitytoj\u0173 <strong>\u0161i</strong> <strong>patarimas</strong> grei\u010diausiai neaktualus , bet vis d\u0117lto verta prisiminti , kad alkoholis \u2013 karjeros prie\u0161as .", "nsubj": "\u0161is", "verb": "patarimas", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=patarimas", "deprel=nsubj", "upos=NOUN", "xpos=dkt.vyr.vns.V.", "Case=Nom"], "ungrammatical": "\u0161i", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sventems-s186%22%20%3B%20A%20%5Bform%3D%22%C5%A1is%22%5D%20%3B%20B%20%5Bform%3D%22patarimas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Akcij\u0105 \u201c Paremkime gri\u016bvan\u010dias ba\u017eny\u010dias \u201d inicijavusi gid\u0117 Danut\u0117 \u010cornij sak\u0117 , kad <strong>\u0161ios</strong> <strong>l\u0117\u0161os</strong> bus skirtos \u0160v . Luko koply\u010dios atnaujinimo projektui rengti .", "swapSentence": "Akcij\u0105 \u201c Paremkime gri\u016bvan\u010dias ba\u017eny\u010dias \u201d inicijavusi gid\u0117 Danut\u0117 \u010cornij sak\u0117 , kad <strong>\u0161ie</strong> <strong>l\u0117\u0161os</strong> bus skirtos \u0160v . Luko koply\u010dios atnaujinimo projektui rengti .", "nsubj": "\u0161ios", "verb": "l\u0117\u0161os", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.mot.dgs.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur", "PronType=Dem"], "verbFeats": ["lemma=l\u0117\u0161os", "deprel=nsubj", "upos=NOUN", "xpos=dkt.mot.dgs.V.", "Case=Nom"], "ungrammatical": "\u0161ie", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22baznyciomis-s8%22%20%3B%20A%20%5Bform%3D%22%C5%A1ios%22%5D%20%3B%20B%20%5Bform%3D%22l%C4%97%C5%A1os%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "<strong>Kiekviena</strong> <strong>detal\u0117</strong> j\u012f labiau \u017eeid\u017eia ir \u017elugdo pasitik\u0117jim\u0105 savo seksualumu .", "swapSentence": "<strong>Kiekvienas</strong> <strong>detal\u0117</strong> j\u012f labiau \u017eeid\u017eia ir \u017elugdo pasitik\u0117jim\u0105 savo seksualumu .", "nsubj": "kiekviena", "verb": "detal\u0117", "nsubjFeats": ["lemma=kiekvienas", "xpos=\u012fv.mot.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Tot"], "verbFeats": ["lemma=detal\u0117", "deprel=nsubj", "upos=NOUN", "xpos=dkt.mot.vns.V.", "Case=Nom"], "ungrammatical": "Kiekvienas", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kalbeti_ar_tyleti-s17%22%20%3B%20A%20%5Bform%3D%22Kiekviena%22%5D%20%3B%20B%20%5Bform%3D%22detal%C4%97%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "<strong>\u0160io</strong> <strong>tyrimo</strong> objektas yra priva\u010dios sveikatos draudimo bendrov\u0117s , teikian\u010dios privataus medicininio gydymo draudimo paslaugas , o tikslas \u2013 i\u0161analizuoti , ar duomen\u0173 apsaugos taisykl\u0117s \u0161iame sektoriuje derinamos su esan\u010diomis visoje Europos S\u0105jungoje ir kaip tai atliekama .", "swapSentence": "<strong>\u0160ios</strong> <strong>tyrimo</strong> objektas yra priva\u010dios sveikatos draudimo bendrov\u0117s , teikian\u010dios privataus medicininio gydymo draudimo paslaugas , o tikslas \u2013 i\u0161analizuoti , ar duomen\u0173 apsaugos taisykl\u0117s \u0161iame sektoriuje derinamos su esan\u010diomis visoje Europos S\u0105jungoje ir kaip tai atliekama .", "nsubj": "\u0161io", "verb": "tyrimo", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=tyrimas", "deprel=nmod", "upos=NOUN", "xpos=dkt.vyr.vns.K.", "Case=Gen"], "ungrammatical": "\u0160ios", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[gen]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Veiklos_ataskaita-s105%22%20%3B%20A%20%5Bform%3D%22%C5%A0io%22%5D%20%3B%20B%20%5Bform%3D%22tyrimo%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Anot Z . Vaigausko , n\u0117 vienas kandidatas nedeklaravo vir\u0161ij\u0119s \u012fstatymo numatyt\u0173 \u201e lub\u0173 \u201c <strong>tokioms</strong> agitacin\u0117ms <strong>kampanijoms</strong> - 79010 lit\u0173 .", "swapSentence": "Anot Z . Vaigausko , n\u0117 vienas kandidatas nedeklaravo vir\u0161ij\u0119s \u012fstatymo numatyt\u0173 \u201e lub\u0173 \u201c <strong>tokiems</strong> agitacin\u0117ms <strong>kampanijoms</strong> - 79010 lit\u0173 .", "nsubj": "tokioms", "verb": "kampanijoms", "nsubjFeats": ["lemma=toks", "xpos=\u012fv.mot.dgs.N.", "Case=Dat", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Plur", "PronType=Dem"], "verbFeats": ["lemma=kampanija", "deprel=nmod", "upos=NOUN", "xpos=dkt.mot.dgs.N.", "Case=Dat"], "ungrammatical": "tokiems", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-7-s12%22%20%3B%20A%20%5Bform%3D%22tokioms%22%5D%20%3B%20B%20%5Bform%3D%22kampanijoms%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Suprantama , taikant <strong>\u0161i\u0105</strong> trinar\u0119 <strong>konstrukcij\u0105</strong> istorijos \u012fvyki\u0173 eiga supaprast\u0117ja , vien\u0173 ar kit\u0173 permain\u0173 iniciatoriai lengviau identifikuojami , nekyla sunkum\u0173 charakterizuojant skirtingus laikotarpius .", "swapSentence": "Suprantama , taikant <strong>\u0161\u012f</strong> trinar\u0119 <strong>konstrukcij\u0105</strong> istorijos \u012fvyki\u0173 eiga supaprast\u0117ja , vien\u0173 ar kit\u0173 permain\u0173 iniciatoriai lengviau identifikuojami , nekyla sunkum\u0173 charakterizuojant skirtingus laikotarpius .", "nsubj": "\u0161i\u0105", "verb": "konstrukcij\u0105", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.mot.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=konstrukcija", "deprel=obj", "upos=NOUN", "xpos=dkt.mot.vns.G.", "Case=Acc"], "ungrammatical": "\u0161\u012f", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Antanaicio_rec_77s-s16%22%20%3B%20A%20%5Bform%3D%22%C5%A1i%C4%85%22%5D%20%3B%20B%20%5Bform%3D%22konstrukcij%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Man gra\u017eus , nes toks ir <strong>patsai</strong> <strong>Kaunas</strong> .", "swapSentence": "Man gra\u017eus , nes toks ir <strong>pati</strong> <strong>Kaunas</strong> .", "nsubj": "patsai", "verb": "Kaunas", "nsubjFeats": ["lemma=pats", "xpos=\u012fv.\u012fvard\u017e.vyr.vns.V.", "Case=Nom", "Definite=Def", "<b>Gender=Masc</b>", "Number=Sing", "PronType=Emp"], "verbFeats": ["lemma=Kaunas", "deprel=nsubj", "upos=PROPN", "xpos=dkt.tikr.vyr.vns.V.", "Case=Nom"], "ungrammatical": "pati", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-14-s28%22%20%3B%20A%20%5Bform%3D%22patsai%22%5D%20%3B%20B%20%5Bform%3D%22Kaunas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Susirgti <strong>\u0161ia</strong> <strong>liga</strong> rizikuojama u\u017evalgius neplaut\u0173 mi\u0161ko uog\u0173 arba kolektyviniame sode nukritusi\u0173 vaisi\u0173 , i\u0161g\u0117rus nevirinto vandens , suvalgius neplaut\u0105 dar\u017eov\u0119 , kuri buvo laistoma u\u017ekr\u0117stu vandeniu , ir pan .", "swapSentence": "Susirgti <strong>\u0161iuo</strong> <strong>liga</strong> rizikuojama u\u017evalgius neplaut\u0173 mi\u0161ko uog\u0173 arba kolektyviniame sode nukritusi\u0173 vaisi\u0173 , i\u0161g\u0117rus nevirinto vandens , suvalgius neplaut\u0105 dar\u017eov\u0119 , kuri buvo laistoma u\u017ekr\u0117stu vandeniu , ir pan .", "nsubj": "\u0161ia", "verb": "liga", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.mot.vns.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=liga", "deprel=obl:arg", "upos=NOUN", "xpos=dkt.mot.vns.\u012en.", "Case=Ins"], "ungrammatical": "\u0161iuo", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[ins]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22parazitine-s23%22%20%3B%20A%20%5Bform%3D%22%C5%A1ia%22%5D%20%3B%20B%20%5Bform%3D%22liga%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "K\u016bno labai daug , jo per daug dvigulei lovai , per daug kambariui ir visam namui , jis jau netgi m\u0117gina kaip kokia ameba i\u0161siver\u017eti pro m\u016br\u0105 ir susilieti su \u0161alia esan\u010diais e\u017eero vandenimis , su jo gelmi\u0173 \u0161altu raibuliavimu , su <strong>visa</strong> mano pasaul\u012f u\u017eklojusia nakties <strong>tamsa</strong> .", "swapSentence": "K\u016bno labai daug , jo per daug dvigulei lovai , per daug kambariui ir visam namui , jis jau netgi m\u0117gina kaip kokia ameba i\u0161siver\u017eti pro m\u016br\u0105 ir susilieti su \u0161alia esan\u010diais e\u017eero vandenimis , su jo gelmi\u0173 \u0161altu raibuliavimu , su <strong>visu</strong> mano pasaul\u012f u\u017eklojusia nakties <strong>tamsa</strong> .", "nsubj": "visa", "verb": "tamsa", "nsubjFeats": ["lemma=visas", "xpos=\u012fv.mot.vns.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Fem</b>", "Number=Sing", "PronType=Tot"], "verbFeats": ["lemma=tamsa", "deprel=conj", "upos=NOUN", "xpos=dkt.mot.vns.\u012en.", "Case=Ins"], "ungrammatical": "visu", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[ins]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s53%22%20%3B%20A%20%5Bform%3D%22visa%22%5D%20%3B%20B%20%5Bform%3D%22tamsa%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}]};
+const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "det", "roleB": "np head", "decisiveFeat": "Gender", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Lithuanian", "languageName": "Lithuanian", "accuracy": "98.9%", "testAccuracy": "98.9%", "testN": 92, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "826", "predictor": "NP head-DET_Gender", "rootAccuracy": "98.9%", "trainAccuracy": "98.9%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 0.989247311827957, "pooledTestN": 93, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 918, "pooledUnkRows": 70, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "ALKSNIS", "rows": 847, "unkRows": 7, "status": "ok", "excluded": false, "reason": null, "acc": 0.9882352941176471, "pooledAcc": 0.9882352941176471, "delta": 0.0, "diverges": false, "href": "Lithuanian/UD_Lithuanian-ALKSNIS.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "HSE", "rows": 71, "unkRows": 63, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Lithuanian/UD_Lithuanian-HSE.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Gender"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Gender"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 817, "color": "var(--yes)"}, {"cls": "no", "cnt": 9, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 826, "H": 0.0905, "acc": 0.9885, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 817, "color": "var(--yes)"}, {"cls": "no", "cnt": 9, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 817, "correctSwaps": 642, "pairRoleCounts": {"A": 642}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "Aptik\u0119s <strong>\u0161\u012f<\/strong> <strong>vard\u0105<\/strong> laikra\u0161\u010diuose , a\u0161 ir dabar beveik visuomet prisimenu kirpimo istorij\u0105 ir mechanin\u0117s ma\u0161in\u0117l\u0117s avarij\u0105 .", "verb": "vard\u0105", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=vardas", "xpos=dkt.vyr.vns.G.", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "\u0161\u012f", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Kuncinas-s122%22%20%3B%20A%20%5Bform%3D%22%C5%A1%C4%AF%22%5D%20%3B%20B%20%5Bform%3D%22vard%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "<strong>T\u0173<\/strong> <strong>laik\u0173<\/strong> entuziazmas buvo gra\u017eus , o sud\u0117tos aukos vertos didel\u0117s pagarbos .", "verb": "laik\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=laikas", "xpos=NN", "Case=Gen", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "t\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=t\u0173", "xpos=PRP$", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2276%22%20%3B%20A%20%5Bform%3D%22T%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22laik%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "Kitas dalykas \u2013 tavo mentalitetas ir moral\u0117 : juos mes suksime <strong>tokia<\/strong> <strong>linkme<\/strong> , kokia mums paranki .", "verb": "linkme", "verbFeats": ["upos=NOUN", "deprel=iobj", "lemma=linkm\u0117", "xpos=NN", "Case=Ins", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "tokia", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=toks", "xpos=DT", "Case=Ins", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2272%22%20%3B%20A%20%5Bform%3D%22tokia%22%5D%20%3B%20B%20%5Bform%3D%22linkme%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "Gal jos kaip tik ir saugo <strong>tas<\/strong> mano lengvai pa\u017eeid\u017eiamas <strong>ribas<\/strong> , gal esu jomis apraizgyta kaip kokiais nei\u0161dylan\u010diais n\u0117riniais , kad nei\u0161tirp\u010diau nakties erdv\u0117s begalyb\u0117je .", "verb": "ribas", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=riba", "xpos=dkt.mot.dgs.G.", "Case=Acc", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "tas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.mot.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s44%22%20%3B%20A%20%5Bform%3D%22tas%22%5D%20%3B%20B%20%5Bform%3D%22ribas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Knygos pratarm\u0117je pristatydamos <strong>\u0161\u012f<\/strong> kokybin\u012f <strong>metod\u0105<\/strong> , autor\u0117s pa\u017eymi ir kitus jo aspektus , \u017eymin\u010dius tyrimo proceso specifik\u0105 ir jos keliamus reikalavimus tyr\u0117jui ( k\u016brybi\u0161kumas , geb\u0117jimas \u012fvertinti i\u0161kylan\u010dias s\u0105veikas , reflektuoti ir pan . ) .", "verb": "metod\u0105", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=metodas", "xpos=dkt.vyr.vns.G.", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "\u0161\u012f", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Kanopienes_rec_73s-s32%22%20%3B%20A%20%5Bform%3D%22%C5%A1%C4%AF%22%5D%20%3B%20B%20%5Bform%3D%22metod%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "\u0160\u012f vakar\u0105 <strong>jokio<\/strong> <strong>televizoriaus<\/strong> ! \u201c", "verb": "televizoriaus", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=televizorius", "xpos=dkt.vyr.vns.K.", "Case=Gen", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "jokio", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=joks", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Neg"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22pikti_tevai-s44%22%20%3B%20A%20%5Bform%3D%22jokio%22%5D%20%3B%20B%20%5Bform%3D%22televizoriaus%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Finansavimo ataskaitos rodo , kad V . Uspaskicho rinkim\u0173 kampanij\u0105 par\u0117m\u0117 <strong>jo<\/strong> <strong>paties<\/strong> \u012fmon\u0117s .", "verb": "jo", "verbFeats": ["upos=PRON", "deprel=nmod", "lemma=jis", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "Person=3", "PronType=Prs"], "nsubj": "paties", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=pats", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Emp"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-7-s14%22%20%3B%20A%20%5Bform%3D%22paties%22%5D%20%3B%20B%20%5Bform%3D%22jo%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "<strong>Toks<\/strong> <strong>vaikas<\/strong> , negav\u0119s norimo daikto ( saldainio , \u017eaislo , ma\u0161in\u0117l\u0117s i\u0161 draugo ) , ima reikalauti jo visokiais b\u016bdais : gali nenumaldomai verkti , maldauti , kaulyti , tik\u0117damasis , kad gaus tai , ko nori .", "verb": "vaikas", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=vaikas", "xpos=dkt.vyr.vns.V.", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "toks", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=toks", "xpos=\u012fv.vyr.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22pikti_tevai-s56%22%20%3B%20A%20%5Bform%3D%22Toks%22%5D%20%3B%20B%20%5Bform%3D%22vaikas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Ne \u012f <strong>t\u0105<\/strong> <strong>pus\u0119<\/strong> judat , sakau atsargiai , bijodamas u\u017egauti feminizmo jud\u0117jim\u0105 .", "verb": "pus\u0119", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=pus\u0117", "xpos=dkt.mot.vns.G.", "Case=Acc", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "t\u0105", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.mot.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Parulskis-2-s28%22%20%3B%20A%20%5Bform%3D%22t%C4%85%22%5D%20%3B%20B%20%5Bform%3D%22pus%C4%99%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Tod\u0117l , remdamasi <strong>\u0161iame<\/strong> <strong>komunikate<\/strong> i\u0161nagrin\u0117tais pasiekimais ir pristatyta \u012fgyta patirtimi , ir kaip reikalavo Europos Vadov\u0173 Taryba , Komisija ketina nagrin\u0117ti galimyb\u0119 valstyb\u0117ms nar\u0117ms iki 2010 m . pavasario pateikti Europos inovacij\u0173 akt\u0105 , \u012f kur\u012f bus \u012ftrauktos visos darnaus vystymosi s\u0105lygos ir kuris bus pagrindin\u0117 sud\u0117tin\u0117 Europos reform\u0173 darbotvark\u0117s dalis .", "verb": "komunikate", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=komunikatas", "xpos=dkt.vyr.vns.Vt.", "Case=Loc", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "\u0161iame", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.vyr.vns.Vt.", "Case=Loc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222009_komunikatas-s156%22%20%3B%20A%20%5Bform%3D%22%C5%A1iame%22%5D%20%3B%20B%20%5Bform%3D%22komunikate%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Semaforai stabdo traukinius , o gele\u017einkeliai <strong>tuo<\/strong> <strong>metu<\/strong> lieka tu\u0161ti ir li\u016bdni kaip sur\u016bkytas Primos pakelis .", "verb": "metu", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=metas", "xpos=dkt.vyr.vns.\u012en.", "Case=Ins", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "tuo", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tas", "xpos=\u012fv.vyr.vns.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Serelyte-4-s40%22%20%3B%20A%20%5Bform%3D%22tuo%22%5D%20%3B%20B%20%5Bform%3D%22metu%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "<strong>\u0160iomis<\/strong> <strong>aplinkyb\u0117mis<\/strong> svarbus vaidmuo tenka socialiniams partneriams .", "verb": "aplinkyb\u0117mis", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=aplinkyb\u0117", "xpos=dkt.mot.dgs.\u012en.", "Case=Ins", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "\u0161iomis", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.mot.dgs.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222009_komunikatas-s110%22%20%3B%20A%20%5Bform%3D%22%C5%A0iomis%22%5D%20%3B%20B%20%5Bform%3D%22aplinkyb%C4%97mis%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Ta\u010diau per visus \u0161iuos metus daugiausiai echinokokoz\u0117s atvej\u0173 u\u017eregistruota Vilniaus rajone - tai yra 46 atvejai , arba 39 proc . , <strong>vis\u0173<\/strong> <strong>atvej\u0173<\/strong> Lietuvoje .", "verb": "atvej\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=atvejis", "xpos=dkt.vyr.dgs.K.", "Case=Gen", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "vis\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Tot"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22parazitine-s19%22%20%3B%20A%20%5Bform%3D%22vis%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22atvej%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "\u017dinojau <strong>tok\u012f<\/strong> <strong>fason\u0105<\/strong> , mes j\u012f vadindavom \u201e bli\u016bdeliu \u201c , \u0161itaip kirpdavosi visi kaimie\u010diai .", "verb": "fason\u0105", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=fasonas", "xpos=dkt.vyr.vns.G.", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "tok\u012f", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=toks", "xpos=\u012fv.vyr.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Kuncinas-s53%22%20%3B%20A%20%5Bform%3D%22tok%C4%AF%22%5D%20%3B%20B%20%5Bform%3D%22fason%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "12 . Savaranki\u0161kos \u012fmon\u0117s darbuotoj\u0173 skai\u010diumi laikomas tik \u0161ioje \u012fmon\u0117je dirban\u010di\u0173 darbuotoj\u0173 skai\u010dius , o \u012fmon\u0117s metin\u0117s pajamos ir balanse nurodyto turto vert\u0117 nustatoma remiantis tik <strong>\u0161ios<\/strong> <strong>\u012fmon\u0117s<\/strong> finansiniais duomenimis , nurodytais \u012fmon\u0117s metin\u0117je finansin\u0117je atskaitomyb\u0117je ar kituose finansiniuose dokumentuose .", "verb": "\u012fmon\u0117s", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u012fmon\u0117", "xpos=dkt.mot.vns.K.", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "nsubj": "\u0161ios", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.mot.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Dem"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Smulkiojo_ir_vidutinio_verslo_pletros_istatymas-s61%22%20%3B%20A%20%5Bform%3D%22%C5%A1ios%22%5D%20%3B%20B%20%5Bform%3D%22%C4%AFmon%C4%97s%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Seimas , apsijuokdamas prie\u0161 Europ\u0105 , neretai keldamas <strong>jos<\/strong> <strong>pasibjaur\u0117jim\u0105<\/strong> , priimin\u0117ja \u012fstatymus apie raides \u201e w \u201c draudim\u0105 pasuose ir apie draudim\u0105 platinti seksualin\u0119 informacij\u0105 , o asmenys , laikantys save laisv\u0117s kovotojais , apm\u0117to akmenimis g\u0117j\u0173 eitynes ( gink Dieve , ne naci\u0173 simpatik\u0173 eitynes ) .", "verb": "pasibjaur\u0117jim\u0105", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=pasibjaur\u0117jimas", "xpos=NN", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "jos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=jos", "xpos=PRP$", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2256%22%20%3B%20A%20%5Bform%3D%22jos%22%5D%20%3B%20B%20%5Bform%3D%22pasibjaur%C4%97jim%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "Kai kuri\u0173 ekspert\u0173 manymu , tai gali b\u016bti \u017eenklas , kad \u201e Vilniaus prekyba \u201c nusprend\u0117 i\u0161parduoti <strong>\u0161ios<\/strong> <strong>g\u0117rim\u0173<\/strong> bendrov\u0117s produkcij\u0105 ir \u0161ios pozicijas u\u017eleisti kitam stambiam gamintojui - bendrovei \u201e Vilniaus degtin\u0117 \u201c .", "verb": "g\u0117rim\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=g\u0117rimas", "xpos=dkt.vyr.dgs.K.", "Case=Gen", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "\u0161ios", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=\u0161is", "xpos=\u012fv.mot.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Dem"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-6-s22%22%20%3B%20A%20%5Bform%3D%22%C5%A1ios%22%5D%20%3B%20B%20%5Bform%3D%22g%C4%97rim%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Jei Rusijai sekasi , tai baisu , jei nesiseka , tai didel\u0117 laim\u0117 ; Rusijos klest\u0117jimas , ekonominis ir kult\u016brinis atgimimas b\u016bt\u0173 baisiausia , kas gali i\u0161tikti <strong>jos<\/strong> <strong>kaimynus<\/strong> ir pasaul\u012f .", "verb": "kaimynus", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=kaimynas", "xpos=NN", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "jos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=jos", "xpos=PRP$", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22189%22%20%3B%20A%20%5Bform%3D%22jos%22%5D%20%3B%20B%20%5Bform%3D%22kaimynus%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "Vadiname <strong>jos<\/strong> <strong>narius<\/strong> patriotais \u2013 subjektyviai jie tokie ir buvo , - bet negalima gerbti patriot\u0173 , padariusi\u0173 savo kra\u0161tui did\u017eiul\u0117s \u017ealos , kurios ligi \u0161iol nepaj\u0117giame i\u0161sr\u0117bti .", "verb": "narius", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=narys", "xpos=NN", "Case=Acc", "<b>Gender=Masc<\/b>", "Number=Plur"], "nsubj": "jos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=jos", "xpos=DT", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22172%22%20%3B%20A%20%5Bform%3D%22jos%22%5D%20%3B%20B%20%5Bform%3D%22narius%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "6 ) sudaryti palankias s\u0105lygas pl\u0117toti <strong>vis\u0173<\/strong> meno <strong>\u0161ak\u0173<\/strong> ir \u017eanr\u0173 m\u0117g\u0117j\u0173 meno veikl\u0105 , kaip b\u016bd\u0105 nacionaliniam kult\u016bros paveldui i\u0161saugoti , dain\u0173 \u0161ven\u010di\u0173 tradicijoms ir region\u0173 kult\u016brai pl\u0117toti , ir siekti \u012ftraukti \u012f j\u0105 daugiau bendruomeni\u0173 , kolektyv\u0173 , individ\u0173 .", "verb": "\u0161ak\u0173", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=\u0161aka", "xpos=dkt.mot.dgs.K.", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Plur"], "nsubj": "vis\u0173", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=\u012fv.vyr.dgs.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Tot"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Nutarimas_kulturos_politikos_kaitos_gaires-s139%22%20%3B%20A%20%5Bform%3D%22vis%C5%B3%22%5D%20%3B%20B%20%5Bform%3D%22%C5%A1ak%C5%B3%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}, {"sentence": "Beje , <strong>visa<\/strong> <strong>tai<\/strong> n\u0117ra didel\u0117 naujov\u0117 .", "verb": "tai", "verbFeats": ["upos=PRON", "deprel=nsubj", "lemma=tai", "xpos=DT", "Definite=Ind", "<b>Gender=Neut<\/b>", "PronType=Ind"], "nsubj": "visa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=DT", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22117%22%20%3B%20A%20%5Bform%3D%22visa%22%5D%20%3B%20B%20%5Bform%3D%22tai%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "<strong>Visa<\/strong> <strong>tai<\/strong> primena karikat\u016bra , kuri\u0105 neseniai ma\u010diau lenk\u0173 \u017eurnale .", "verb": "tai", "verbFeats": ["upos=PRON", "deprel=nsubj", "lemma=tai", "xpos=DT", "Definite=Ind", "<b>Gender=Neut<\/b>", "PronType=Ind"], "nsubj": "visa", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=visas", "xpos=DT", "Case=Nom", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22191%22%20%3B%20A%20%5Bform%3D%22Visa%22%5D%20%3B%20B%20%5Bform%3D%22tai%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "Anot jo , ra\u0161ytoja viena pirm\u0173j\u0173 \u017eeng\u0117 dr\u0105s\u0173 \u017eingsn\u012f ir vie\u0161ai atskleid\u0117 , kad <strong>jos<\/strong> <strong>giminaitis<\/strong> dalyvavo Holokauste .", "verb": "giminaitis", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=giminaitis", "xpos=NN", "Case=Nom", "<b>Gender=Masc<\/b>", "Number=Sing"], "nsubj": "jos", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=jos", "xpos=PRP$", "Case=Gen", "<b>Gender=Fem<\/b>", "Number=Sing"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-HSE%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22lt-ru-3-p2-4%22%20%3B%20A%20%5Bform%3D%22jos%22%5D%20%3B%20B%20%5Bform%3D%22giminaitis%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-HSE"}, {"sentence": "<strong>Kiekvienas<\/strong> <strong>k\u016bdikis<\/strong> i\u0161siver\u017eia \u012f regim\u0105 \u0161vies\u0105 , o vis\u0105 gyvenim\u0105 ilgisi neregimos .", "verb": "k\u016bdikis", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=k\u016bdikis", "xpos=dkt.bendr.vns.V.", "Case=Nom", "<b>Gender=Com<\/b>", "Number=Sing"], "nsubj": "kiekvienas", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=kiekvienas", "xpos=\u012fv.vyr.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Tot"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Jonuskaite-s78%22%20%3B%20A%20%5Bform%3D%22Kiekvienas%22%5D%20%3B%20B%20%5Bform%3D%22k%C5%ABdikis%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS"}]}, "PAIRS": [{"origSentence": "Daugeliui skaitytoj\u0173 <strong>\u0161is<\/strong> <strong>patarimas<\/strong> grei\u010diausiai neaktualus , bet vis d\u0117lto verta prisiminti , kad alkoholis \u2013 karjeros prie\u0161as .", "swapSentence": "Daugeliui skaitytoj\u0173 <strong>\u0161i<\/strong> <strong>patarimas<\/strong> grei\u010diausiai neaktualus , bet vis d\u0117lto verta prisiminti , kad alkoholis \u2013 karjeros prie\u0161as .", "nsubj": "\u0161is", "verb": "patarimas", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=patarimas", "deprel=nsubj", "upos=NOUN", "xpos=dkt.vyr.vns.V.", "Case=Nom"], "ungrammatical": "\u0161i", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22sventems-s186%22%20%3B%20A%20%5Bform%3D%22%C5%A1is%22%5D%20%3B%20B%20%5Bform%3D%22patarimas%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "O \u0161tai jeigu tikras vyras ne\u0161t\u0173 i\u0161 paskos dulki\u0173 siurblio \u017earn\u0105 ar sanitarin\u012f valikl\u012f voniai , b\u016bt\u0173 jau ne baisu , o juokinga , nes esu tikra , kad valiklio u\u017esipilt\u0173 ant kelni\u0173 ir i\u0161eikvot\u0173 <strong>visus<\/strong> keiksma\u017eod\u017ei\u0173 <strong>i\u0161teklius<\/strong> , ber\u0117kdamas ant siurblio , niekaip nepraryjan\u010dio senos kojin\u0117s .", "swapSentence": "O \u0161tai jeigu tikras vyras ne\u0161t\u0173 i\u0161 paskos dulki\u0173 siurblio \u017earn\u0105 ar sanitarin\u012f valikl\u012f voniai , b\u016bt\u0173 jau ne baisu , o juokinga , nes esu tikra , kad valiklio u\u017esipilt\u0173 ant kelni\u0173 ir i\u0161eikvot\u0173 <strong>visas<\/strong> keiksma\u017eod\u017ei\u0173 <strong>i\u0161teklius<\/strong> , ber\u0117kdamas ant siurblio , niekaip nepraryjan\u010dio senos kojin\u0117s .", "nsubj": "visus", "verb": "i\u0161teklius", "nsubjFeats": ["lemma=visas", "xpos=\u012fv.vyr.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Tot"], "verbFeats": ["lemma=i\u0161tekliai", "deprel=obj", "upos=NOUN", "xpos=dkt.vyr.dgs.G.", "Case=Acc"], "ungrammatical": "visas", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Serelyte-4-s29%22%20%3B%20A%20%5Bform%3D%22visus%22%5D%20%3B%20B%20%5Bform%3D%22i%C5%A1teklius%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "2004 - 2008 met\u0173 duomenys rodo , kad did\u017ei\u0105j\u0105 echinokokoz\u0117s dal\u012f sudaro cistin\u0117 echinokokoz\u0117 , ta\u010diau per <strong>\u0161iuos<\/strong> <strong>metus<\/strong> labai i\u0161augo sergamumo sunkesne \u0161ios ligos forma - alveokokine echinokokoze rodiklis : nuo 0,03 iki 0,32 atvejo , tenkan\u010dio 100 t\u016bkst . gyventoj\u0173 .", "swapSentence": "2004 - 2008 met\u0173 duomenys rodo , kad did\u017ei\u0105j\u0105 echinokokoz\u0117s dal\u012f sudaro cistin\u0117 echinokokoz\u0117 , ta\u010diau per <strong>\u0161ias<\/strong> <strong>metus<\/strong> labai i\u0161augo sergamumo sunkesne \u0161ios ligos forma - alveokokine echinokokoze rodiklis : nuo 0,03 iki 0,32 atvejo , tenkan\u010dio 100 t\u016bkst . gyventoj\u0173 .", "nsubj": "\u0161iuos", "verb": "metus", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Dem"], "verbFeats": ["lemma=metai", "deprel=obl", "upos=NOUN", "xpos=dkt.vyr.dgs.G.", "Case=Acc"], "ungrammatical": "\u0161ias", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22parazitine-s11%22%20%3B%20A%20%5Bform%3D%22%C5%A1iuos%22%5D%20%3B%20B%20%5Bform%3D%22metus%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "J\u016bs\u0173 artimas \u017emogus u\u017emezg\u0117 <strong>tuos<\/strong> <strong>ry\u0161ius<\/strong> , nes jis to nor\u0117jo , jam to reik\u0117jo .", "swapSentence": "J\u016bs\u0173 artimas \u017emogus u\u017emezg\u0117 <strong>tas<\/strong> <strong>ry\u0161ius<\/strong> , nes jis to nor\u0117jo , jam to reik\u0117jo .", "nsubj": "tuos", "verb": "ry\u0161ius", "nsubjFeats": ["lemma=tas", "xpos=\u012fv.vyr.dgs.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Dem"], "verbFeats": ["lemma=ry\u0161ys", "deprel=obj", "upos=NOUN", "xpos=dkt.vyr.dgs.G.", "Case=Acc"], "ungrammatical": "tas", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kalbeti_ar_tyleti-s32%22%20%3B%20A%20%5Bform%3D%22tuos%22%5D%20%3B%20B%20%5Bform%3D%22ry%C5%A1ius%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Nauja \u012fmon\u0117 priskiriama vidutinei , ma\u017eai ar labai ma\u017eai \u012fmonei <strong>\u0161io<\/strong> <strong>straipsnio<\/strong> 8 dalyje nustatyta tvarka nusta\u010dius , kad ji atitinka \u0161io straipsnio 1 , 2 ir 3 dalyse nustatytas s\u0105lygas .", "swapSentence": "Nauja \u012fmon\u0117 priskiriama vidutinei , ma\u017eai ar labai ma\u017eai \u012fmonei <strong>\u0161ios<\/strong> <strong>straipsnio<\/strong> 8 dalyje nustatyta tvarka nusta\u010dius , kad ji atitinka \u0161io straipsnio 1 , 2 ir 3 dalyse nustatytas s\u0105lygas .", "nsubj": "\u0161io", "verb": "straipsnio", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.vyr.vns.K.", "Case=Gen", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=straipsnis", "deprel=nmod", "upos=NOUN", "xpos=dkt.vyr.vns.K.", "Case=Gen"], "ungrammatical": "\u0161ios", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[gen]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Smulkiojo_ir_vidutinio_verslo_pletros_istatymas-s56%22%20%3B%20A%20%5Bform%3D%22%C5%A1io%22%5D%20%3B%20B%20%5Bform%3D%22straipsnio%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Tik dabar atsikuria <strong>\u0161i<\/strong> \u0161imtame\u010di\u0173 tradicij\u0173 <strong>bendruomen\u0117<\/strong> , v\u0117l ba\u017eny\u010dios steigiamos .", "swapSentence": "Tik dabar atsikuria <strong>\u0161is<\/strong> \u0161imtame\u010di\u0173 tradicij\u0173 <strong>bendruomen\u0117<\/strong> , v\u0117l ba\u017eny\u010dios steigiamos .", "nsubj": "\u0161i", "verb": "bendruomen\u0117", "nsubjFeats": ["lemma=\u0161is", "xpos=\u012fv.mot.vns.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Dem"], "verbFeats": ["lemma=bendruomen\u0117", "deprel=nsubj", "upos=NOUN", "xpos=dkt.mot.vns.V.", "Case=Nom"], "ungrammatical": "\u0161is", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22baznyciomis-s36%22%20%3B%20A%20%5Bform%3D%22%C5%A1i%22%5D%20%3B%20B%20%5Bform%3D%22bendruomen%C4%97%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Ta\u010diau , norint ES padaryti palankiausia erdve inovacijoms , reikia tam skirti nuolatin\u012f d\u0117mes\u012f , be to , reikia geriau i\u0161naudoti Europos S\u0105jungos ir jos valstybi\u0173 nari\u0173 partneryst\u0117s potencial\u0105 <strong>visais<\/strong> <strong>lygmenimis<\/strong> imantis tiksliau orientuot\u0173 ir geriau koordinuot\u0173 veiksm\u0173 .", "swapSentence": "Ta\u010diau , norint ES padaryti palankiausia erdve inovacijoms , reikia tam skirti nuolatin\u012f d\u0117mes\u012f , be to , reikia geriau i\u0161naudoti Europos S\u0105jungos ir jos valstybi\u0173 nari\u0173 partneryst\u0117s potencial\u0105 <strong>visa<\/strong> <strong>lygmenimis<\/strong> imantis tiksliau orientuot\u0173 ir geriau koordinuot\u0173 veiksm\u0173 .", "nsubj": "visais", "verb": "lygmenimis", "nsubjFeats": ["lemma=visas", "xpos=\u012fv.vyr.dgs.\u012en.", "Case=Ins", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Tot"], "verbFeats": ["lemma=lygmuo", "deprel=obl", "upos=NOUN", "xpos=dkt.vyr.dgs.\u012en.", "Case=Ins"], "ungrammatical": "visa", "swapRole": "A", "afterValue": "Neut", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[ins]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222009_komunikatas-s155%22%20%3B%20A%20%5Bform%3D%22visais%22%5D%20%3B%20B%20%5Bform%3D%22lygmenimis%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Anot Z . Vaigausko , n\u0117 vienas kandidatas nedeklaravo vir\u0161ij\u0119s \u012fstatymo numatyt\u0173 \u201e lub\u0173 \u201c <strong>tokioms<\/strong> agitacin\u0117ms <strong>kampanijoms<\/strong> - 79010 lit\u0173 .", "swapSentence": "Anot Z . Vaigausko , n\u0117 vienas kandidatas nedeklaravo vir\u0161ij\u0119s \u012fstatymo numatyt\u0173 \u201e lub\u0173 \u201c <strong>tokiems<\/strong> agitacin\u0117ms <strong>kampanijoms<\/strong> - 79010 lit\u0173 .", "nsubj": "tokioms", "verb": "kampanijoms", "nsubjFeats": ["lemma=toks", "xpos=\u012fv.mot.dgs.N.", "Case=Dat", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Plur", "PronType=Dem"], "verbFeats": ["lemma=kampanija", "deprel=nmod", "upos=NOUN", "xpos=dkt.mot.dgs.N.", "Case=Dat"], "ungrammatical": "tokiems", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[dat]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22kd1-7-s12%22%20%3B%20A%20%5Bform%3D%22tokioms%22%5D%20%3B%20B%20%5Bform%3D%22kampanijoms%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "\u201e 5 . Parai\u0161kas gali teikti <strong>visi<\/strong> Lietuvos Respublikos teis\u0117s akt\u0173 nustatyta tvarka \u012fregistruoti ne pelno siekiantys vie\u0161ieji juridiniai <strong>asmenys<\/strong> , veikiantys kult\u016bros srityje ir teikiantys kult\u016bros srities paslaugas ( toliau \u2013 projekt\u0173 vykdytojai ) , i\u0161skyrus fizinius asmenis .", "swapSentence": "\u201e 5 . Parai\u0161kas gali teikti <strong>visos<\/strong> Lietuvos Respublikos teis\u0117s akt\u0173 nustatyta tvarka \u012fregistruoti ne pelno siekiantys vie\u0161ieji juridiniai <strong>asmenys<\/strong> , veikiantys kult\u016bros srityje ir teikiantys kult\u016bros srities paslaugas ( toliau \u2013 projekt\u0173 vykdytojai ) , i\u0161skyrus fizinius asmenis .", "nsubj": "visi", "verb": "asmenys", "nsubjFeats": ["lemma=visas", "xpos=\u012fv.vyr.dgs.V.", "Case=Nom", "Definite=Ind", "<b>Gender=Masc<\/b>", "Number=Plur", "PronType=Tot"], "verbFeats": ["lemma=asmuo", "deprel=nsubj", "upos=NOUN", "xpos=dkt.vyr.dgs.V.", "Case=Nom"], "ungrammatical": "visos", "swapRole": "A", "afterValue": "Fem", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[nom]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%222009_KM_Isak-s7%22%20%3B%20A%20%5Bform%3D%22visi%22%5D%20%3B%20B%20%5Bform%3D%22asmenys%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}, {"origSentence": "Iki \u0161iol \u017deneva ir kirpykla mano galvoje tam tikra prasme yra neatsiejami dalykai , nes politika , kaip \u017einoma , visuomet prasideda nuo buities , o tik paskui , pama\u017eu kildama auk\u0161tyn , patenka \u012f vyriausybinius sluoksnius , ir galiausiai \u2013 \u012f <strong>pa\u010di\u0105<\/strong> <strong>\u017denev\u0105<\/strong> ...", "swapSentence": "Iki \u0161iol \u017deneva ir kirpykla mano galvoje tam tikra prasme yra neatsiejami dalykai , nes politika , kaip \u017einoma , visuomet prasideda nuo buities , o tik paskui , pama\u017eu kildama auk\u0161tyn , patenka \u012f vyriausybinius sluoksnius , ir galiausiai \u2013 \u012f <strong>pat\u012f<\/strong> <strong>\u017denev\u0105<\/strong> ...", "nsubj": "pa\u010di\u0105", "verb": "\u017denev\u0105", "nsubjFeats": ["lemma=pats", "xpos=\u012fv.mot.vns.G.", "Case=Acc", "Definite=Ind", "<b>Gender=Fem<\/b>", "Number=Sing", "PronType=Emp"], "verbFeats": ["lemma=\u017deneva", "deprel=obl:arg", "upos=PROPN", "xpos=dkt.tikr.mot.vns.G.", "Case=Acc"], "ungrammatical": "pat\u012f", "swapRole": "A", "afterValue": "Masc", "afterFeatKey": "Gender", "siblingKeys": ["Gender[DET]", "Gender[acc]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Lithuanian-ALKSNIS%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22Kuncinas-s124%22%20%3B%20A%20%5Bform%3D%22pa%C4%8Di%C4%85%22%5D%20%3B%20B%20%5Bform%3D%22%C5%BDenev%C4%85%22%5D%20%20%7D", "treebankName": "UD_Lithuanian-ALKSNIS", "leaf": "0"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Lithuanian \u00b7 NP head-DET_Gender", "roleA": "de
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

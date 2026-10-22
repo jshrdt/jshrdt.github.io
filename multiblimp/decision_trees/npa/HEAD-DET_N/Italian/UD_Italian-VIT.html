@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "roleA": "det", "roleB": "np head", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Italian \u00b7 VIT", "languageName": "Italian", "accuracy": "99.6%", "testAccuracy": "99.7%", "testN": 1134, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "10,198", "predictor": "NP head-DET_Number", "rootAccuracy": "99.6%", "trainAccuracy": "99.6%", "treebank": "VIT", "nav": {"pooledAcc": 0.9974210186976145, "pooledTestN": 3102, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 30986, "pooledUnkRows": 4892, "pooledHref": "../Italian.html", "pooledCurrent": false, "items": [{"name": "ISDT", "rows": 13270, "unkRows": 2187, "status": "ok", "excluded": false, "reason": null, "acc": 0.9992464204973625, "pooledAcc": 0.9992464204973625, "delta": 0.0, "diverges": false, "href": "UD_Italian-ISDT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "MarkIT", "rows": 1763, "unkRows": 269, "status": "ok", "excluded": false, "reason": null, "acc": 0.9774011299435028, "pooledAcc": 0.9774011299435028, "delta": 0.0, "diverges": false, "href": "UD_Italian-MarkIT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 1253, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Italian-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "ParTUT", "rows": 2431, "unkRows": 309, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Italian-ParTUT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "ParlaMint", "rows": 937, "unkRows": 66, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Italian-ParlaMint.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "VIT", "rows": 11332, "unkRows": 2060, "status": "ok", "excluded": false, "reason": null, "acc": 0.9973544973544973, "pooledAcc": 0.9973544973544973, "delta": 0.0, "diverges": false, "href": "UD_Italian-VIT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 10159, "color": "var(--yes)"}, {"cls": "no", "cnt": 39, "color": "var(--no)"}, {"cls": "unk", "cnt": 2060, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 10198, "H": 0.0366, "acc": 0.9961, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 10159, "color": "var(--yes)"}, {"cls": "no", "cnt": 39, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "La risposta di <strong>la</strong> <strong>canottieri</strong> Lazio : gioved\u00ec prossimo appuntamento con Fini , Berlusconi e Rutelli .", "verb": "canottieri", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=canottiere", "xpos=S", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6997%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22canottieri%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Per l' attribuzione di <strong>i</strong> punteggi in <strong>questione</strong> valgono le precisazioni di cui a i 2 commi precedenti .", "verb": "questione", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=questione", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4303%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22questione%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il Rialzo , comunque , ha avuto natura solo tecnica cos\u00ec come di natura tecnica \u00e8 stato il calo di Cir , Italcementi e Rinascente che , a partire da luned\u00ec , non faranno pi\u00f9 parte di <strong>il</strong> <strong>paniere</strong> di le \" star \" su cui si basa il Fib 30 .", "verb": "paniere", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=paniera", "xpos=S", "Gender=Fem", "<b>Number=Plur</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8186%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22paniere%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Le grandi multinazionali di l' informatica sono le prime e pi\u00f9 convinte utilizzatrici di <strong>i</strong> <strong>computer</strong> da scrivania :", "verb": "computer", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=computer", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4045%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22computer%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Da il primo novembre dovrebbe essere introdotto a Fiumicino il sistema telematico Cute , a lungo richiesto da le compagnie , che solo cos\u00ec potranno accedere da i terminali di l' aeroporto direttamente a <strong>i</strong> <strong>computer</strong> centrali .", "verb": "computer", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=computer", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1154%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22computer%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Doppiato questo scoglio , su cui si erano incagliate l' 11 febbraio scorso i negoziati bilaterali avviati in il luglio di il 1993 , <strong>i</strong> due <strong>partner</strong> commerciali hanno promesso di procedere a passo spedito .", "verb": "partner", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=partner", "xpos=S", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-571%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22partner%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "I Rapporti di l' impresa con <strong>i</strong> suoi <strong>partner</strong> ( banche , fornitori , clienti , filiali ) , che poco tempo fa richiedevano tonnellate di moduli di ogni tipo , vengono sempre pi\u00f9 smaterializzati da la comunicazione telematica .", "verb": "partner", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=partner", "xpos=S", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-3845%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22partner%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "I leader di le due fazioni non hanno risposto in via ufficiale a l' appello rivolto loro da l' inviato Onu affinch\u00e9 la tregua , che sarebbe dovuta scadere a <strong>le</strong> 16 <strong>ora</strong> italiana di ieri , fosse prorogata di un giorno per consentire a l' inviato di l' Onu di ultimare i suoi colloqui con i rappresentanti di il governo .", "verb": "ora", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ora", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-497%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22ora%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In gli ultimi anni la dinamica di <strong>i</strong> <strong>polo</strong> di attrazione \u00e8 stata sempre pi\u00f9 caratterizzata da l' emergere di una crescente concorrenza che si \u00e8 progressivamente spostata da le singole imprese a i sistemi economici e territoriali , determinando l' esigenza di una riconsiderazione di i rapporti esistenti tra soggetti produttivi e ambiente in cui questi operano .", "verb": "polo", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=polo", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22polo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\" professore - gli ha chiesto <strong>un</strong> <strong>signore</strong> mentre eravamo in il bar - , se vincer\u00e0 le elezioni , in il suo governo inserir\u00e0 tecnici o politici ?", "verb": "signore", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=signore", "xpos=S", "Gender=Fem", "<b>Number=Plur</b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9809%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22signore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "E <strong>i</strong> <strong>partner</strong> di il club hanno fatto di tutto per rimarcar lo .", "verb": "partner", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=partner", "xpos=S", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5213%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22partner%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "I giornali svizzeri hanno da giorni smesso di pubblicare notizie su la nube e la televisione francese ha trasmesso soltanto un' intervista a un' esperta che aveva davanti <strong>un</strong> <strong>bicchierone</strong> di latte \" .", "verb": "bicchierone", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=bicchiere", "xpos=S", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5199%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22bicchierone%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In sostanza , <strong>il</strong> <strong>finanziere</strong> saudita si para le spalle : se il prodotto acquistato non tiene fede a le premesse , lui potr\u00e0 ridar lo a il venditore recuperando capitale e interessi .", "verb": "finanziere", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=finanziera", "xpos=S", "Gender=Fem", "<b>Number=Plur</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7941%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22finanziere%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La segretaria non dovrebbe far altro che aggiungere a la lettera gli abbellimenti grafici , correggere gli errori di battitura e di ortografia ( da una inchiesta americana si \u00e8 scoperto che uno di i principali ostacoli a la diffusione di le tastiere su le scrivanie di <strong>i</strong> <strong>manager</strong> \u00e8 proprio il loro timore di rivelare una scarsa conoscenza di l' ortografia che pu\u00f2 essere invece camuffata in la dettatura o con una scrittura a mano molto nervosa ) , e rispedir la a il manager per eventuali ripensamenti o per l' ok definitivo , sempre usando posta elettronica .", "verb": "manager", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=manager", "xpos=S", "<b>Number=Sing</b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4037%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22manager%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Lo studio di Cappugi reca alcune tabelle rivelatrici : come quella su le spese di il settore pubblico , da cui si apprende che i pagamenti correnti sono saliti , tra l' 80 e il novantadue , da il 38,9 a il 53,2 % di <strong>il</strong> <strong>pil</strong> .", "verb": "pil", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pil", "xpos=S", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-738%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22pil%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Un horror partenopeo , perfetto per <strong>la</strong> <strong>cabala</strong> e per l' aneddotica da vecchio boss .", "verb": "cabala", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=cabala", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7243%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22cabala%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>L'</strong> <strong>ingresso</strong> di Cefis in Santavaleria resta subordinato a l' accettazione da parte di Varasi di il piano predisposto da Mediobanca che potrebbe essere a grandi linee simile a quello gi\u00e0 realizzato proprio con il gruppo Ligresti .", "verb": "ingresso", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=ingresso", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2127%22%20%3B%20A%20%5Bform%3D%22L%27%22%5D%20%3B%20B%20%5Bform%3D%22ingresso%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Lo stato svedese ha infatti confermato ieri che <strong>la</strong> <strong>privatizzazione</strong> di l' azienda farmaceutica Pharmacia partir\u00e0 per gli investitori privati il prossimo primo giugno .", "verb": "privatizzazione", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=privatizzazione", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2014%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22privatizzazione%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Su l' argomento Poli Bortone ha riferito che le risorse finanziarie da destinare a <strong>il</strong> <strong>settore</strong> dovranno essere superiori a quelle stanziate in passato , anche perch\u00e9 l' attuale bilancio di il ministero \u00e8 solo un terzo rispetto a quello di sette - otto anni fa .", "verb": "settore", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=settore", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1038%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22settore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Le poste rettificative di l' attivo possono essere esposte secondo le due seguenti modalit\u00e0 : 1 ) esposizione di l' importo lordo , di l' ammontare di il fondo rettificativo ( esempio : ammortamento ) , e conseguentemente di <strong>l'</strong> <strong>importo</strong> netto ; 2 ) esposizione di il solo importo netto , con ricostruzione di le movimentazioni di i fondi rettificativi di la nota integrativa .", "verb": "importo", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=importo", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2480%22%20%3B%20A%20%5Bform%3D%22l%27%22%5D%20%3B%20B%20%5Bform%3D%22importo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "A pochi verrebbe in mente di includere , fra le tante corporazioni in cui si articola <strong>il</strong> <strong>potere</strong> reale in il nostro paese , anche un gruppo di neppure 3 mila scienziati , formato da una stretta \u00e9lite perennemente in viaggio fra un congresso e l' altro , da gli Stati Uniti e il Giappone , da la Finlandia a la Sicilia , e da una truppa dispersa in una ventina di dipartimenti in le universit\u00e0 italiane , in alcuni laboratori nazionali e in qualche prestigioso centro di ricerca europeo .", "verb": "potere", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=potere", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4115%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22potere%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\" mio marito era entrato da pochi minuti in sala operatoria - racconta la moglie Katia - e per <strong>lo</strong> stesso <strong>malanno</strong> c' era gi\u00e0 entrato altre nove volte .", "verb": "malanno", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=malanno", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "lo", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7200%22%20%3B%20A%20%5Bform%3D%22lo%22%5D%20%3B%20B%20%5Bform%3D%22malanno%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Sapevo che in <strong>il</strong> <strong>finale</strong> avremmo ridotto lo svantaggio .", "verb": "finale", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=finale", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7801%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22finale%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ma <strong>il</strong> <strong>controllo</strong> di la spesa di il personale deve chinar si a rammendare tutti i buchi e non solo quelli di gli aumenti contrattuali .", "verb": "controllo", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=controllo", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-676%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22controllo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In mattinata , durante un incontro con Lester Pollack , presidente di le organizzazioni israelitiche americane , Martino ha dato un' anticipazione su uno di gli argomenti che saranno trattati proprio a le riunioni annuali di il gruppo di i sette di Napoli , la volont\u00e0 italiana cio\u00e8 di chiedere a i paesi arabi di sospendere immediatamente l' embargo economico che ancora vige in <strong>alcuni</strong> <strong>casi</strong> in i confronti di Israele :", "verb": "casi", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=caso", "xpos=S", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "alcuni", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=alcuno", "xpos=DI", "Gender=Masc", "<b>Number=Plur</b>", "PronType=Ind"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-397%22%20%3B%20A%20%5Bform%3D%22alcuni%22%5D%20%3B%20B%20%5Bform%3D%22casi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Drammatica \u00e8 l' impunit\u00e0 di <strong>le</strong> <strong>stragi</strong> le cui radici stanno in l' infedelt\u00e0 di essenziali apparati di lo stato e in le collusioni politiche .", "verb": "stragi", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=strage", "xpos=S", "Gender=Fem", "<b>Number=Plur</b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5872%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22stragi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Non prevarr\u00e0 , esaltando l' \" articolazione di i problemi \" , ancora una volta <strong>la</strong> <strong>ragnatela</strong> di la complicit\u00e0 , e , quindi , il vecchio mondo di la ricerca italiana ?", "verb": "ragnatela", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=ragnatela", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5015%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22ragnatela%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>Il</strong> suo <strong>stato</strong> \u00e8 instabile e pu\u00f2 sia migliorare che peggiorare \" .", "verb": "stato", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=stato", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8788%22%20%3B%20A%20%5Bform%3D%22Il%22%5D%20%3B%20B%20%5Bform%3D%22stato%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La richiesta sar\u00e0 effettuata per affrettare l' iter di il provvedimento a l' esame di la commissione fin da la fine di l' ottobre di il sessantaotto , mentre <strong>un</strong> analogo <strong>progetto</strong> di legge era gi\u00e0 stato lungamente discusso in la passata legislatura .", "verb": "progetto", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=progetto", "xpos=S", "Gender=Masc", "<b>Number=Sing</b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-756%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22progetto%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ma su Montalto , come su Caorso , pesa <strong>un'</strong> altra <strong>incognita</strong> :", "verb": "incognita", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=incognita", "xpos=S", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "un'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Fem", "<b>Number=Sing</b>", "PronType=Art"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5129%22%20%3B%20A%20%5Bform%3D%22un%27%22%5D%20%3B%20B%20%5Bform%3D%22incognita%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "roleA": "det", "roleB": "np head", "decisiveFeat": "Number", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Italian \u00b7 VIT", "languageName": "Italian", "accuracy": "98.7%", "testAccuracy": "98.6%", "testN": 1253, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "11,275", "predictor": "NP head-DET_Number", "rootAccuracy": "98.7%", "trainAccuracy": "98.7%", "treebank": "VIT", "nav": {"pooledAcc": 0.9862129656790848, "pooledTestN": 3409, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 34067, "pooledUnkRows": 1831, "pooledHref": "../Italian.html", "pooledCurrent": false, "items": [{"name": "ISDT", "rows": 14605, "unkRows": 857, "status": "ok", "excluded": false, "reason": null, "acc": 0.9835728952772074, "pooledAcc": 0.9835728952772074, "delta": 0.0, "diverges": false, "href": "UD_Italian-ISDT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "VIT", "rows": 12528, "unkRows": 867, "status": "ok", "excluded": false, "reason": null, "acc": 0.9864325618515563, "pooledAcc": 0.9864325618515563, "delta": 0.0, "diverges": false, "href": "UD_Italian-VIT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "ParTUT", "rows": 2684, "unkRows": 60, "status": "ok", "excluded": false, "reason": null, "acc": 0.9888475836431226, "pooledAcc": 0.9888475836431226, "delta": 0.0, "diverges": false, "href": "UD_Italian-ParTUT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "ParlaMint", "rows": 998, "unkRows": 5, "status": "ok", "excluded": false, "reason": null, "acc": 0.99, "pooledAcc": 0.99, "delta": 0.0, "diverges": false, "href": "UD_Italian-ParlaMint.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 1253, "unkRows": 1, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Italian-PUD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "MarkIT", "rows": 1999, "unkRows": 41, "status": "ok", "excluded": false, "reason": null, "acc": 0.99, "pooledAcc": 0.99, "delta": 0.0, "diverges": false, "href": "UD_Italian-MarkIT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 11126, "color": "var(--yes)"}, {"cls": "no", "cnt": 149, "color": "var(--no)"}, {"cls": "unk", "cnt": 867, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 10128, "H": 0.0592, "acc": 0.9931, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 10059, "color": "var(--yes)"}, {"cls": "no", "cnt": 69, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 1147, "H": 0.3664, "acc": 0.9299, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 1067, "color": "var(--yes)"}, {"cls": "no", "cnt": 80, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 11275, "H": 0.1017, "acc": 0.9867, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 11126, "color": "var(--yes)"}, {"cls": "no", "cnt": 149, "color": "var(--no)"}], "rule": "DET.form = le", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "A pochi verrebbe in mente di includere , fra le tante corporazioni in cui si articola il potere reale in il nostro paese , anche un gruppo di neppure 3 mila scienziati , formato da una stretta \u00e9lite perennemente in viaggio fra un congresso e l' altro , da gli Stati Uniti e il Giappone , da la Finlandia a la Sicilia , e da una truppa dispersa in una ventina di dipartimenti in le universit\u00e0 italiane , in alcuni laboratori nazionali e in <strong>qualche<\/strong> prestigioso <strong>centro<\/strong> di ricerca europeo .", "verb": "centro", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=centro", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "qualche", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=qualche", "xpos=DI", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Ind"], "label": "yes", "route": {"0": "qualche"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4115%22%20%3B%20A%20%5Bform%3D%22qualche%22%5D%20%3B%20B%20%5Bform%3D%22centro%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Cadavere in <strong>il<\/strong> <strong>fiume<\/strong> forse un suicidio .", "verb": "fiume", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=fiume", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6812%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22fiume%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Mimina \u00e8 il diminutivo di Cosima S ha 26 anni : fino ad un mese fa , viveva con sua sorella Nadia , in <strong>un<\/strong> modesto <strong>appartamento<\/strong> di Ugento , trentamila abitanti , una ventina di chilometri da Lecce .", "verb": "appartamento", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=appartamento", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "un"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7141%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22appartamento%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Per i trasferimenti su i posti di le dotazioni organiche aggiuntive di i docenti provenienti da una altra provincia si prendano in considerazione tutti i titoli previsti da la tabella di valutazione per i trasferimenti da fuori sede ivi comprese tutte le esigenze di famiglia di cui a <strong>il<\/strong> <strong>titolo<\/strong> II di la tabella di valutazione .", "verb": "titolo", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=titolo", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4315%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22titolo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ma non \u00e8 questo l' unico indizio ad inchiodare Marcello Calabria - 27 anni , <strong>una<\/strong> <strong>vita<\/strong> da balordo - a la responsabilit\u00e0 di aver violentato una ragazza di 16 anni .", "verb": "vita", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=vita", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "una", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "una"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7184%22%20%3B%20A%20%5Bform%3D%22una%22%5D%20%3B%20B%20%5Bform%3D%22vita%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Per la gente di volo , tuttavia , la strategia di risparmi elaborata da Schisano punta su la forte riduzione di il costo unitario di <strong>il<\/strong> <strong>lavoro<\/strong> , per il quale l' Alitalia \u00e8 il fanalino di coda rispetto a i concorrenti .", "verb": "lavoro", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=lavoro", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1352%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22lavoro%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Allora provai <strong>una<\/strong> terza <strong>volta<\/strong> .", "verb": "volta", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=volta", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "una", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "una"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-3392%22%20%3B%20A%20%5Bform%3D%22una%22%5D%20%3B%20B%20%5Bform%3D%22volta%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "E per dar luogo a questo aggiustamento <strong>l'<\/strong> <strong>Italia<\/strong> si potrebbe trovare a pagare pi\u00f9 di un prezzo .", "verb": "Italia", "verbFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Italia", "xpos=SP", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "l'"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5238%22%20%3B%20A%20%5Bform%3D%22l%27%22%5D%20%3B%20B%20%5Bform%3D%22Italia%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Quattordici nuovi soci entrano a far parte di lo storico circolo , e <strong>il<\/strong> <strong>presidente<\/strong> Gianni Battistoni li ha voluti festeggiare a la grande .", "verb": "presidente", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=presidente", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7000%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22presidente%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In <strong>il<\/strong> <strong>computo<\/strong> di il servizio valutabile a i sensi di il presente articolo non deve essere considerato l' anno scolastico in corso .", "verb": "computo", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=computo", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4305%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22computo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Titolo DPR 29/09/73 n. 603 art. 8 GU 268/73 decreto di il presidente di <strong>la<\/strong> <strong>repubblica<\/strong> 29 settembre 1973 numero 603 articolo 8 gazzetta ufficiale n. 268 di il 1973 modifiche ed integrazioni a il TU di le leggi su i servizi di la riscossione di le II DD approvato con DPR 15 maggio 1963 , n. 858 .", "verb": "repubblica", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=repubblica", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5411%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22repubblica%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il problema \u00e8 che il fronte di le banche \u00e8 tutt' altro che compatto : quelle di la galassia Mediobanca puntano a consolidare <strong>la<\/strong> <strong>cooptazione<\/strong> di Ferfin - Montedison , alcune come l' istituto San Paolo di Torino e il Monte di i Paschi di Siena stanno valutando se andare a lo scontro aperto oppure defilar si , le banche minori cercano di capire cosa accadr\u00e0 .", "verb": "cooptazione", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=cooptazione", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8012%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22cooptazione%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Da il primo novembre dovrebbe essere introdotto a Fiumicino il sistema telematico Cute , a lungo richiesto da le compagnie , che solo cos\u00ec potranno accedere da <strong>i<\/strong> <strong>terminali<\/strong> di l' aeroporto direttamente a i computer centrali .", "verb": "terminali", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=terminale", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1154%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22terminali%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In le mani di i magistrati \u00e8 finito anche <strong>il<\/strong> <strong>protocollo<\/strong> d' intesa siglato tra Sasea Italia , ( gi\u00e0 iniziative industriali ) , Sanpaolo Finance e Cofilp :", "verb": "protocollo", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=protocollo", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2268%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22protocollo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>L'<\/strong> <strong>intesa<\/strong> ha avuto un effetto marginale su l' andamento di la borsa valori , che ha recuperato ieri terreno seguendo una ripresa di le quotazioni obbligazionarie .", "verb": "intesa", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=intesa", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "l'"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-584%22%20%3B%20A%20%5Bform%3D%22L%27%22%5D%20%3B%20B%20%5Bform%3D%22intesa%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "I comunisti italiani hanno da tempo affermato che <strong>quelle<\/strong> <strong>societ\u00e0<\/strong> non solo non possono in alcun modo costituire un modello per altri paesi e particolarmente per quelli retti da sistemi democratici rappresentativi .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "quelle", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=quello", "xpos=DD", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "quelle"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5779%22%20%3B%20A%20%5Bform%3D%22quelle%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Incremento che sta continuando con <strong>la<\/strong> <strong>super<\/strong> a 1.705 lire per litro ( prezzo consigliato a partire da il 24 maggio ) e che viene giustificato come il sommar si di le altalene di il dollaro rispetto a la lira e di l' entrata a regime di i nuovi margini a i gestori ( aumentati di 4,2 lire per litro ) stabiliti in l' accordo che ha messo fine a gli scioperi di aprile .", "verb": "super", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=supero", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1133%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22super%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Biancheri dovr\u00e0 affrontare <strong>i<\/strong> complessi <strong>dossier<\/strong> europei .", "verb": "dossier", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=dossier", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8854%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22dossier%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La Continuit\u00e0 di il servizio prestato in la scuola o in la sede di attuale titolarit\u00e0 ( lettere c e d di il titolo i di la tabella di valutazione di i trasferimenti di ufficio ) deve essere attestata , da <strong>i<\/strong> docenti in <strong>soprannumero<\/strong> , con apposita dichiarazione conforme a il modello allegato f .", "verb": "soprannumero", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=soprannumero", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4302%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22soprannumero%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Gente come Maurizio Bobbi e il suo socio Sergio Cervi ( da mesi latitanti a Montecarlo dove sono stati visti a <strong>i<\/strong> <strong>box<\/strong> Minardi in occasione di l' ultimo Gran Premio ) che con le loro \" cartiere \" Publimarketing e New Way Advertising erano i re di la sponsorizzazione gonfiata in il mondo di la Formula 1 , o come Giovanni Arnaboldi , ( di cui la procura di Torino ha chiesto in i giorni scorsi un primo rinvio a giudizio ) , l' ex pilota di offshore che con le sue rivelazioni aveva fatto arrestare Marcello Dell' Utri .", "verb": "box", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=box", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9081%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22box%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La delega a questo organismo permette non solo di definire caratteristiche minime di sicurezza , ma permette di individuare anche possibili innalzamenti di <strong>questi<\/strong> <strong>standard<\/strong> .", "verb": "standard", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=standard", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "questi", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=questo", "xpos=DD", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "questi"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5047%22%20%3B%20A%20%5Bform%3D%22questi%22%5D%20%3B%20B%20%5Bform%3D%22standard%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Per una sera niente racchette , <strong>niente<\/strong> <strong>vogatori<\/strong> , niente palloni : per gli sportivissimi soci di il circolo canottieri Roma , \u00e8 quasi uno shock , ma gioved\u00ec sera di buon grado lasciano a casa pantaloncini corti e polo , e indossano senza insofferenza impeccabili completi scuri e le cravatte d' ordinanza a bandierine giallorosse .", "verb": "vogatori", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=vogatore", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "niente", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=niente", "xpos=DI", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Ind"], "label": "no", "route": {"0": "niente"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6998%22%20%3B%20A%20%5Bform%3D%22niente%22%5D%20%3B%20B%20%5Bform%3D%22vogatori%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Posso dire che l' italiano me l' hanno insegnato Pinelli , Flaiano , Zavattini e tutti gli sceneggiatori di <strong>quei<\/strong> <strong>film<\/strong> indimenticabili .", "verb": "film", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=film", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "quei", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=quello", "xpos=DD", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "quei"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9239%22%20%3B%20A%20%5Bform%3D%22quei%22%5D%20%3B%20B%20%5Bform%3D%22film%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\u00c8 necessario estendere e rafforzare l' intesa di cui gi\u00e0 i comunisti sono stati promotori in tante realt\u00e0 di il paese , tra <strong>i<\/strong> <strong>lavoratori<\/strong> dipendenti e i ceti medi di la produzione e di i servizi .", "verb": "lavoratori", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=lavoratore", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6001%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22lavoratori%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In Europa , a <strong>i<\/strong> <strong>film<\/strong> Usa spetta il 74 % di gli incassi , a i film nazionali il 17 % e a quelli di gli altri paesi europei il 7 % circa .", "verb": "film", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=film", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-900%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22film%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La segretaria non dovrebbe far altro che aggiungere a la lettera gli abbellimenti grafici , correggere gli errori di battitura e di ortografia ( da una inchiesta americana si \u00e8 scoperto che uno di i principali ostacoli a la diffusione di le tastiere su le scrivanie di <strong>i<\/strong> <strong>manager<\/strong> \u00e8 proprio il loro timore di rivelare una scarsa conoscenza di l' ortografia che pu\u00f2 essere invece camuffata in la dettatura o con una scrittura a mano molto nervosa ) , e rispedir la a il manager per eventuali ripensamenti o per l' ok definitivo , sempre usando posta elettronica .", "verb": "manager", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=manager", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4037%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22manager%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ieri , infine , il comitato per <strong>i<\/strong> tre <strong>referendum<\/strong> su la legge Mamm\u00ec ha protestato per il suo mancato ricevimento da parte di il presidente di la camera , Irene Pivetti .", "verb": "referendum", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=referendum", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-374%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22referendum%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Per una sera <strong>niente<\/strong> <strong>racchette<\/strong> , niente vogatori , niente palloni : per gli sportivissimi soci di il circolo canottieri Roma , \u00e8 quasi uno shock , ma gioved\u00ec sera di buon grado lasciano a casa pantaloncini corti e polo , e indossano senza insofferenza impeccabili completi scuri e le cravatte d' ordinanza a bandierine giallorosse .", "verb": "racchette", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=racchetta", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "niente", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=niente", "xpos=DI", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Ind"], "label": "no", "route": {"0": "niente"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6998%22%20%3B%20A%20%5Bform%3D%22niente%22%5D%20%3B%20B%20%5Bform%3D%22racchette%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\" professore - gli ha chiesto <strong>un<\/strong> <strong>signore<\/strong> mentre eravamo in il bar - , se vincer\u00e0 le elezioni , in il suo governo inserir\u00e0 tecnici o politici ?", "verb": "signore", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=signore", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "un"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9809%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22signore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Su il piano macroeconomico , dunque , le infrastrutture si delineano come un vantaggio competitivo offerto da una citt\u00e0 rispetto ad altre , non solo in stretti termini di economie esterne fruibili da le attivit\u00e0 produttive , ma anche in termini di determinanti di l' ambiente socio economico in cui sono inserite e operano <strong>tali<\/strong> <strong>attivit\u00e0<\/strong> e di la qualit\u00e0 di la vita che le diverse aree sono in grado di offrire .", "verb": "attivit\u00e0", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=attivit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "tali", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=tale", "xpos=DD", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Dem"], "label": "no", "route": {"0": "tali"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-17%22%20%3B%20A%20%5Bform%3D%22tali%22%5D%20%3B%20B%20%5Bform%3D%22attivit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}], "2": [{"sentence": "a ) punti 2 per frazioni di anno pari o superiori a 4 mesi , b ) punti 4 per frazioni di anno pari o superiori a 8 mesi , proporzionalmente le frazioni di anno di servizio di ruolo di cui a la b ) di il punto i di la tabella di valutazione saranno valutate rispettivamente in la misura di punti 1 per frazioni di anno pari a 8 mesi , in la stessa misura saranno valutate le frazioni di servizio pre ruolo riconosciuto o riconoscibile ad es il docente che ha prestato 6 anni di servizio pre ruolo ha diritto , per tale servizio , a <strong>le<\/strong> <strong>attribuzioni<\/strong> di punti 16 15 3 pi\u00f9 1 per 4 mesi eccedenti il quinto anno di riconoscimento o riconoscibile .", "verb": "attribuzioni", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=attribuzione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4291%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22attribuzioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "E tra questi , c' \u00e8 chi ha fornito a Salamone informazioni preziose su <strong>le<\/strong> <strong>speranze<\/strong> di Gorrini di risalire la china e su gli aiuti che si attendeva .", "verb": "speranze", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=speranza", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9054%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22speranze%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\u00c8 enorme , maestosa , anche cos\u00ec sdraiata in l' acqua com' \u00e8 : una di <strong>le<\/strong> <strong>statue<\/strong> pi\u00f9 grandi che l' antica Grecia ha restituito a la Grecia di oggi .", "verb": "statue", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=statua", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6502%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22statue%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Possono chiedere l' assegnazione provvisoria gli insegnanti che , avendo titolo a partecipare a i trasferimenti di cui a le precedenti II e III fase ( art. 64 ) , abbiano chiesto e non ottenuto il trasferimento , incluso il trasferimento annuale di cui a il titolo IV di la presente o m , per nessuna di le preferenze gi\u00e0 indicate in la relativa domanda ( art. 73 , I comma , DPR 31/5/74 , n. 417 ) , a condizione che sussistano <strong>le<\/strong> sole <strong>ipotesi<\/strong> di ricongiungimento a il coniuge o di ricongiungimento a la famiglia per esigenze di assistenza a i figli minori o inabili ed a i genitori anziani , cos\u00ec come specificato in l' apposita tabella allegato c , o per gravi esigenze di salute ( art. 59 legge 11/7/1980 , n. 312 ) .", "verb": "ipotesi", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ipotesi", "xpos=S", "Gender=Fem", "<b>Number=Plur,Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4745%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22ipotesi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>Le<\/strong> stesse <strong>disposizioni<\/strong> si applicano a gli insegnanti che - a partire da l' anno scolastico 1984/85 - ottengono il trasferimento avvalendo si di la precedenza prevista a gli artt 3 e 64 di la presente ordinanza .", "verb": "disposizioni", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=disposizione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4599%22%20%3B%20A%20%5Bform%3D%22Le%22%5D%20%3B%20B%20%5Bform%3D%22disposizioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Terminate le operazioni relative a i trasferimenti ed a i passaggi in cui a le precedenti disposizioni , il Provveditore a gli studi utilizzando tutti i posti di <strong>le<\/strong> <strong>dotazioni<\/strong> organiche rimasti disponibili a tali fini dispone l' assegnazione definitiva di sede , in l' ordine , a le seguenti categorie di insegnanti :", "verb": "dotazioni", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=dotazione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4738%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22dotazioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ascoltare e comprendere , confrontar si con le ragioni di gli altri \u00e8 il modo migliore per arrivare a contrastare e a combattere con consapevolezza e senza settarismi di parte <strong>le<\/strong> <strong>posizioni<\/strong> che si considerano erronee rispetto a gli interessi di i lavoratori e di il paese .", "verb": "posizioni", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=posizione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6255%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22posizioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Titolo DPR 29/09/73 n. 603 art. 25 GU 268/73 decreto di il presidente di la repubblica 29 settembre 1973 numero 603 articolo 25 gazzetta ufficiale n. 268 di il 1973 modifiche ed integrazioni a il TU di <strong>le<\/strong> <strong>leggi<\/strong> su i servizi di la riscossione di le II DD approvato con DPR 15 maggio 1963 , n. 858 .", "verb": "leggi", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=leggio", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5510%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22leggi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Quest' ultima accusa non solo non ha precedenti , ma rischia di scaricare su le agenzie di relazioni pubbliche ( che si occupano di la pubblicit\u00e0 ) gran parte di <strong>le<\/strong> <strong>responsabilit\u00e0<\/strong> : con le imprese citate \u00e8 stata inserita in la richiesta di risarcimento danni anche la Hill & Knowlton , che fino a la fine di gli anni sessanta ha rappresentato molte industrie di il tabacco .", "verb": "responsabilit\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=responsabilit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Plur,Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2043%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22responsabilit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Da <strong>le<\/strong> <strong>ore<\/strong> 20 in Via Boccea 590 .", "verb": "ore", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=ora", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7110%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22ore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "A il miglioramento di l' attivit\u00e0 scolastica si dovr\u00e0 affiancare , secondo il governo , un pi\u00f9 chiaro orientamento verso il mondo di il lavoro , per facilitar ne l' accesso a gli studenti , promuovendo la consulenza in <strong>le<\/strong> future <strong>carriere<\/strong> e facendo in modo che , in ogni caso , tutti i giovani che hanno raggiunto i 16 anni di et\u00e0 lascino la scuola con una concreta esperienza lavorativa .", "verb": "carriere", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=carriera", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-603%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22carriere%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>Le<\/strong> <strong>variazioni<\/strong> in i debiti e in i crediti per l' acquisizione o la vendita di attivo immobilizzato ( a esempio immobilizzazioni tecniche e partecipazioni ) devono essere esposte in il rendiconto finanziario separatamente da le variazioni connesse con la gestione reddituale .", "verb": "variazioni", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=variazione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2862%22%20%3B%20A%20%5Bform%3D%22Le%22%5D%20%3B%20B%20%5Bform%3D%22variazioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il controllo democratico di i processi di formazione , accumulazione , trasmissione di l' informazione e la visibilit\u00e0 di le fonti e di i processi decisionali costituiscono un capitolo nuovo e fondamentale di <strong>le<\/strong> <strong>libert\u00e0<\/strong> costituzionali e di i diritti individuali .", "verb": "libert\u00e0", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=libert\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Plur,Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5715%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22libert%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "3 ) le altre norme di legge attinenti a la materia di il bilancio che richiedono o possono richiedere informazioni da indicare in la nota integrativa sono : - alcune norme di legge anteriori a il D Lgs 127/91 che richiedono informazioni in la relazione di gli amministratori e che non sono state abrogate ( per esempio articolo 105 , 7 comma , dpr 917/86 che richiede la distinzione in la nota integrativa di <strong>le<\/strong> <strong>riserve<\/strong> e di i fondi in base a l' imponibilit\u00e0 fiscale ; articolo 10 , legge 72/83 che richiede l' indicazione in la nota integrativa di i beni rivalutati per effetto di leggi per conguaglio monetario ancora in patrimonio ; ) - tutte le norme future che saranno attinenti in via diretta o indiretta a il bilancio , e che richiederanno di inserire specifiche informazioni in la nota integrativa .", "verb": "riserve", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=riserva", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2716%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22riserve%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il primo emendamento prevede la nullit\u00e0 di un' ordinanza di custodia cautelare se il Gip non valuta tutti gli elementi a favore di l' imputato , mentre in la precedente versione <strong>le<\/strong> <strong>porte<\/strong> di il carcere si riaprivano se \" l' omissione \" era di il pm .", "verb": "porte", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=porta", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8932%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22porte%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Offerte anche le Popolare di Novara e le Popolare Commercio Industria ( rispettivamente min0,8 e min0,5 % ) , mentre <strong>le<\/strong> <strong>Popolare<\/strong> di l' Emilia Romagna hanno recuperato quanto ceduto luned\u00ec .", "verb": "Popolare", "verbFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Popolare", "xpos=SP", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2961%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22Popolare%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "I leader di le due fazioni non hanno risposto in via ufficiale a l' appello rivolto loro da l' inviato Onu affinch\u00e9 la tregua , che sarebbe dovuta scadere a <strong>le<\/strong> 16 <strong>ora<\/strong> italiana di ieri , fosse prorogata di un giorno per consentire a l' inviato di l' Onu di ultimare i suoi colloqui con i rappresentanti di il governo .", "verb": "ora", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ora", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-497%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22ora%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il diritto camerale , in misura fissa per le ditte individuali e <strong>le<\/strong> <strong>societ\u00e0<\/strong> personali e in misura rapportata a il capitale sociale per le societ\u00e0 di capitali , \u00e8 stato istituito da la legge 26 febbraio 1982 , numero 51 , e pi\u00f9 volte modificato in l' entit\u00e0 e in i criteri di applicazione .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1525%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il riconoscimento di <strong>le<\/strong> <strong>societ\u00e0<\/strong> di ingegneria contenuto in la legge non \u00e8 stato ancora digerito .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1410%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La complessa e articolata composizione sociale di il paese , la scomposizione e segmentazione di le classi , <strong>le<\/strong> <strong>diversit\u00e0<\/strong> crescenti tra i lavoratori , il tentativo di la parte pi\u00f9 \" forte \" di la societ\u00e0 di fare accettare la degradazione sociale di la parte pi\u00f9 debole , richiedono una rinnovata capacit\u00e0 e volont\u00e0 di unificazione di le forze di progresso .", "verb": "diversit\u00e0", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=diversit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5950%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22diversit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "- n. b. i dati si riferiscono solo a <strong>le<\/strong> singole <strong>societ\u00e0<\/strong> e non a i consolidati di gruppo .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1320%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il diritto camerale , in misura fissa per le ditte individuali e le societ\u00e0 personali e in misura rapportata a il capitale sociale per <strong>le<\/strong> <strong>societ\u00e0<\/strong> di capitali , \u00e8 stato istituito da la legge 26 febbraio 1982 , numero 51 , e pi\u00f9 volte modificato in l' entit\u00e0 e in i criteri di applicazione .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1525%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Polemiche di le associazioni di il volontariato cattolico italiano con le dichiarazioni di il leader di Forza Italia su <strong>le<\/strong> <strong>attivit\u00e0<\/strong> di solidariet\u00e0 .", "verb": "attivit\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=attivit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8984%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22attivit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\u00c8 chiaro cos\u00ec che si prosegue su una linea che aggrava le contraddizioni sociali insieme a <strong>le<\/strong> <strong>difficolt\u00e0<\/strong> di l' economia , rendendo ne pi\u00f9 acute le debolezze strutturali .", "verb": "difficolt\u00e0", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=difficolt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5907%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22difficolt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Parigi e Berlino , <strong>le<\/strong> due <strong>citt\u00e0<\/strong> , saranno i centri pulsanti di l' Europa .", "verb": "citt\u00e0", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=citt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6344%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22citt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In il settore diversi appesantimenti vistosi hanno interessato <strong>le<\/strong> <strong>terme<\/strong> di Bognanco , le condotte d' acqua e le Ferrovie Nord Milano , le cui flessioni sono state comprese tra l' 8,5 e il 5,8 per cento .", "verb": "terme", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=terme", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2964%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22terme%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ci si attende adesso , dopo l' incarico assegnato a la Morgan Stanley , che venga chiarito anche il ruolo di le istituzioni palestinesi che hanno il compito di valutare <strong>le<\/strong> <strong>priorit\u00e0<\/strong> di investimento e la fattibilit\u00e0 di i progetti di sviluppo .", "verb": "priorit\u00e0", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=priorit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-540%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22priorit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Anche per <strong>le<\/strong> <strong>crisi<\/strong> regionali il dialogo iniziato a Ginevra pu\u00f2 favorire la ricerca di una soluzione di i conflitti , compresi quelli che non coinvolgono direttamente le grandi potenze .", "verb": "crisi", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=crisi", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5644%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22crisi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Generali per quanto siano , le regole investono adesso proprio <strong>le<\/strong> <strong>tv<\/strong> Fininvest .", "verb": "tv", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=tv", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9614%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22tv%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "A pochi verrebbe in mente di includere , fra le tante corporazioni in cui si articola il potere reale in il nostro paese , anche un gruppo di neppure 3 mila scienziati , formato da una stretta \u00e9lite perennemente in viaggio fra un congresso e l' altro , da gli Stati Uniti e il Giappone , da la Finlandia a la Sicilia , e da una truppa dispersa in una ventina di dipartimenti in <strong>le<\/strong> <strong>universit\u00e0<\/strong> italiane , in alcuni laboratori nazionali e in qualche prestigioso centro di ricerca europeo .", "verb": "universit\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=universit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4115%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22universit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}], "0": [{"sentence": "L' Estensione di la alleanza pentapartita a le giunte regionali e locali - anche l\u00e0 dove era possibile una ampia maggioranza di sinistra - ha interrotto una esperienza di straordinario valore ed un processo di rinnovamento di la vita amministrativa ha rappresentato un ulteriore fattore di logoramento di <strong>la<\/strong> <strong>vita<\/strong> democratica , per il colpo inferto a il principio costituzionale di la autonomia di le regioni e di gli enti locali .", "verb": "vita", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vita", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5934%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22vita%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In caso di mancanza di posti in <strong>i<\/strong> predetti <strong>ambiti<\/strong> territoriali , il trasferimento d' ufficio \u00e8 disposto in altri comuni pi\u00f9 vicini , prima di procedere a il movimento di cui a la seconda fase , secondo l' ordine previsto da la tabella di vicinanza predisposta per ciascun comune .", "verb": "ambiti", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ambito", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4579%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22ambiti%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "A ) gli insegnanti trasferiti d' ufficio in l' ultimo triennio per soppressione di posti o per motivi di servizio non imputabili a loro colpa , limitatamente a il comune in <strong>il<\/strong> <strong>quale<\/strong> erano titolari a l' atto di il trasferimento .", "verb": "quale", "verbFeats": ["upos=PRON", "deprel=obl", "lemma=quale", "xpos=PR", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Rel"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4670%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22quale%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Una risposta accettabile a la domanda \u00e8 conosciuta solo da una cinquantina di anni , da quando il fisico tedesco americano Hans Bethe descrisse un modello di produzione di l' energia solare basato su il processo di fusione termonucleare di l' idrogeno , l' elemento pi\u00f9 abbondante di <strong>l'<\/strong> <strong>universo<\/strong> .", "verb": "universo", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=universo", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "l'"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4171%22%20%3B%20A%20%5Bform%3D%22l%27%22%5D%20%3B%20B%20%5Bform%3D%22universo%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "In <strong>ogni<\/strong> <strong>caso<\/strong> , l' attenzione di l' Antitrust non \u00e8 destinata ad esaurir si con questa segnalazione : \u00e8 sempre in corso un' indagine su le strutture contrattuali che legano i gestori a le compagnie .", "verb": "caso", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=caso", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "ogni", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=ogni", "xpos=DI", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Ind"], "label": "yes", "route": {"0": "ogni"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1134%22%20%3B%20A%20%5Bform%3D%22ogni%22%5D%20%3B%20B%20%5Bform%3D%22caso%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "b ) a gli insegnanti che , per cause a loro imputabili ad esempio <strong>la<\/strong> <strong>soppressione<\/strong> di il posto per contrazione di le classi di l' istituto magistrale cui sono stati assegnati ) , siano cessati prima di il compimento di il quinquennio da l' anzidetta assegnazione .", "verb": "soppressione", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=soppressione", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4615%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22soppressione%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Anche i trasferimenti da il governo centrale a quelli locali finiscono poi in massima parte in spese di personale , mentre la spesa per <strong>le<\/strong> <strong>pensioni<\/strong> ha stretti legami con salari e stipendi .", "verb": "pensioni", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=pensione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-658%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22pensioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il raggiungimento e il mantenimento di posizioni competitive sono sempre pi\u00f9 il risultato di la interazione tra <strong>le<\/strong> <strong>azioni<\/strong> di i singoli soggetti ( non solo economici ) e la disponibilit\u00e0 di risorse presenti in il contesto socio economico di riferimento .", "verb": "azioni", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=azione", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-3%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22azioni%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Qualora l' ammontare complessivo di <strong>gli<\/strong> <strong>aggi<\/strong> tariffati su i ruoli posti in riscossione in il corso di l' anno 1974 e quelli spettanti su i versamenti diretti effettuati da i contribuenti in lo stesso anno per le entrate tributarie di lo stato , di le province , di i comuni , di le Camere di commercio , industria , artigianato e agricoltura e di le aziende autonome di soggiorno , cura o turismo risulti inferiore a l' ammontare di gli aggi tariffati su i ruoli posti in riscossione a gli stessi titoli in l' anno 1972 , gli esattori hanno diritto a il pagamento di la differenza a carico di il bilancio di lo stato .", "verb": "aggi", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=aggio", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "gli", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "gli"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5535%22%20%3B%20A%20%5Bform%3D%22gli%22%5D%20%3B%20B%20%5Bform%3D%22aggi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Segnalati pesci piranha in <strong>le<\/strong> <strong>anse<\/strong> di il Ticino probabilmente gettati da collezionisti di acquari .", "verb": "anse", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ansa", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-7416%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22anse%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Questa intesa e queste convergenze , da realizzar si in il rispetto di le reciproche autonomie , chiede oggi di misurar si con la peculiarit\u00e0 che la piccola impresa presenta rispetto a <strong>i<\/strong> <strong>temi<\/strong> di l' occupazione , di lo sviluppo di il Mezzogiorno , di l' accesso a questo mondo di le professionalit\u00e0 espulse da la grande impresa , di un nuovo democratico sistema di relazioni sindacali .", "verb": "temi", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=tema", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6006%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22temi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il docente che chiede di fruire di la precedenza assoluta prevista da l' ultimo comma di l' art. 6 di la presente ordinanza non vedenti , emodializzati , ecc debbono presentare con documentazione rilasciata da gli organi di cui a il precedente comma terzo la propria particolare condizione fisica , nonch\u00e9 in il caso di docenti in emodialisi , una dichiarazione personale , che contenga <strong>i<\/strong> seguenti <strong>elementi<\/strong> :", "verb": "elementi", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=elemento", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-4274%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22elementi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Non vorrei che si continuasse in <strong>l'<\/strong> <strong>errore<\/strong> di assegnare pochi fondi e poi , per far funzionare lo stesso l' amministrazione toccassero importanti garanzie che attualmente tutelano i cittadini onesti .", "verb": "errore", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=errore", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "l'", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "l'"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-835%22%20%3B%20A%20%5Bform%3D%22l%27%22%5D%20%3B%20B%20%5Bform%3D%22errore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "1 ) i criteri applicati in la valutazione di le voci di il bilancio , in <strong>le<\/strong> <strong>rettifiche<\/strong> di valore e in la conversione di i valori non espressi a l' origine in moneta avente corso legale in lo stato ;", "verb": "rettifiche", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=rettifica", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2665%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22rettifiche%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Da Renato Altissimo a Romano Venturi , <strong>il<\/strong> lungo <strong>elenco<\/strong> di i 32 rinviati a giudizio comprende otto ex parlamentari di il Psi , cinque di la Dc , tre di il Pri , due esponenti di la Lega Nord , e uno rispettivamente di il Pli e di il Psdi .", "verb": "elenco", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=elenco", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "il", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "yes", "route": {"0": "il"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-365%22%20%3B%20A%20%5Bform%3D%22il%22%5D%20%3B%20B%20%5Bform%3D%22elenco%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "non ci \u00e8 possibile neppure fare ipotesi fin quando non avremo compiuto <strong>le<\/strong> <strong>analisi<\/strong> termografiche e il restauro che cominciamo in questi giorni e ci porter\u00e0 via un paio di anni \" .", "verb": "analisi", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=analisi", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6509%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22analisi%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Il riconoscimento di <strong>le<\/strong> <strong>societ\u00e0<\/strong> di ingegneria contenuto in la legge non \u00e8 stato ancora digerito .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-1410%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Ieri , infine , il comitato per <strong>i<\/strong> tre <strong>referendum<\/strong> su la legge Mamm\u00ec ha protestato per il suo mancato ricevimento da parte di il presidente di la camera , Irene Pivetti .", "verb": "referendum", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=referendum", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-374%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22referendum%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "<strong>Le<\/strong> <strong>difficolt\u00e0<\/strong> e la crisi di il movimento sindacale derivano in primo luogo da le modificazioni profonde in la realt\u00e0 produttiva .", "verb": "difficolt\u00e0", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=difficolt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6068%22%20%3B%20A%20%5Bform%3D%22Le%22%5D%20%3B%20B%20%5Bform%3D%22difficolt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Questo \u00e8 il nodo essenziale che le forze di il socialismo hanno dinnanzi a s\u00e9 , da sciogliere , in <strong>le<\/strong> <strong>societ\u00e0<\/strong> sviluppate di l' Occidente e di l' Europa .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5607%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Sa per\u00f2 con certezza quali sono <strong>le<\/strong> <strong>difficolt\u00e0<\/strong> per attuare la conservatoria meccanizzata .", "verb": "difficolt\u00e0", "verbFeats": ["upos=NOUN", "deprel=ccomp", "lemma=difficolt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-855%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22difficolt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Persino in gli Stati Uniti - che con l' amministrazione Reagan sono diventati la guida di l' attacco conservatore - a il rafforzamento di il blocco militare industriale corrisponde il progressivo indebolimento di una parte consistente di l' economia e di <strong>le<\/strong> <strong>societ\u00e0<\/strong> americane .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-5725%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Tuttavia , <strong>le<\/strong> <strong>novit\u00e0<\/strong> che caratterizzano la vendita di l' Ina sono di rilevanza tale da far pensare che il modello adottato possa essere il punto di riferimento di l' esecutivo anche in le successive privatizzazioni .", "verb": "novit\u00e0", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=novit\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-40%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22novit%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "La risposta di <strong>la<\/strong> <strong>canottieri<\/strong> Lazio : gioved\u00ec prossimo appuntamento con Fini , Berlusconi e Rutelli .", "verb": "canottieri", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=canottiere", "xpos=S", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "la", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "la"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-6997%22%20%3B%20A%20%5Bform%3D%22la%22%5D%20%3B%20B%20%5Bform%3D%22canottieri%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "il progetto Euralille sta rivitalizzando un' area in forte declino industriale ; la dotazione di un importante sistema di infrastrutture \u00e8 il punto di forza per lo sviluppo di <strong>le<\/strong> <strong>citt\u00e0<\/strong> di l' innovazione di la regione PACA ( Provence , Alpes , C\u00f2te d' Azur ) di cui Marsiglia , Nizza , Tolone e Avignone sono i poli di maggior rilievo .", "verb": "citt\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=citt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-11%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22citt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "L' interesse di gli investitori si \u00e8 soffermato su i titoli di <strong>le<\/strong> <strong>societ\u00e0<\/strong> in odore di acquisizione , risentendo di la recente offerta lanciata da la Sandoz in i confronti di la Gerber .", "verb": "societ\u00e0", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=societ\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2931%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22societ%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Escludendo il ramo grandine , la raccolta diretta di <strong>i<\/strong> <strong>rami<\/strong> danni risulta cresciuta di l' 8,3 % a quota 315,9 miliardi .", "verb": "rami", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ramie", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "i", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "i"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-2362%22%20%3B%20A%20%5Bform%3D%22i%22%5D%20%3B%20B%20%5Bform%3D%22rami%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Basta il mercato , e <strong>le<\/strong> <strong>citt\u00e0<\/strong> in il caos domano il traffico .", "verb": "citt\u00e0", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=citt\u00e0", "xpos=S", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "le", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Fem", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "le"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-793%22%20%3B%20A%20%5Bform%3D%22le%22%5D%20%3B%20B%20%5Bform%3D%22citt%C3%A0%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "\" professore - gli ha chiesto <strong>un<\/strong> <strong>signore<\/strong> mentre eravamo in il bar - , se vincer\u00e0 le elezioni , in il suo governo inserir\u00e0 tecnici o politici ?", "verb": "signore", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=signore", "xpos=S", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "un", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=uno", "xpos=RI", "Definite=Ind", "Gender=Masc", "<b>Number=Sing<\/b>", "PronType=Art"], "label": "no", "route": {"0": "un"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-9809%22%20%3B%20A%20%5Bform%3D%22un%22%5D%20%3B%20B%20%5Bform%3D%22signore%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}, {"sentence": "Giorgio Bottene , il fantasioso imprenditore \" padre \" di la formula di il contratto con <strong>gli<\/strong> <strong>optional<\/strong> , ha affidato a le colonne di un quindicinale locale il suo originalissimo annuncio .", "verb": "optional", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=optional", "xpos=S", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "gli", "nsubjFeats": ["upos=DET", "deprel=det", "lemma=il", "xpos=RD", "Definite=Def", "Gender=Masc", "<b>Number=Plur<\/b>", "PronType=Art"], "label": "no", "route": {"0": "gli"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Italian-VIT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22VIT-8056%22%20%3B%20A%20%5Bform%3D%22gli%22%5D%20%3B%20B%20%5Bform%3D%22optional%22%5D%20%20%7D", "treebankName": "UD_Italian-VIT"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Italian \u00b7 VIT \u00b7 NP head-DET_Number", "rol
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

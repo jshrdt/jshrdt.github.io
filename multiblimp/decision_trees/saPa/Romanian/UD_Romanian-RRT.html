@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Romanian \u00b7 RRT", "languageName": "Romanian", "accuracy": "99.8%", "testAccuracy": "98.8%", "testN": 328, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "2,947", "predictor": "Aux_nsubj_Person", "rootAccuracy": "99.7%", "trainAccuracy": "99.7%", "treebank": "RRT", "nav": {"pooledAcc": 0.9927272727272727, "pooledTestN": 550, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 5498, "pooledUnkRows": 135, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "ArT", "rows": 4, "unkRows": 0, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 3275, "unkRows": 63, "status": "ok", "excluded": false, "reason": null, "acc": 0.9878048780487805, "pooledAcc": 0.9878048780487805, "delta": 0.0, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "SiMoNERo", "rows": 2219, "unkRows": 72, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 2940, "color": "var(--yes)"}, {"cls": "no", "cnt": 7, "color": "var(--no)"}, {"cls": "unk", "cnt": 63, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 2947, "H": 0.0256, "acc": 0.9975, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2940, "color": "var(--yes)"}, {"cls": "no", "cnt": 7, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "<strong>Mul\u021bi</strong> <strong>am</strong> fi voit s\u0103 renun\u021b\u0103m , dar ne era team\u0103 s\u0103 nu -l sup\u0103r\u0103m pe Atila , la care \u021bineam foarte mult .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=2+"], "nsubj": "mul\u021bi", "nsubjFeats": ["upos=PRON", "lemma=mult", "xpos=Pi3mpr", "Case=Acc,Nom", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "PronType=Ind", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6881%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Mul%C8%9Bi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Nou\u0103 din ace\u0219tia s- au distrus , cinci , precum ni\u0219te g\u00e2ndaci pe spate , s- au imobilizat \u00een cratere scut \u0219i doar <strong>nou\u0103</strong> <strong>au</strong> reu\u0219it s\u0103 opereze \u00een \u00eentregime cu infanteria .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "nou\u0103", "nsubjFeats": ["upos=PRON", "lemma=eu", "xpos=Pp1-pd--------s", "Case=Dat", "Number=Plur", "<b>Person=1</b>", "PronType=Prs", "Strength=Strong", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4821%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22nou%C4%83%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pentru mine , <strong>care</strong> <strong>am</strong> \u00eembr\u0103\u021bi\u0219at matematicile , \u00een\u021belege\u021bi c\u0103 Banciu a fost ceva mai mult ca pentru voi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "lemma=care", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6914%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Te- a strigat pre\u0219edintele Nae Dumitrescu , pe scen\u0103 , \u0219i ai <strong>no\u0219tri</strong> , <strong>au</strong> spus c\u0103 lipse\u0219ti .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "no\u0219tri", "nsubjFeats": ["upos=PRON", "lemma=meu", "xpos=Ps1mp-p", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1</b>", "Poss=Yes", "PronType=Prs", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6705%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22no%C8%99tri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Tot ce a fost postmodernismul capabil s\u0103 fac\u0103 este s\u0103 semnaleze dispari\u021bia \u0219i pierderea a tot <strong>ce</strong> <strong>am</strong> avut drag , \u0219i r\u0103m\u00e2ne ca alt\u0103 genera\u021bie de arti\u0219ti s\u0103 ne scoat\u0103 din mocirl\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1"], "nsubj": "ce", "nsubjFeats": ["upos=PRON", "lemma=ce", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5148%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ce%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "/ sub cea din urm\u0103 raz\u0103 de soare , / un <strong>glas</strong> t\u0103ios ca o sabie / <strong>\u00eei</strong> striga s\u0103 se urce \u00een corabie .", "verb": "\u00eei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--2s", "Number=Sing", "<b>Person=2</b>", "SubjAuxCount=1"], "nsubj": "glas", "nsubjFeats": ["upos=NOUN", "lemma=glas", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2412%22%20%3B%20A%20%5Bform%3D%22%C3%AEi%22%5D%20%3B%20B%20%5Bform%3D%22glas%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "DREPT CARE , <strong>subsemna\u021bii</strong> , \u00eemputernici\u021bi corespunz\u0103tor \u00een acest sens , <strong>am</strong> semnat prezentul protocol .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1</b>", "SubjAuxCount=1"], "nsubj": "subsemna\u021bii", "nsubjFeats": ["upos=NOUN", "lemma=subsemnat", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4507%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22subsemna%C8%9Bii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Noi doar am luat \u00een considerare problema \u00een leg\u0103tur\u0103 cu <strong>cine</strong> <strong>va</strong> suporta pierderea c\u00e2nd bunurile vor PIERI .", "verb": "va", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "cine", "nsubjFeats": ["upos=PRON", "lemma=cine", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5489%22%20%3B%20A%20%5Bform%3D%22va%22%5D%20%3B%20B%20%5Bform%3D%22cine%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen ultimii ani , <strong>Rom\u00e2nia</strong> <strong>a</strong> devenit o destina\u021bie preferat\u0103 pentru mul\u021bi europeni ( mai mult de 60 % Rom\u00e2nia ofer\u0103 \u0219i atrac\u021bii turistice naturale , precum Delta Dun\u0103rii , Por\u021bile de Fier , Pe\u0219tera Sc\u0103ri\u0219oara \u0219i alte pe\u0219teri din Mun\u021bii Apuseni .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "Rom\u00e2nia", "nsubjFeats": ["upos=PROPN", "lemma=Rom\u00e2nia", "xpos=Np", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7581%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Rom%C3%A2nia%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Quartila</strong> Q1 <strong>este</strong> un num\u0103r cu proprietatea c\u0103 o p\u0103trime din date au valori mai mici dec\u00e2t Q1 \u0219i trei p\u0103trimi din date au valori mai mari dec\u00e2t Q1 .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "quartila", "nsubjFeats": ["upos=NOUN", "lemma=quartil\u0103", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7928%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Quartila%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Acesta</strong> <strong>este</strong> un curent spre exterior activat de voltaj , cu o cinetic\u0103 foarte lent\u0103 , care se activeaz\u0103 progresiv \u00een timpul platoului poten\u021bialului de ac\u021biune miocardic , fiind principalul curent care cauzeaz\u0103 repolarizarea , at\u00e2t la fibrele cu r\u0103spuns rapid c\u00e2t \u0219i la cele cu r\u0103spuns lent .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "acesta", "nsubjFeats": ["upos=PRON", "lemma=acesta", "xpos=Pd3msr", "Case=Acc,Nom", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "PronType=Dem", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7313%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Acesta%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Gibson</strong> <strong>este</strong> \u00een top 10 la toate categoriile - bani , coperte de reviste , apari\u021bii \u00een pres\u0103 , prezen\u021be pe web , se arat\u0103 \u00een \" Forbes \" .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "Gibson", "nsubjFeats": ["upos=PROPN", "lemma=Gibson", "xpos=Np", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1221%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22Gibson%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Femeile , cum le <strong>e</strong> <strong>obiceiul</strong> , vorbeau mult .", "verb": "e", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "obiceiul", "nsubjFeats": ["upos=NOUN", "lemma=obicei", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-312%22%20%3B%20A%20%5Bform%3D%22e%22%5D%20%3B%20B%20%5Bform%3D%22obiceiul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Nu -i de mirare c\u0103 <strong>Spectra</strong> slab de 40 kg ( 851 b ) <strong>a</strong> devenit universal pentru pletora cascadorilor de m\u0103rime medie .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "Spectra", "nsubjFeats": ["upos=PROPN", "lemma=Spectra", "xpos=Np", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4790%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Spectra%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Orice sunet pe care l- <strong>ar</strong> fi scos <strong>Winston</strong> , mai tare dec\u00e2t o \u0219oapt\u0103 foarte slab\u0103 , putea fi captat ; \u00een plus , c\u00e2t timp st\u0103tea \u00een c\u00e2mpul vizual al pl\u0103cii de metal , putea fi \u0219i v\u0103zut , nu numai auzit .", "verb": "ar", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3", "<b>Person=3</b>", "SubjAuxCount=2+"], "nsubj": "Winston", "nsubjFeats": ["upos=PROPN", "lemma=Winston", "xpos=Np", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-170%22%20%3B%20A%20%5Bform%3D%22ar%22%5D%20%3B%20B%20%5Bform%3D%22Winston%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "De c\u00e2nd ne- am mutat aici <strong>astmul</strong> s- <strong>a</strong> \u00eenr\u0103ut\u0103\u021bit .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "astmul", "nsubjFeats": ["upos=NOUN", "lemma=astm", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4841%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22astmul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Cel mai bine ilustrat <strong>este</strong> <strong>compartimentul</strong> traducerilor , unde sunt de semnalat nume multe \u0219i autori foarte diferi\u021bi valoric .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "compartimentul", "nsubjFeats": ["upos=NOUN", "lemma=compartiment", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2071%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22compartimentul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "C\u0103pitanul GUNG HO ' Ochi de pas\u0103re \" se \u00eendrepta spre cas\u0103 de pe m\u0103ri \u00eenghe\u021bate noaptea trecut\u0103 dup\u0103 ce <strong>echipajul</strong> lui aproape <strong>a</strong> murit de foame .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "echipajul", "nsubjFeats": ["upos=NOUN", "lemma=echipaj", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4989%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22echipajul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Este un moment \u00een care <strong>valoarea</strong> <strong>va</strong> ie\u0219i la iveal\u0103 a\u0219a cum nu s- a mai \u00eent\u00e2mplat de aproape dou\u0103 decenii , de la precedenta trecere a Nodului Nord prin Berbec .", "verb": "va", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "valoarea", "nsubjFeats": ["upos=NOUN", "lemma=valoare", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1382%22%20%3B%20A%20%5Bform%3D%22va%22%5D%20%3B%20B%20%5Bform%3D%22valoarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Din motive de claritate , <strong>este</strong> necesar\u0103 <strong>codificarea</strong> dispozi\u021biilor \u00een cauz\u0103 .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "codificarea", "nsubjFeats": ["upos=NOUN", "lemma=codificare", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1567%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22codificarea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Principalii <strong>indicatori</strong> ai eficacit\u0103\u021bii <strong>au</strong> fost timpul de supravie\u021buire al pacien\u021bilor sau perioada de timp care s- a scurs p\u00e2n\u0103 c\u00e2nd cancerul pacientului a \u00eenceput s\u0103 se agraveze .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3</b>", "SubjAuxCount=2+"], "nsubj": "indicatori", "nsubjFeats": ["upos=NOUN", "lemma=indicator", "xpos=Ncmp-n", "Definite=Ind", "Gender=Masc", "Number=Plur", "<b>Person=3</b>", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3924%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22indicatori%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Cel mai cunoscut club de fotbal din Rom\u00e2nia este Steaua Bucure\u0219ti , care \u00een 1986 a fost prima echip\u0103 din estul Europei \u0219i singura din Rom\u00e2nia <strong>ce</strong> <strong>a</strong> c\u00e2\u0219tigat Cupa Campionilor Europeni .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3</b>", "SubjAuxCount=1"], "nsubj": "ce", "nsubjFeats": ["upos=PRON", "lemma=ce", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3</b>", "PronType=Int,Rel", "deprel=nsubj"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7626%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22ce%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}]}, "PAIRS": []};
+const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "roleA": "nsubj", "roleB": "aux", "decisiveFeat": "Person", "swappedRole": "B", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Romanian \u00b7 RRT", "languageName": "Romanian", "accuracy": "99.8%", "testAccuracy": "99.3%", "testN": 447, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "4,023", "predictor": "Aux_nsubj_Person", "rootAccuracy": "99.7%", "trainAccuracy": "99.7%", "treebank": "RRT", "nav": {"pooledAcc": 0.9960159362549801, "pooledTestN": 753, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 7531, "pooledUnkRows": 258, "pooledHref": "../Romanian.html", "pooledCurrent": false, "items": [{"name": "ArT", "rows": 4, "unkRows": 0, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "UD_Romanian-ArT.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "RRT", "rows": 4470, "unkRows": 124, "status": "ok", "excluded": false, "reason": null, "acc": 0.9932885906040269, "pooledAcc": 0.9932885906040269, "delta": 0.0, "diverges": false, "href": "UD_Romanian-RRT.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": true}, {"name": "SiMoNERo", "rows": 3057, "unkRows": 134, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "UD_Romanian-SiMoNERo.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "../index.html"}, "excludedClasses": ["unk"], "fitExcluded": [{"role": "b", "feat": "Person"}, {"role": "b", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 4013, "color": "var(--yes)"}, {"cls": "no", "cnt": 10, "color": "var(--no)"}, {"cls": "unk", "cnt": 124, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 4023, "H": 0.0262, "acc": 0.9974, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 4013, "color": "var(--yes)"}, {"cls": "no", "cnt": 10, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": false, "keepThresholdAcc": null, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "DREPT CARE , <strong>subsemna\u021bii<\/strong> , \u00eemputernici\u021bi corespunz\u0103tor \u00een acest sens , <strong>am<\/strong> semnat prezentul protocol .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "subsemna\u021bii", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=subsemnat", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4507%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22subsemna%C8%9Bii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u0218i <strong>-a<\/strong> prins s\u0103 -mi plac\u0103 / acest <strong>eu<\/strong> \u00eensumi f\u0103r\u0103 pat\u0103 , suav \u0219i cur\u0103\u021bat de fum .", "verb": "-a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s----y", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Variant=Short", "VerbForm=Fin"], "nsubj": "eu", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=eu", "xpos=Pp1-sn--------s", "Case=Nom", "Number=Sing", "<b>Person=1<\/b>", "PronType=Prs", "Strength=Strong"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2117%22%20%3B%20A%20%5Bform%3D%22-a%22%5D%20%3B%20B%20%5Bform%3D%22eu%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Ne- <strong>am<\/strong> \u00eenscris vreo 30 de <strong>elevi<\/strong> , din 45 , c\u00e2\u021bi eram cu to\u021bii .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "elevi", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=elev", "xpos=Ncmp-n", "Definite=Ind", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-612%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22elevi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Tot ce a fost postmodernismul capabil s\u0103 fac\u0103 este s\u0103 semnaleze dispari\u021bia \u0219i pierderea a tot <strong>ce<\/strong> <strong>am<\/strong> avut drag , \u0219i r\u0103m\u00e2ne ca alt\u0103 genera\u021bie de arti\u0219ti s\u0103 ne scoat\u0103 din mocirl\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ce", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=ce", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5148%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22ce%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Sunt<\/strong> men\u021bionate numai acele <strong>evenimente<\/strong> pentru care exist\u0103 cel pu\u021bin o suspiciune \u00eentemeiat\u0103 de rela\u021bie cauzal\u0103 cu tratamentul intravenos cu TORISEL .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip1s", "Mood=Ind", "Number=Sing", "<b>Person=1<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "evenimente", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=eveniment", "xpos=Ncfp-n", "Definite=Ind", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-3993%22%20%3B%20A%20%5Bform%3D%22Sunt%22%5D%20%3B%20B%20%5Bform%3D%22evenimente%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Mul\u021bi<\/strong> <strong>am<\/strong> fi voit s\u0103 renun\u021b\u0103m , dar ne era team\u0103 s\u0103 nu -l sup\u0103r\u0103m pe Atila , la care \u021bineam foarte mult .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "mul\u021bi", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=mult", "xpos=Pi3mpr", "Case=Acc,Nom", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>", "PronType=Ind"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6881%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22Mul%C8%9Bi%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen conversa\u021bia <strong>care<\/strong> <strong>am<\/strong> avut -o \u00eemi propune s\u0103 -mi dau doctoratul la Bucure\u0219ti \u0219i , \u00eentre timp , s\u0103 primesc locul de asistent pe l\u00e2ng\u0103 catedra de geometrie analitic\u0103 .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6917%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Te- a strigat pre\u0219edintele Nae Dumitrescu , pe scen\u0103 , \u0219i ai <strong>no\u0219tri<\/strong> , <strong>au<\/strong> spus c\u0103 lipse\u0219ti .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "no\u0219tri", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=meu", "xpos=Ps1mp-p", "Gender=Masc", "Number=Plur", "Number[psor]=Plur", "<b>Person=1<\/b>", "Poss=Yes", "PronType=Prs"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6705%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22no%C8%99tri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Pentru mine , <strong>care<\/strong> <strong>am<\/strong> \u00eembr\u0103\u021bi\u0219at matematicile , \u00een\u021belege\u021bi c\u0103 Banciu a fost ceva mai mult ca pentru voi .", "verb": "am", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--1", "<b>Person=1<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6914%22%20%3B%20A%20%5Bform%3D%22am%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "/ sub cea din urm\u0103 raz\u0103 de soare , / un <strong>glas<\/strong> t\u0103ios ca o sabie / <strong>\u00eei<\/strong> striga s\u0103 se urce \u00een corabie .", "verb": "\u00eei", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=vrea", "xpos=Va--2s", "Number=Sing", "<b>Person=2<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "glas", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=glas", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2412%22%20%3B%20A%20%5Bform%3D%22%C3%AEi%22%5D%20%3B%20B%20%5Bform%3D%22glas%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>parametrul<\/strong> principal de eficacitate <strong>a<\/strong> fost propor\u021bia femeilor care nu au n\u0103scut \u0219i nu au necesitat tratament tocolitic alternativ \u00een decurs de 7 zile de la ini\u021bierea tratamentului .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "parametrul", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=parametru", "xpos=Ncmsry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4007%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22parametrul%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "S\u0103m\u0103n\u0103torismul s\u0103u excesiv \u0219i dogmatic l- a descalificat \u00een ochii moderni\u0219tilor , <strong>care<\/strong> i- <strong>au<\/strong> repro\u0219at insensibilitatea la literatura mai nou\u0103 .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "care", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=care", "xpos=Pw3--r", "Case=Acc,Nom", "<b>Person=3<\/b>", "PronType=Int,Rel"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2429%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22care%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 4 ) Tratatul CECO a expirat la 23 iulie 2002 \u0219i <strong>Comunitatea<\/strong> European\u0103 <strong>a<\/strong> preluat toate drepturile \u0219i obliga\u021biile contractate de CECO .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "comunitatea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=comunitate", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6336%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Comunitatea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Nic\u0103ieri poate nu l- <strong>ar<\/strong> fi cople\u0219it at\u00e2ta <strong>durere<\/strong> , ca -n ora\u0219ul visurilor lui \u00eendep\u0103rtate .", "verb": "ar", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3", "<b>Person=3<\/b>", "SubjAuxCount=2+", "VerbForm=Fin"], "nsubj": "durere", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=durere", "xpos=Ncfsrn", "Case=Acc,Nom", "Definite=Ind", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-286%22%20%3B%20A%20%5Bform%3D%22ar%22%5D%20%3B%20B%20%5Bform%3D%22durere%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( a ) <strong>Autorit\u0103\u021bile<\/strong> contractante <strong>sunt<\/strong> \u00eencurajate s\u0103 publice \u00een \u00eentregime caietul de sarcini \u0219i documentele suplimentare pe Internet .", "verb": "sunt", "verbFeats": ["upos=AUX", "deprel=aux:pass", "lemma=fi", "xpos=Vaip3p", "Mood=Ind", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "autorit\u0103\u021bile", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=autoritate", "xpos=Ncfpry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-6190%22%20%3B%20A%20%5Bform%3D%22sunt%22%5D%20%3B%20B%20%5Bform%3D%22Autorit%C4%83%C8%9Bile%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Anglia a pierdut cel mai important juc\u0103tor de bowling din ultimele dou\u0103 teste , \u00eentruc\u00e2t \u00een afar\u0103 de m\u00e2na rupt\u0103 a lui Gooch , <strong>Fraser<\/strong> \u0219i- <strong>a<\/strong> \u00eentins un mu\u0219chi de la coast\u0103 , \u0219i i s- a sim\u021bit lipsa acurate\u021bei lui .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "Fraser", "nsubjFeats": ["upos=PROPN", "deprel=nsubj", "lemma=Fraser", "xpos=Np", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-5550%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Fraser%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Marele <strong>ayatollah<\/strong> Ali al-Sistani , unul dintre cei mai influen\u021bi lideri religio\u0219i \u0219ii\u021bi , <strong>a<\/strong> plecat spre Najaf , \u00eenso\u021bit de c\u00e2teva mii de persoane , pentru a \u00eencerca s\u0103 pun\u0103 cap\u0103t confrunt\u0103rilor din ora\u0219ul sf\u00e2nt musulman .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "ayatollah", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=ayatollah", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-142%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22ayatollah%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>El<\/strong> <strong>este<\/strong> scutul \u0219i m\u00e2ntuirea mea .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "el", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=el", "xpos=Pp3msr--------s", "Case=Acc,Nom", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>", "PronType=Prs", "Strength=Strong"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2892%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22El%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "<strong>Una<\/strong> din primele s- <strong>a<\/strong> numit \u201e Societatea de dare la semn \u201d ( \u00eenfiin\u021bat\u0103 \u00een timpul domniei lui Al.I.Cuza .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "una", "nsubjFeats": ["upos=PRON", "deprel=nsubj", "lemma=unul", "xpos=Pi3fsr", "Case=Acc,Nom", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>", "PronType=Ind"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-7612%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22Una%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Al\u0103turi de partea de calendar , con\u021bin\u00e2nd \u0219i un istoric al edit\u0103rii calendarelor \u00een Europa \u0219i \u00een Rom\u00e2nia , interesant\u0103 <strong>este<\/strong> <strong>sec\u021biunea<\/strong> literar\u0103 .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "sec\u021biunea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=sec\u021biune", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-2786%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22sec%C8%9Biunea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "( 15 ) M\u0103surile prev\u0103zute \u00een prezenta directiv\u0103 au f\u0103cut obiectul unei proceduri de consultare public\u0103 la care <strong>au<\/strong> participat <strong>p\u0103r\u021bile<\/strong> interesate .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "p\u0103r\u021bile", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=parte", "xpos=Ncfpry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-1716%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22p%C4%83r%C8%9Bile%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Oseltamivirul nu interac\u021bioneaz\u0103 cinetic cu amoxicilina , care este eliminat\u0103 pe aceea\u0219i cale , suger\u00e2nd c\u0103 <strong>interac\u021biunea<\/strong> oseltamivirului cu aceast\u0103 cale <strong>este<\/strong> redus\u0103 .", "verb": "este", "verbFeats": ["upos=AUX", "deprel=cop", "lemma=fi", "xpos=Vaip3s", "Mood=Ind", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "Tense=Pres", "VerbForm=Fin"], "nsubj": "interac\u021biunea", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=interac\u021biune", "xpos=Ncfsry", "Case=Acc,Nom", "Definite=Def", "Gender=Fem", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4055%22%20%3B%20A%20%5Bform%3D%22este%22%5D%20%3B%20B%20%5Bform%3D%22interac%C8%9Biunea%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Precum <strong>telespectatorii<\/strong> programelor cu poli\u021bi\u0219ti <strong>au<\/strong> devenit imuni la violen\u021b\u0103 , la fel \u0219i fanii Ligii Na\u021bionale de Fotbal s- au obi\u0219nuit cu p\u0103r\u0103sirea terenului de c\u0103tre juc\u0103torii accidenta\u021bi .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "telespectatorii", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=telespectator", "xpos=Ncmpry", "Case=Acc,Nom", "Definite=Def", "Gender=Masc", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4889%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22telespectatorii%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "\u00cen mai 1990 s- <strong>au<\/strong> organizat <strong>alegeri<\/strong> ale partidelor pentru legislatur\u0103 \u0219i pre\u0219eden\u021bie .", "verb": "au", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3p", "Number=Plur", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "alegeri", "nsubjFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=alegere", "xpos=Ncfp-n", "Definite=Ind", "Gender=Fem", "Number=Plur", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-693%22%20%3B%20A%20%5Bform%3D%22au%22%5D%20%3B%20B%20%5Bform%3D%22alegeri%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}, {"sentence": "Astfel , \u00een septembrie , 1976 , un <strong>incendiu<\/strong> la bordul HMS Glasgow , care era la acel moment \u00een repara\u021bii \u00een \u0219antierul Swan Hunter , <strong>a<\/strong> rezultat \u00een moartea a opt muncitori .", "verb": "a", "verbFeats": ["upos=AUX", "deprel=aux", "lemma=avea", "xpos=Va--3s", "Number=Sing", "<b>Person=3<\/b>", "SubjAuxCount=1", "VerbForm=Fin"], "nsubj": "incendiu", "nsubjFeats": ["upos=NOUN", "deprel=nsubj", "lemma=incendiu", "xpos=Ncms-n", "Definite=Ind", "Gender=Masc", "Number=Sing", "<b>Person=3<\/b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Romanian-RRT%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-4945%22%20%3B%20A%20%5Bform%3D%22a%22%5D%20%3B%20B%20%5Bform%3D%22incendiu%22%5D%20%20%7D", "treebankName": "UD_Romanian-RRT"}]}, "PAIRS": []};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Romanian \u00b7 RRT \u00b7 Aux_nsubj_Person", "role
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();

@@ -205,8 +205,8 @@
     padding: 0 6px 0 4px;
   }
   /* A chip row that's actually scrollable, not just clipped -- with enough
-     chips (e.g. an incl.-unk tree's Agree/Disagree/det_unknown/adj_unknown/
-     both_unknown) this can run out of room next to the Samples/Pairs pill;
+     chips (e.g. an incl.-unk tree's Agree/Disagree/DET's Gender unknown/ADJ's Gender unknown/
+     Gender unknown on both) this can run out of room next to the Samples/Pairs pill;
      overflow-x:auto (rather than :hidden) lets the rest still be reached
      instead of silently disappearing past the edge. */
   .drawer-labels::-webkit-scrollbar { height: 4px; }
@@ -301,8 +301,7 @@
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Tree selector (switches between the two real trees) ── */
-  .tree-select-row { display: flex; gap: 8px; padding: 12px 18px 0; }
+  /* ── Tree-selector buttons (also the treebank chips) ── */
   .tree-select-btn {
     font-family: var(--font-ui);
     font-size: 12px;
@@ -391,7 +390,7 @@
 
   /* ── Tree panel ── */
   .tree-wrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .tree-wrap > .card-header, .tree-select-row, .treebank-row { flex: 0 0 auto; }
+  .tree-wrap > .card-header, .treebank-row { flex: 0 0 auto; }
   /* :fullscreen alone would work in most browsers, but this class (toggled
      in JS off the fullscreenchange event) is the reliable cross-browser
      hook -- the UA's own fullscreen sizing can otherwise fight this card's
@@ -422,7 +421,7 @@
      width, is what has to do the shrinking here) -- but only ever *down* to
      match this window exactly. A small tree's own diagram is deliberately
      capped from scaling *up* past its native size to fill this window the
-     same way (see sizeTreeBox()'s contentScale) -- rendering it oversized
+     same way -- rendering it oversized
      wouldn't actually help anyone read it, just look blown up -- so
      flexbox centers that smaller, native-size .tree-svg-box in the middle
      of this (still fully fitted) window instead, leaving genuine empty
@@ -679,16 +678,27 @@
   .dist-col-bar-wrap { display: flex; align-items: flex-end; justify-content: center; }
   .dist-col-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
   .dist-col-count { font-family: var(--font-mono); color: var(--text-secondary); text-align: center; white-space: nowrap; }
-  /* normal, not nowrap: a multi-word class name (e.g. "Subject unknown")
+  /* normal, not nowrap: a multi-word class name (e.g. "Subject's Gender unknown")
      wraps onto a second line within its own column instead of
      overflowing into the neighboring column -- these columns get more
      numerous and label-heavy as soon as an unk-split condition (Head/
-     Subject/Both unknown, or NPA's role-named equivalents) is in play. */
+     Subject's/Verb's/both-sides unknown, or NPA's role-named equivalents) is in play. */
   .dist-col-label { font-family: var(--font-mono); color: var(--text-tertiary); text-align: center; white-space: normal; word-break: break-word; line-height: 1.15; }
   .node-dist-popover .dist-col { width: 46px; }
   .node-dist-popover .dist-col-bar-wrap { width: 13px; height: 34px; }
   .node-dist-popover .dist-col-count { font-size: 8.5px; }
   .node-dist-popover .dist-col-label { font-size: 7.5px; }
+
+  /* Root card of a page with no fitted tree (META.rootNotice): the notice plus the class distribution. */
+  .node-box.root-notice { width: 400px; cursor: default; }
+  .root-notice .node-header { background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+  .root-notice-text { font-family: var(--font-ui); font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); margin-bottom: 10px; }
+  .root-notice-foot { margin: 8px 0 4px; font-size: 10.5px; color: var(--text-tertiary); }
+  .root-notice-dist { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; padding-top: 4px; }
+  .root-notice-dist .dist-col { width: 62px; }
+  .root-notice-dist .dist-col-bar-wrap { width: 30px; height: 56px; }
+  .root-notice-dist .dist-col-count { font-size: 12px; }
+  .root-notice-dist .dist-col-label { font-size: 9.5px; }
 
   .node-slot { position: absolute; transform: translate(-50%, -50%); }
   .node-slot.current .node-box { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); }
@@ -723,7 +733,7 @@
     max-width: calc(100% - 32px);
     /* Expanded, this panel's content (meta rows + class legend + toggle +
        branch legend + notes) can end up taller than .tree-scroll itself,
-       especially on a shorter/narrower tree like Hindi's. Capping height
+       especially on a short or narrow tree. Capping height
        here and scrolling the body below (not this element) keeps the
        header pinned in view while the rest scrolls, rather than the panel
        just running off the bottom of the card uncapped. */
@@ -1257,7 +1267,7 @@
     .card-header .hint { display: none; }
     .header-left h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tree-select-btn { padding: 4px 10px; }
-    .treebank-row, .tree-select-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
+    .treebank-row { padding-left: 12px; padding-right: 12px; gap: 6px; }
   }
 </style>
 
@@ -1278,7 +1288,6 @@
         <button type="button" class="theme-toggle" id="themeToggleBtn" title="Toggle light/dark theme">☾</button>
       </div>
     </div>
-    <div class="tree-select-row" id="treeSelectRow"></div>
     <div class="treebank-row" id="treebankRow" style="display:none"></div>
     <div class="tree-scroll" id="treeScroll">
     <div class="tree-scale-outer" id="treeScaleOuter">
@@ -1380,15 +1389,10 @@
 <script>
 (function () {
   const PALETTE = ['--trace-a', '--trace-b', '--trace-c', '--trace-d', '--trace-e'];
-  // Per-tree, not a fixed 900x500 -- that was sized to fit two hand-placed
-  // demo trees specifically; a real tree's own width/depth varies a lot
-  // (wide+shallow vs. narrow+deep), so the canvas has to too, or nodes
-  // either overlap (canvas too small for the real spread) or end up
-  // needlessly tiny (canvas too large). Set from T.CANVAS_W/H below and
-  // again in selectTree() -- see drawBaseTree()'s treeSvg viewBox update.
+  // Canvas size comes from the tree's own layout (T.CANVAS_W/H).
   let CANVAS_W, CANVAS_H;
 
-const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "num", "roleB": "np head", "decisiveFeat": "Number", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 480, "CANVAS_H": 120, "META": {"language": "Portuguese", "languageName": "Portuguese", "accuracy": "99.6%", "testAccuracy": null, "testN": null, "measure": "accuracy", "nodes": "1 (1 leaves)", "depth": "0", "trainingSamples": "273", "predictor": "NP head-NUM_Number", "rootAccuracy": "99.5%", "trainAccuracy": "99.5%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 1.0, "pooledTestN": 30, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 304, "pooledUnkRows": 1167, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "Bosque", "rows": 3, "unkRows": 232, "status": "too few samples", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-Bosque.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "CINTIL", "rows": 298, "unkRows": 197, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-CINTIL.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "GSD", "rows": 0, "unkRows": 77, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-GSD.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 0, "unkRows": 15, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-PUD.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PetroGold", "rows": 3, "unkRows": 488, "status": "too few samples", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-PetroGold.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}, {"name": "Porttinari", "rows": 0, "unkRows": 158, "status": "single label", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-Porttinari.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 272, "color": "var(--yes)"}, {"cls": "no", "cnt": 1, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"0": {"x": 380.0, "y": 60.0, "branch": "root", "n": 273, "H": 0.049, "acc": 0.9945, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 272, "color": "var(--yes)"}, {"cls": "no", "cnt": 1, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 272, "correctSwaps": 1, "pairRoleCounts": {"A": 1}}}, "EDGES": [], "PATHS": {"0": [0]}, "NODE_SAMPLES": {"0": [{"sentence": "At\u00e9 a_ as <strong>cinco</strong> de_ a <strong>manh\u00e3</strong> .", "verb": "manh\u00e3", "verbFeats": ["upos=NOUN", "deprel=dep", "lemma=manh\u00e3", "xpos=CN", "Gender=Fem", "<b>Number=Sing</b>"], "nsubj": "cinco", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=cinco", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "no", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2219662%22%20%3B%20A%20%5Bform%3D%22manh%C3%A3%22%5D%20%3B%20B%20%5Bform%3D%22cinco%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "<strong>Tr\u00eas</strong> <strong>homens</strong> abandonaram o primeiro andar de_ o pr\u00e9dio e foram presos .", "verb": "homens", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=homem", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "tr\u00eas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=tr\u00eas", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2231194%22%20%3B%20A%20%5Bform%3D%22homens%22%5D%20%3B%20B%20%5Bform%3D%22Tr%C3%AAs%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Transmiss\u00e3o de_ os <strong>dois</strong> primeiros <strong>actos</strong> .", "verb": "actos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=acto", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2226107%22%20%3B%20A%20%5Bform%3D%22actos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "\u00c9 a partir de_ as <strong>duas</strong> <strong>bases</strong> que tem em_ a Rep\u00fablica Centro-Africana , a de Bangui , a capital , e a de Bouar , a Noroeste , que os franceses controlam muito de_ o que se passa em_ a \u00c1frica Equatorial , designadamente em_ o Chade , em_ os Camar\u00f5es , em_ o Congo e em_ o Zaire .", "verb": "bases", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=base", "xpos=CN", "Gender=Fem", "<b>Number=Plur</b>"], "nsubj": "duas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=duas", "xpos=CARD", "Gender=Fem", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2236696%22%20%3B%20A%20%5Bform%3D%22bases%22%5D%20%3B%20B%20%5Bform%3D%22duas%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Amir , segundo a imprensa israelita , confiara recentemente a <strong>dois</strong> <strong>amigos</strong> :", "verb": "amigos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=amigo", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2212825%22%20%3B%20A%20%5Bform%3D%22amigos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Uns <strong>quinze</strong> <strong>minutos</strong> depois de se ter ido embora , todos aqueles prisioneiros s\u00e3o levados para um armaz\u00e9m em Kravica , onde s\u00e3o executados .", "verb": "minutos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=minuto", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "quinze", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=quinze", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2238041%22%20%3B%20A%20%5Bform%3D%22minutos%22%5D%20%3B%20B%20%5Bform%3D%22quinze%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Novos planos prev\u00eaem a mobiliza\u00e7\u00e3o de <strong>dez</strong> mil <strong>homens</strong> para a B\u00f3snia", "verb": "homens", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=homem", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dez", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dez", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2224857%22%20%3B%20A%20%5Bform%3D%22homens%22%5D%20%3B%20B%20%5Bform%3D%22dez%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Tem <strong>tr\u00eas</strong> <strong>\u00e1lbuns</strong> important\u00edssimos e de_ a\u00ed tive de escolher um .", "verb": "\u00e1lbuns", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=\u00e1lbum", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "tr\u00eas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=tr\u00eas", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2220505%22%20%3B%20A%20%5Bform%3D%22%C3%A1lbuns%22%5D%20%3B%20B%20%5Bform%3D%22tr%C3%AAs%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "de_ o seu lado , as for\u00e7as russas registaram apenas tr\u00eas mortos e <strong>seis</strong> <strong>feridos</strong> .", "verb": "feridos", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ferido", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "seis", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=seis", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%226822%22%20%3B%20A%20%5Bform%3D%22feridos%22%5D%20%3B%20B%20%5Bform%3D%22seis%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A provid\u00eancia cautelar foi colocada por <strong>dois</strong> <strong>fundos</strong> de pens\u00f5es que viram recusado o direito a_ o voto em_ a assembleia geral por alegadas irregularidades em_ a certifica\u00e7\u00e3o de_ as suas ac\u00e7\u00f5es .", "verb": "fundos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=fundo", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2238259%22%20%3B%20A%20%5Bform%3D%22fundos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Um Boeing 747 , considerado um de_ os avi\u00f5es mais seguros , n\u00e3o rebenta , em segundos , 20 minutos depois de ter descolado , sem que os <strong>dois</strong> <strong>comandantes</strong> a bordo - cada um com mais de 30 anos de experi\u00eancia - tenha comunicado a m\u00ednima anomalia t\u00e9cnica a_ os controladores a\u00e9reos em terra .", "verb": "comandantes", "verbFeats": ["upos=NOUN", "deprel=dep", "lemma=comandante", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2237986%22%20%3B%20A%20%5Bform%3D%22comandantes%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Era preciso acomodar em_ uma de_ as bancadas o Gil , a mascote-s\u00edmbolo de_ a exposi\u00e7\u00e3o , com <strong>oito</strong> <strong>metros</strong> de altura , instalar a imagem publicit\u00e1ria de_ a Expo em_ a sala de imprensa e esperar por_ a chegada de_ o cami\u00e3o TIR com maquetes , v\u00eddeos , folhetos informativos e todo o tipo de material de marketing :", "verb": "metros", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=metro", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "oito", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=oito", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2236056%22%20%3B%20A%20%5Bform%3D%22metros%22%5D%20%3B%20B%20%5Bform%3D%22oito%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "<strong>Seis</strong> <strong>presidentes</strong> de c\u00e2mara .", "verb": "presidentes", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=presidente", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "seis", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=seis", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221838%22%20%3B%20A%20%5Bform%3D%22presidentes%22%5D%20%3B%20B%20%5Bform%3D%22Seis%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A Academia de Hollywood distinguiu -o com <strong>quatro</strong> <strong>\u00d3scares</strong> .", "verb": "\u00f3scares", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=\u00f3scar", "xpos=CN", "<b>Number=Plur</b>"], "nsubj": "quatro", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=quatro", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2211695%22%20%3B%20A%20%5Bform%3D%22%C3%93scares%22%5D%20%3B%20B%20%5Bform%3D%22quatro%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "<strong>Seis</strong> <strong>executivos</strong> de topo de_ a empresa nova-iorquina venderam ac\u00e7\u00f5es em Agosto e Setembro .", "verb": "executivos", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=executivo", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "seis", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=seis", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2233825%22%20%3B%20A%20%5Bform%3D%22executivos%22%5D%20%3B%20B%20%5Bform%3D%22Seis%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "' Ainda h\u00e1 <strong>dez</strong> <strong>anos</strong> , quinze anos , estavam de p\u00e9 .", "verb": "anos", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=ano", "xpos=CN", "Gender=Masc", "<b>Number=Plur</b>"], "nsubj": "dez", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dez", "xpos=CARD", "NumType=Card", "<b>Number=Plur</b>"], "label": "yes", "route": {}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%227047%22%20%3B%20A%20%5Bform%3D%22anos%22%5D%20%3B%20B%20%5Bform%3D%22dez%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}]}, "PAIRS": [{"origSentence": "O cabelo ter\u00e1 ficado grisalho mas o seu bom aspecto e o ar agaiatado n\u00e3o deixam transparecer os seus 50 anos e , muito provavelmente , <strong>milh\u00f5es</strong> de <strong>f\u00e3s</strong> continuar\u00e3o a am\u00e1 lo quando ele tiver 64 .", "swapSentence": "O cabelo ter\u00e1 ficado grisalho mas o seu bom aspecto e o ar agaiatado n\u00e3o deixam transparecer os seus 50 anos e , muito provavelmente , <strong>milh\u00e3o</strong> de <strong>f\u00e3s</strong> continuar\u00e3o a am\u00e1 lo quando ele tiver 64 .", "nsubj": "milh\u00f5es", "verb": "f\u00e3s", "nsubjFeats": ["lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Plur</b>"], "verbFeats": ["lemma=f\u00e3", "deprel=nsubj", "upos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP593-3%22%20%3B%20A%20%5Bform%3D%22f%C3%A3s%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque", "leaf": "0"}]};
+const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "num", "roleB": "np head", "decisiveFeat": "Number", "swappedRole": "A", "defaultNode": 0, "CANVAS_W": 670, "CANVAS_H": 290, "META": {"language": "Portuguese", "languageName": "Portuguese", "accuracy": "97.1%", "testAccuracy": "97.4%", "testN": 77, "measure": "accuracy", "nodes": "3 (2 leaves)", "depth": "1", "trainingSamples": "685", "predictor": "NP head-NUM_Number", "rootAccuracy": "94.2%", "trainAccuracy": "97.0%", "keepThreshold": "leaf accuracy > 0.95", "keepThresholdAcc": 0.95, "nav": {"pooledAcc": 1.0, "pooledTestN": 78, "pooledUnkAcc": null, "pooledUnkTestN": null, "pooledRows": 762, "pooledUnkRows": 1099, "pooledHref": null, "pooledCurrent": true, "items": [{"name": "GSD", "rows": 226, "unkRows": 241, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-GSD.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "Porttinari", "rows": 53, "unkRows": 105, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-Porttinari.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PetroGold", "rows": 71, "unkRows": 420, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-PetroGold.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "Bosque", "rows": 104, "unkRows": 131, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-Bosque.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "CINTIL", "rows": 299, "unkRows": 196, "status": "ok", "excluded": false, "reason": null, "acc": 1.0, "pooledAcc": 1.0, "delta": 0.0, "diverges": false, "href": "Portuguese/UD_Portuguese-CINTIL.html", "placeholder": false, "unkAcc": null, "unkHref": null, "current": false}, {"name": "PUD", "rows": 9, "unkRows": 6, "status": "too few samples", "excluded": false, "reason": null, "acc": null, "pooledAcc": null, "delta": null, "diverges": false, "href": "Portuguese/UD_Portuguese-PUD.html", "placeholder": true, "unkAcc": null, "unkHref": null, "current": false}], "variant": null, "counterpartHref": null, "overviewHref": "index.html"}, "fitExcluded": [{"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}, {"role": "b", "feat": "Number"}, {"role": "b", "feat": "xpos"}, {"role": "a", "feat": "Number"}, {"role": "a", "feat": "xpos"}]}, "CLASSES": [{"cls": "yes", "cnt": 646, "color": "var(--yes)"}, {"cls": "no", "cnt": 39, "color": "var(--no)"}, {"cls": "unk", "cnt": 0, "color": "var(--unk)"}], "NODES": {"1": {"x": 380.0, "y": 230.0, "branch": "false", "n": 662, "H": 0.1838, "acc": 0.9721, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 644, "color": "var(--yes)"}, {"cls": "no", "cnt": 18, "color": "var(--no)"}], "rule": "predict: yes", "predicted": "yes", "majorityLabel": "yes", "keep": true, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 644, "correctSwaps": 12, "pairRoleCounts": {"A": 12}}, "2": {"x": 570.0, "y": 230.0, "branch": "true", "n": 23, "H": 0.4821, "acc": 0.8958, "leaf": true, "corr": [], "dist": [{"cls": "yes", "cnt": 2, "color": "var(--yes)"}, {"cls": "no", "cnt": 21, "color": "var(--no)"}], "rule": "predict: no", "predicted": "no", "majorityLabel": "no", "keep": false, "keepThresholdAcc": 0.95, "secondChance": false, "kept": 0, "correctSwaps": 0, "pairRoleCounts": {}}, "0": {"x": 475.0, "y": 60.0, "branch": "root", "n": 685, "H": 0.3178, "acc": 0.9424, "leaf": false, "corr": [], "dist": [{"cls": "yes", "cnt": 646, "color": "var(--yes)"}, {"cls": "no", "cnt": 39, "color": "var(--no)"}], "rule": "NUM has SYM sibling?", "ruleFeat": null, "ruleRole": null, "ruleValue": null}}, "EDGES": [[0, 1, "false"], [0, 2, "true"]], "PATHS": {"1": [0, 1], "2": [0, 2], "0": [0]}, "NODE_SAMPLES": {"1": [{"sentence": "O \u00ab Crescente Dourado \u00bb ( Afeganist\u00e3o , Ir\u00e3o e Paquist\u00e3o ) \u00e9 a fonte de a hero\u00edna em a Europa Ocidental , onde entra de <strong>2<\/strong> <strong>formas<\/strong> : 1 . via terrestre , por a \u00ab rota de os Balc\u00e3s \u00bb ( Turquia , ex-Jugosl\u00e1via , It\u00e1lia , \u00c1ustria e Alemanha , donde \u00e9 distribu\u00edda ) ;", "verb": "formas", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=forma", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP938-3%22%20%3B%20A%20%5Bform%3D%22formas%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "O medidor \u00e9 capaz de medir os seguintes gases : O2 , CO2 , CO , NOx e HC ( hidrocarbonetos n\u00e3o queimados ) , sendo estes dois \u00faltimos medidos em <strong>partes<\/strong> por <strong>milh\u00e3o<\/strong> ( ppm ) , e os demais em percentagens de o total ( sem a \u00e1gua ) .", "verb": "partes", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=parte", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22279-20140530-MONOGRAFIA_0-104%22%20%3B%20A%20%5Bform%3D%22partes%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Usou se hidrog\u00eanio como g\u00e1s de arraste ( <strong>2<\/strong> <strong>mL/min<\/strong> ) e o volume de inje\u00e7\u00e3o foi de 1 \uf06d L , al\u00e9m de padr\u00f5es de \u00e1cidos graxos metilados SUPELCO37 .", "verb": "mL/min", "verbFeats": ["upos=PROPN", "deprel=appos", "lemma=mL/min", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22271-20150810-MONOGRAFIA_0-203%22%20%3B%20A%20%5Bform%3D%22mL%2Fmin%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Ap\u00f3s nova onda de ataques a a pol\u00edcia -- que resultou em a o menos <strong>sete<\/strong> <strong>PMs<\/strong> executados -- agentes que fazem o patrulhamento em o Estado trabalham em alerta total .", "verb": "PMs", "verbFeats": ["upos=PROPN", "deprel=nmod", "xpos=PNOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s9344%22%20%3B%20A%20%5Bform%3D%22PMs%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Em o <strong>dia<\/strong> <strong>sete<\/strong> de dezembro de 1941 , avi\u00f5es japoneses praticamente destru\u00edram a frota norte-americana em o Pac\u00edfico , ancorada em Pearl Harbour , em o Hava\u00ed .", "verb": "dia", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=dia", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=sete", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF766-3%22%20%3B%20A%20%5Bform%3D%22dia%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "A vers\u00e3o mais sofisticada ter\u00e1 trac\u00e7\u00e3o integral e um novo motor de <strong>2<\/strong> <strong>litros<\/strong> de 16 v\u00e1lvulas .", "verb": "litros", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=litro", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "xpos=DGT", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2231204%22%20%3B%20A%20%5Bform%3D%22litros%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Tensoativos ani\u00f4nicos possuem , em solu\u00e7\u00e3o aquosa , <strong>um<\/strong> ou v\u00e1rios <strong>grupos<\/strong> ioniz\u00e1veis que produzem \u00edons carregados negativamente em a superf\u00edcie ativa .", "verb": "grupos", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=grupo", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "um", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=um", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22241-20140227-MONOGRAFIA_0-38%22%20%3B%20A%20%5Bform%3D%22grupos%22%5D%20%3B%20B%20%5Bform%3D%22um%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Deve se notar , entretanto , que foram interpretados apenas <strong>um<\/strong> ou dois <strong>perfis<\/strong> representativos sobre cada alvo , visando unicamente demonstrar a aplicabilidade de a metodologia proposta em este trabalho .", "verb": "perfis", "verbFeats": ["upos=NOUN", "deprel=nsubj:pass", "lemma=perfil", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "um", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=um", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2220-20140904-TESEDSC_0-708%22%20%3B%20A%20%5Bform%3D%22perfis%22%5D%20%3B%20B%20%5Bform%3D%22um%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Festa com ambiente livre de preconceitos , composto por ativistas de o movimento negro e LGBTQ+ de as periferias de a cidade , a Batekoo \u00e9 <strong>zero<\/strong> <strong>car\u00e3o<\/strong> .", "verb": "car\u00e3o", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=car\u00e3o", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "zero", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=zero", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Porttinari%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FOLHA_DOC003155_SENT005%22%20%3B%20A%20%5Bform%3D%22car%C3%A3o%22%5D%20%3B%20B%20%5Bform%3D%22zero%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Porttinari"}, {"sentence": "<strong>2<\/strong> . - <strong>OBJETIVOS<\/strong>", "verb": "objetivos", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=objetivo", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22284-20150917-MONOGRAFIA_0-12%22%20%3B%20A%20%5Bform%3D%22OBJETIVOS%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "O ex-deputado estadual Luiz Fernandes Litro foi preso em a tarde de este domingo (7 ) acusado de causar tumulto em um col\u00e9gio eleitoral de a <strong>cidade<\/strong> de <strong>Dois<\/strong> Vizinhos ( 46 km a o norte de Francisco Beltr\u00e3o ) , em o sudoeste de o Paran\u00e1 .", "verb": "cidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=cidade", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=Dois", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6383%22%20%3B%20A%20%5Bform%3D%22cidade%22%5D%20%3B%20B%20%5Bform%3D%22Dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Uma agress\u00e3o enorme para o meio ambiente , visto que um litro de \u00f3leo contamina cerca de 1 <strong>milh\u00e3o<\/strong> de <strong>litros<\/strong> de \u00e1gua , o equivalente a o consumo de uma pessoa em o per\u00edodo de 14 anos .", "verb": "litros", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=litro", "xpos=NOUN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6710%22%20%3B%20A%20%5Bform%3D%22litros%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O rio continua a subir <strong>2<\/strong> <strong>cm<\/strong> por dia .", "verb": "cm", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cent\u00edmetro", "Gender=Masc", "<b>Number=Plur<\/b>", "Abbr=Yes"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s5291%22%20%3B%20A%20%5Bform%3D%22cm%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "At\u00e9 a_ as <strong>cinco<\/strong> de_ a <strong>manh\u00e3<\/strong> .", "verb": "manh\u00e3", "verbFeats": ["upos=NOUN", "deprel=dep", "lemma=manh\u00e3", "xpos=CN", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "cinco", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=cinco", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2219662%22%20%3B%20A%20%5Bform%3D%22manh%C3%A3%22%5D%20%3B%20B%20%5Bform%3D%22cinco%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Sem entrar em pormenores , devo recordar que as empresas portuguesas a trabalhar em a Guin\u00e9-Bissau rondam a meia centena , de as quais seis ultrapassam , em investimentos e responsabilidades , o <strong>milh\u00e3o<\/strong> de <strong>contos<\/strong> .", "verb": "contos", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=conto", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP603-1%22%20%3B%20A%20%5Bform%3D%22contos%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "<strong>Vinte<\/strong> <strong>anos<\/strong> de pedagogia de_ a cat\u00e1strofe", "verb": "anos", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=ano", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "vinte", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=vinte", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2210821%22%20%3B%20A%20%5Bform%3D%22anos%22%5D%20%3B%20B%20%5Bform%3D%22Vinte%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A medida elevou de seis para <strong>sete<\/strong> <strong>atletas<\/strong> em campo por time em a pr\u00f3xima temporada .", "verb": "atletas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=atleta", "xpos=NOUN", "Gender=Fem,Masc", "<b>Number=Plur<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6707%22%20%3B%20A%20%5Bform%3D%22atletas%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O jornal kuaitiano diz que o governo de o pa\u00eds fechou um sal\u00e3o de beleza por <strong>uma<\/strong> <strong>semana<\/strong> por infringir a lei que pro\u00edbe mulheres de trabalhar em sal\u00f5es para homens e vice-versa .", "verb": "semana", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=semana", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "uma", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=uma", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF535-4%22%20%3B%20A%20%5Bform%3D%22semana%22%5D%20%3B%20B%20%5Bform%3D%22uma%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "\u00ab Se sentir que h\u00e1 um desejo coletivo , ele vai encaminhar as emendas constitucionais \u00bb , disse Luiz Henrique ap\u00f3s <strong>uma<\/strong> <strong>hora<\/strong> de conversa com Itamar , ontem , em o Planalto .", "verb": "hora", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=hora", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "uma", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=uma", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF117-1%22%20%3B%20A%20%5Bform%3D%22hora%22%5D%20%3B%20B%20%5Bform%3D%22uma%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "Os rendimentos a <strong>seis<\/strong> <strong>meses<\/strong> e um ano n\u00e3o sofreram altera\u00e7\u00f5es .", "verb": "meses", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=m\u00eas", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "seis", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=seis", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2233849%22%20%3B%20A%20%5Bform%3D%22meses%22%5D%20%3B%20B%20%5Bform%3D%22seis%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Sendo que eles correlacionam as duas partes de queda de press\u00e3o a <strong>dois<\/strong> <strong>fen\u00f4menos<\/strong> : desprendimento de as gotas e limpeza de a parede .", "verb": "fen\u00f4menos", "verbFeats": ["upos=NOUN", "deprel=obl:arg", "lemma=fen\u00f4meno", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2277-20141209-TESEMSC_0-132%22%20%3B%20A%20%5Bform%3D%22fen%C3%B4menos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Existem <strong>dois<\/strong> <strong>tipos<\/strong> de citoqueratinas : as citoqueratinas \u00e1cidas de tipo I e as citoqueratinas b\u00e1sicas ou neutras de tipo II .", "verb": "tipos", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=tipo", "xpos=NOUN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s1266%22%20%3B%20A%20%5Bform%3D%22tipos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "\u00c9 a partir de_ as <strong>duas<\/strong> <strong>bases<\/strong> que tem em_ a Rep\u00fablica Centro-Africana , a de Bangui , a capital , e a de Bouar , a Noroeste , que os franceses controlam muito de_ o que se passa em_ a \u00c1frica Equatorial , designadamente em_ o Chade , em_ os Camar\u00f5es , em_ o Congo e em_ o Zaire .", "verb": "bases", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=base", "xpos=CN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "duas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=duas", "xpos=CARD", "Gender=Fem", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2236696%22%20%3B%20A%20%5Bform%3D%22bases%22%5D%20%3B%20B%20%5Bform%3D%22duas%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Os <strong>sete<\/strong> <strong>andores<\/strong> avan\u00e7am lentamente .", "verb": "andores", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=andor", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=sete", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2221632%22%20%3B%20A%20%5Bform%3D%22andores%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "H\u00e1 <strong>sete<\/strong> outros <strong>suspeitos<\/strong> que a pol\u00edcia ainda procura .", "verb": "suspeitos", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=suspeito", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=sete", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22839%22%20%3B%20A%20%5Bform%3D%22suspeitos%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "<strong>Sete<\/strong> <strong>anos<\/strong> de_ a r\u00e1dio em directo", "verb": "anos", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=ano", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=sete", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2216046%22%20%3B%20A%20%5Bform%3D%22anos%22%5D%20%3B%20B%20%5Bform%3D%22Sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Foi em Nova Iorque , <strong>trinta<\/strong> <strong>anos<\/strong> depois , quando Miles Davis juntou John Coltrane , Red Garland , Paul Chambers e Philly Joe Jones .", "verb": "anos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=ano", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "trinta", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=trinta", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2226929%22%20%3B%20A%20%5Bform%3D%22anos%22%5D%20%3B%20B%20%5Bform%3D%22trinta%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Uns <strong>quinze<\/strong> <strong>minutos<\/strong> depois de se ter ido embora , todos aqueles prisioneiros s\u00e3o levados para um armaz\u00e9m em Kravica , onde s\u00e3o executados .", "verb": "minutos", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=minuto", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "quinze", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=quinze", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2238041%22%20%3B%20A%20%5Bform%3D%22minutos%22%5D%20%3B%20B%20%5Bform%3D%22quinze%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Carlos Leopoldo era o segundo de os <strong>quatro<\/strong> <strong>filhos<\/strong> de o duque Frederico I de Mecklenburg - Schwerin e de a landegravina Cristina Guilhermina de Hesse - Homburg .", "verb": "filhos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=filho", "xpos=NOUN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "quatro", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s107%22%20%3B%20A%20%5Bform%3D%22filhos%22%5D%20%3B%20B%20%5Bform%3D%22quatro%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "A vaz\u00e3o em a repartida foi de 3 GPM , monitorando se o diferencial de press\u00e3o entre <strong>dois<\/strong> <strong>pontos<\/strong> de a tubula\u00e7\u00e3o em fun\u00e7\u00e3o de o tempo .", "verb": "pontos", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=ponto", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2277-20141209-TESEMSC_0-410%22%20%3B%20A%20%5Bform%3D%22pontos%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}], "2": [{"sentence": "O limite m\u00e1ximo de subven\u00e7\u00e3o federal que cada benefici\u00e1rio pode receber \u00e9 de R $ 192 mil , sendo R $ 96 mil em a modalidade agr\u00edcola e <strong>R<\/strong> $ 32 <strong>mil<\/strong> para cada uma de as demais modalidades : pecu\u00e1ria , floresta e aqu\u00edcola .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s819%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Os vencedores de cada categoria ir\u00e3o receber um pr\u00eamio em dinheiro , sendo <strong>R<\/strong> $ 1 <strong>mil<\/strong> reais para o primeiro lugar , R $ 700,00 para o segundo e R $ 500,00 para o terceiro .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s1092%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Analistas consultados por a Reuters estimavam , em m\u00e9dia , preju\u00edzo l\u00edquido de <strong>R<\/strong> $ 292,1 <strong>milh\u00f5es<\/strong> em o segundo trimestre .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6890%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O limite m\u00e1ximo de subven\u00e7\u00e3o federal que cada benefici\u00e1rio pode receber \u00e9 de R $ 192 mil , sendo <strong>R<\/strong> $ 96 <strong>mil<\/strong> em a modalidade agr\u00edcola e R $ 32 mil para cada uma de as demais modalidades : pecu\u00e1ria , floresta e aqu\u00edcola .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s819%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Pessoas que trabalham em o setor financeiro e de investimentos de os Estados Unidos doaram US $ 20 milh\u00f5es para a campanha de a Romney , ante <strong>US<\/strong> $ 6 <strong>milh\u00f5es<\/strong> para Obama , segundo o Centro para Responsabilidade Pol\u00edtica .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=nmod", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s243%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Em a sequ\u00eancia est\u00e3o as vendas de a\u00e7\u00facares de cana ( <strong>US<\/strong> $ 332 <strong>milh\u00f5es<\/strong> ) , milho em gr\u00e3o ( US $ 208 milh\u00f5es ) , \u00e1lcool et\u00edlico desnaturado ( US $ 68 milh\u00f5es ) e baga\u00e7os e res\u00edduos s\u00f3lidos de o \u00f3leo de soja ( US $ 39 milh\u00f5es ) .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=appos", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4642%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Para efeito de compara\u00e7\u00e3o , entre 2001 e 2008 , o fundo setorial de energia CT - Energ , que se destina a fim semelhante , aplicou <strong>R<\/strong> $ 235 <strong>milh\u00f5es<\/strong> .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s5756%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Em a sequ\u00eancia est\u00e3o as vendas de a\u00e7\u00facares de cana ( US $ 332 milh\u00f5es ) , milho em gr\u00e3o ( <strong>US<\/strong> $ 208 <strong>milh\u00f5es<\/strong> ) , \u00e1lcool et\u00edlico desnaturado ( US $ 68 milh\u00f5es ) e baga\u00e7os e res\u00edduos s\u00f3lidos de o \u00f3leo de soja ( US $ 39 milh\u00f5es ) .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=appos", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4642%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O Banco Nacional de Desenvolvimento Econ\u00f4mico e Social ( BNDES ) aprovou uma linha de cr\u00e9dito em o valor de <strong>US<\/strong> $ 700 <strong>milh\u00f5es<\/strong> para a Braskem Idesa , empresa respons\u00e1vel por a constru\u00e7\u00e3o de um complexo petroqu\u00edmico em o M\u00e9xico e liderada por a brasileira Braskem , em parceria com a mexicana Idesa .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=nmod", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s613%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "\" Al\u00e9m de provocar alto custo \" , disse em a quinta - feira o presidente , que se baseou em uma an\u00e1lise feita por o Minist\u00e9rio de as Rela\u00e7\u00f5es Exteriores de o Paraguai , cujo custo estimado de o processo \u00e9 de <strong>US<\/strong> $ 50 <strong>mil<\/strong> .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=nmod", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s1621%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Segundo o depoente , \" o PCC arrumaria o dinheiro [ R$ <strong>2<\/strong> <strong>milh\u00f5es<\/strong> ] \" .", "verb": "milh\u00f5es", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=milh\u00e3o", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Porttinari%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22FOLHA_DOC003162_SENT033%22%20%3B%20A%20%5Bform%3D%22milh%C3%B5es%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Porttinari"}, {"sentence": "A cota\u00e7\u00e3o de a arroba de o algod\u00e3o beneficiado gira em torno de ( R $ 53 a R $ 54 ) o que elevaria o preju\u00edzo em a casa de os <strong>R<\/strong> $ 3 <strong>milh\u00f5es<\/strong> .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s7753%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Os gastos com as desapropria\u00e7\u00f5es e obras -- tocadas por a empreiteira Ararib\u00f3ia -- chegam a a ordem de <strong>R<\/strong> $ 24,9 <strong>milh\u00f5es<\/strong> .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s829%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Em a sequ\u00eancia est\u00e3o as vendas de a\u00e7\u00facares de cana ( US $ 332 milh\u00f5es ) , milho em gr\u00e3o ( US $ 208 milh\u00f5es ) , \u00e1lcool et\u00edlico desnaturado ( US $ 68 milh\u00f5es ) e baga\u00e7os e res\u00edduos s\u00f3lidos de o \u00f3leo de soja ( <strong>US<\/strong> $ 39 <strong>milh\u00f5es<\/strong> ) .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=appos", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4642%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "A Pol\u00edcia Civil abrir\u00e1 inqu\u00e9rito para apurar o crime de concuss\u00e3o ( vantagem indevida obtida por meio de a pr\u00f3pria fun\u00e7\u00e3o para o favorecimento de terceiros ) e prev\u00ea de 2 a 8 anos de pris\u00e3o , por\u00e9m S\u00e9rgio Roberto poder\u00e1 ser libertado ap\u00f3s pagar a fian\u00e7a fixada em <strong>R<\/strong> $ 5 <strong>mil<\/strong> .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3230%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O estudo custou pouco mais de <strong>R<\/strong> $ 1 <strong>milh\u00e3o<\/strong> .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "yes", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s8325%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Mas o tempo gasto fazendo lan\u00e7amentos surtiu efeito : os US $ 880 mil ( cerca de <strong>R<\/strong> $ 1,7 <strong>milh\u00e3o<\/strong> ) que o garoto vai receber em seis temporadas , em a maior transa\u00e7\u00e3o de um jogador brasileiro para um time de a Major League Baseball ( MLB ) , dariam para manter a produ\u00e7\u00e3o de ovos de a cidade , popularmente conhecida como a \" capital de o ovo \" , por mais de um ano .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=appos", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "yes", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s298%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}], "0": [{"sentence": "Entre o pagamento de juros e corre\u00e7\u00f5es , o valor pode chegar at\u00e9 a <strong>R<\/strong> $ 36 <strong>milh\u00f5es<\/strong> caso n\u00e3o seja quitado antes de o prazo estipulado , em janeiro de 2016 .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s206%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O medidor \u00e9 capaz de medir os seguintes gases : O2 , CO2 , CO , NOx e HC ( hidrocarbonetos n\u00e3o queimados ) , sendo estes dois \u00faltimos medidos em <strong>partes<\/strong> por <strong>milh\u00e3o<\/strong> ( ppm ) , e os demais em percentagens de o total ( sem a \u00e1gua ) .", "verb": "partes", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=parte", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22279-20140530-MONOGRAFIA_0-104%22%20%3B%20A%20%5Bform%3D%22partes%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "O \u00ab Crescente Dourado \u00bb ( Afeganist\u00e3o , Ir\u00e3o e Paquist\u00e3o ) \u00e9 a fonte de a hero\u00edna em a Europa Ocidental , onde entra de <strong>2<\/strong> <strong>formas<\/strong> : 1 . via terrestre , por a \u00ab rota de os Balc\u00e3s \u00bb ( Turquia , ex-Jugosl\u00e1via , It\u00e1lia , \u00c1ustria e Alemanha , donde \u00e9 distribu\u00edda ) ;", "verb": "formas", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=forma", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP938-3%22%20%3B%20A%20%5Bform%3D%22formas%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "At\u00e9 a_ as <strong>cinco<\/strong> de_ a <strong>manh\u00e3<\/strong> .", "verb": "manh\u00e3", "verbFeats": ["upos=NOUN", "deprel=dep", "lemma=manh\u00e3", "xpos=CN", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "cinco", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=cinco", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2219662%22%20%3B%20A%20%5Bform%3D%22manh%C3%A3%22%5D%20%3B%20B%20%5Bform%3D%22cinco%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Em a sequ\u00eancia est\u00e3o as vendas de a\u00e7\u00facares de cana ( <strong>US<\/strong> $ 332 <strong>milh\u00f5es<\/strong> ) , milho em gr\u00e3o ( US $ 208 milh\u00f5es ) , \u00e1lcool et\u00edlico desnaturado ( US $ 68 milh\u00f5es ) e baga\u00e7os e res\u00edduos s\u00f3lidos de o \u00f3leo de soja ( US $ 39 milh\u00f5es ) .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=appos", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s4642%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Foi <strong>um<\/strong> de os primeiros <strong>sintomas<\/strong> de o efeito que as decis\u00f5es de Maastricht ter\u00e3o em a ultra-subsidiada agricultura francesa -- e o primeiro sinal de retra\u00e7\u00e3o .", "verb": "sintomas", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=sintoma", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "um", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=um", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP624-9%22%20%3B%20A%20%5Bform%3D%22sintomas%22%5D%20%3B%20B%20%5Bform%3D%22um%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "J\u00e1 para determinar o grau de tixotropia , foram necess\u00e1rios <strong>tr\u00eas<\/strong> <strong>minuto<\/strong> de experimento , em o primeiro minuto , variou se a taxa de cisalhamento de 5 a 1010 s-1 , em o segundo minuto manteve se a taxa de cisalhamento em 1010 s-1 , e em o terceiro minuto variou se a taxa de cisalhamento de 1010 a 5 s-1 .", "verb": "minuto", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=minuto", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "tr\u00eas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=tr\u00eas", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22240-20140220-MONOGRAFIA_0-337%22%20%3B%20A%20%5Bform%3D%22minuto%22%5D%20%3B%20B%20%5Bform%3D%22tr%C3%AAs%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "Mas o tempo gasto fazendo lan\u00e7amentos surtiu efeito : os <strong>US<\/strong> $ 880 <strong>mil<\/strong> ( cerca de R $ 1,7 milh\u00e3o ) que o garoto vai receber em seis temporadas , em a maior transa\u00e7\u00e3o de um jogador brasileiro para um time de a Major League Baseball ( MLB ) , dariam para manter a produ\u00e7\u00e3o de ovos de a cidade , popularmente conhecida como a \" capital de o ovo \" , por mais de um ano .", "verb": "US", "verbFeats": ["upos=PROPN", "deprel=nsubj", "xpos=PNOUN", "Gender=Fem,Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s298%22%20%3B%20A%20%5Bform%3D%22US%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Sem entrar em pormenores , devo recordar que as empresas portuguesas a trabalhar em a Guin\u00e9-Bissau rondam a meia centena , de as quais seis ultrapassam , em investimentos e responsabilidades , o <strong>milh\u00e3o<\/strong> de <strong>contos<\/strong> .", "verb": "contos", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=conto", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "milh\u00e3o", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP603-1%22%20%3B%20A%20%5Bform%3D%22contos%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%A3o%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "O ex-deputado estadual Luiz Fernandes Litro foi preso em a tarde de este domingo (7 ) acusado de causar tumulto em um col\u00e9gio eleitoral de a <strong>cidade<\/strong> de <strong>Dois<\/strong> Vizinhos ( 46 km a o norte de Francisco Beltr\u00e3o ) , em o sudoeste de o Paran\u00e1 .", "verb": "cidade", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=cidade", "Gender=Fem", "<b>Number=Sing<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=Dois", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6383%22%20%3B%20A%20%5Bform%3D%22cidade%22%5D%20%3B%20B%20%5Bform%3D%22Dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "A vers\u00e3o mais sofisticada ter\u00e1 trac\u00e7\u00e3o integral e um novo motor de <strong>2<\/strong> <strong>litros<\/strong> de 16 v\u00e1lvulas .", "verb": "litros", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=litro", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "xpos=DGT", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2231204%22%20%3B%20A%20%5Bform%3D%22litros%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Tensoativos ani\u00f4nicos possuem , em solu\u00e7\u00e3o aquosa , <strong>um<\/strong> ou v\u00e1rios <strong>grupos<\/strong> ioniz\u00e1veis que produzem \u00edons carregados negativamente em a superf\u00edcie ativa .", "verb": "grupos", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=grupo", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "um", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=um", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-PetroGold%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22241-20140227-MONOGRAFIA_0-38%22%20%3B%20A%20%5Bform%3D%22grupos%22%5D%20%3B%20B%20%5Bform%3D%22um%22%5D%20%20%7D", "treebankName": "UD_Portuguese-PetroGold"}, {"sentence": "O rio continua a subir <strong>2<\/strong> <strong>cm<\/strong> por dia .", "verb": "cm", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=cent\u00edmetro", "Gender=Masc", "<b>Number=Plur<\/b>", "Abbr=Yes"], "nsubj": "2", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=2", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "no", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s5291%22%20%3B%20A%20%5Bform%3D%22cm%22%5D%20%3B%20B%20%5Bform%3D%222%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Analistas consultados por a Reuters estimavam , em m\u00e9dia , preju\u00edzo l\u00edquido de <strong>R<\/strong> $ 292,1 <strong>milh\u00f5es<\/strong> em o segundo trimestre .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "milh\u00f5es", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6890%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "O limite m\u00e1ximo de subven\u00e7\u00e3o federal que cada benefici\u00e1rio pode receber \u00e9 de R $ 192 mil , sendo R $ 96 mil em a modalidade agr\u00edcola e <strong>R<\/strong> $ 32 <strong>mil<\/strong> para cada uma de as demais modalidades : pecu\u00e1ria , floresta e aqu\u00edcola .", "verb": "r", "verbFeats": ["upos=NOUN", "deprel=conj", "lemma=r", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "no", "route": {"0": "True"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s819%22%20%3B%20A%20%5Bform%3D%22R%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "S\u00e3o processadores de baixo consumo voltados para o mercado de notebooks e est\u00e3o dispon\u00edveis em duas vers\u00f5es , com <strong>um<\/strong> <strong>n\u00facleo<\/strong> ( \" single core \" ) e com dois n\u00facleos ( \" dual core \" ) .", "verb": "n\u00facleo", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=n\u00facleo", "xpos=NOUN", "Gender=Masc", "<b>Number=Sing<\/b>"], "nsubj": "um", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Sing<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22dev-s630%22%20%3B%20A%20%5Bform%3D%22n%C3%BAcleo%22%5D%20%3B%20B%20%5Bform%3D%22um%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Ele condenou ainda outros <strong>cinco<\/strong> <strong>r\u00e9us<\/strong> ligados a o n\u00facleo de o empres\u00e1rio Marcos Val\u00e9rio .", "verb": "r\u00e9us", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=r\u00e9u", "xpos=NOUN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "cinco", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6981%22%20%3B%20A%20%5Bform%3D%22r%C3%A9us%22%5D%20%3B%20B%20%5Bform%3D%22cinco%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "<strong>Quatro<\/strong> <strong>indiv\u00edduos<\/strong> e 18 assaltos", "verb": "indiv\u00edduos", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=indiv\u00edduo", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "quatro", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=quatro", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%228444%22%20%3B%20A%20%5Bform%3D%22indiv%C3%ADduos%22%5D%20%3B%20B%20%5Bform%3D%22Quatro%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Rio -- <strong>Dois<\/strong> <strong>carros<\/strong> capotaram em a Radial Oeste , em a altura de o Maracan\u00e3 , em a madrugada deste s\u00e1bado .", "verb": "carros", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=carro", "xpos=NOUN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s9051%22%20%3B%20A%20%5Bform%3D%22carros%22%5D%20%3B%20B%20%5Bform%3D%22Dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "<strong>Tr\u00eas<\/strong> <strong>faculdades<\/strong> em_ o Campo Alegre", "verb": "faculdades", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=faculdade", "xpos=CN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "tr\u00eas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=tr\u00eas", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2211087%22%20%3B%20A%20%5Bform%3D%22faculdades%22%5D%20%3B%20B%20%5Bform%3D%22Tr%C3%AAs%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Em_ o conjunto de_ os <strong>dez<\/strong> <strong>pa\u00edses<\/strong> que se apresentam melhor colocados para os futuros alargamentos , o PIB per capita m\u00e9dio equivale a 30 por cento de_ a m\u00e9dia europeia .", "verb": "pa\u00edses", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=pa\u00eds", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dez", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dez", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2237486%22%20%3B%20A%20%5Bform%3D%22pa%C3%ADses%22%5D%20%3B%20B%20%5Bform%3D%22dez%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "As <strong>duas<\/strong> <strong>partidas<\/strong> , amanh\u00e3 e em a quinta - feira , em Sofia , em a Bulg\u00e1ria , ser\u00e3o a as 11h30 ( de Bras\u00edlia ) .", "verb": "partidas", "verbFeats": ["upos=NOUN", "deprel=nsubj", "lemma=partida", "xpos=NOUN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "duas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22test-s281%22%20%3B%20A%20%5Bform%3D%22partidas%22%5D%20%3B%20B%20%5Bform%3D%22duas%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "Com <strong>duas<\/strong> <strong>preocupa\u00e7\u00f5es<\/strong> e dois apelos .", "verb": "preocupa\u00e7\u00f5es", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=preocupa\u00e7\u00e3o", "xpos=CN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "duas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=duas", "xpos=CARD", "Gender=Fem", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%221713%22%20%3B%20A%20%5Bform%3D%22preocupa%C3%A7%C3%B5es%22%5D%20%3B%20B%20%5Bform%3D%22duas%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A propor\u00e7\u00e3o \u00e9 pior em os estados de Alagoas ( 2,6 ) , Pernambuco ( 2,4 ) e de o Acre ( 2,2 ) , com d\u00e9ficit de 2,085 <strong>mil<\/strong> , 15,283 mil e 2,045 mil <strong>vagas<\/strong> , respectivamente .", "verb": "vagas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=vaga", "xpos=NOUN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "mil", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s1440%22%20%3B%20A%20%5Bform%3D%22vagas%22%5D%20%3B%20B%20%5Bform%3D%22mil%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}, {"sentence": "As opini\u00f5es sobre os seus prospectos de <strong>tr\u00eas<\/strong> <strong>meses<\/strong> est\u00e3o divididas .", "verb": "meses", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=m\u00eas", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "tr\u00eas", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=tr\u00eas", "xpos=CARD", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2232484%22%20%3B%20A%20%5Bform%3D%22meses%22%5D%20%3B%20B%20%5Bform%3D%22tr%C3%AAs%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A Eufrasio Ve\u00edculos , revendedora Ford , aposta em o showroom sazonal e se prepara para come\u00e7ar a atuar em Campos de o Jord\u00e3o por <strong>dois<\/strong> <strong>meses<\/strong> .", "verb": "meses", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=m\u00eas", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "dois", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=dois", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CF466-2%22%20%3B%20A%20%5Bform%3D%22meses%22%5D%20%3B%20B%20%5Bform%3D%22dois%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "O piloto portugu\u00eas fez um bom arranque de o 15\u00ba. posto de a grelha , ganhando <strong>quatro<\/strong> <strong>lugares<\/strong> .", "verb": "lugares", "verbFeats": ["upos=NOUN", "deprel=obj", "lemma=lugar", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "quatro", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=quatro", "Gender=Fem,Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP293-11%22%20%3B%20A%20%5Bform%3D%22lugares%22%5D%20%3B%20B%20%5Bform%3D%22quatro%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque"}, {"sentence": "A popula\u00e7\u00e3o de Srebrenica , em circunst\u00e2ncias normais , era de <strong>sete<\/strong> mil <strong>pessoas<\/strong> .", "verb": "pessoas", "verbFeats": ["upos=NOUN", "deprel=root", "lemma=pessoa", "xpos=CN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "sete", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=sete", "xpos=CARD", "Gender=Fem", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2238057%22%20%3B%20A%20%5Bform%3D%22pessoas%22%5D%20%3B%20B%20%5Bform%3D%22sete%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "Gomes \u00e9 ali\u00e1s acompanhado , em_ esta posi\u00e7\u00e3o , por_ a maioria de_ os deputados socialistas eleitos por_ o c\u00edrculo de_ o Porto , e tamb\u00e9m por_ a generalidade de_ os presidentes de c\u00e2mara de_ os <strong>nove<\/strong> <strong>munic\u00edpios<\/strong> que comp\u00f5em a \u00e1rea metropolitana , independentemente de_ a sua filia\u00e7\u00e3o partid\u00e1ria .", "verb": "munic\u00edpios", "verbFeats": ["upos=NOUN", "deprel=obl", "lemma=munic\u00edpio", "xpos=CN", "Gender=Masc", "<b>Number=Plur<\/b>"], "nsubj": "nove", "nsubjFeats": ["upos=NUM", "deprel=nummod", "lemma=nove", "xpos=CARD", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-CINTIL%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%2236881%22%20%3B%20A%20%5Bform%3D%22munic%C3%ADpios%22%5D%20%3B%20B%20%5Bform%3D%22nove%22%5D%20%20%7D", "treebankName": "UD_Portuguese-CINTIL"}, {"sentence": "A Adidas est\u00e1 envolvida com as Olimp\u00edadas h\u00e1 mais de <strong>oito<\/strong> <strong>d\u00e9cadas<\/strong> , mas fazer os jogos em casa \u00e9 algo realmente especial para n\u00f3s \" , afirmou Nick Craggs , diretor de marketing de a marca em o Reino Unido .", "verb": "d\u00e9cadas", "verbFeats": ["upos=NOUN", "deprel=nmod", "lemma=d\u00e9cada", "xpos=NOUN", "Gender=Fem", "<b>Number=Plur<\/b>"], "nsubj": "oito", "nsubjFeats": ["upos=NUM", "deprel=nummod", "xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "label": "yes", "route": {"0": "False"}, "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s8125%22%20%3B%20A%20%5Bform%3D%22d%C3%A9cadas%22%5D%20%3B%20B%20%5Bform%3D%22oito%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD"}]}, "PAIRS": [{"origSentence": "S\u00f3 que este n\u00famero \u00e9 50 % maior e o d\u00e9ficit real s\u00e3o 30 <strong>milh\u00f5es<\/strong> de <strong>toneladas<\/strong> \" , alerta Vino , vislumbrando que , a cada ano , cerca de 10 milh\u00f5es de toneladas de gr\u00e3os produzidos em o Pa\u00eds se perdem por serem mal armazenadas em equipamentos antigos , e sem condi\u00e7\u00f5es ideais .", "swapSentence": "S\u00f3 que este n\u00famero \u00e9 50 % maior e o d\u00e9ficit real s\u00e3o 30 <strong>milh\u00e3o<\/strong> de <strong>toneladas<\/strong> \" , alerta Vino , vislumbrando que , a cada ano , cerca de 10 milh\u00f5es de toneladas de gr\u00e3os produzidos em o Pa\u00eds se perdem por serem mal armazenadas em equipamentos antigos , e sem condi\u00e7\u00f5es ideais .", "nsubj": "milh\u00f5es", "verb": "toneladas", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=tonelada", "deprel=conj", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6833%22%20%3B%20A%20%5Bform%3D%22toneladas%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "Com n\u00fameros de 2011 , a pesquisa mostra que de os 27 <strong>milh\u00f5es<\/strong> de <strong>empreendedores<\/strong> brasileiros , 14,4 milh\u00f5es t\u00eam entre 25 e 44 anos .", "swapSentence": "Com n\u00fameros de 2011 , a pesquisa mostra que de os 27 <strong>milh\u00e3o<\/strong> de <strong>empreendedores<\/strong> brasileiros , 14,4 milh\u00f5es t\u00eam entre 25 e 44 anos .", "nsubj": "milh\u00f5es", "verb": "empreendedores", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=empreendedor", "deprel=nmod", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3034%22%20%3B%20A%20%5Bform%3D%22empreendedores%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "O cabelo ter\u00e1 ficado grisalho mas o seu bom aspecto e o ar agaiatado n\u00e3o deixam transparecer os seus 50 anos e , muito provavelmente , <strong>milh\u00f5es<\/strong> de <strong>f\u00e3s<\/strong> continuar\u00e3o a am\u00e1 lo quando ele tiver 64 .", "swapSentence": "O cabelo ter\u00e1 ficado grisalho mas o seu bom aspecto e o ar agaiatado n\u00e3o deixam transparecer os seus 50 anos e , muito provavelmente , <strong>milh\u00e3o<\/strong> de <strong>f\u00e3s<\/strong> continuar\u00e3o a am\u00e1 lo quando ele tiver 64 .", "nsubj": "milh\u00f5es", "verb": "f\u00e3s", "nsubjFeats": ["lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=f\u00e3", "deprel=nsubj", "upos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP593-3%22%20%3B%20A%20%5Bform%3D%22f%C3%A3s%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque", "leaf": "1"}, {"origSentence": "Em comunicado oficial divulgado em a quarta - feira , 4 de outubro , a empresa informou que a remessa inicial de RE6 enviada para todo o mundo atingiu a marca de 4,5 <strong>milh\u00f5es<\/strong> de <strong>unidades<\/strong> .", "swapSentence": "Em comunicado oficial divulgado em a quarta - feira , 4 de outubro , a empresa informou que a remessa inicial de RE6 enviada para todo o mundo atingiu a marca de 4,5 <strong>milh\u00e3o<\/strong> de <strong>unidades<\/strong> .", "nsubj": "milh\u00f5es", "verb": "unidades", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=unidade", "deprel=nmod", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s3827%22%20%3B%20A%20%5Bform%3D%22unidades%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "A o todo , 7,4 <strong>milh\u00f5es<\/strong> de <strong>ve\u00edculos<\/strong> produzidos entre 2005 e 2009 foram convocados .", "swapSentence": "A o todo , 7,4 <strong>milh\u00e3o<\/strong> de <strong>ve\u00edculos<\/strong> produzidos entre 2005 e 2009 foram convocados .", "nsubj": "milh\u00f5es", "verb": "ve\u00edculos", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=ve\u00edculo", "deprel=nsubj", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6431%22%20%3B%20A%20%5Bform%3D%22ve%C3%ADculos%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "Eles ter\u00e3o que passar por o crivo de 138 <strong>milh\u00f5es<\/strong> de <strong>eleitores<\/strong> .", "swapSentence": "Eles ter\u00e3o que passar por o crivo de 138 <strong>milh\u00e3o<\/strong> de <strong>eleitores<\/strong> .", "nsubj": "milh\u00f5es", "verb": "eleitores", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=eleitor", "deprel=nmod", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s443%22%20%3B%20A%20%5Bform%3D%22eleitores%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "Conseguir um bom exclusivo pode significar a entrada de <strong>milh\u00f5es<\/strong> de <strong>d\u00f3lares<\/strong> em publicidade .", "swapSentence": "Conseguir um bom exclusivo pode significar a entrada de <strong>milh\u00e3o<\/strong> de <strong>d\u00f3lares<\/strong> em publicidade .", "nsubj": "milh\u00f5es", "verb": "d\u00f3lares", "nsubjFeats": ["lemma=milh\u00e3o", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=d\u00f3lar", "deprel=nmod", "upos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-Bosque%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22CP223-3%22%20%3B%20A%20%5Bform%3D%22d%C3%B3lares%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-Bosque", "leaf": "1"}, {"origSentence": "Conven\u00e7\u00e3o de Berna ( anexo III ) O registo f\u00f3ssil indicia que este grupo de mustel\u00eddeos evoluiu a partir de ancestrais semelhantes a martas e fuinhas ( G\u00e9n. Martes ) , que em o Terci\u00e1rio ( h\u00e1 65 -- 2 <strong>milh\u00f5es<\/strong> de <strong>anos<\/strong> ) diferenciaram se , apresentando uma evolu\u00e7\u00e3o em a denti\u00e7\u00e3o em direc\u00e7\u00e3o a a omnivoria ( import\u00e2ncia crescente de os dentes tuberculados atr\u00e1s de as mand\u00edbulas e redu\u00e7\u00e3o de os dentes carniceiros cortantes ) .", "swapSentence": "Conven\u00e7\u00e3o de Berna ( anexo III ) O registo f\u00f3ssil indicia que este grupo de mustel\u00eddeos evoluiu a partir de ancestrais semelhantes a martas e fuinhas ( G\u00e9n. Martes ) , que em o Terci\u00e1rio ( h\u00e1 65 -- 2 <strong>milh\u00e3o<\/strong> de <strong>anos<\/strong> ) diferenciaram se , apresentando uma evolu\u00e7\u00e3o em a denti\u00e7\u00e3o em direc\u00e7\u00e3o a a omnivoria ( import\u00e2ncia crescente de os dentes tuberculados atr\u00e1s de as mand\u00edbulas e redu\u00e7\u00e3o de os dentes carniceiros cortantes ) .", "nsubj": "milh\u00f5es", "verb": "anos", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=ano", "deprel=nmod", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s8569b%22%20%3B%20A%20%5Bform%3D%22anos%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "Mais de 10 <strong>milh\u00f5es<\/strong> de <strong>pessoas<\/strong> foram afetadas por a seca deste ano , segundo levantamento de o Minist\u00e9rio de a Integra\u00e7\u00e3o Nacional .", "swapSentence": "Mais de 10 <strong>milh\u00e3o<\/strong> de <strong>pessoas<\/strong> foram afetadas por a seca deste ano , segundo levantamento de o Minist\u00e9rio de a Integra\u00e7\u00e3o Nacional .", "nsubj": "milh\u00f5es", "verb": "pessoas", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=pessoa", "deprel=nsubj:pass", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s319%22%20%3B%20A%20%5Bform%3D%22pessoas%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}, {"origSentence": "\" O Apple iPhone 5 teve um come\u00e7o s\u00f3lido , com uma estimativa de 6 <strong>milh\u00f5es<\/strong> de <strong>unidades<\/strong> vendidas em o terceiro trimestre .", "swapSentence": "\" O Apple iPhone 5 teve um come\u00e7o s\u00f3lido , com uma estimativa de 6 <strong>milh\u00e3o<\/strong> de <strong>unidades<\/strong> vendidas em o terceiro trimestre .", "nsubj": "milh\u00f5es", "verb": "unidades", "nsubjFeats": ["xpos=NUM", "Gender=Masc", "NumType=Card", "<b>Number=Plur<\/b>"], "verbFeats": ["lemma=unidade", "deprel=nmod", "upos=NOUN", "xpos=NOUN"], "ungrammatical": "milh\u00e3o", "swapRole": "A", "afterValue": "Sing", "afterFeatKey": "Number", "siblingKeys": ["Number[NUM]"], "bonusAfterFeats": [], "treebankLink": "https://universal.grew.fr/?corpus=UD_Portuguese-GSD%402.18&request=pattern%20%7B%20meta.sent_id%20%3D%20%22train-s6671%22%20%3B%20A%20%5Bform%3D%22unidades%22%5D%20%3B%20B%20%5Bform%3D%22milh%C3%B5es%22%5D%20%20%7D", "treebankName": "UD_Portuguese-GSD", "leaf": "1"}]};
   const TREES = { main: TREE_DATA };
   let currentTreeKey = 'main';
 
@@ -1424,7 +1428,6 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   const pairsList = document.getElementById('pairsList');
   const pairsTitle = document.getElementById('pairsTitle');
   const treeTitle = document.getElementById('treeTitle');
-  const treeSelectRow = document.getElementById('treeSelectRow');
   const treebankRow = document.getElementById('treebankRow');
   const treeWrap = document.querySelector('.tree-wrap');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1438,55 +1441,19 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   const distToggleRow = document.getElementById('distToggleRow');
   const distToggleSwitch = document.getElementById('distToggleSwitch');
 
-  // ── Pan/zoom: scale+translate treeViewport as one unit, not the SVG's own
-  // viewBox. The HTML node-box overlay (nodesLayer) doesn't know
-  // about the SVG's viewBox at all -- each node's left/top is just a
-  // percentage of the shared parent box -- so zooming the viewBox alone
-  // would desync the SVG edges from the HTML boxes drawn on top of them.
-  // Transforming their shared parent instead keeps both in lockstep for free.
+  // Pan/zoom: treeViewport (SVG edges and HTML node boxes together) is scaled and translated as one unit, so both stay in sync.
   const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 1.3;
   let zoom = { scale: 1, tx: 0, ty: 0 };
+
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function applyZoom() {
     treeViewport.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   }
 
-  // Fits the whole diagram into the available card width and TREE_BOX_MAX_H
-  // by scaling .tree-svg-box -- always laid out at its native CANVAS_W (see
-  // that rule's own comment for why narrowing it instead would let fixed
-  // 168px node boxes overlap) -- as one rigid unit via CSS `transform`.
-  // Two separate scales, not one, because "fill the available window" and
-  // "how big should the diagram itself render" pull in different
-  // directions for a small tree: fitScale sizes .tree-scale-outer -- the
-  // window -- and is NOT capped at 1, so a trivial one-leaf tree's tiny
-  // logical canvas still gets a properly roomy window (same as the old
-  // plain `width:100%` did), rather than one so small the info-panel/
-  // zoom-controls -- sized in real, unscaled px and pinned to
-  // .tree-scale-outer's own corners -- overlap it. contentScale is what
-  // actually transforms .tree-svg-box, and IS capped at 1: a small tree's
-  // diagram rendered at native size, centered in that roomier window (see
-  // .tree-scale-outer's flexbox), reads better than the same diagram
-  // stretched up to fill it -- bigger text and node boxes than the layout
-  // was ever designed for, not more legible for it. Scaling *down* is
-  // exactly as before (fitScale === contentScale whenever the tree doesn't
-  // fit natively; node spacing and the fixed 168px node boxes shrink
-  // together, so nothing that didn't already overlap at native size can
-  // start overlapping by getting smaller) -- the two only diverge once
-  // fitScale climbs past 1. The height cap matters as much for a
-  // wide-but-shallow (or trivial) tree's *window* as for an oversized
-  // tree's: without it, fitScale alone could still render several
-  // viewport-heights tall, pushing the node-samples panel below fully
-  // offscreen on load.
-  let fitScale = 1;
-  let contentScale = 1;
-  // The pan/zoom surface (treeBox) fills the whole tree area, so panning and
-  // zooming are clipped only by the card's edges, not by a box sized to the
-  // canvas's own aspect ratio. The tree itself stays laid out at its native
-  // CANVAS_W x CANVAS_H (treeViewport); fitToContent() scales it into view.
+  // treeBox fills the tree area; the tree stays laid out at its native CANVAS_W x CANVAS_H and fitToContent() scales it into view.
   function sizeTreeBox() {
     const w = treeScroll.clientWidth, h = treeScroll.clientHeight;
-    fitScale = 1;
-    contentScale = 1;
     treeBox.style.width = `${w}px`;
     treeBox.style.height = `${h}px`;
     treeBox.style.transform = 'none';
@@ -1496,29 +1463,10 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     treeViewport.style.height = `${CANVAS_H}px`;
   }
 
-  // Both demo trees' node coordinates were hand-placed to already fit the
-  // fixed 900x500 canvas, so this reduces to the identity transform for
-  // them -- but it's computed from T.NODES' actual bounding box, not
-  // hardcoded to that fact, so a tree whose layout doesn't fit 900x500 still
-  // opens fully visible instead of clipped or half off-screen. Operates
-  // entirely within .tree-svg-box's own native CANVAS_W/CANVAS_H frame --
-  // this is the *interactive* pan/zoom the user drives via the zoom
-  // controls/wheel/drag, layered underneath (and independent of) the
-  // fitScale/contentScale pair above, which only fit the box as a whole
-  // into the card.
+  // Fits the nodes' bounding box into treeBox; never zooms in past 1:1.
   function fitToContent() {
     const nodes = Object.values(T.NODES);
-    // Real, fixed CSS pixels -- not "canvas units" -- because that's what a
-    // .node-box actually is: a 168px-wide element whose *position* is a
-    // percentage of the box (so it scales with boxW) but whose *size* isn't
-    // (so it doesn't). Padding expressed in canvas units and only converted
-    // to pixels afterward (the previous version of this function) scales
-    // together with boxW and cancels out of the scale calculation entirely
-    // -- it never actually adapted to a narrower box, which only surfaced
-    // once something genuinely compressed treeBox: the fixed-width node
-    // boxes kept overflowing past the edge regardless of scale, because the
-    // padding meant to account for their real pixel footprint shrank right
-    // along with everything else instead of staying fixed.
+    // Padding is in real CSS pixels: a .node-box is a fixed 168px wide while its position scales with the box.
     const NODE_HALF_W = 84;  // half of .node-box's fixed 168px width
     const NODE_HALF_H = 45;  // rough half-height allowance (rule, stats, dist bar, keep badge)
     const PAD = 20;
@@ -1542,13 +1490,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   }
 
   function zoomBy(factor, centerX, centerY) {
-    // treeBox.clientWidth/Height, not getBoundingClientRect(): the latter
-    // reports the *visual*, contentScale-scaled size, but centerX/centerY
-    // (both the default here and the wheel handler's cursor-relative
-    // values below) need to land in treeBox's own untransformed local
-    // frame, same as zoom.tx/zoom.ty -- clientWidth/Height are a layout
-    // property and stay at the native CANVAS_W/CANVAS_H regardless of the
-    // `transform` sizeTreeBox() applies to this element.
+    // clientWidth/Height (layout size), not getBoundingClientRect(): zoom.tx/ty live in treeBox's local frame.
     const cx = centerX ?? treeBox.clientWidth / 2;
     const cy = centerY ?? treeBox.clientHeight / 2;
     const newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom.scale * factor));
@@ -1591,17 +1533,11 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   treeBox.addEventListener('wheel', e => {
     if (e.target.closest('.info-panel')) return;
     e.preventDefault();
-    // getBoundingClientRect() here IS the visual (contentScale-scaled)
-    // rect -- exactly what's needed to turn the cursor's real screen
-    // position into an offset from the box's visible top-left. Dividing
-    // that offset by contentScale then undoes the scale, converting it
-    // into treeBox's own untransformed local frame that zoomBy() (and
-    // zoom.tx/ty) work in.
     const rect = treeBox.getBoundingClientRect();
     zoomBy(
       e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
-      (e.clientX - rect.left) / contentScale,
-      (e.clientY - rect.top) / contentScale
+      e.clientX - rect.left,
+      e.clientY - rect.top
     );
   }, { passive: false });
 
@@ -1616,42 +1552,22 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   });
   window.addEventListener('mousemove', e => {
     if (!panState) return;
-    // Screen-space mouse movement divided by contentScale for the same
-    // reason as the wheel handler's cursor offset: zoom.tx/ty live in
-    // treeBox's untransformed local frame, so a real on-screen drag of N px
-    // should move content by N/contentScale local units to track the
-    // cursor 1:1.
-    zoom.tx = panState.origTx + (e.clientX - panState.startX) / contentScale;
-    zoom.ty = panState.origTy + (e.clientY - panState.startY) / contentScale;
+    zoom.tx = panState.origTx + (e.clientX - panState.startX);
+    zoom.ty = panState.origTy + (e.clientY - panState.startY);
     applyZoom();
   });
   window.addEventListener('mouseup', () => {
     if (panState) { panState = null; treeBox.classList.remove('panning'); }
   });
 
-  // Re-fit whenever the *available* space changes, for any reason -- not
-  // just a window resize event. treeBox itself is always CANVAS_W x
-  // CANVAS_H now (see sizeTreeBox()), so it never fires its own resize;
-  // treeScroll is the element whose actual rendered width sizeTreeBox()
-  // reads as maxW, so a ResizeObserver on it also catches the available
-  // width changing for reasons that never fire "resize" on window at all:
-  // this artifact's own panel narrowing, a host page's sidebar toggling, a
-  // container query breakpoint, etc. Without this, fitScale stays keyed to
-  // whatever space was available at the last real window resize, so the
-  // fitted tree can end up sized for a card that no longer exists, spilling
-  // out past the page's own edge instead of shrinking with it.
+  // Re-fit when the available space changes for any reason (panel resize, sidebar toggle, ...), not only on window resize.
   let resizeTimer = null;
   const scheduleRefit = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { sizeTreeBox(); fitToContent(); }, 150);
   };
   new ResizeObserver(scheduleRefit).observe(treeScroll);
-  // Kept alongside the observer above, not replaced by it: an actual
-  // window resize always fires this reliably, so it's a guaranteed
-  // fallback in case something about a given host page's layout ever
-  // stops treeScroll's own box size from changing in step with the window
-  // (e.g. a CSS containment quirk) -- redundant in the common case, but
-  // that just means fitToContent() gets called twice, which is harmless.
+  // Window resize kept as a fallback to the observer.
   window.addEventListener('resize', scheduleRefit);
 
   function widthFor(childN, parentN) { return Math.max(2, (childN / parentN) * 15); }
@@ -1671,16 +1587,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     });
   }
 
-  // Shared, comparable features first (this is exactly what agreement is
-  // about), then role-specific morphology, then dependency-structure extras
-  // (deprel/upos) used by the Hindi tree's rule checks. lemma trails those:
-  // identifying context like deprel/upos, not agreement-relevant morphology,
-  // but the Python side (_build_feat_columns/_v2_pair_feat_list) already
-  // emits a "lemma=..." entry for every row -- it just never had a matching
-  // feature column to render into.
-  // Every feature the rows carry gets a column. Morphological features come
-  // first (the usual ones in this order, any others alphabetically after),
-  // then the token-level fields, marked off visually.
+  // Columns: the usual morphological features first, any others alphabetically, then the token-level fields (OTHER_FEATS).
   const MORPH_ORDER = ['Number', 'Person', 'Gender', 'Case', 'Mood', 'Tense', 'Aspect', 'Voice', 'VerbForm', 'Definite', 'PronType', 'Poss', 'Reflex'];
   const OTHER_FEATS = ['lemma', 'deprel', 'upos', 'xpos'];
   function featBase(f) {
@@ -1697,19 +1604,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   }
 
   function featEntries(feats, key) {
-    // A plain "Number=..." entry and a bracketed "Number[abs]=..." one both
-    // live under the same "NUMBER" table column (one dimension, several
-    // possible sources -- see _v2_pair_feat_list's own resolve_bracket_feats
-    // for why obj/iobj/ergative-marked-subj agreement only ever has the
-    // bracketed form), but they are never the same reading: a bracket
-    // means this value came from a specific argument slot, not the token's
-    // unqualified feature. And a single token can carry *more than one*
-    // bracket of the same dimension at once (a transitive Basque verb's
-    // Number[abs] -- the object's number -- and Number[erg] -- the
-    // subject's -- both at once) -- every one of them is returned here
-    // (not just the first) so the caller can show all of them, each with
-    // its own bracket marker, rather than one arbitrarily winning the
-    // shared column.
+    // All entries of a column: plain "Number=" and bracketed "Number[abs]=" share a column but are different readings
+    // (a bracket is a specific argument slot), and a token can carry several brackets at once.
     const hits = feats.filter(f => {
       const clean = f.replace(/<\/?[bi]>/g, '');
       return clean.startsWith(key + '=') || clean.startsWith(key + '[');
@@ -1719,73 +1615,23 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
       const eqIdx = clean.indexOf('=');
       const fullKey = clean.slice(0, eqIdx);
       const value = clean.slice(eqIdx + 1);
-      // "nan" is the pipeline's own missing-value sentinel (see viz_tree.py's
-      // "_missing" -> "nan" rewrite) -- treated the same as a feature that
-      // doesn't apply to this token at all, rather than leaking the raw
-      // Python string into the table.
+      // "nan" is the missing-value sentinel (viz_tree.py rewrites "_missing" to it): treated as absent.
       if (value === 'nan') return null;
       const bracket = fullKey.length > key.length ? fullKey.slice(key.length) : null;
-      // bold: the decisive swap value (real violation, gets the red
-      // decisive.swapped styling below). bonus: a dimension with no
-      // original value at all, only a real one on the reinflected
-      // candidate (see applyAfterFeat's own docstring) -- genuinely new
-      // information, not a violation, so it must NOT inherit that same red
-      // "this changed for the worse" color just for sharing the cell with
-      // the entry that did.
+      // bold: the decisive swapped value (red). bonus: a dimension with no original value, new on the reinflected form (not a violation).
       return { value, bold: hit.startsWith('<b>'), bonus: hit.startsWith('<i>'), bracket };
     }).filter(e => e !== null);
   }
 
-  // Single-entry convenience for callers that only need "is this column
-  // populated at all" (column-set computation) -- picks the first match,
-  // same as the old featEntry did before it could return several.
+  // First entry only, for "is this column populated" checks.
   function featEntry(feats, key) {
     return featEntries(feats, key)[0] || null;
   }
 
-  // Sets a minimal pair's decisive feature to its real post-swap value --
-  // create_pairs' own after_{role}_{Feat}[...] column, emitted per pair as
-  // p.afterValue with the exact key it was found under (plain or
-  // bracketed) as p.afterFeatKey -- so the "swapped" row's other features
-  // are identical to the original by construction (the same feature list,
-  // only this one entry replaced), the decisive value itself is real data,
-  // not a guessed opposite, and a bracketed source (e.g. "Number[abs]")
-  // renders as one -- never silently relabeled as the plain "Number" the
-  // original row's own entry might (or might not) also carry.
-  //
-  // Matches afterFeatKey EXACTLY, not just a "starts with decisiveFeat["
-  // prefix: a token can carry more than one bracket of the same base
-  // feature at once (Number[abs] AND Number[erg] on one Basque verb), and
-  // only the one actually reinflected -- plus any TRUE alias of that same
-  // argument slot -- should change. A blanket prefix match would also drop
-  // genuinely different, untouched arguments that just happen to share the
-  // base feature name (e.g. relabeling-away the subject's unrelated
-  // Number[erg] when only the indirect object's Number[io] was swapped).
-  //
-  // siblingKeys (p.siblingKeys, from html_tree.py's own _v2_pair_from_row)
-  // is the precise list of alias brackets create_pairs' own
-  // resolve_layered_head_key would have tried for the SAME slot as
-  // afterFeatKey (relation-named bracket first, e.g. "[io]", then the
-  // child's own Case, e.g. "[dat]") -- both naming conventions for one
-  // reading, not two (Basque iobj: [io] and [dat] both key off the same
-  // indirect object). The original role's value for a sibling was real
-  // (both conventions' sources happened to agree pre-swap), but the
-  // swap_bundle that produced afterValue only ever reports the ONE key it
-  // was actually generated under -- html_tree.py's own after_feat_key
-  // resolution stops at the first populated candidate, so a sibling with no
-  // after_ value has no verified post-swap reading at all. Carrying its
-  // pre-swap value over here would silently claim it was checked and found
-  // unchanged, when it simply was never checked -- so drop only those true
-  // aliases, not every bracket of the base feature.
-  //
-  // bonusAfterFeats (p.bonusAfterFeats, see html_tree.py's own
-  // _v2_pair_from_row) are APPENDED rather than patched into an existing
-  // entry: a dimension like Basque's indirect-object Number/Person slot can
-  // be entirely absent from the original word (a plain transitive form like
-  // "zuen" never marks one at all) while genuinely present on the
-  // reinflected candidate (a ditransitive form like "zioten" does) -- real
-  // data with no original entry to replace, so it has to be added as a new
-  // column instead of overwriting one.
+  // Sets the pair's decisive feature to its real post-swap value (p.afterValue, found under p.afterFeatKey, plain or
+  // bracketed). Only afterFeatKey is patched, not every bracket of the base feature (a token can carry Number[abs] and
+  // Number[erg] at once); its alias brackets p.siblingKeys have no verified post-swap value and are dropped.
+  // bonusAfterFeats are dimensions absent from the original token, so they are appended rather than patched.
   function applyAfterFeat(feats, decisiveFeat, afterValue, afterFeatKey, bonusAfterFeats, siblingKeys) {
     const targetKey = afterFeatKey || decisiveFeat;
     const dropKeys = new Set(siblingKeys || []);
@@ -1797,26 +1643,15 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
       return f;
     }).filter(f => f !== null);
     if (!bonusAfterFeats || !bonusAfterFeats.length) return patched;
-    // <i>, not <b>: featEntries reads the wrapper tag to tell "the decisive
-    // value actually changed" (bold, gets the red decisive.swapped color)
-    // apart from "a dimension with no original value, genuinely new here"
-    // (bonus) -- see its own comment for why conflating the two was wrong.
+    // <i> marks a bonus entry, <b> the changed decisive value (see featEntries).
     return [...patched, ...bonusAfterFeats.map(f => `<i>${f}</i>`)];
   }
 
-  // One row per {label, form, feats} entry x one column per feature, columns
-  // limited to whichever features actually appear across all rows -- keeps a
-  // trimmed pair's table narrow instead of padding it out to a fixed schema.
-  // Rows flagged `linked` get a colored left rail connecting them (a role and
-  // its reinflected "swapped_" counterpart); a row flagged `swapped` gets its
-  // decisive cell flagged as the violation rather than the grammatical value.
-  // "Why this row is here": for each split on the way from the root to the
-  // current node, the rule, the branch this row took, and the row's own
-  // value of the column that split looks at.
+  // "Why this row is here": for each split from the root to the current node, the rule, the branch this row took, and
+  // the row's own value of the column that split looks at.
   function buildRouteTable(s, key) {
     const route = s.route || {};
     const path = T.PATHS[currentNode];
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const rows = [];
     for (let i = 0; i + 1 < path.length; i++) {
       const p = path[i], child = path[i + 1];
@@ -1835,12 +1670,10 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
         <tbody>${rows.join('')}</tbody></table></div></div></div>`;
   }
 
+  // One row per {label, form, feats} entry, one column per feature present in any row. `linked` rows get a colored
+  // left rail (a role and its swapped_ counterpart); a `swapped` row flags its decisive cell as the violation.
   function buildFeatTable(decisiveFeat, rows, forceCols) {
-    // forceCols lets a caller fix the same column set across several of
-    // these tables (e.g. all 5 sample rows for a node) so they line up
-    // visually -- left to compute its own columns, each table only shows
-    // the features actually set for its own two rows, which drifts from
-    // sample to sample.
+    // forceCols fixes one column set across several tables (e.g. a node's sample rows) so they line up.
     const cols = forceCols || featColumns(rows.map(r => r.feats));
     const firstOther = cols.findIndex(k => OTHER_FEATS.includes(k));
     const colCls = (k, i, extra) => {
@@ -1856,32 +1689,15 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     }).join('');
     const rowHtml = (r) => {
       const cells = cols.map((k, ci) => {
-        // Every entry for this column, not just one -- a token can carry
-        // more than one bracket of the same dimension at once (see
-        // featEntries), and all of them are shown, separated, so e.g. a
-        // verb's object-agreement AND subject-agreement Number are both
-        // visible and each stays comparable to the swapped role's own
-        // entry for that exact bracket.
+        // Every entry of the column is shown (a token can carry several brackets), each comparable to the swapped role's entry for the same bracket.
         const entries = featEntries(r.feats, k);
         const isDecisive = k === decisiveFeat;
         const cellCls = colCls(k, ci, isDecisive ? `decisive${r.variant === 'swapped' ? ' swapped' : ''}` : '');
         const cls = cellCls.length ? ` class="${cellCls.join(' ')}"` : '';
         if (!entries.length) return `<td${cls}><span class="na">–</span></td>`;
-        // One line per entry, stacked vertically (feat-entry-line is
-        // block-level), not joined inline with a "/" separator -- 2-3
-        // bracket variants of the same dimension (e.g. a transitive verb's
-        // Number[abs]/Number[erg], plus a bonus Number[io] on some rows)
-        // used to force the whole table wide enough to need horizontal
-        // scrolling just to read one cell; stacking keeps every table the
-        // same width regardless of how many brackets a given row happens
-        // to carry.
+        // One line per entry, stacked, so several bracket variants don't widen the table.
         const parts = entries.map(e => {
-          // bonus first: a bonus entry is never also .bold (applyAfterFeat
-          // wraps each entry with exactly one of <i>/<b>), but checking it
-          // first keeps that explicit rather than relying on the ordering
-          // not mattering. class="bonus-feat" is what lets the CSS below
-          // override the red decisive.swapped color for just this entry,
-          // without touching the real decisive value sharing its cell.
+          // bonus-feat lets the CSS override the red decisive.swapped color for a bonus entry sharing the cell.
           const valueHtml = e.bonus ? `<b class="bonus-feat">${e.value}</b>`
             : e.bold ? `<b>${e.value}</b>`
             : e.value;
@@ -1929,21 +1745,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     return `#${[mix(r1, r2), mix(g1, g2), mix(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  // Node fill: majority-class color (the same real per-node dist the mini
-  // bar below draws from) blended toward white in proportion to H -- the
-  // exact interpolate_color(node_color, "#ffffff", relative_entropy*0.72)
-  // formula decision_trees/{cond}/{lang}.html's _finalize_tree_html uses
-  // (relative_entropy there is impurity/log2(n_classes), which for these
-  // two-class Yes/No trees is the same binary entropy already shown as H).
-  // Fixed light-mode hex, not cssVar('--yes'/'--no'): the fill is meant to
-  // stay light-toned in both page themes (see the --node-fill comment
-  // above), so its base color shouldn't shift with the dark-mode palette.
-  // Fixed light-mode hex per semantic class, keyed the same way classColor
-  // below looks them up -- interpolateHex needs a real hex to blend toward
-  // white, not a var(...) reference, which is why this can't just reuse
-  // classColor's/T.CLASSES's own color values directly for yes/no/unk (it
-  // can for any other class, whose color already IS a real hex -- see the
-  // fallback below).
+  // Node fill: majority-class color blended toward white by uncertainty (nodeFillColor). Fixed light-mode hex per class
+  // (interpolateHex needs real hex, not var(...)), so the fill stays light in both themes.
   const SEMANTIC_BASE_HEX = { yes: '#14b8a6', no: '#ec4899', unk: '#a78bda' };
   function nodeFillColor(node) {
     if (!node.dist) return null;
@@ -1963,15 +1766,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     return entry ? entry.color : 'var(--unk)';
   }
 
-  // Yes/No is the real class name in the underlying data (T.CLASSES, every
-  // node's dist[], each sample's label) and stays that way everywhere it's
-  // used as an identifier -- grouping key, dataset key, comparisons against
-  // majorityLabel. This only relabels it where it's rendered as text for a
-  // reader, to "Agree"/"Disagree" (does the subject/verb, or det/head,
-  // actually agree), so it can't be misread as the True/False branch
-  // result shown elsewhere on the same tree -- two different yes/no-shaped
-  // facts about a node that used to share the same two words. Handles the
-  // rare compound case too (node 2's tied "Yes / No" leaf prediction).
+  // Class names (Yes/No) stay the identifiers; only rendered text says Agree/Disagree, so it isn't mistaken for the True/False branch result.
   function displayLabel(cls) {
     return cls.split(' / ').map(part => {
       const lower = part.toLowerCase();
@@ -1982,14 +1777,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     }).join(' / ');
   }
 
-  // T.roleA/T.roleB (and each pair's own swapRole 'A'/'B') are always the
-  // short raw role token the pipeline used internally (UD upos-ish tags for
-  // NPA -- "det", "adj", "adp", "num", "pron", "head" -- or SVA/subj_aux's
-  // "nsubj"/"verb"/"aux") -- spelled out here only where it's shown to a
-  // reader (the Pairs tab's role chips/group headers), the same "relabel at
-  // render time, keep the raw token as the identifier everywhere else"
-  // split as displayLabel above. An unrecognized token still degrades
-  // gracefully to Titlecase rather than showing raw lowercase.
+  // Raw role tokens (T.roleA/B, pair swapRole) are spelled out only where shown to a reader; unknown tokens fall back to Titlecase.
   const ROLE_DISPLAY_NAMES = {
     det: 'Determiner', adj: 'Adjective', adp: 'Adposition', num: 'Numeral',
     pron: 'Pronoun', head: 'Head', nsubj: 'Subject', verb: 'Verb', aux: 'Auxiliary',
@@ -2000,12 +1788,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     return token ? key.charAt(0).toUpperCase() + key.slice(1) : token;
   }
 
-  // Leaf node boxes render node.rule verbatim ("predict: Yes") server-side --
-  // relabel just the predicted class part through displayLabel, the same
-  // way every other reader-facing Yes/No already is. Internal (split-rule)
-  // nodes have no node.predicted and are returned unchanged: their rule
-  // text is a feature condition, not a class name, even on the rare
-  // feature whose own value happens to be the literal string "Yes"/"No".
+  // Leaf boxes render "predict: <class>" with the class relabeled; internal rules are feature conditions and stay as is.
   function nodeRuleDisplay(node) {
     if (!node.leaf || !node.predicted) return node.rule;
     return `predict: ${displayLabel(node.predicted)}`;
@@ -2014,15 +1797,16 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   // One bar + count + label per class; sizing (bar width/height, font size)
   // comes entirely from the caller's CSS context (.node-dist-popover vs.
   // .node-dist-detail), so this only ever computes the fill heights.
-  function buildDistColumns(dist, maxH) {
+  function buildDistColumns(dist, maxH, discounted) {
     const maxCnt = Math.max(...dist.map(d => d.cnt), 1);
     return dist.map(d => {
       const h = Math.max(2, Math.round((d.cnt / maxCnt) * maxH));
+      const off = discounted && discounted.has(d.cls);
       return `
-        <div class="dist-col">
+        <div class="dist-col"${off ? ' style="opacity:0.45" title="Not used in this view\'s fit -- shown for context"' : ''}>
           <div class="dist-col-bar-wrap"><div class="dist-col-bar" style="height:${h}px; background:${classColor(d.cls)}"></div></div>
           <div class="dist-col-count">${d.cnt.toLocaleString()}</div>
-          <div class="dist-col-label">${displayLabel(d.cls)}</div>
+          <div class="dist-col-label">${esc(displayLabel(d.cls))}</div>
         </div>`;
     }).join('');
   }
@@ -2030,10 +1814,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   function buildDistBar(node) {
     if (!node.dist) return '';
     const total = node.dist.reduce((s, d) => s + d.cnt, 0) || 1;
-    // Zero-count classes are dropped before rendering, not just given 0%
-    // width -- a 0%-wide segment would still take its :not(:last-child)
-    // divider (a border-right renders regardless of width), producing a
-    // stray line with nothing on one side of it.
+    // Zero-count classes are dropped: a 0%-wide segment would still draw its divider.
     const segs = node.dist.filter(d => d.cnt > 0).map(d => {
       return `<span class="seg" style="width:${(d.cnt / total * 100).toFixed(2)}%; background:${classColor(d.cls)}"></span>`;
     }).join('');
@@ -2058,12 +1839,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
       line.setAttribute('stroke', kind === 'true' ? 'var(--ok)' : 'var(--danger)');
       line.setAttribute('stroke-width', w);
       line.setAttribute('stroke-linecap', 'round');
-      // False ("No") branches dashed, True ("Yes") solid -- a second, shape-
-      // based cue alongside the green/red color so the branch taken doesn't
-      // rely on color alone (e.g. for colorblind readers, or a projector
-      // that washes the red out). Dash/gap scaled to the edge's own width
-      // (already variable, by sample count) so thick and thin dashed edges
-      // both read as a clean "- - - -", not a blob on the thick ones.
+      // False branches are dashed (a cue besides color), the dash scaled to the edge width.
       if (kind !== 'true') line.setAttribute('stroke-dasharray', `${w * 1.8},${w * 1.4}`);
       line.classList.add('base-edge');
       edgesBase.appendChild(line);
@@ -2076,38 +1852,30 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
       slot.style.left = (node.x / CANVAS_W * 100) + '%';
       slot.style.top = (node.y / CANVAS_H * 100) + '%';
 
-      // Minimal pairs are only ever generated from an Agree-majority leaf
-      // (create_pairs never swaps out of a Disagree majority) -- node.keep
-      // is computed from acc alone, with no majority-label check, so it can
-      // still come back true for a Disagree leaf whose acc happens to clear
-      // the threshold; omit the badge entirely there rather than show a
-      // "kept" or "not kept" note that can't ever inform anything.
+      // Pairs come only from Agree-majority leaves; node.keep ignores the majority label, so Disagree leaves get no badge.
       const isAgreeLeaf = node.majorityLabel && node.majorityLabel.toLowerCase() === 'yes';
-      // node.keepThresholdAcc is this leaf's own cutoff -- same value for every
-      // leaf unless second_chance's depth-aware retry gave leaves different
-      // ones, in which case T.META's single global number can't be trusted.
+      // node.keepThresholdAcc is this leaf's own cutoff (it differs per leaf after a depth-aware second_chance).
       const keepHtml = !node.leaf || !isAgreeLeaf || node.keepThresholdAcc == null ? '' : node.keep
         ? `<span class="node-keep yes${node.secondChance ? ' second-chance' : ''}" data-keep-toggle="1">🔑${node.secondChance ? '2️⃣' : ''} ${node.kept.toLocaleString()} kept${node.secondChance ? ` (acc>${node.keepThresholdAcc.toFixed(2)})` : ''} › ${node.correctSwaps.toLocaleString()} pairs ▸</span>`
         : `<span class="node-keep no">not kept (acc ${node.acc.toFixed(3)} ≤ ${node.keepThresholdAcc.toFixed(2)})</span>`;
       const fill = nodeFillColor(node);
-      // [+] marker: flags a split rule where some other feature was >99%
-      // correlated with the chosen one in the rows reaching this node (the
-      // tree's pick was largely arbitrary among them) -- see
-      // get_correlated_features in viz_tree.py. Only ever set on internal
-      // (non-leaf) nodes there, same as here. Both real trees behind this
-      // mockup happen to have zero correlated features at every node (a
-      // real, verified fact about these two trees, not a placeholder), so
-      // this renders nothing today -- the mechanism is wired for whenever a
-      // tree that does have some gets dropped in.
+      // [+]: other features were >99% correlated with the chosen split feature here (get_correlated_features in viz_tree.py); internal nodes only.
       const corrHtml = (node.corr && node.corr.length)
         ? `<span class="corr-marker-wrap"><span class="corr-marker">[+]</span><span class="corr-popover">${node.corr.map(c => `≈ ${c}`).join('<br>')}</span></span>`
         : '';
 
-      // No branch (True/False) badge on the node itself -- same as the real
-      // decision_trees/{cond}/{lang}.html annotations, which carry no
-      // direction indicator either; that's conveyed by the green/true vs.
-      // red/false edge color and position alone.
-      slot.innerHTML = `
+      // No True/False badge on the node: the branch is conveyed by edge color and dashing.
+      const notice = T.META.rootNotice;
+      slot.innerHTML = notice && Number(id) === 0 ? `
+        <div class="node-box root-notice">
+          <div class="node-header"><span class="node-rule">${notice.heading}</span></div>
+          <div class="node-body">
+            <div class="root-notice-text">${notice.text}</div>
+            <div class="root-notice-dist">${buildDistColumns(node.dist, 56, new Set(T.META.excludedClasses || []))}</div>
+            ${(T.META.excludedClasses || []).length ? '<div class="root-notice-text root-notice-foot">Greyed-out classes are rows missing annotation: they are not counted in this view. Switch on &ldquo;Include rows missing annotation&rdquo; to include them.</div>' : ''}
+            [${id}]&nbsp; n=${node.n}
+          </div>
+        </div>` : `
         <div class="node-box">
           <div class="node-header"${fill ? ` style="--node-fill:${fill}"` : ''}>
             <span class="node-rule">${nodeRuleDisplay(node)}${corrHtml}</span>
@@ -2148,14 +1916,13 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     });
   }
 
-  // Pooled tree + one pill per treebank tree (word_order.per_treebank).
+  // Pooled tree + one pill per treebank tree (agreement_trees.extract.per_treebank).
   // A pill is tagged when that treebank's own tree beats the pooled tree on
   // the same held-out rows by a clear margin.
   function buildTreebankRow() {
     const nav = T.META.nav;
     if (!nav) return;
     const pct = v => (v * 100).toFixed(1) + '%';
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const pills = [`<span class="tb-label">Trees</span>`];
     const unkView = nav.variant === 'unk';
     const pAcc = unkView ? nav.pooledUnkAcc : nav.pooledAcc;
@@ -2251,24 +2018,6 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     if (overview && nav.overviewHref) overview.setAttribute('href', nav.overviewHref);
   }
 
-  function buildTreeSelector() {
-    treeSelectRow.innerHTML = '';
-    // A real per-language page only ever has one tree -- the selector row
-    // (built for comparing multiple trees side by side) has nothing to
-    // switch between, so it's not shown at all rather than rendering as a
-    // single, unclickable-feeling button.
-    if (Object.keys(TREES).length <= 1) { treeSelectRow.style.display = 'none'; return; }
-    Object.entries(TREES).forEach(([key, tree]) => {
-      const keepLeaves = Object.entries(tree.NODES).filter(([, n]) => n.keep);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tree-select-btn' + (key === currentTreeKey ? ' active' : '');
-      btn.innerHTML = `${tree.title.split(' · ')[0]}<span class="keep-count">🔑×${keepLeaves.length}</span>`;
-      btn.addEventListener('click', () => selectTree(key));
-      treeSelectRow.appendChild(btn);
-    });
-  }
-
   // Blue "current" outline covers the whole root→currentNode route, not just
   // the node itself, so you can see how you got there at a glance.
   function markCurrentPath() {
@@ -2278,11 +2027,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     });
   }
 
-  // Floating info panel -- title/accuracy/meta rows straight from T.META,
-  // and the "Classes · dataset distribution" swatch+count+bar rows (same
-  // convention, same "unk" bucket dimmed to opacity 0.35 at zero count) from
-  // T.CLASSES -- both read from decision_trees/{cond}/{lang}.html's own
-  // info-panel, not recomputed here.
+  // Floating info panel: meta rows from T.META, class distribution rows from T.CLASSES.
   const META_ROWS = [
     ['Language', 'languageName'], ['Treebank', 'treebank'], ['Excluded from pairs', 'excludedReason'], ['Keep threshold', 'keepThreshold'], ['train accuracy', 'accuracy'], ['test accuracy', 'testAccuracyRow'],
     ['base entropy', 'baseEntropy'], ['reduced entropy', 'reducedEntropy'],
@@ -2298,18 +2043,20 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     infoPanelTitle.textContent = T.META.language;
     // Train = accuracy on the rows the tree was fit on; test = on its held-out
     // split. Pages built before the test figure existed just show "accuracy".
+    if (T.META.rootNotice) infoPanelAccuracy.closest('.accuracy-badge').style.display = 'none';
     infoPanelAccuracy.textContent = T.META.testAccuracy
       ? `train ${T.META.accuracy} · test ${T.META.testAccuracy}`
       : `${T.META.accuracy} accuracy`;
-    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy')).map(([label, key]) => `
-      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${T.META[key]}</span></div>`).join('');
+    const NO_TREE_HIDDEN = ['accuracy', 'testAccuracyRow', 'rootAccuracy', 'trainAccuracy', 'baseEntropy', 'reducedEntropy', 'nodes', 'depth', 'keepThreshold'];
+    infoPanelMeta.innerHTML = META_ROWS.filter(([, key]) => T.META[key] !== undefined && !(T.META.measure === 'accuracy' && key === 'accuracy') && !(T.META.rootNotice && NO_TREE_HIDDEN.includes(key))).map(([label, key]) => `
+      <div class="meta-row"><span class="meta-key">${label}</span><span class="meta-val">${esc(T.META[key])}</span></div>`).join('');
 
     const maxCnt = Math.max(...T.CLASSES.map(c => c.cnt), 1);
     const excluded = new Set(T.META.excludedClasses || []);
     classDistLegend.innerHTML = T.CLASSES.map(c => `
       <div class="class-dist-row" style="${c.cnt === 0 ? 'opacity:0.35' : excluded.has(c.cls) ? 'opacity:0.45' : ''}"${excluded.has(c.cls) ? ' title="Not used in this tree\'s fit -- shown for context"' : ''}>
         <span class="class-dist-swatch" style="background:${c.color}"></span>
-        <span class="class-dist-label">${displayLabel(c.cls)}</span>
+        <span class="class-dist-label">${esc(displayLabel(c.cls))}</span>
         <span class="class-dist-count">${c.cnt.toLocaleString()}</span>
         <div class="class-dist-bar-track">
           <div class="class-dist-bar-fill" style="width:${(c.cnt / maxCnt * 100).toFixed(1)}%; background:${c.color}"></div>
@@ -2346,39 +2093,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     document.querySelectorAll('.node-dist-bar-wrap').forEach(el => { el.style.display = showNodeDist ? '' : 'none'; });
   });
 
-  function selectTree(key) {
-    if (key === currentTreeKey) return;
-    currentTreeKey = key;
-    T = TREES[key];
-    CANVAS_W = T.CANVAS_W; CANVAS_H = T.CANVAS_H;
-    currentNode = T.defaultNode;
-    active.clear();
-    openLabels.clear();
-    openRouteLabels.clear();
-    // Leaf ids aren't unique across trees (both demo trees happen to have a
-    // leaf "3"), so leaving these set would leak one tree's open/highlight
-    // state onto the other tree's same-numbered leaf.
-    openLeaves.clear();
-    activePairKey = null;
-    document.querySelectorAll('.tree-select-btn').forEach((el, i) => {
-      el.classList.toggle('active', Object.keys(TREES)[i] === key);
-    });
-    treeTitle.textContent = T.title;
-    drawBaseTree();
-    sizeTreeBox();
-    fitToContent();
-    markCurrentPath();
-    buildInfoPanel();
-    buildSampleGrid();
-    buildPairsList();
-    render();
-  }
-
   function selectNode(id) {
-    // Traces don't survive a node change: leaving them active let a leaf
-    // flag from a node you're no longer looking at linger indefinitely,
-    // which read as stale rather than as an intentional cross-node
-    // comparison.
+    // Traces do not survive a node change (a stale leaf flag would read as an intentional comparison).
     if (id !== currentNode) active.clear();
     currentNode = id;
     markCurrentPath();
@@ -2442,18 +2158,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   // feature-table visibility.
   let activePairKey = null;
 
-  // Runs `mutate`, then scrolls the page by however far the element tagged
-  // data-scroll-anchor="anchorValue" moved vertically as a result -- so
-  // whatever a person just clicked (a "features" toggle, a pair card) stays
-  // under their eye instead of the page jumping when content above or
-  // around it changes height. Re-queries by a stable data attribute rather
-  // than keeping clickedEl's own reference because buildPairsList() (and,
-  // in principle, any other full-rebuild caller) replaces the whole list on
-  // every call -- the original element is gone, but whatever it represents
-  // (a leaf's header button, a specific pair, a sample row) still has a
-  // stable identifying attribute to find its replacement by. Works just as
-  // well for callers that mutate in place (setLabelFeatsOpen never rebuilds
-  // anything) since re-querying the same still-present element is harmless.
+  // Runs `mutate`, then scrolls by however far the element with data-scroll-anchor="anchorValue" moved, so the clicked
+  // element stays under the cursor. Re-queries by attribute because full rebuilds replace the element.
   function preservingScroll(clickedEl, anchorValue, mutate) {
     const before = clickedEl.getBoundingClientRect().top;
     mutate();
@@ -2464,16 +2170,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     if (after) scrollPane.scrollBy(0, after.getBoundingClientRect().top - before);
   }
 
-  // Wires single- and double-click as genuinely distinct actions on the
-  // same element, not just an addition on top of each other: a native
-  // dblclick fires *after* two ordinary click events already have, so a
-  // plain "click" + "dblclick" listener pair still runs onSingle twice
-  // (each its own unprotected rebuild/scroll-jump) before onDouble ever
-  // gets a turn -- by the time onDouble's own preservingScroll runs, it's
-  // only protecting against its own mutation, not undoing the jump those
-  // two already caused. Delaying onSingle instead, and swallowing it
-  // entirely when a second click arrives within the window, means a real
-  // double-click runs onDouble alone.
+  // Distinct single and double click: a native dblclick fires after two clicks, so onSingle is delayed and dropped when a
+  // second click arrives, and a double-click runs onDouble alone.
   function onSingleOrDoubleClick(el, onSingle, onDouble) {
     let pending = null;
     el.addEventListener('click', () => {
@@ -2510,16 +2208,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     if (open) alignFeatLabelCols();
   }
 
-  // sharedCols (above) already keeps the data columns identical across all
-  // 5 samples' tables; the one column it can't fix is the row-label cell
-  // itself, since its width comes from the actual nsubj/verb token text --
-  // a one-letter Greek pronoun next to a ten-letter noun -- which a shared
-  // *set* of columns says nothing about. Measuring the widest one actually
-  // rendered and applying it to all of them (rather than guessing a fixed
-  // CSS width that's either wasteful or too narrow for a real outlier)
-  // finishes the alignment exactly. Only real once the rows are unhidden --
-  // a hidden row's cells measure 0-width -- so this runs after that, not at
-  // build time.
+  // Row-label cells are sized to the widest one rendered (token text length varies); measured after the rows are unhidden, since hidden cells measure 0.
   function alignFeatLabelCols() {
     ['role-label-cell', 'role-form-cell'].forEach(cls => {
       const cells = [...document.querySelectorAll(`#sampleGrid tr.feat-row:not([hidden]) .feat-mini-table tbody th.${cls}`)];
@@ -2662,7 +2351,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
         header.dataset.label = label;
         header.innerHTML = `<td colspan="3"><div class="group-header-row">
           <span class="group-swatch" style="background:${classColor(label)}"></span>
-          <span class="group-label">${displayLabel(label)}</span>
+          <span class="group-label">${esc(displayLabel(label))}</span>
           <span class="group-n">showing ${idxs.length} of ${distEntry.cnt.toLocaleString()} (${pct}% of this node)</span>
           ${T.PATHS[currentNode].length > 1 ? `<button type="button" class="group-route-toggle" data-label="${label}" data-text="route" data-scroll-anchor="routehdr_${label}" aria-expanded="${openRouteLabels.has(label)}">${openRouteLabels.has(label) ? '▾' : '▸'} route</button>` : ''}
           <button type="button" class="group-feats-toggle" data-label="${label}" data-scroll-anchor="samplehdr_${label}" aria-expanded="${isOpen}">${isOpen ? '▾' : '▸'} features</button>
@@ -2697,7 +2386,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
         btn.type = 'button';
         btn.className = 'label-jump';
         btn.title = `Jump to the ${displayLabel(label)} samples`;
-        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${displayLabel(label)}` +
+        btn.innerHTML = `<span class="swatch" style="background:${classColor(label)}"></span>${esc(displayLabel(label))}` +
           (entry ? `<span class="n">${entry.cnt.toLocaleString()}</span>` : '');
         btn.addEventListener('click', () => {
           // From the Pairs tab, jump means "show me these samples".
@@ -2810,10 +2499,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
         el.setAttribute('aria-pressed', String(key === activePairKey));
         el.setAttribute('data-scroll-anchor', `pair_${key}`);
 
-        // The swapped role is the one create_pairs actually reinflected --
-        // roleA (det) for Hindi, roleB (verb) for Greek. Its "swapped_" row
-        // is the original row's features with only the decisive feature
-        // flipped, exactly what reinflection does.
+        // The swapped role is the one create_pairs reinflected; its "swapped_" row is the original's features with only the decisive one flipped.
         const swappedIsA = (p.swapRole || T.swappedRole) === 'A';
         const origRole = swappedIsA ? { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' } : { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' };
         const otherRole = swappedIsA ? { label: T.roleB, form: p.verb, feats: p.verbFeats, role: 'b' } : { label: T.roleA, form: p.nsubj, feats: p.nsubjFeats, role: 'a' };
@@ -2871,15 +2557,8 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
         group.appendChild(el);
       };
 
-      // Group by which component this leaf's pairs actually reinflected
-      // (npa.agreement.swap_roles_for_target_col: a no-HEAD pair like
-      // DET-ADJ reinflects each role in turn and merges both directions into
-      // one bucket) -- same idea as the samples table's byLabel groups, so a
-      // leaf that mixes e.g. DET- and ADJ-reinflected pairs shows them as two
-      // labelled runs instead of interleaved with no indication of which
-      // side was reinflected. A leaf with only one direction (SVA/subj_aux,
-      // or NPA's HEAD pairs) renders exactly as before -- no header, one
-      // flat list -- since there's nothing to distinguish.
+      // Group by the reinflected role (npa swap_roles_for_target_col: no-HEAD pairs like DET-ADJ reinflect each role and share
+      // one bucket); a single-direction leaf renders as one flat list.
       const byRole = new Map();
       leafPairs.forEach((p, i) => {
         const role = p.swapRole || T.swappedRole;
@@ -2888,7 +2567,6 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
       });
       const roleOrder = ['A', 'B'].filter(r => byRole.has(r));
       if (roleOrder.length > 1) {
-        const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         roleOrder.forEach(role => {
           const idxs = byRole.get(role);
           const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
@@ -2906,21 +2584,13 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     });
   }
 
-  // One chip per reinflected component present among the current leaf's
-  // pairs (only when the leaf actually mixes both -- see roleOrder above),
-  // sitting next to the Pairs tab the same way drawerLabels' Agree/Disagree
-  // chips sit next to Samples. Counts come from node.pairRoleCounts -- the
-  // REAL per-direction total straight from correct_swaps.parquet, not just
-  // however many of that direction happen to be materialized into T.PAIRS
-  // -- the same "real distribution, not the capped sample" convention
-  // node.dist gives the Agree/Disagree chips (see buildLabelJumps). Jumps
-  // to that component's group header (built above) rather than filtering.
+  // One chip per reinflected role in the leaf (only when it mixes both); counts are the real totals from
+  // node.pairRoleCounts, not the capped T.PAIRS sample. Jumps to the group header.
   function buildPairRoleJumps(leafId) {
     drawerPairRoles.innerHTML = '';
     const counts = (leafId != null && T.NODES[leafId] && T.NODES[leafId].pairRoleCounts) || {};
     const roleOrder = ['A', 'B'].filter(r => counts[r] > 0);
     if (roleOrder.length > 1) {
-      const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       roleOrder.forEach(role => {
         const roleLabel = displayRole(role === 'A' ? T.roleA : T.roleB);
         const btn = document.createElement('button');
@@ -2977,7 +2647,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   function closeDrawer() {
     drawerOpen = false;
     drawer.hidden = true;
-    if (revealShift) { zoom.ty += revealShift / contentScale; revealShift = 0; applyZoom(); }
+    if (revealShift) { zoom.ty += revealShift; revealShift = 0; applyZoom(); }
     active.clear();
     markCurrentPath();
     render();
@@ -2993,7 +2663,7 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
     if (over <= 0) return;
     const room = r.top - treeScroll.getBoundingClientRect().top - 8;
     const dy = Math.min(over, Math.max(0, room));
-    if (dy > 0) { zoom.ty -= dy / contentScale; revealShift += dy; applyZoom(); }
+    if (dy > 0) { zoom.ty -= dy; revealShift += dy; applyZoom(); }
   }
   function jumpToLeafGroup(id) {
     const group = pairsList.querySelector(`[data-leaf-group="${CSS.escape(String(id))}"]`);
@@ -3038,7 +2708,6 @@ const TREE_DATA = {"title": "Portuguese \u00b7 NP head-NUM_Number", "roleA": "nu
   drawerHandle.addEventListener('pointerup', endDrawerDrag);
   drawerHandle.addEventListener('pointercancel', endDrawerDrag);
 
-  buildTreeSelector();
   treeTitle.textContent = T.title;
   drawBaseTree();
   sizeTreeBox();
