@@ -8,7 +8,7 @@
             if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
         } catch (e) {}
     </script>
-    <title>MultiBLiMP – Morphological Agreement – NP NUM–PRON (Gender)</title>
+    <title>MultiBLiMP – Agreement – NP NUM–PRON (Gender)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -475,17 +475,17 @@
     <div class="container">
         <div class="header">
             <div class="title-section">
-                <h1>MultiBLiMP – Morphological Agreement – NP NUM–PRON (Gender)</h1>
+                <h1>MultiBLiMP – Agreement – NP NUM–PRON (Gender)</h1>
                 <div class="subtitle">
                     NP NUM–PRON (Gender) agreement prediction through decision trees. Click a language row (or the <strong>Results</strong> button) to open its create_pairs results below. The small chevron after N Keep (or the <strong>Diagnostics</strong> button) is separate: it opens just the bucket breakdown, inline, right where those items dropped out of the pipeline.
                 </div>
             </div>
             <div class="top-controls">
-                <a href="../../../index.html" class="back-btn" title="Back to the sva-dt dataset stats overview">
+                <a href="../../../data.html" class="back-btn" title="Back to the dataset overview">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Main Page
+                    Data overview
                 </a>
                 <a href="../../" class="back-btn">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -643,7 +643,7 @@
                 <tr><td>% undefined feature</td><td># undefined feature (<code>undefined_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
                 <tr><td>% conflicting features</td><td># conflicting features (<code>conflicting_features</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form. Always 0 for NPA.</td></tr>
                 <tr><td>% ambiguous PRON</td><td># ambiguous PRON (<code>ambiguous_subjects</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Fires once per attempted swap_form.</td></tr>
-                <tr><td>% invalid surface</td><td># invalid surface (<code>invalid_surface</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>A valid pair whose written form could not be built: the swapped word sits in a contraction (<code>de le</code> = <code>du</code>) and its new components are neither a known contraction nor an attested word sequence. Left out of the pairs.</td></tr>
+                <tr><td>% invalid surface</td><td># invalid surface (<code>invalid_surface</code>)</td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>A valid pair whose written form could not be built: the swapped word sits in a contraction (<code>de le</code> = <code>du</code>) and its new components are not a known contraction (kept as separate words now; this bucket stays empty).</td></tr>
                 <tr><td>(not shown) extra_pairs</td><td><code>extra_pairs</code></td><td>swap_items</td><td><code>items_seen &minus; no_match &minus; no_inflection</code></td><td>item</td><td>Would collect otherwise-valid swaps (same eligibility as correct_swaps) that get capped once their FROM&rarr;TO combination hits the max_num_of_pairs limit. Always 0 today since create_pairs is never called with that limit set.</td></tr>
               </tbody>
             </table>
