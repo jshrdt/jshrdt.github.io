@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         try {
             var t = localStorage.getItem('sva-dt-theme');
@@ -53,6 +54,10 @@
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
+        }
+        @media (max-width: 600px) {
+            body { padding: .75rem; }
+            .container { padding: 1.25rem; }
         }
         .container {
             max-width: 1400px;
@@ -335,7 +340,7 @@
           });
         })();
 
-        const allData = {"npa/DET-PRON_C": {"acc": [{"name": "Ancient Greek", "base": 0.75, "tree": 0.8743654822335025, "n_items": 98, "url": "../../npa/DET-PRON_C/Ancient_Greek.html", "color": "#2563eb"}]}, "npa/DET-PRON_G": {"acc": [{"name": "Ancient Greek", "base": 0.7519083969465649, "tree": 0.7519083969465649, "n_items": 295, "url": "../../npa/DET-PRON_G/Ancient_Greek.html", "color": "#2563eb"}]}, "npa/DET-PRON_N": {"acc": [{"name": "Ancient Greek", "base": 0.7093908629441624, "tree": 0.7093908629441624, "n_items": 279, "url": "../../npa/DET-PRON_N/Ancient_Greek.html", "color": "#2563eb"}, {"name": "Beja", "base": 0.9210526315789473, "tree": 0.9210526315789473, "n_items": 17, "url": "../../npa/DET-PRON_N/Beja.html", "color": "#2563eb"}, {"name": "Nheengatu", "base": 0.86, "tree": 0.86, "n_items": 21, "url": "../../npa/DET-PRON_N/Nheengatu.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.9513888888888888, "tree": 0.9513888888888888, "n_items": 68, "url": "../../npa/DET-PRON_N/Norwegian_Bokmaal.html", "color": "#2563eb"}]}, "npa/DET-PRON_Polite": {"acc": []}};
+        const allData = {"npa/DET-PRON_C": {"acc": [{"name": "Ancient Greek", "base": 0.75, "tree": 0.8743654822335025, "n_items": 106, "url": "../../npa/DET-PRON_C/Ancient_Greek.html", "color": "#2563eb"}, {"name": "Old Norse", "base": 0.5222222222222223, "tree": 0.9222222222222223, "n_items": 22, "url": "../../npa/DET-PRON_C/Old_Norse.html", "color": "#2563eb"}]}, "npa/DET-PRON_G": {"acc": [{"name": "Ancient Greek", "base": 0.7519083969465649, "tree": 0.7519083969465649, "n_items": 331, "url": "../../npa/DET-PRON_G/Ancient_Greek.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.9913793103448276, "tree": 0.9913793103448276, "n_items": 57, "url": "../../npa/DET-PRON_G/Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": 0.9945652173913043, "tree": 0.9945652173913043, "n_items": 91, "url": "../../npa/DET-PRON_G/Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Old Norse", "base": 0.6555555555555556, "tree": 0.7888888888888889, "n_items": 32, "url": "../../npa/DET-PRON_G/Old_Norse.html", "color": "#2563eb"}]}, "npa/DET-PRON_N": {"acc": [{"name": "Ancient Greek", "base": 0.7093908629441624, "tree": 0.7093908629441624, "n_items": 316, "url": "../../npa/DET-PRON_N/Ancient_Greek.html", "color": "#2563eb"}, {"name": "Beja", "base": 0.9210526315789473, "tree": 0.9210526315789473, "n_items": 20, "url": "../../npa/DET-PRON_N/Beja.html", "color": "#2563eb"}, {"name": "Nheengatu", "base": 0.86, "tree": 0.86, "n_items": 23, "url": "../../npa/DET-PRON_N/Nheengatu.html", "color": "#2563eb"}, {"name": "Norwegian Bokmaal", "base": 0.9513888888888888, "tree": 0.9513888888888888, "n_items": 76, "url": "../../npa/DET-PRON_N/Norwegian_Bokmaal.html", "color": "#2563eb"}, {"name": "Norwegian Nynorsk", "base": 0.9833333333333333, "tree": 0.9833333333333333, "n_items": 29, "url": "../../npa/DET-PRON_N/Norwegian_Nynorsk.html", "color": "#2563eb"}, {"name": "Old Norse", "base": 0.7444444444444445, "tree": 0.7444444444444445, "n_items": 37, "url": "../../npa/DET-PRON_N/Old_Norse.html", "color": "#2563eb"}]}, "npa/DET-PRON_Polite": {"acc": [{"name": "Javanese", "base": 0.9705882352941176, "tree": 0.9705882352941176, "n_items": 16, "url": "../../npa/DET-PRON_Polite/Javanese.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so

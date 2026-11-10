@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         try {
             var t = localStorage.getItem('sva-dt-theme');
@@ -53,6 +54,10 @@
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
+        }
+        @media (max-width: 600px) {
+            body { padding: .75rem; }
+            .container { padding: 1.25rem; }
         }
         .container {
             max-width: 1400px;
@@ -327,7 +332,7 @@
           });
         })();
 
-        const allData = {"npa/NUM-PRON_G": {"acc": [{"name": "Ancient Hebrew", "base": 0.6621621621621622, "tree": 0.7432432432432432, "n_items": 12, "url": "../../npa/NUM-PRON_G/Ancient_Hebrew.html", "color": "#2563eb"}]}, "npa/NUM-PRON_N": {"acc": [{"name": "Ancient Hebrew", "base": 0.5337837837837838, "tree": 0.9256756756756757, "n_items": 34, "url": "../../npa/NUM-PRON_N/Ancient_Hebrew.html", "color": "#2563eb"}]}};
+        const allData = {"npa/NUM-PRON_G": {"acc": [{"name": "Ancient Hebrew", "base": 0.6621621621621622, "tree": 0.7432432432432432, "n_items": 14, "url": "../../npa/NUM-PRON_G/Ancient_Hebrew.html", "color": "#2563eb"}]}, "npa/NUM-PRON_N": {"acc": [{"name": "Ancient Hebrew", "base": 0.5337837837837838, "tree": 0.9256756756756757, "n_items": 38, "url": "../../npa/NUM-PRON_N/Ancient_Hebrew.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so

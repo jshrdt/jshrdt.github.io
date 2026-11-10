@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         try {
             var t = localStorage.getItem('sva-dt-theme');
@@ -53,6 +54,10 @@
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
+        }
+        @media (max-width: 600px) {
+            body { padding: .75rem; }
+            .container { padding: 1.25rem; }
         }
         .container {
             max-width: 1400px;
@@ -304,6 +309,10 @@
                 <div id="plot-npa_HEAD-ADJ_Mutation" class="mini-plot" data-url="../../npa/HEAD-ADJ_Mutation/index.html" data-deprel="npa/HEAD-ADJ_Mutation"></div>
                 <div class="panel-label"><a href="../../npa/HEAD-ADJ_Mutation/index.html">Head–Adjective</a></div>
             </div>
+            <div class="panel">
+                <div id="plot-npa_HEAD-ADP_Mutation" class="mini-plot" data-url="../../npa/HEAD-ADP_Mutation/index.html" data-deprel="npa/HEAD-ADP_Mutation"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADP_Mutation/index.html">Head–Adposition</a></div>
+            </div>
             </div>
         </div>
     </div>
@@ -327,7 +336,7 @@
           });
         })();
 
-        const allData = {"npa/HEAD-ADJ_Mutation": {"acc": [{"name": "Welsh", "base": 0.885593220338983, "tree": 0.885593220338983, "n_items": 104, "url": "../../npa/HEAD-ADJ_Mutation/Welsh.html", "color": "#2563eb"}]}, "npa/HEAD-NUM_Mutation": {"acc": []}};
+        const allData = {"npa/HEAD-ADJ_Mutation": {"acc": [{"name": "Welsh", "base": 0.885593220338983, "tree": 0.885593220338983, "n_items": 118, "url": "../../npa/HEAD-ADJ_Mutation/Welsh.html", "color": "#2563eb"}]}, "npa/HEAD-ADP_Mutation": {"acc": [{"name": "Welsh", "base": 0.875, "tree": 0.875, "n_items": 35, "url": "../../npa/HEAD-ADP_Mutation/Welsh.html", "color": "#2563eb"}]}, "npa/HEAD-NUM_Mutation": {"acc": [{"name": "Welsh", "base": 0.6071428571428571, "tree": 0.6071428571428571, "n_items": 10, "url": "../../npa/HEAD-NUM_Mutation/Welsh.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so

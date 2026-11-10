@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         try {
             var t = localStorage.getItem('sva-dt-theme');
@@ -53,6 +54,10 @@
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
+        }
+        @media (max-width: 600px) {
+            body { padding: .75rem; }
+            .container { padding: 1.25rem; }
         }
         .container {
             max-width: 1400px;
@@ -297,6 +302,10 @@
             <h2 class="group-title">Degree</h2>
             <div class="grid">
             <div class="panel">
+                <div id="plot-npa_HEAD-ADJ_Deg" class="mini-plot" data-url="../../npa/HEAD-ADJ_Deg/index.html" data-deprel="npa/HEAD-ADJ_Deg"></div>
+                <div class="panel-label"><a href="../../npa/HEAD-ADJ_Deg/index.html">Head–Adjective</a></div>
+            </div>
+            <div class="panel">
                 <div id="plot-npa_DET-ADJ_Deg" class="mini-plot" data-url="../../npa/DET-ADJ_Deg/index.html" data-deprel="npa/DET-ADJ_Deg"></div>
                 <div class="panel-label"><a href="../../npa/DET-ADJ_Deg/index.html">Determiner–Adjective</a></div>
             </div>
@@ -323,7 +332,7 @@
           });
         })();
 
-        const allData = {"npa/DET-ADJ_Deg": {"acc": [{"name": "Latvian", "base": 0.8846153846153846, "tree": 0.8846153846153846, "n_items": 11, "url": "../../npa/DET-ADJ_Deg/Latvian.html", "color": "#2563eb"}]}};
+        const allData = {"npa/DET-ADJ_Deg": {"acc": [{"name": "Latvian", "base": 0.8846153846153846, "tree": 0.8846153846153846, "n_items": 13, "url": "../../npa/DET-ADJ_Deg/Latvian.html", "color": "#2563eb"}]}, "npa/HEAD-ADJ_Deg": {"acc": [{"name": "Old Norse", "base": 0.8076923076923077, "tree": 0.8076923076923077, "n_items": 12, "url": "../../npa/HEAD-ADJ_Deg/Old_Norse.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so

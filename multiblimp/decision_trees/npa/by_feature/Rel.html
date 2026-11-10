@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         try {
             var t = localStorage.getItem('sva-dt-theme');
@@ -53,6 +54,10 @@
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
+        }
+        @media (max-width: 600px) {
+            body { padding: .75rem; }
+            .container { padding: 1.25rem; }
         }
         .container {
             max-width: 1400px;
@@ -323,7 +328,7 @@
           });
         })();
 
-        const allData = {"npa/HEAD-ADP_Rel": {"acc": [{"name": "Guajajara", "base": 0.7361111111111112, "tree": 0.7731481481481481, "n_items": 28, "url": "../../npa/HEAD-ADP_Rel/Guajajara.html", "color": "#2563eb"}, {"name": "Tupinamba", "base": 0.5535714285714286, "tree": 0.6964285714285714, "n_items": 12, "url": "../../npa/HEAD-ADP_Rel/Tupinamba.html", "color": "#2563eb"}]}};
+        const allData = {"npa/HEAD-ADP_Rel": {"acc": [{"name": "Guajajara", "base": 0.6507352941176471, "tree": 0.7536764705882353, "n_items": 52, "url": "../../npa/HEAD-ADP_Rel/Guajajara.html", "color": "#2563eb"}, {"name": "Nheengatu", "base": 0.7, "tree": 0.7, "n_items": 12, "url": "../../npa/HEAD-ADP_Rel/Nheengatu.html", "color": "#2563eb"}, {"name": "Tupinamba", "base": 0.5657894736842105, "tree": 0.5657894736842105, "n_items": 19, "url": "../../npa/HEAD-ADP_Rel/Tupinamba.html", "color": "#2563eb"}]}};
 
         // Read once at load, after the theme CSS (light or dark) has applied --
         // Plotly's own layout config takes plain color strings, not CSS vars, so
